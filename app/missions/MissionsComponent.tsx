@@ -698,45 +698,26 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
 
   const { setCurrentContent, isReading, stopReading, startReading } = useNimiReader();
 
-  // Helper to build consistent narration
+  // Helper to build narration for a page
   const getNarrationForPage = (page?: Page) => {
     if (!page) return "";
-    let narration = "";
-    if (page.ocrText) narration += page.ocrText + " ";
-    if (page.text) narration += page.text + " ";
-    if (page.caption) narration += page.caption;
-    return narration.trim();
+    return [page.ocrText, page.text, page.caption].filter(Boolean).join(" ").trim();
   };
-  function useIsMobile(breakpoint = 768) {
-    const [isMobile, setIsMobile] = useState(false);
-  
-    useEffect(() => {
-      const checkSize = () => setIsMobile(window.innerWidth < breakpoint);
-      checkSize();
-      window.addEventListener("resize", checkSize);
-      return () => window.removeEventListener("resize", checkSize);
-    }, [breakpoint]);
-  
-    return isMobile;
-  }
-  // Preprocess pages: image URL + OCR
+
+  // Preprocess pages: Supabase URLs + OCR
   useEffect(() => {
     const processPages = async () => {
       const newPages = await Promise.all(
         pages.map(async (page) => {
           let imageUrl = page.image_url;
 
-          // Supabase public URL
           if (imageUrl.startsWith("supabase://")) {
             const path = imageUrl.replace("supabase://", "");
             const [bucket, ...filePath] = path.split("/");
-            const { data } = await supabase.storage
-              .from(bucket)
-              .getPublicUrl(filePath.join("/"));
+            const { data } = await supabase.storage.from(bucket).getPublicUrl(filePath.join("/"));
             imageUrl = data.publicUrl;
           }
 
-          // OCR
           let ocrText = "";
           try {
             const { data } = await Tesseract.recognize(imageUrl, "eng");
@@ -745,40 +726,25 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
             console.error("OCR failed for page", page.page_number, err);
           }
 
-          return {
-            ...page,
-            image_url: imageUrl,
-            ocrText,
-          };
+          return { ...page, image_url: imageUrl, ocrText };
         })
       );
 
       setProcessedPages(newPages);
       setIsLoading(false);
 
-      // Read first spread
-      const leftPage = newPages[0];
-      const rightPage = newPages[1];
-      const narration = [getNarrationForPage(leftPage), getNarrationForPage(rightPage)]
-        .filter(Boolean)
-        .join(" ");
-      setCurrentContent(narration);
+      // Read the first page
+      const narration = getNarrationForPage(newPages[0]);
+      if (narration) setCurrentContent(narration);
     };
 
     processPages();
-  }, [pages, setCurrentContent]);
+  }, [pages]);
 
-  // Flip pages: read spread
+  // Handle page change
   const handlePageChange = (newIndex: number) => {
     setCurrentPage(newIndex);
-
-    const leftPage = processedPages[newIndex];
-    const rightPage = processedPages[newIndex + 1];
-
-    const narration = [getNarrationForPage(leftPage), getNarrationForPage(rightPage)]
-      .filter(Boolean)
-      .join(" ");
-
+    const narration = getNarrationForPage(processedPages[newIndex]);
     if (narration) setCurrentContent(narration);
   };
 
@@ -797,22 +763,15 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
         <h2 className="text-white text-lg font-semibold">
           {type === "story" ? t("storyTime") : t("coloringBook")} - {t("flipbook")}
         </h2>
-
         <div className="flex gap-2">
-          {/* Close */}
           <button
             onClick={onClose}
             className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
           >
             ✕
           </button>
-
-          {/* Pause/Resume */}
           <button
-            onClick={() => {
-              if (isReading) stopReading();
-              else startReading();
-            }}
+            onClick={() => (isReading ? stopReading() : startReading())}
             className="bg-yellow-500 text-black px-4 py-2 rounded-lg"
           >
             {isReading ? "⏸ Pause" : "▶️ Resume"}
@@ -820,30 +779,30 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
         </div>
       </div>
 
+      {/* Flipbook */}
       <div className="flex-1 flex items-center justify-center overflow-hidden">
         <HTMLFlipBook
           width={isMobile ? 320 : 400}
           height={isMobile ? 480 : 550}
           showCover
-          usePortrait={isMobile}
+          usePortrait
           mobileScrollSupport
           flippingTime={isMobile ? 1500 : 800}
           size="fixed"
           className="shadow-2xl rounded-lg"
-          onFlip={(e: any) => handlePageChange(e.data)}
-          // Required props
           style={{}}
+          onFlip={(e: any) => handlePageChange(e.data)}
           startPage={0}
           minWidth={300}
           maxWidth={600}
           minHeight={400}
           maxHeight={800}
-          drawShadow={true}
-          autoSize={true}
-          clickEventForward={true}
-          useMouseEvents={true}
+          drawShadow
+          autoSize
+          clickEventForward
+          useMouseEvents
           swipeDistance={30}
-          showPageCorners={true}
+          showPageCorners
           disableFlipByClick={false}
           startZIndex={0}
           maxShadowOpacity={0.5}
@@ -851,25 +810,35 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           {processedPages.map((page, idx) => (
             <div
               key={idx}
-              className="relative flex flex-col justify-between p-6 rounded-[6px]"
-              style={{
-                backgroundImage: "url('/paper-texture.png')",
-                backgroundSize: "300px 300px",
-                backgroundRepeat: "repeat",
-                backgroundColor: "#fdfaf4",
-                border: "1px solid rgba(0,0,0,0.08)",
-              }}
+              className="relative flex flex-col justify-between p-6 rounded-[6px] border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white"
             >
-              <img
-                src={page.image_url}
-                alt={page.image_alt || `Page ${idx + 1}`}
-                className="rounded-md shadow-md object-contain max-h-[70%] mx-auto"
+              {/* Paper texture */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundImage: "url('/paper-texture.png')",
+                  backgroundSize: "cover",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  opacity: 0.05,
+                }}
               />
-              {type === "story" && page.text && (
-                <p className="mt-4 text-center text-base font-serif text-gray-800 leading-relaxed">
-                  {page.text}
-                </p>
-              )}
+
+              {/* Page content */}
+              <div className="relative z-20 flex flex-col justify-between h-full">
+                <div className="flex-1 flex items-center justify-center">
+                  <img
+                    src={page.image_url}
+                    alt={page.image_alt || `Page ${idx + 1}`}
+                    className="rounded-md shadow-md object-contain max-h-full max-w-full"
+                  />
+                </div>
+                {type === "story" && page.text && (
+                  <p className="mt-4 text-center text-base font-serif text-gray-800 leading-relaxed">
+                    {page.text}
+                  </p>
+                )}
+              </div>
             </div>
           ))}
         </HTMLFlipBook>
@@ -877,6 +846,18 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
     </div>
   );
 };
+
+// Hook outside
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkSize = () => setIsMobile(window.innerWidth < breakpoint);
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 // =====================
 // BOOK CARD
