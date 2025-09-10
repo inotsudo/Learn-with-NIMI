@@ -48,6 +48,7 @@ export default function SubscriptionPage() {
     f4: t(language, "f4Description") || "Exclusive educational games",
     f5: t(language, "f5Description") || "Special yearly subscriber bonus content",
   }), [language]);
+  
 
   // Define Plans
   const plans = useMemo(
@@ -295,7 +296,7 @@ export default function SubscriptionPage() {
                         <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{t(language, f)}</span>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute left-0 top-6 ml-6 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10 max-w-xs pointer-events-none">
-                          {featureDescriptions[f]}
+                        {featureDescriptions[f as keyof typeof featureDescriptions]}
                         </div>
                         <Info className="h-3 w-3 text-gray-400 mt-1 ml-1 flex-shrink-0" />
                       </li>

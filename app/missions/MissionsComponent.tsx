@@ -27,6 +27,23 @@ import { Video } from "lucide-react";
 import { X } from "lucide-react";
 import { Clock } from "lucide-react";
 
+const t = (
+  key: string, // allow any string now
+  params?: Record<string, any>,
+  language: keyof typeof translations = "en"
+) => {
+  const translationObj = translations[language] as Record<string, string> || translations.en as Record<string, string>;
+
+  let translation = translationObj[key] || (translations.en as Record<string, string>)[key] || key;
+
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      translation = translation.replace(`{${k}}`, v);
+    });
+  }
+
+  return translation;
+};
 
 const translations = {
   en: {
@@ -284,18 +301,20 @@ interface ColoringPage {
   page_number: number;
   image_url: string;
 }
-interface Page {
-    image_url: string;
-    page_number: number;
-    caption?: string; 
+export interface Page {
+  image_url: string;
+  page_number: number;
+  text?: string;
+  caption?: string;
+  image_alt?: string;
+  ocrText?: string; // ✅ optional
 }
-
-type FlipBookViewerProps = {
+interface FlipBookViewerProps {
   pages: Page[];
   onClose: () => void;
   type: "story" | "coloring";
-  t: (key: string) => string;
-};
+  t: (key: string) => string; // translation function
+}
 
 // Update the SlidesModal component to properly display images
 const SlidesModal = ({
@@ -675,19 +694,32 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
+  const isMobile = useIsMobile();
 
   const { setCurrentContent, isReading, stopReading, startReading } = useNimiReader();
 
   // Helper to build consistent narration
-  const getNarrationForPage = (page: Page) => {
+  const getNarrationForPage = (page?: Page) => {
+    if (!page) return "";
     let narration = "";
-    if (page?.ocrText) narration += page.ocrText + " ";
-    if (page?.text) narration += page.text + " ";
-    if (page?.caption) narration += page.caption;
+    if (page.ocrText) narration += page.ocrText + " ";
+    if (page.text) narration += page.text + " ";
+    if (page.caption) narration += page.caption;
     return narration.trim();
   };
-
-  // Preprocess pages: image URL + OCR + narration
+  function useIsMobile(breakpoint = 768) {
+    const [isMobile, setIsMobile] = useState(false);
+  
+    useEffect(() => {
+      const checkSize = () => setIsMobile(window.innerWidth < breakpoint);
+      checkSize();
+      window.addEventListener("resize", checkSize);
+      return () => window.removeEventListener("resize", checkSize);
+    }, [breakpoint]);
+  
+    return isMobile;
+  }
+  // Preprocess pages: image URL + OCR
   useEffect(() => {
     const processPages = async () => {
       const newPages = await Promise.all(
@@ -791,20 +823,24 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
       {/* Flipbook */}
       <div className="flex-1 flex items-center justify-center overflow-hidden">
         <HTMLFlipBook
-          width={400}
-          height={550}
+          width={isMobile ? 320 : 400}
+          height={isMobile ? 480 : 550}
           showCover
-          className="shadow-2xl rounded-lg"
-          flippingTime={800}
-          usePortrait
+          usePortrait={isMobile}
           mobileScrollSupport
-          onFlip={(e) => handlePageChange(e.data)}
+          flippingTime={isMobile ? 1500 : 800}   // ✅ slower on phone
+          size="fixed"
+          className="shadow-2xl rounded-lg"
+          onFlip={(e: any) => handlePageChange(e.data)}
         >
           {processedPages.map((page, idx) => (
             <div
               key={idx}
-              className="relative bg-[url('/paper-texture.png')] bg-repeat bg-[length:300px_300px] flex flex-col justify-between p-6 rounded-[6px] shadow-sm"
+              className="relative flex flex-col justify-between p-6 rounded-[6px]"
               style={{
+                backgroundImage: "url('/paper-texture.png')",
+                backgroundSize: "300px 300px",
+                backgroundRepeat: "repeat",
                 backgroundColor: "#fdfaf4",
                 border: "1px solid rgba(0,0,0,0.08)",
               }}
@@ -812,22 +848,22 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
               <img
                 src={page.image_url}
                 alt={page.image_alt || `Page ${idx + 1}`}
-                className="rounded-md shadow-md object-contain max-h-[75%] mx-auto"
+                className="rounded-md shadow-md object-contain max-h-[70%] mx-auto"
               />
-
               {type === "story" && page.text && (
-                <p className="mt-4 text-center text-lg font-serif text-gray-800 leading-relaxed">
+                <p className="mt-4 text-center text-base font-serif text-gray-800 leading-relaxed">
                   {page.text}
                 </p>
               )}
             </div>
           ))}
         </HTMLFlipBook>
+
       </div>
     </div>
   );
 };
-  
+
 // =====================
 // BOOK CARD
 // =====================
@@ -1209,17 +1245,6 @@ const MissionsComponent = () => {
   const [missionSlides, setMissionSlides] = useState<Record<string, any[]>>({});
   const [nimiContent, setNimiContent] = useState<string>("");
   
-  // Translation function
-  const t = (key: string, params?: Record<string, any>) => {
-    let translation = translations[language]?.[key] || translations.en[key] || key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        translation = translation.replace(`{${k}}`, v);
-      });
-    }
-    return translation;
-  };
-
   // Generate dates for the mission program
   const dates = useMemo(() => {
     const now = new Date();

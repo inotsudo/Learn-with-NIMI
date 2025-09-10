@@ -8,11 +8,27 @@ export interface Child {
   id: string;
   name: string;
   birthDate: string;
+  age?: string; // or number, depending on your logic
   screenTimeLimit?: number;
   bedtimeMode?: boolean;
   activities?: any[];
+  bedtimeStart?: string; // add this
+  bedtimeEnd?: string;   
   contentLock?: boolean;
+  avatar?: string;
+  theme?: string;
+  whitelist?: string[];
+  blacklist?: string[];
 }
+
+// In @/hooks/useChildren.ts
+export type Activity = {
+  id: string;
+  title: string;
+  completed: boolean;
+  weeklyRecord?: boolean[]; 
+};
+
 
 interface UseChildrenResult {
   children: Child[];

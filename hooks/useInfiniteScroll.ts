@@ -1,7 +1,7 @@
 import { useEffect, RefObject } from "react";
 
 export const useInfiniteScroll = (
-  targetRef: RefObject<HTMLElement>,
+  targetRef: RefObject<HTMLElement | null>, // allow null
   callback: () => void,
   dependencies: any[] = []
 ) => {

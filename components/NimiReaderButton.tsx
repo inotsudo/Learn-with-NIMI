@@ -46,7 +46,7 @@ export default function NimiReaderButton({ hide }: NimiReaderButtonProps) {
   }, []);
 
   const wrapWordsWithSpans = (element: HTMLElement) => {
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
     const textNodes: Text[] = [];
     while (walker.nextNode()) {
       const node = walker.currentNode as Text;

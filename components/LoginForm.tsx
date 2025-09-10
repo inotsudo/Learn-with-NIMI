@@ -1,12 +1,9 @@
-// components/LoginForm.tsx
-
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@/contexts/UserContext";
+import supabase from "@/lib/supabaseClient";
 
 export default function LoginForm() {
-  const { login } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -18,7 +15,15 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      console.log("Logged in!", data.user);
+      // optionally redirect or update state here
     } catch (error: any) {
       setErrorMsg(error.message || "Login failed");
     } finally {

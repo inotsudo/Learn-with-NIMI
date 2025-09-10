@@ -39,13 +39,16 @@ export const NimiChat = ({
   // Scroll to bottom on new messages
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  // Detect browser features
   useEffect(() => {
     setBrowserSupports({
-      mic: typeof window !== 'undefined' && navigator.mediaDevices?.getUserMedia && 'webkitSpeechRecognition' in window,
-      tts: typeof window !== 'undefined' && 'speechSynthesis' in window
+      mic:
+        typeof window !== "undefined" &&
+        typeof navigator.mediaDevices?.getUserMedia === "function" &&
+        "webkitSpeechRecognition" in window,
+      tts: typeof window !== "undefined" && "speechSynthesis" in window,
     });
   }, []);
+  
 
   // Cleanup on unmount
   useEffect(() => {

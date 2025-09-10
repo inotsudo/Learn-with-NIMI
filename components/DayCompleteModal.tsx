@@ -1,5 +1,9 @@
 import { useEffect } from "react";
 import { Howl } from "howler";
+import { motion } from "framer-motion"; // <-- Add this
+
+import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 
 const DAY_COMPLETE_VOICES = [
   new Howl({ src: ["/sounds/nimi-day-complete1.mp3"], volume: 0.8 }),

@@ -3,9 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Languages, Smile } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext"; // <-- Make sure this import is here
+import { useLanguage, Language } from "@/contexts/LanguageContext";
 
-export default function Header() {
+interface HeaderProps {
+  simple?: boolean; // <-- optional prop
+}
+
+export default function Header({ simple }: HeaderProps) {
   const { language, setLanguage, t } = useLanguage();
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -23,7 +27,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white/95 border-b-2 border-pink-200 sticky top-0 z-40">
+    <header className={`${simple ? "bg-transparent border-none" : "bg-white/95 border-b-2 border-pink-200"} sticky top-0 z-40`}>
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <Link href="/" className="flex items-center group">
@@ -42,8 +46,8 @@ export default function Header() {
             <h1 className="ml-3 text-2xl font-bold text-pink-600">NIMI</h1>
           </Link>
 
-          {isClient && (
-            <div className="relative"> {/* Container relative for positioning */}
+          {isClient && !simple && ( // Hide language picker if simple
+            <div className="relative">
               <button
                 onClick={() => setShowLanguagePicker(!showLanguagePicker)}
                 className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center shadow-md hover:bg-pink-200 transition-colors"
@@ -60,9 +64,11 @@ export default function Header() {
                     <button
                       key={lang.code}
                       onClick={() => {
-                        setLanguage(lang.code);
+                        setLanguage(lang.code as Language);
                         setShowLanguagePicker(false);
                       }}
+                      
+                      
                       className="flex items-center px-4 py-3 w-full hover:bg-pink-50 transition-colors text-lg"
                     >
                       <span className="text-2xl mr-3">{lang.flag}</span>

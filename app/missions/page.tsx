@@ -24,15 +24,20 @@ const translations = {
     loading: "Inapakia misheni...",
   }
 };
-
 const MissionsComponent = dynamic(
   () => import('./MissionsComponent'),
   { 
     ssr: false,
     loading: () => {
       const { language } = useLanguage();
-      const t = (key: string) => translations[language][key] || translations.en[key] || key;
-      
+
+      // Type-safe translation function
+      const t = (key: string) => {
+        const translationObj = translations[language] as Record<string, string> 
+          || translations.en as Record<string, string>;
+        return translationObj[key] || (translations.en as Record<string, string>)[key] || key;
+      };
+
       return (
         <div className="min-h-screen flex flex-col">
           <Header />
@@ -42,10 +47,11 @@ const MissionsComponent = dynamic(
           </main>
           <BottomNavigation />
         </div>
-      )
+      );
     }
   }
 );
+
 
 export default function MissionsPage() {
   const { language } = useLanguage();

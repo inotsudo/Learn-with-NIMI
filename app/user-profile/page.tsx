@@ -375,8 +375,9 @@ export default function UserProfilePage() {
               </div>
             ) : (
               <p className="text-gray-700">
-                {aboutText || t("aboutMePlaceholder", { name: userData.name })}
-              </p>
+              {aboutText || `About ${userData.name}...`}
+            </p>
+            
             )}
           </CardContent>
         </Card>

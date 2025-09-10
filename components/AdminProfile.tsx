@@ -65,12 +65,17 @@ export default function AdminProfile() {
       .upload(filePath, file, { upsert: true });
 
     if (error) throw error;
-
-    const { publicURL, error: urlError } = supabase.storage
+    // Get the public URL for the avatar
+    const { data } = supabase.storage
       .from("avatars")
       .getPublicUrl(filePath);
 
-    if (urlError) throw urlError;
+    const publicURL = data?.publicUrl;
+
+    if (!publicURL) {
+      console.error("Failed to get public URL for file:", filePath);
+      return;
+    }
 
     return publicURL;
   }
@@ -169,20 +174,22 @@ export default function AdminProfile() {
         <label className="block">
           <span className="text-gray-700">Name</span>
           <input
-            type="text"
-            value={profile.name}
-            onChange={(e) => setProfile((p) => p ? { ...p, name: e.target.value } : p)}
-            disabled={saving || !editing}
-            required
-            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ff9a9e]"
-          />
+  type="text"
+  value={profile?.name || ""}
+  onChange={(e) =>
+    setProfile((p) => (p ? { ...p, name: e.target.value } : p))
+  }
+  disabled={saving || !editing}
+  required
+/>
+
         </label>
 
         <label className="block">
           <span className="text-gray-700">Email</span>
           <input
             type="email"
-            value={profile.email}
+            value={profile?.email}
             onChange={(e) => setProfile((p) => p ? { ...p, email: e.target.value } : p)}
             disabled={saving || !editing}
             required
@@ -193,7 +200,7 @@ export default function AdminProfile() {
         <label className="block">
           <span className="text-gray-700">Bio</span>
           <textarea
-            value={profile.bio || ""}
+            value={profile?.bio || ""}
             onChange={(e) => setProfile((p) => p ? { ...p, bio: e.target.value } : p)}
             disabled={saving || !editing}
             rows={3}

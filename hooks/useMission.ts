@@ -12,9 +12,9 @@ export function useMissions() {
   useEffect(() => {
     const fetchMissions = async () => {
       const { data, error } = await supabase
-        .from('daily_missions')
+        .from('missions')
         .select('*')
-        .order('day_number')
+        .order('day')
         .order('mission_time');
 
       if (error) {
@@ -37,11 +37,15 @@ export function useMissions() {
           };
         }
 
+        // Safely get icon from LucideIcons
+        const iconName = row.icon as keyof typeof LucideIcons;
+        const iconComponent = iconName in LucideIcons ? LucideIcons[iconName] : LucideIcons.Smile;
+
         grouped[dayNumber].missions.push({
           id: row.id,
           title: row.activity_title || row.title,
           time: row.time || '',
-          icon: LucideIcons[row.icon] || LucideIcons.Smile,
+          icon: iconComponent,
           points: row.points || 0,
           duration: row.duration || '',
           objectives: row.objectives || [],

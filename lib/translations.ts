@@ -183,6 +183,12 @@ interface Translations {
       sw: "Yaliyomo ya kipekee"
     }
   };
+  type Language = 'en' | 'es' | 'fr' | 'rw' | 'sw';
+
   export function t(language: string, key: string): string {
-    return translations[key]?.[language] || translations[key]?.en || key
+    const langs = ['en', 'es', 'fr', 'rw', 'sw'] as const;
+  
+    const lang = langs.includes(language as Language) ? (language as Language) : 'en';
+    return translations[key]?.[lang] || translations[key]?.en || key;
   }
+  

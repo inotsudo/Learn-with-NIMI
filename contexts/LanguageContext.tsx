@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-type Language = "en" | "es" | "fr" | "rw" | "sw";
+export type Language = "en" | "es" | "fr" | "rw" | "sw";
 const LANGUAGE_KEY = "app_language"
 
 const dict: Record<Language, Record<string, string>> = {

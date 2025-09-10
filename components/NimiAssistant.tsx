@@ -9,7 +9,7 @@ export default function NimiAssistant({ mood = "happy", phrase = "" }) {
     celebration: "/nimi/celebration.jpeg",
   };
 
-  const moodImage = moodImageMap[mood] || "/nimi/happy.png";
+  const moodImage = moodImageMap[mood as keyof typeof moodImageMap] || "/nimi/happy.png";
 
   return (
     <motion.div

@@ -24,8 +24,7 @@ const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image> & { src?: string | null }
 >(({ className, src, ...props }, ref) => {
-  // If src is empty string, null, or undefined, pass null to avoid warning
-  const safeSrc = src && src.trim() !== "" ? src : null;
+  const safeSrc = src && src.trim() !== "" ? src : undefined;
 
   return (
     <AvatarPrimitive.Image
@@ -36,6 +35,7 @@ const AvatarImage = React.forwardRef<
     />
   );
 });
+
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 
 const AvatarFallback = React.forwardRef<

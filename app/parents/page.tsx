@@ -222,7 +222,7 @@ const ThemeSelector = ({
 };
 
 export default function ParentPage() {
-  const { t, currentLanguage, setLanguage, isRTL } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const router = useRouter();
   const session = useSession();
   const { toast } = useToast();
@@ -280,7 +280,7 @@ export default function ParentPage() {
       else ageRange = "8+ years";
     }
     
-    const result = await addChild(name, ageRange, birthDate);
+    const result = await addChild(name); // only pass name
     if (result.success && result.child) {
       setCurrentChildId(result.child.id);
       setIsAddingChild(false);
@@ -315,8 +315,8 @@ export default function ParentPage() {
   if (!parentId) return null; // redirect in progress
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-purple-50" dir={isRTL ? "rtl" : "ltr"}>
-      <Header />
+<div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-purple-50" dir="ltr">
+<Header />
       <main className="flex-grow w-full max-w-6xl mx-auto p-4 md:p-6 space-y-6 relative">
         <div className="absolute top-4 right-4 z-10">
           <UserProfileMenu />
@@ -549,8 +549,8 @@ function AddChildForm({
         
         {currentChildCount >= maxChildrenFree && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-yellow-700 text-sm">
-            {t("freePlanLimitReached", { max: maxChildrenFree })}
-          </div>
+          {`${t("freePlanLimitReached")}: ${maxChildrenFree}`}
+</div>
         )}
         
         <div className="flex gap-2">
@@ -796,7 +796,7 @@ function WeeklyReportCard({
                 <span className="text-xs text-muted-foreground">{t("thisWeek")}</span>
               </div>
               <div className="flex gap-1">
-                {item.weeklyRecord?.map((v, i) => (
+              {item.weeklyRecord?.map((v: boolean, i: number) => (
                   <div
                     key={i}
                     className={`h-4 w-6 rounded flex items-center justify-center ${
@@ -1184,7 +1184,7 @@ function ControlsCard({
             </span>
           </div>
           <Slider
-            value={[child.screenTimeLimit]}
+            value={[child.screenTimeLimit ?? 0]} 
             max={120}
             step={5}
             onValueChange={handleScreenTimeChange}

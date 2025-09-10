@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, RefObject } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { v4 as uuidv4 } from "uuid";
 import DOMPurify from "dompurify";
@@ -8,17 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Trophy, Camera, Share2, MessageCircle, Heart, Loader2 } from "lucide-react";
 import { CreationCard } from "@/components/community/CreationCard";
-import { UploadModal } from "@/components/community/UploadModal";
+import  UploadModal  from "@/components/community/UploadModal";
 import { NimiChat } from "@/components/community/NimiChat";
+import type { Comment as AppComment} from "@/components/community/types";
 import { CelebrationBanner } from "@/components/community/CelebrationBanner";
 import { ErrorToast } from "@/components/community/ErrorToast";
-import { Creation, PikoPal, UserMessage } from "@/components/community/types";
+import { Creation,UploadFormState, ShareMethod, PikoPal, UserMessage } from "@/components/community/types";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
 import { useNimiChat } from "@/hooks/useNimiChat";
+
+
+// const observerTarget = useRef<HTMLDivElement>(null);
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
@@ -145,18 +149,18 @@ const CommunityPage = () => {
   const creationsContainerRef = useRef<HTMLDivElement>(null);
 
   // Upload form state
-  const [uploadForm, setUploadForm] = useState({
+  const [uploadForm, setUploadForm] = useState<UploadFormState>({
     childName: "",
     age: "",
     description: "",
     isPublic: true,
-    imageFile: null as File | null,
+    imageFile: null,
     previewUrl: "",
     uploadProgress: 0,
     isUploading: false,
-    shareMethod: 'public' as 'public' | 'whatsapp'
+    shareMethod: "public", // ✅ must be ShareMethod type
   });
-
+  
   // Use custom hooks for data fetching
   const { data: userData, loading: userLoading } = useSupabaseQuery(
     () => supabase.auth.getUser().then(({ data: { user } }) => user),
@@ -304,14 +308,16 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
     fetchCreations(0, true);
   }, [fetchCreations]);
 
-  // Infinite scroll setup
-  useInfiniteScroll(observerTarget, () => {
+
+  useInfiniteScroll(observerTarget as RefObject<HTMLElement>, () => {
     if (!loadingStates.creations && hasMoreCreations) {
       const nextPage = page + 1;
       setPage(nextPage);
       fetchCreations(nextPage, false);
     }
-  }, [loadingStates.creations, hasMoreCreations, page]);
+  });
+  
+
   const fetchPikopals = useCallback(async () => {
     try {
       setLoadingStates(prev => ({ ...prev, pikopals: true }));
@@ -327,25 +333,25 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
   
       if (children && children.length > 0) {
         // Fetch achievements for each child
-        const pikopalsData = await Promise.all(
-          children.map(async child => {
-            const { count } = await supabase
-              .from("creations")
-              .select("*", { count: "exact" })
-              .eq("child_id", child.id);
-  
-            return {
-              id: child.id,
-              name: child.name,
-              age: child.age ? parseInt(child.age) || 0 : 0,
-              achievements: count || 0,
-              streak: child.streak || 0,
-              avatar: child.avatar_url || "👦",
-              avatarUrl: child.avatar_url || "",
-              title: count > 10 ? "Master Creator" : count > 5 ? "Creative Explorer" : "Rising Star",
-            };
-          })
-        );
+        const pikopalsData = children.map((child, index) => {
+          const count = child.achievements ?? 0; // default to 0 if null or undefined
+          return {
+            id: child.id,
+            name: child.name,
+            age: child.age,
+            achievements: count,
+            streak: child.streak || 0,
+            avatar: child.avatar_url || "👦",
+            avatarUrl: child.avatar_url || "",
+            title:
+              count > 10
+                ? "Master Creator"
+                : count > 5
+                ? "Creative Explorer"
+                : "Rising Star",
+          };
+        });
+        
   
         setPikopals(pikopalsData);
       }
@@ -410,88 +416,98 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
     }
   }, [creations, currentUser.id, fetchCreations, supabase, triggerCelebration]);
   // CommunityPage.tsx
-  const handleAddComment = useCallback(
-    async (creationId: string, content: string) => {
-      console.log("[DEBUG] handleAddComment received content:", content);
-  
-      const sanitizedContent = DOMPurify.sanitize(content?.trim());
-      if (!sanitizedContent) return false;
-  
-      const tempId = `temp-${Date.now()}`;
-  
-      // Optimistic comment
-      const tempComment = {
-        id: tempId,
-        creation_id: creationId,
-        author: currentUser.name || "Guest",
-        author_avatar: currentUser.avatar || "",
-        content: sanitizedContent,
-        created_at: new Date().toISOString(),
+const handleAddComment = useCallback(
+  async (creationId: string, content: string) => {
+    console.log("[DEBUG] handleAddComment received content:", content);
+
+    const sanitizedContent = DOMPurify.sanitize(content?.trim());
+    if (!sanitizedContent) return false;
+
+    const tempId = `temp-${Date.now()}`;
+
+    // ✅ use currentUser instead of undefined "user"
+    const tempComment: AppComment = {
+      id: tempId,
+      creationId,
+      author: currentUser?.name || "Guest",
+      authorAvatar: currentUser?.avatar || "",
+      content: sanitizedContent,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Optimistic UI update
+    setCreations(prev =>
+      prev.map(c =>
+        c.id === creationId
+          ? { ...c, comments: [...(c.comments || []), tempComment] }
+          : c
+      )
+    );
+
+    try {
+      // Insert into Supabase
+      console.log("[DEBUG] Inserting into Supabase:", sanitizedContent);
+      const { data, error } = await supabase
+        .from("comments")
+        .insert({
+          creation_id: creationId,
+          author: currentUser?.name || "Guest",
+          author_avatar: currentUser?.avatar || "",
+          content: sanitizedContent,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // ✅ Map DB fields → AppComment fields
+      const dbComment: AppComment = {
+        id: data.id,
+        creationId: data.creation_id,
+        author: data.author,
+        authorAvatar: data.author_avatar,
+        content: data.content,
+        createdAt: data.created_at,
       };
-  
+
+      // Replace temp with DB result
       setCreations(prev =>
         prev.map(c =>
           c.id === creationId
-            ? { ...c, comments: [...(c.comments || []), tempComment] }
+            ? {
+                ...c,
+                comments: [
+                  ...(c.comments?.filter(comment => comment.id !== tempId) || []),
+                  dbComment,
+                ],
+              }
             : c
         )
       );
-  
-      try {
-        // Insert into Supabase
-        console.log("[DEBUG] Inserting into Supabase:", sanitizedContent);
-        const { data, error } = await supabase
-          .from("comments")
-          .insert({
-            creation_id: creationId,
-            author: currentUser.name || "Guest",
-            author_avatar: currentUser.avatar || "",
-            content: sanitizedContent,
-          })
-          .select()
-          .single();
-  
-        if (error) throw error;
-  
-        // Replace temp comment with DB result
-        setCreations(prev =>
-          prev.map(c =>
-            c.id === creationId
-              ? {
-                  ...c,
-                  comments: [
-                    ...(c.comments?.filter(comment => comment.id !== tempId) || []),
-                    {
-                      id: data.id,
-                      creation_id: data.creation_id,
-                      author: data.author,
-                      author_avatar: data.author_avatar,
-                      content: data.content,
-                      created_at: data.created_at,
-                    },
-                  ],
-                }
-              : c
-          )
-        );
-  
-        return true;
-      } catch (err) {
-        console.error("Error adding comment:", err);
-  
-        setCreations(prev =>
-          prev.map(c =>
-            c.id === creationId
-              ? { ...c, comments: c.comments?.filter(comment => comment.id !== tempId) || [] }
-              : c
-          )
-        );
-  
-        return false;
-      }
-    },
-    [currentUser, supabase, setCreations]
-  );
+
+      return true;
+    } catch (err) {
+      console.error("Error adding comment:", err);
+
+      // Rollback optimistic update
+      setCreations(prev =>
+        prev.map(c =>
+          c.id === creationId
+            ? {
+                ...c,
+                comments:
+                  c.comments?.filter(comment => comment.id !== tempId) || [],
+              }
+            : c
+        )
+      );
+
+      return false;
+    }
+  },
+  [currentUser, supabase, setCreations]
+);
+
   
   // WhatsApp sharing function
   const shareViaWhatsApp = async (creation: Creation) => {
@@ -730,7 +746,6 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
       });
   
       triggerCelebration(`Your creation has been shared publicly!`);
-  
     } catch (err: any) {
       setError(err.message || "Failed to upload creation. Please try again.");
     } finally {
@@ -747,20 +762,25 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
     };
   }, [uploadForm.previewUrl]);
 
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         <CelebrationBanner isVisible={showCelebration} text={celebrationText} />
-        {error && <ErrorToast message={error} onDismiss={() => setError(null)} />}
+        <ErrorToast error={error} onDismiss={() => setError(null)} />
 
         <UploadModal
-          isOpen={showUploadModal}
-          onClose={() => !uploadForm.isUploading && setShowUploadModal(false)}
-          onSubmit={handleUploadSubmit}
-          formState={uploadForm}
-          setFormState={setUploadForm}
-          onShareMethodChange={(method) => setUploadForm(prev => ({ ...prev, shareMethod: method }))}
-        />
+        open={showUploadModal} // ✅ corrected from isOpen
+        onClose={() => !uploadForm.isUploading && setShowUploadModal(false)}
+        onSubmit={handleUploadSubmit}
+        formState={uploadForm}
+        setFormState={setUploadForm}
+      />
+
+
+
+
+
         <Header />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -827,9 +847,9 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
               <CardContent>
                 <div className="flex flex-col items-center">
                   <div className="text-8xl mb-4 animate-bounce">
-                    {pikopals[0].avatarUrl ? (
+                    {pikopals[0].avatar ? (
                       <img 
-                        src={pikopals[0].avatarUrl} 
+                        src={pikopals[0].avatar} 
                         alt={pikopals[0].name}
                         className="w-24 h-24 rounded-full object-cover mx-auto"
                         loading="lazy"
@@ -880,18 +900,19 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
             ) : (
               <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {creations.map(creation => (
-                  <CreationCard 
-                    key={`creation-${creation.id}`} 
-                    creation={creation}
-                    onLike={() => handleLike(creation.id)}
-                    onAddComment={(creationId, content) => handleAddComment(creationId, content)}
-                    onShare={(platform) => shareCreation(creation, platform)}
-                    currentUser={currentUser}
-                    isLoadingComment={loadingStates.comments[creation.id] || false}
-                    isLoadingLike={loadingStates.likes[creation.id] || false}
-                  />
-                ))}
+              {creations.map((creation) => (
+                <CreationCard
+                  key={creation.id}
+                  creation={creation}
+                  currentUser={currentUser}
+                  onLike={handleLike}
+                  onAddComment={handleAddComment}
+                  onShare={shareCreation}
+                  isLoadingComment={loadingStates.comments[creation.id] || false}
+                  isLoadingLike={loadingStates.likes[creation.id] || false}
+                />
+              ))}
+
               </div>
 
                 {/* Infinite scroll target */}

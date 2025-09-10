@@ -31,6 +31,7 @@ export default function UploadMissionMedia({ missionId, onUploadComplete }: Uplo
     const fileName = `${missionId}/${type}-${Date.now()}.${fileExt}`;
     const filePath = fileName;
 
+    // Upload the file
     const { error } = await supabase.storage
       .from("mission-media")
       .upload(filePath, file, { upsert: true });
@@ -41,13 +42,13 @@ export default function UploadMissionMedia({ missionId, onUploadComplete }: Uplo
       return null;
     }
 
-    const { data: publicUrlData, error: urlError } = supabase.storage
+    // Get the public URL
+    const { data: publicUrlData } = supabase.storage
       .from("mission-media")
       .getPublicUrl(filePath);
 
-    if (urlError) {
-      console.error(`Get public URL error (${type}):`, urlError);
-      setMessage(`Failed to get public URL for ${type}: ${urlError.message}`);
+    if (!publicUrlData?.publicUrl) {
+      setMessage(`Failed to get public URL for ${type}`);
       return null;
     }
 

@@ -1,39 +1,51 @@
-import { prisma } from './db'
+import supabase from './supabaseClient'
 
 export const MissionService = {
   // Get today's missions
   async getTodaysMissions() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
-    return await prisma.dailyMission.findMany({
-      where: {
-        date: {
-          gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        }
-      },
-      orderBy: {
-        scheduledAt: 'asc'
-      }
-    })
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
+
+    const { data, error } = await supabase
+      .from('missions')
+      .select('*')
+      .gte('date', today.toISOString())
+      .lt('date', tomorrow.toISOString())
+      .order('scheduled_at', { ascending: true })
+
+    if (error) throw error
+    return data
   },
 
   // Complete a mission
   async completeMission(missionId: string) {
-    return await prisma.dailyMission.update({
-      where: { id: missionId },
-      data: { isCompleted: true }
-    })
+    const { data, error } = await supabase
+      .from('missions')
+      .update({ is_completed: true })
+      .eq('id', missionId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   },
 
   // Create a new mission
   async createMission(data: {
     title: string
-    description: string
+    description?: string
     date: Date
-    // ... other fields
+    scheduled_at?: string
+    [key: string]: any
   }) {
-    return await prisma.dailyMission.create({ data })
+    const { data: newMission, error } = await supabase
+      .from('missions')
+      .insert([data])
+      .select()
+      .single()
+
+    if (error) throw error
+    return newMission
   }
 }
