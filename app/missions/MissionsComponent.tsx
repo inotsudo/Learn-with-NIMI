@@ -820,7 +820,6 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
         </div>
       </div>
 
-      {/* Flipbook */}
       <div className="flex-1 flex items-center justify-center overflow-hidden">
         <HTMLFlipBook
           width={isMobile ? 320 : 400}
@@ -828,10 +827,26 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           showCover
           usePortrait={isMobile}
           mobileScrollSupport
-          flippingTime={isMobile ? 1500 : 800}   // ✅ slower on phone
+          flippingTime={isMobile ? 1500 : 800}
           size="fixed"
           className="shadow-2xl rounded-lg"
           onFlip={(e: any) => handlePageChange(e.data)}
+          // Required props
+          style={{}}
+          startPage={0}
+          minWidth={300}
+          maxWidth={600}
+          minHeight={400}
+          maxHeight={800}
+          drawShadow={true}
+          autoSize={true}
+          clickEventForward={true}
+          useMouseEvents={true}
+          swipeDistance={30}
+          showPageCorners={true}
+          disableFlipByClick={false}
+          startZIndex={0}
+          maxShadowOpacity={0.5}
         >
           {processedPages.map((page, idx) => (
             <div
@@ -858,7 +873,6 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
             </div>
           ))}
         </HTMLFlipBook>
-
       </div>
     </div>
   );
