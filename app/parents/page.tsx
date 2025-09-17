@@ -455,10 +455,7 @@ export default function ParentPage() {
                 
                 {!isPremium && (
                   <PremiumUpsellCard t={t} />
-                )}
-                
-                <OfflineActivitiesCard t={t} isPremium={isPremium} />
-                
+                )}                
                 <FamilyLinkingCard t={t} isPremium={isPremium} />
               </TabsContent>
             </Tabs>
@@ -953,8 +950,6 @@ function ProgressCharts({
     { day: 'Wed', minutes: 35 },
     { day: 'Thu', minutes: 60 },
     { day: 'Fri', minutes: 45 },
-    { day: 'Sat', minutes: 70 },
-    { day: 'Sun', minutes: 50 },
   ];
 
   const activityData = [
@@ -1595,53 +1590,53 @@ function PremiumUpsellCard({ t }: { t: (key: string) => string }) {
   );
 }
 
-function OfflineActivitiesCard({ t, isPremium }: { t: (key: string) => string; isPremium: boolean }) {
-  const activities = [
-    { id: 1, title: t("coloringBook"), description: t("coloringBookDesc"), downloadUrl: "#" },
-    { id: 2, title: t("storyBook"), description: t("storyBookDesc"), downloadUrl: "#" },
-    { id: 3, title: t("activityPack"), description: t("activityPackDesc"), downloadUrl: "#" },
-  ];
+// function OfflineActivitiesCard({ t, isPremium }: { t: (key: string) => string; isPremium: boolean }) {
+//   const activities = [
+//     { id: 1, title: t("coloringBook"), description: t("coloringBookDesc"), downloadUrl: "#" },
+//     { id: 2, title: t("storyBook"), description: t("storyBookDesc"), downloadUrl: "#" },
+//     { id: 3, title: t("activityPack"), description: t("activityPackDesc"), downloadUrl: "#" },
+//   ];
 
-  return (
-    <Card className="bg-blue-50 border-2 border-blue-200">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-blue-700">
-          <Download className="h-5 w-5" />
-          {t("offlineActivities")}
-        </CardTitle>
-        <CardDescription>
-          {t("offlineActivitiesDesc")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {activities.map(activity => (
-          <div key={activity.id} className="p-3 border rounded-md bg-white">
-            <h4 className="font-medium">{activity.title}</h4>
-            <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
-            <Button 
-              size="sm" 
-              disabled={!isPremium}
-              onClick={() => window.open(activity.downloadUrl, '_blank')}
-            >
-              <Download className="h-4 w-4 mr-1" />
-              {t("download")}
-            </Button>
-          </div>
-        ))}
+//   return (
+//     <Card className="bg-blue-50 border-2 border-blue-200">
+//       <CardHeader>
+//         <CardTitle className="flex items-center gap-2 text-blue-700">
+//           <Download className="h-5 w-5" />
+//           {t("offlineActivities")}
+//         </CardTitle>
+//         <CardDescription>
+//           {t("offlineActivitiesDesc")}
+//         </CardDescription>
+//       </CardHeader>
+//       <CardContent className="space-y-4">
+//         {activities.map(activity => (
+//           <div key={activity.id} className="p-3 border rounded-md bg-white">
+//             <h4 className="font-medium">{activity.title}</h4>
+//             <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
+//             <Button 
+//               size="sm" 
+//               disabled={!isPremium}
+//               onClick={() => window.open(activity.downloadUrl, '_blank')}
+//             >
+//               <Download className="h-4 w-4 mr-1" />
+//               {t("download")}
+//             </Button>
+//           </div>
+//         ))}
         
-        {!isPremium && (
-          <div className="text-center mt-4">
-            <Link href="/subscription">
-              <Button variant="outline">
-                {t("upgradeToDownload")}
-              </Button>
-            </Link>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+//         {!isPremium && (
+//           <div className="text-center mt-4">
+//             <Link href="/subscription">
+//               <Button variant="outline">
+//                 {t("upgradeToDownload")}
+//               </Button>
+//             </Link>
+//           </div>
+//         )}
+//       </CardContent>
+//     </Card>
+//   );
+// }
 
 function FamilyLinkingCard({ t, isPremium }: { t: (key: string) => string; isPremium: boolean }) {
   const [familyMembers, setFamilyMembers] = useState([

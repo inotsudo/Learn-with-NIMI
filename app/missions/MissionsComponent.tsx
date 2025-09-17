@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion,useAnimation , AnimatePresence } from "framer-motion";
 import supabase from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -264,6 +264,7 @@ interface Mission {
   slides_url?: string;
   difficulty: number;
   mission_type: string;
+  preview_url?: string;    // ✅ New: Animation teaser
 }
 
 interface CompletionData {
@@ -279,6 +280,7 @@ interface DayData {
   emoji: string;
   missions: Mission[];
 }
+
 
 interface AudioTrack {
   id: string;
@@ -315,6 +317,7 @@ interface FlipBookViewerProps {
   type: "story" | "coloring";
   t: (key: string) => string; // translation function
 }
+
 
 // Update the SlidesModal component to properly display images
 const SlidesModal = ({
@@ -1110,59 +1113,117 @@ const DateButton = ({
     </motion.button>
   );
 };
-
-const MissionCard = ({ 
-  mission, 
-  completed, 
-  videoWatched, 
-  onVideoOpen, 
-  onManualComplete, 
-  t, 
+const MissionCard = ({
+  mission,
+  completed,
+  videoWatched,
+  onVideoOpen,
+  onManualComplete,
+  t,
   index,
   missionSlides,
   setOpenSlides
-}: { 
-  mission: Mission; 
-  completed: boolean; 
-  videoWatched: boolean; 
-  onVideoOpen: (mission: Mission) => void; 
-  onManualComplete: (mission: Mission) => void; 
-  t: (key: string) => string; 
+}: {
+  mission: Mission & { preview_url?: string };
+  completed: boolean;
+  videoWatched: boolean;
+  onVideoOpen: (mission: Mission) => void;
+  onManualComplete: (mission: Mission) => void;
+  t: (key: string) => string;
   index: number;
-  missionSlides: Record<string, any[]>;
-  setOpenSlides: (slides: {slides: any[], mission: Mission}) => void;
+  missionSlides: Record<string, Slide[]>;
+  setOpenSlides: (slides: { slides: Slide[], mission: Mission }) => void;
 }) => {
-  const iconSrc = `/mission-icon-${index + 1}.png`;
-  const missionType = mission.mission_type || 'video';
-  const hasSlides = missionSlides[mission.id]?.length > 0;
-  const hasVideo = mission.video_url;
+  const defaultPreviewUrl = 'https://your-bucket.s3.amazonaws.com/mission-previews/mission-preview-artistic.mp4';
+
+  const previewUrl = useMemo(() => mission.preview_url ?? defaultPreviewUrl, [mission.preview_url]);
+  const hasSlides = useMemo(() => !!missionSlides[mission.id]?.length, [missionSlides, mission.id]);
+  const hasVideo = !!mission.video_url;
+
+  const [isMuted, setIsMuted] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  const controls = useAnimation();
+
+  // Intersection Observer to detect visibility
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.3 } // consider visible if 30% is on screen
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Animate in when visible
+  useEffect(() => {
+    if (isVisible) {
+      controls.start({ opacity: 1, y: 0, transition: { duration: 0.3, delay: Math.min(index * 0.1, 0.5) } });
+    }
+  }, [isVisible, controls, index]);
+
+  console.log("Mission Preview URL:", mission.title, previewUrl);
 
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.1 }}
+      animate={controls}
       whileHover={{ y: -5 }}
       className="w-full"
     >
-      <Card className={`relative overflow-hidden border-2 transition-all w-full h-full
-        ${completed ? "border-green-300 bg-green-50" : "border-purple-200 hover:border-purple-300"}`}
+      <Card
+        className={`relative overflow-hidden border-2 transition-all w-full h-full ${
+          completed
+            ? "border-green-300 bg-green-50"
+            : "border-purple-200 hover:border-purple-300"
+        }`}
       >
+        {/* Completed Badge */}
         {completed && (
           <div className="absolute top-3 right-3 bg-green-500 text-white p-1 rounded-full">
             <CheckCircle className="h-5 w-5" />
           </div>
         )}
 
+        {/* Video Preview + Title */}
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-3">
-            <img src={iconSrc} alt="Mission icon" className="h-10 w-10 object-contain" />
-            <CardTitle className="text-xl">{mission.title}</CardTitle>
+          <div className="flex flex-col gap-2">
+            <div className="w-full aspect-video rounded-xl overflow-hidden shadow-md border border-purple-200 bg-black">
+              {previewUrl && isVisible ? (
+                <video
+                  key={previewUrl}
+                  src={previewUrl}
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                  onMouseEnter={() => setIsMuted(false)}
+                  onMouseLeave={() => setIsMuted(true)}
+                  onError={(e) => {
+                    console.warn(`Preview failed for ${mission.title}`);
+                    e.currentTarget.style.display = "none";
+                  }}
+                  aria-label={`Preview for ${mission.title}`}
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-500">
+                  No Preview Available
+                </div>
+              )}
+            </div>
+            <CardTitle className="text-lg font-bold">{mission.title}</CardTitle>
           </div>
         </CardHeader>
 
+        {/* Card Content: Buttons */}
         <CardContent className="grid gap-3">
-          {/* Content Buttons */}
           <div className="grid gap-2">
             {hasVideo && (
               <Button
@@ -1170,17 +1231,19 @@ const MissionCard = ({
                 className="w-full gap-2 py-4 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
               >
                 <Video className="h-5 w-5" />
-                <span>{t('watchMagic')}</span>
+                <span>{t("watchMagic")}</span>
               </Button>
             )}
 
             {hasSlides && (
               <Button
-                onClick={() => setOpenSlides({ slides: missionSlides[mission.id] || [], mission })}
+                onClick={() =>
+                  setOpenSlides({ slides: missionSlides[mission.id] || [], mission })
+                }
                 className="w-full gap-2 py-4 text-lg bg-gradient-to-r from-pink-600 to-orange-600 hover:from-pink-700 hover:to-orange-700 text-white"
               >
                 <ImageIcon className="h-5 w-5" />
-                <span>{t('viewSlides')}</span>
+                <span>{t("viewSlides")}</span>
               </Button>
             )}
           </div>
@@ -1191,23 +1254,23 @@ const MissionCard = ({
               onClick={() => onManualComplete(mission)}
               variant="outline"
               className={`w-full gap-2 py-4 text-lg ${
-                (missionType === 'video' && !videoWatched) 
+                mission.mission_type === "video" && !videoWatched
                   ? "border-gray-300 text-gray-400 cursor-not-allowed"
                   : "border-yellow-400 text-yellow-600 hover:bg-yellow-50"
               }`}
-              disabled={missionType === 'video' && !videoWatched}
+              disabled={mission.mission_type === "video" && !videoWatched}
             >
               <Sparkles className="h-5 w-5" />
               <span>
-                {missionType === 'video' && !videoWatched 
-                  ? t('watchVideoFirst') 
-                  : t('completeMission')}
+                {mission.mission_type === "video" && !videoWatched
+                  ? t("watchVideoFirst")
+                  : t("completeMission")}
               </span>
             </Button>
           ) : (
             <div className="flex items-center justify-center gap-2 text-green-600 text-lg font-semibold p-4 bg-green-100 rounded-lg">
               <Trophy className="h-5 w-5" />
-              <span>{t('completed')}</span>
+              <span>{t("completed")}</span>
             </div>
           )}
         </CardContent>
@@ -1215,6 +1278,7 @@ const MissionCard = ({
     </motion.div>
   );
 };
+
 
 // Main Component with translations
 const MissionsComponent = () => {
