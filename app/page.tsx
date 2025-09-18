@@ -221,6 +221,7 @@ export default function HomePage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [todaysMission, setTodaysMission] = useState<any>(null);
   const [todaysVideo, setTodaysVideo] = useState<any>(null);
+  const [showShareOptions, setShowShareOptions] = useState(false);
   const [streak, setStreak] = useState(0);
   const [showSurprise, setShowSurprise] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -464,6 +465,34 @@ export default function HomePage() {
       }
     }
   };
+  const shareWhatsApp = (text: string) => {
+    const encodedText = encodeURIComponent(text);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+    if (isMobile) {
+      // Opens the WhatsApp app on mobile
+      window.open(`whatsapp://send?text=${encodedText}`, "_blank");
+    } else {
+      // Fallback to WhatsApp Web on desktop
+      window.open(`https://api.whatsapp.com/send?text=${encodedText}`, "_blank");
+    }
+  };
+  const fallbackCopyText = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed"; // prevent scrolling to bottom
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand("copy");
+      alert("Video link copied!");
+    } catch (err) {
+      alert("Failed to copy link");
+    }
+    document.body.removeChild(textArea);
+  };
+  
 
   /* 🐥 Buddy tap interaction */
   const handleBuddyClick = () => {
@@ -559,126 +588,144 @@ export default function HomePage() {
             </p>
           )}
         </div>
-
-        {/* 🎥 Today's Video Card - Enhanced for toddlers */}
-        {todaysVideo && videoUrl && (
-          <Card className="bg-gradient-to-r from-blue-100 to-purple-100 border-4 border-purple-300 shadow-xl mb-8 overflow-hidden">
-            <CardContent className="p-0">
-              <div className="relative">
-                {/* Video thumbnail with play button */}
-                {!isPlaying ? (
-                  <div className="relative">
-                    <img 
-                      src={thumbnailUrl || "/video-placeholder.jpg"} 
-                      alt={todaysVideo.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Button
-                          onClick={handleVideoPlay}
-                          className="rounded-full p-4 bg-purple-500 hover:bg-purple-600 text-white shadow-lg"
-                          aria-label={t("playVideo")}
-                        >
-                          <Play className="w-8 h-8 fill-white" />
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Video player */
-                  <div className="relative">
-                    <video
-                      className="w-full h-48 object-cover"
-                      controls
-                      autoPlay
-                      onEnded={handleVideoComplete}
-                      onTimeUpdate={handleVideoProgress}
-                    >
-                      <source src={videoUrl} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                    
-                    {/* Custom progress bar */}
-                    <div className="absolute bottom-0 left-0 right-0 h-3 bg-gray-200">
-                      <div 
-                        className="h-full bg-purple-500 rounded-r-full" 
-                        style={{ width: `${videoProgress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Video info */}
-                <div className="p-4">
-                  <h3 className="text-xl font-bold text-purple-700 mb-2 flex items-center">
-                    <span className="mr-2">📺</span> {t("todaysVideo")}
-                  </h3>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">{todaysVideo.title}</h4>
-                  <p className="text-gray-600 text-sm mb-4">{todaysVideo.description}</p>
-                  
-                  {/* Video actions - larger buttons for toddlers */}
-                  <div className="flex space-x-3 justify-center">
-                    {isVideoCompleted && (
-                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Button
-                          variant="outline"
-                          size="lg"
-                          onClick={() => {
-                            setIsPlaying(true);
-                            setIsVideoCompleted(false);
-                          }}
-                          className="text-purple-600 border-purple-300 hover:bg-purple-50"
-                        >
-                          <RotateCw className="w-5 h-5 mr-2" />
-                          {t("watchAgain")}
-                        </Button>
-                      </motion.div>
-                    )}
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        variant="outline" 
-                        size="lg"
-                        onClick={handleDownload}
-                        disabled={isDownloading}
-                        className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                      >
-                        <Download className="w-5 h-5 mr-2" />
-                        {isDownloading ? "..." : t("download")}
-                      </Button>
-                    </motion.div>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        variant="outline" 
-                        size="lg"
-                        onClick={handleShare}
-                        className="text-green-600 border-green-300 hover:bg-green-50"
-                      >
-                        <Share className="w-5 h-5 mr-2" />
-                        {t("share")}
-                      </Button>
-                    </motion.div>
-                  </div>
-                </div>
-                
-                {/* Completion badge */}
-                {isVideoCompleted && (
-                  <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-3 py-2 rounded-full shadow-md"
-                  >
-                    Completed! 🎉
-                  </motion.div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+{/* 🎥 Today's Video Card - YouTube style */}
+{todaysVideo && videoUrl && (
+  <Card className="bg-gray-900 border-0 shadow-xl mb-8 relative overflow-hidden">
+    <CardContent className="p-0">
+      <div className="relative">
+        {/* Video thumbnail or player */}
+        {!isPlaying ? (
+          <div className="relative w-full">
+            <img
+              src={thumbnailUrl || "/video-placeholder.jpg"}
+              alt={todaysVideo.title}
+              className="w-full h-56 object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+              <Button
+                onClick={handleVideoPlay}
+                className="rounded-full p-4 bg-white text-black shadow-lg hover:scale-105 transition"
+                aria-label="Play Video"
+              >
+                <Play className="w-6 h-6" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="relative w-full">
+            <video
+              className="w-full h-56 object-cover"
+              controls
+              autoPlay
+              onEnded={handleVideoComplete}
+              onTimeUpdate={handleVideoProgress}
+            >
+              <source src={videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
         )}
 
+       {/* Bottom-right icons */}
+<div className="absolute bottom-3 right-3 flex space-x-3">
+  {/* Download */}
+  <Button
+    size="sm"
+    variant="ghost"
+    onClick={handleDownload}
+    disabled={isDownloading}
+    className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full"
+  >
+    <Download className="w-5 h-5 text-black" />
+  </Button>
+
+  {/* Share */}
+  <div className="relative">
+    <Button
+      size="sm"
+      variant="ghost"
+      onClick={() => setShowShareOptions(!showShareOptions)}
+      className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full"
+    >
+      <Share className="w-5 h-5 text-black" />
+    </Button>
+
+    {/* Social media share popup */}
+    {showShareOptions && videoUrl && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="absolute bottom-12 right-0 bg-white shadow-lg rounded-lg p-2 flex flex-col space-y-2 z-50"
+      >
+        {/* WhatsApp */}
+        <button
+          onClick={() =>
+            window.open(
+              `https://api.whatsapp.com/send?text=${encodeURIComponent(
+                todaysVideo.title + " " + videoUrl
+              )}`,
+              "_blank"
+            )
+          }
+          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+        >
+          <img src="/icons/whatsapp.svg" className="w-5 h-5" alt="WhatsApp" />
+        </button>
+
+        {/* Facebook */}
+        <button
+          onClick={() =>
+            window.open(
+              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(videoUrl)}`,
+              "_blank"
+            )
+          }
+          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+        >
+          <img src="/icons/facebook.svg" className="w-5 h-5" alt="Facebook" />
+        </button>
+
+        {/* Twitter */}
+        <button
+          onClick={() =>
+            window.open(
+              `https://twitter.com/intent/tweet?url=${encodeURIComponent(videoUrl)}&text=${encodeURIComponent(
+                todaysVideo.title
+              )}`,
+              "_blank"
+            )
+          }
+          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+        >
+          <img src="/icons/twitter.svg" className="w-5 h-5" alt="Twitter" />
+        </button>
+
+    {/* Copy Link */}
+    <button
+      onClick={() => {
+        if (typeof navigator !== "undefined" && navigator.clipboard) {
+          navigator.clipboard.writeText(videoUrl)
+            .then(() => alert("Video link copied!"))
+            .catch(() => fallbackCopyText(videoUrl));
+        } else {
+          fallbackCopyText(videoUrl);
+        }
+      }}
+      className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+    >
+      <img src="/icons/link.svg" className="w-5 h-5" alt="Copy Link" />
+    </button>
+
+      </motion.div>
+    )}
+  </div>
+</div>
+
+      </div>
+    </CardContent>
+  </Card>
+)}
         {/* 🎯 Today's Learning - Enhanced for toddlers */}
         <Card className="bg-gradient-to-r from-pink-100 to-purple-100 border-4 border-pink-300 shadow-xl mb-8">
           <CardContent className="p-6 text-center">

@@ -20,7 +20,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SupabaseProviderWrapper>
               <UserProvider> {/* wrap with UserProvider */}
                 {children}
-                <NimiReaderButton />
               </UserProvider>
             </SupabaseProviderWrapper>
           </NimiReaderProvider>
