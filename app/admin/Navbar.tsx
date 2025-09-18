@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
-import supabase from './supabaseClient'
+import supabase from "@/lib/supabaseClient";
 import { LogOut, User, Search, ChevronDown } from 'lucide-react'
 
 interface NavbarProps {

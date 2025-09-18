@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import supabase from './supabaseClient'
+import supabase from "@/lib/supabaseClient";
 
 export default function AdminProfile() {
   const [profile, setProfile] = useState<any>(null)

@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import supabase from '../admin/supabaseClient'
+import supabase from "@/lib/supabaseClient";
 import Link from 'next/link'
 
 export default function AdminSignup() {

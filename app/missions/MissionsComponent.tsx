@@ -317,6 +317,13 @@ interface FlipBookViewerProps {
   type: "story" | "coloring";
   t: (key: string) => string; // translation function
 }
+type Slide = {
+  id: string;
+  title: string;
+  content: string;
+  videoUrl?: string;
+};
+
 
 
 // Update the SlidesModal component to properly display images
@@ -1129,7 +1136,7 @@ const MissionCard = ({
   videoWatched: boolean;
   onVideoOpen: (mission: Mission) => void;
   onManualComplete: (mission: Mission) => void;
-  t: (key: string) => string;
+  t: (key: string) => string; 
   index: number;
   missionSlides: Record<string, Slide[]>;
   setOpenSlides: (slides: { slides: Slide[], mission: Mission }) => void;

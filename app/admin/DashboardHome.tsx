@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import supabase from './supabaseClient'
+import supabase from "@/lib/supabaseClient";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 export default function Dashboard() {
