@@ -26,9 +26,11 @@ import { Trophy } from "lucide-react";
 import { Video } from "lucide-react";
 import { X } from "lucide-react";
 import { Clock } from "lucide-react";
+import { Music } from "lucide-react";
+
 
 const t = (
-  key: string, // allow any string now
+  key: string,
   params?: Record<string, any>,
   language: keyof typeof translations = "en"
 ) => {
@@ -83,7 +85,14 @@ const translations = {
     availableAtMidnight: "New content available at midnight!",
     flipbook: "Flipbook",
     today: "Today",
-    tomorrow: "Tomorrow"
+    tomorrow: "Tomorrow",
+    morningMission: "Morning Mission",
+    artisticMission: "Artistic Mission",
+    discoveryMission: "Discovery Mission",
+    movementMission: "Movement Mission",
+    zoomMission: "Zoom 2025 Mission",
+    toctocMission: "Toctoc Fun",
+    capsuleMission: "Capsule Progress"
   },
   es: {
     magicalLearning: "Aprendizaje Mágico",
@@ -122,7 +131,14 @@ const translations = {
     availableAtMidnight: "¡Nuevo contenido disponible a medianoche!",
     flipbook: "Libro interactivo",
     today: "Hoy",
-    tomorrow: "Mañana"
+    tomorrow: "Mañana",
+    morningMission: "Misión de la Mañana",
+    artisticMission: "Misión Artística",
+    discoveryMission: "Misión de Descubrimiento",
+    movementMission: "Misión de Movimiento",
+    zoomMission: "Misión Zoom 2025",
+    toctocMission: "Toctoc Divertido",
+    capsuleMission: "Cápsula de Progreso"
   },
   fr: {
     magicalLearning: "Apprentissage Magique",
@@ -161,7 +177,14 @@ const translations = {
     availableAtMidnight: "Nouveau contenu disponible à minuit!",
     flipbook: "Livre animé",
     today: "Aujourd'hui",
-    tomorrow: "Demain"
+    tomorrow: "Demain",
+    morningMission: "Mission du Matin",
+    artisticMission: "Mission Artistique",
+    discoveryMission: "Mission de Découverte",
+    movementMission: "Mission de Mouvement",
+    zoomMission: "Mission Zoom 2025",
+    toctocMission: "Toctoc Amusant",
+    capsuleMission: "Capsule de Progrès"
   },
   rw: {
     magicalLearning: "Kwiga Ubumenyi",
@@ -200,7 +223,14 @@ const translations = {
     availableAtMidnight: "Ibirimo bishya bizaba hashize ijoro!",
     flipbook: "Igito cy'igitendo",
     today: "Uyu munsi",
-    tomorrow: "Ejo"
+    tomorrow: "Ejo",
+    morningMission: "Umurimo w'Igitondo",
+    artisticMission: "Umurimo w'Ubuhanzi",
+    discoveryMission: "Umurimo w'Ubushakashatsi",
+    movementMission: "Umurimo w'Imikorere",
+    zoomMission: "Umurimo wa Zoom 2025",
+    toctocMission: "Toctoc Y'ibyishimo",
+    capsuleMission: "Ingingo y'Iterambere"
   },
   sw: {
     magicalLearning: "Kujifunza Kichawi",
@@ -239,7 +269,14 @@ const translations = {
     availableAtMidnight: "Yaliyomo mapya yatakuwapo saa sita usiku!",
     flipbook: "Kitabu cha kurasa zinazogeuka",
     today: "Leo",
-    tomorrow: "Kesho"
+    tomorrow: "Kesho",
+    morningMission: "Misheni ya Asubuhi",
+    artisticMission: "Misheni ya Sanaa",
+    discoveryMission: "Misheni ya Ugunduzi",
+    movementMission: "Misheni ya Mwendo",
+    zoomMission: "Misheni ya Zoom 2025",
+    toctocMission: "Toctoc Furaha",
+    capsuleMission: "Kapsuli ya Maendeleo"
   }
 };
 
@@ -264,7 +301,8 @@ interface Mission {
   slides_url?: string;
   difficulty: number;
   mission_type: string;
-  preview_url?: string;    // ✅ New: Animation teaser
+  preview_url?: string;
+  category?: string; // New field to categorize missions
 }
 
 interface CompletionData {
@@ -280,7 +318,6 @@ interface DayData {
   emoji: string;
   missions: Mission[];
 }
-
 
 interface AudioTrack {
   id: string;
@@ -303,28 +340,31 @@ interface ColoringPage {
   page_number: number;
   image_url: string;
 }
+
 export interface Page {
   image_url: string;
   page_number: number;
   text?: string;
   caption?: string;
   image_alt?: string;
-  ocrText?: string; // ✅ optional
+  ocrText?: string;
 }
+
 interface FlipBookViewerProps {
   pages: Page[];
   onClose: () => void;
   type: "story" | "coloring";
-  t: (key: string) => string; // translation function
+  t: (key: string) => string;
 }
-type Slide = {
+
+interface Slide {
   id: string;
-  title: string;
-  content: string;
-  videoUrl?: string;
-};
-
-
+  mission_id: string;
+  slide_order: number;
+  image_url: string;
+  title?: string;
+  description?: string;
+}
 
 // Update the SlidesModal component to properly display images
 const SlidesModal = ({
@@ -614,7 +654,7 @@ const VideoPlayerModal = ({
   );
 };
 
-// Morning Video Card Component
+// Morning Video Card Component - Updated with Music icon
 const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: string) => string }) => {
   const [openVideo, setOpenVideo] = useState(false);
 
@@ -623,15 +663,19 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
   return (
     <>
       <motion.div 
-        className="bg-gradient-to-r from-purple-100 to-blue-100 p-4 rounded-xl mb-6 border-2 border-yellow-300 w-full max-w-[400px] mx-auto cursor-pointer"
+        className="bg-gradient-to-r from-purple-100 to-blue-100 p-6 rounded-xl mb-8 border-2 border-yellow-300 w-full max-w-[400px] mx-auto cursor-pointer shadow-lg"
         whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => setOpenVideo(true)}
       >
-        <div className="flex items-center justify-center gap-4">
-          <div className="p-3 bg-white rounded-full shadow-md flex-shrink-0">
-            <Play className="h-8 w-8 text-purple-600" />
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
+          <div className="p-4 bg-white rounded-full shadow-md">
+            <Music className="h-10 w-10 text-purple-600" />
           </div>
-          <span className="text-xl font-bold truncate">{t('genericSong')}</span>
+          <div>
+            <h3 className="text-xl font-bold text-purple-800 mb-2">{t('morningMission')}</h3>
+            <p className="text-purple-600">{t('genericSong')}</p>
+          </div>
         </div>
       </motion.div>
 
@@ -649,6 +693,7 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
     </>
   );
 };
+
 
 // Child Name Input Modal
 const ChildNameModal = ({ 
@@ -700,6 +745,7 @@ const ChildNameModal = ({
     </Dialog>
   );
 };
+
 const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t }) => {
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1120,6 +1166,7 @@ const DateButton = ({
     </motion.button>
   );
 };
+
 const MissionCard = ({
   mission,
   completed,
@@ -1136,7 +1183,7 @@ const MissionCard = ({
   videoWatched: boolean;
   onVideoOpen: (mission: Mission) => void;
   onManualComplete: (mission: Mission) => void;
-  t: (key: string) => string; 
+  t: (key: string) => string;
   index: number;
   missionSlides: Record<string, Slide[]>;
   setOpenSlides: (slides: { slides: Slide[], mission: Mission }) => void;
@@ -1286,7 +1333,6 @@ const MissionCard = ({
   );
 };
 
-
 // Main Component with translations
 const MissionsComponent = () => {
   const [missionProgram, setMissionProgram] = useState<DayData[]>([]);
@@ -1361,6 +1407,66 @@ const MissionsComponent = () => {
   // Check if a day is available
   const isDayAvailable = (day: number) => {
     return availableDays.has(day);
+  };
+
+  // Categorize missions
+  const categorizeMissions = (missions: Mission[]) => {
+    const categorized = {
+      morning: [] as Mission[],
+      artistic: [] as Mission[],
+      discovery: [] as Mission[],
+      movement: [] as Mission[],
+      storyColoring: [] as Mission[],
+      afternoon: [] as Mission[],
+      other: [] as Mission[]
+    };
+
+    missions.forEach(mission => {
+      // Check if mission has a category field
+      if (mission.category) {
+        switch (mission.category.toLowerCase()) {
+          case 'morning':
+            categorized.morning.push(mission);
+            break;
+          case 'artistic':
+            categorized.artistic.push(mission);
+            break;
+          case 'discovery':
+            categorized.discovery.push(mission);
+            break;
+          case 'movement':
+            categorized.movement.push(mission);
+            break;
+          case 'afternoon':
+            categorized.afternoon.push(mission);
+            break;
+          default:
+            categorized.other.push(mission);
+        }
+      } else {
+        // Fallback to title-based categorization
+        const title = mission.title.toLowerCase();
+        if (title.includes('morning') || title.includes('song')) {
+          categorized.morning.push(mission);
+        } else if (title.includes('artistic') || title.includes('art')) {
+          categorized.artistic.push(mission);
+        } else if (title.includes('discovery') || title.includes('explore')) {
+          categorized.discovery.push(mission);
+        } else if (title.includes('movement') || title.includes('move')) {
+          categorized.movement.push(mission);
+        } else if (title.includes('zoom') || title.includes('2025')) {
+          categorized.afternoon.push(mission);
+        } else if (title.includes('toctoc') || title.includes('fun')) {
+          categorized.afternoon.push(mission);
+        } else if (title.includes('capsule') || title.includes('progress')) {
+          categorized.afternoon.push(mission);
+        } else {
+          categorized.other.push(mission);
+        }
+      }
+    });
+
+    return categorized;
   };
 
   // Fetch all data
@@ -1530,6 +1636,19 @@ const MissionsComponent = () => {
     () => missionProgram.find((d) => d.day === selectedDay),
     [missionProgram, selectedDay]
   );
+
+  const categorizedMissions = useMemo(() => {
+    if (!currentDayData) return {
+      morning: [],
+      artistic: [],
+      discovery: [],
+      movement: [],
+      afternoon: [],
+      other: []
+    };
+    
+    return categorizeMissions(currentDayData.missions);
+  }, [currentDayData]);
 
   const handleMissionComplete = async (mission: Mission, childName?: string) => {
     // Check if mission is already completed locally first
@@ -1786,13 +1905,12 @@ const MissionsComponent = () => {
         </div>
       </section>
       
-      {audioTrack && <MorningVideoCard video={audioTrack} t={t} />}
-      
-      {/* Missions Grid */}
-      {isDayAvailable(selectedDay) && currentDayData?.missions.length ? (
-        <section className="max-w-6xl mx-auto px-2 md:px-4 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
-            {currentDayData.missions.map((mission, index) => {
+      {/* Morning Mission Section */}
+      {categorizedMissions.morning.length > 0 && (
+        <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
+          <h3 className="text-xl font-bold mb-4 text-center">{t('morningMission')}</h3>
+          <div className="grid grid-cols-1 gap-4 md:gap-6 w-full">
+            {categorizedMissions.morning.map((mission, index) => {
               const completed = completedIds.has(mission.id);
               const videoWatched = videoCompletion[mission.id];
 
@@ -1813,16 +1931,98 @@ const MissionsComponent = () => {
             })}
           </div>
         </section>
-      ) : (
-        <div className="text-center py-12 md:py-20 text-gray-600 text-lg w-full">
-          {!isDayAvailable(selectedDay) 
-            ? t('availableAtMidnight') 
-            : t('preparingMagic')}
-        </div>
       )}
+      
+      {/* Artistic, Discovery, and Movement Missions Section */}
+      {(categorizedMissions.artistic.length > 0 || 
+        categorizedMissions.discovery.length > 0 || 
+        categorizedMissions.movement.length > 0) && (
+        <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
+          <h3 className="text-xl font-bold mb-4 text-center">Daily Missions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full">
+            {/* Artistic Mission */}
+            {categorizedMissions.artistic.length > 0 && (
+              <div className="flex flex-col">
+                <h4 className="text-lg font-semibold mb-2 text-center">{t('artisticMission')}</h4>
+                {categorizedMissions.artistic.map((mission, index) => {
+                  const completed = completedIds.has(mission.id);
+                  const videoWatched = videoCompletion[mission.id];
 
+                  return (
+                    <MissionCard
+                      key={mission.id}
+                      mission={mission}
+                      completed={completed}
+                      videoWatched={videoWatched}
+                      onVideoOpen={handleVideoOpen}
+                      onManualComplete={handleManualCompletion}
+                      t={t}
+                      index={index}
+                      missionSlides={missionSlides}
+                      setOpenSlides={setOpenSlides}
+                    />
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Discovery Mission */}
+            {categorizedMissions.discovery.length > 0 && (
+              <div className="flex flex-col">
+                <h4 className="text-lg font-semibold mb-2 text-center">{t('discoveryMission')}</h4>
+                {categorizedMissions.discovery.map((mission, index) => {
+                  const completed = completedIds.has(mission.id);
+                  const videoWatched = videoCompletion[mission.id];
+
+                  return (
+                    <MissionCard
+                      key={mission.id}
+                      mission={mission}
+                      completed={completed}
+                      videoWatched={videoWatched}
+                      onVideoOpen={handleVideoOpen}
+                      onManualComplete={handleManualCompletion}
+                      t={t}
+                      index={index}
+                      missionSlides={missionSlides}
+                      setOpenSlides={setOpenSlides}
+                    />
+                  );
+                })}
+              </div>
+            )}
+            
+            {/* Movement Mission */}
+            {categorizedMissions.movement.length > 0 && (
+              <div className="flex flex-col">
+                <h4 className="text-lg font-semibold mb-2 text-center">{t('movementMission')}</h4>
+                {categorizedMissions.movement.map((mission, index) => {
+                  const completed = completedIds.has(mission.id);
+                  const videoWatched = videoCompletion[mission.id];
+
+                  return (
+                    <MissionCard
+                      key={mission.id}
+                      mission={mission}
+                      completed={completed}
+                      videoWatched={videoWatched}
+                      onVideoOpen={handleVideoOpen}
+                      onManualComplete={handleManualCompletion}
+                      t={t}
+                      index={index}
+                      missionSlides={missionSlides}
+                      setOpenSlides={setOpenSlides}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+      
       {/* Storybook and Coloring Book Cards */}
-      <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-8 mt-6 md:mt-8 px-2">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-8 mt-6 md:mt-8 px-2 mb-8">
         {storyPages.length > 0 && (
           <BookCard 
             day={selectedDay} 
@@ -1847,6 +2047,34 @@ const MissionsComponent = () => {
           />
         )}
       </div>
+      
+      {/* Afternoon Missions Section */}
+      {categorizedMissions.afternoon.length > 0 && (
+        <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
+          <h3 className="text-xl font-bold mb-4 text-center">Afternoon Missions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full">
+            {categorizedMissions.afternoon.map((mission, index) => {
+              const completed = completedIds.has(mission.id);
+              const videoWatched = videoCompletion[mission.id];
+
+              return (
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  completed={completed}
+                  videoWatched={videoWatched}
+                  onVideoOpen={handleVideoOpen}
+                  onManualComplete={handleManualCompletion}
+                  t={t}
+                  index={index}
+                  missionSlides={missionSlides}
+                  setOpenSlides={setOpenSlides}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Child Name Input Modal */}
       <ChildNameModal
@@ -1984,15 +2212,8 @@ const MissionsComponent = () => {
         />
       )}
     </AnimatePresence>
-    
-    {/* Nimi Reader Button */}
-    <NimiReaderButton hide={!!openSlides || showStorybook || showColoringBook} />
     </>
   );
 };
 
 export default MissionsComponent;
-
-function setCurrentPage(newPageIndex: number) {
-  throw new Error("Function not implemented.");
-}

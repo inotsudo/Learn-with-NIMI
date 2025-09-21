@@ -20,6 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
 import { useNimiChat } from "@/hooks/useNimiChat";
+import Link from "next/link";
+
 
 
 // const observerTarget = useRef<HTMLDivElement>(null);
@@ -320,29 +322,37 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
 
   const fetchPikopals = useCallback(async () => {
     try {
-      setLoadingStates(prev => ({ ...prev, pikopals: true }));
+      setLoadingStates((prev) => ({ ...prev, pikopals: true }));
   
-      // Fetch all children ordered by points descending
+      // Fetch children ordered by points
       const { data: children, error: childrenError } = await supabase
         .from("children")
         .select("*")
         .order("points", { ascending: false })
-        .limit(5); // top 5 children
+        .limit(5);
   
       if (childrenError) throw childrenError;
   
       if (children && children.length > 0) {
-        // Fetch achievements for each child
-        const pikopalsData = children.map((child, index) => {
-          const count = child.achievements ?? 0; // default to 0 if null or undefined
+        const pikopalsData = children.map((child) => {
+          let publicUrl = "";
+          if (child.avatar_url) {
+            // ✅ Generate public URL from Supabase storage path
+            const { data } = supabase.storage
+              .from("avatars") // <-- change this to your actual bucket name
+              .getPublicUrl(child.avatar_url);
+            publicUrl = data.publicUrl;
+          }
+  
+          const count = child.achievements ?? 0;
           return {
             id: child.id,
             name: child.name,
             age: child.age,
             achievements: count,
             streak: child.streak || 0,
-            avatar: child.avatar_url || "👦",
-            avatarUrl: child.avatar_url || "",
+            avatar: publicUrl || "default-avatar.png", 
+            avatarUrl: publicUrl, 
             title:
               count > 10
                 ? "Master Creator"
@@ -351,14 +361,13 @@ const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean 
                 : "Rising Star",
           };
         });
-        
   
         setPikopals(pikopalsData);
       }
     } catch (err) {
       console.error("Error fetching pikopals:", err);
     } finally {
-      setLoadingStates(prev => ({ ...prev, pikopals: false }));
+      setLoadingStates((prev) => ({ ...prev, pikopals: false }));
     }
   }, [supabase]);
   
@@ -509,258 +518,201 @@ const handleAddComment = useCallback(
 );
 
   
-  // WhatsApp sharing function
-  const shareViaWhatsApp = async (creation: Creation) => {
-    try {
-      let imageUrl = creation.imageUrl;
-      
-      if (!imageUrl.startsWith('http')) {
-        const pathParts = imageUrl.split('/creations/');
-        const fileName = pathParts[pathParts.length - 1];
-        const { data: { publicUrl } } = supabase.storage
-          .from('creations')
-          .getPublicUrl(fileName);
-        imageUrl = publicUrl;
-      }
+ // Default upload form state
+const defaultUploadForm = {
+  childName: "",
+  age: "",
+  description: "",
+  isPublic: false,
+  imageFile: null as File | null,
+  previewUrl: "",
+  uploadProgress: 0,
+  isUploading: false,
+  shareMethod: 'whatsapp' as 'whatsapp' | 'public'
+};
 
-      const shareText = `${creation.description || "Check out this amazing creation!"}\n\nBy ${creation.childName} (age ${creation.age})`;
-      
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const encodedText = encodeURIComponent(`${shareText}\n\n${imageUrl}`);
-      
-      let whatsappUrl;
-      if (isMobile) {
-        whatsappUrl = `whatsapp://send?text=${encodedText}`;
-      } else {
-        whatsappUrl = `https://web.whatsapp.com/send?text=${encodedText}`;
-      }
-      
-      window.open(whatsappUrl, '_blank');
-      
-    } catch (err) {
-      console.error("WhatsApp sharing failed:", err);
-      setError("WhatsApp sharing didn't work. Try copying the link manually.");
-    }
-  };
+// Helper: Get public URL from Supabase storage
+const getPublicUrl = (imageUrl: string): string => {
+  if (imageUrl.startsWith('http')) return imageUrl;
+  const pathParts = imageUrl.split('/creations/');
+  const fileName = pathParts[pathParts.length - 1];
+  const { data: { publicUrl } } = supabase.storage
+    .from('creations')
+    .getPublicUrl(fileName);
+  return publicUrl;
+};
 
-  // Share creation function with multiple platform options
-  const shareCreation = useCallback(async (creation: Creation, platform?: string) => {
+// Helper: Detect if device is mobile
+const isMobileDevice = (): boolean => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+// Share via WhatsApp
+const shareViaWhatsApp = async (creation: Creation) => {
+  try {
+    const imageUrl = getPublicUrl(creation.imageUrl);
+    const shareText = `${creation.description || "Check out this amazing creation!"}\n\nBy ${creation.childName} (age ${creation.age})`;
+    const encodedText = encodeURIComponent(`${shareText}\n\n${imageUrl}`);
+
+    const whatsappUrl = isMobileDevice()
+      ? `whatsapp://send?text=${encodedText}`
+      : `https://web.whatsapp.com/send?text=${encodedText}`;
+
+    const newWindow = window.open(whatsappUrl, '_blank');
+    if (!newWindow) setError("Could not open WhatsApp. Please copy the link manually.");
+  } catch (err) {
+    console.error("WhatsApp sharing failed:", err);
+    setError("WhatsApp sharing failed. Try copying the link manually.");
+  }
+};
+
+// Share creation on multiple platforms
+const shareCreation = useCallback(async (creation: Creation, platform?: string) => {
+  try {
+    const imageUrl = getPublicUrl(creation.imageUrl);
+    const shareText = `${creation.description || "Check out this amazing creation!"}\n\nBy ${creation.childName} (age ${creation.age})`;
+    const shareTitle = `Art by ${creation.childName}`;
+
     if (platform === 'whatsapp') {
       await shareViaWhatsApp(creation);
       return;
     }
-    
-    try {
-      let shareableUrl = creation.imageUrl;
-      
-      if (!shareableUrl.startsWith('http')) {
-        const pathParts = shareableUrl.split('/creations/');
-        const fileName = pathParts[pathParts.length - 1];
-        const { data: { publicUrl } } = supabase.storage
-          .from('creations')
-          .getPublicUrl(fileName);
-        shareableUrl = publicUrl;
-      }
-  
-      const shareText = `${creation.description || "Check out this amazing creation!"}\n\nBy ${creation.childName} (age ${creation.age})`;
-      const shareTitle = `Art by ${creation.childName}`;
-  
-      // Platform-specific sharing
-      if (platform === 'facebook') {
-        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareableUrl)}&quote=${encodeURIComponent(shareText)}`;
-        window.open(facebookUrl, '_blank');
-        return;
-      }
-      
-      if (platform === 'twitter') {
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareableUrl)}`;
-        window.open(twitterUrl, '_blank');
-        return;
-      }
-  
-      // Generic sharing
-      const shareData = {
-        title: shareTitle,
-        text: shareText,
-        url: shareableUrl
-      };
-  
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareableUrl);
-        triggerCelebration("Link copied to clipboard!");
-      } else {
-        setCelebrationText("Share options: Copy the image URL to share");
-        setShowCelebration(true);
-        setTimeout(() => setShowCelebration(false), 3000);
-      }
-    } catch (err) {
-      console.error("Sharing failed:", err);
-      setError("Sharing didn't work. Try copying the link manually.");
-    }
-  }, [triggerCelebration, supabase]);
 
-  const handleUploadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (!uploadForm.imageFile) {
-      setError("Please select an image to share");
+    if (platform === 'facebook') {
+      const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(imageUrl)}&quote=${encodeURIComponent(shareText)}`;
+      window.open(fbUrl, '_blank');
       return;
     }
-  
-    try {
-      setUploadForm(prev => ({ ...prev, isUploading: true }));
-  
-      // Validate the image
-      await validateImage(uploadForm.imageFile);
-  
-      // WhatsApp private sharing
-      if (uploadForm.shareMethod === 'whatsapp') {
-        const fileExt = uploadForm.imageFile.name.split('.').pop();
-        const tempFileName = `temp_${uuidv4()}.${fileExt}`;
-        const filePath = `temp-creations/${tempFileName}`;
-  
-        const { error: uploadError } = await supabase.storage
-          .from('creations')
-          .upload(filePath, uploadForm.imageFile, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: uploadForm.imageFile.type
-          });
-        if (uploadError) throw uploadError;
-  
-        const { data: { publicUrl } } = supabase.storage
-          .from('creations')
-          .getPublicUrl(filePath);
-  
-        const text = `Check out ${uploadForm.childName}'s creation!${uploadForm.description ? `\n${uploadForm.description}` : ''}\n\n${publicUrl}`;
-        
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const encodedText = encodeURIComponent(text);
-        
-        let whatsappUrl;
-        if (isMobile) {
-          whatsappUrl = `whatsapp://send?text=${encodedText}`;
-        } else {
-          whatsappUrl = `https://web.whatsapp.com/send?text=${encodedText}`;
-        }
-  
-        window.open(whatsappUrl, "_blank");
-  
-        setTimeout(async () => {
-          try {
-            await supabase.storage
-              .from('creations')
-              .remove([filePath]);
-          } catch (cleanupError) {
-            console.error("Error cleaning up temporary file:", cleanupError);
-          }
-        }, 3600000);
-  
-        setShowUploadModal(false);
-        setUploadForm({
-          childName: "",
-          age: "",
-          description: "",
-          isPublic: false,
-          imageFile: null,
-          previewUrl: "",
-          uploadProgress: 0,
-          isUploading: false,
-          shareMethod: 'whatsapp'
-        });
-  
-        triggerCelebration("Shared privately via WhatsApp!");
-        return; 
-      }
-  
-      // Public upload
-      const fileExt = uploadForm.imageFile.name.split('.').pop();
-      const fileName = `${generateUniqueId()}.${fileExt}`;
-      const filePath = `creations/${fileName}`;
-  
-      const { error: uploadError } = await supabase.storage
-        .from('creations')
-        .upload(filePath, uploadForm.imageFile, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: uploadForm.imageFile.type
-        });
-      if (uploadError) throw uploadError;
-  
-      const { data: { publicUrl } } = supabase.storage
-        .from('creations')
-        .getPublicUrl(filePath);
-  
-      const { data: children } = await supabase
-        .from('children')
-        .select('id')
-        .eq('parent_id', currentUser.id)
-        .limit(1);
-      const childId = children && children.length > 0 ? children[0].id : null;
-  
-      const { data: creation, error: insertError } = await supabase
-        .from('creations')
-        .insert({
-          child_id: childId,
-          child_name: uploadForm.childName,
-          age: parseInt(uploadForm.age),
-          description: uploadForm.description,
-          is_public: uploadForm.isPublic,
-          image_url: publicUrl,
-          type: 'art',
-          completion_status: 'completed'
-        })
-        .select()
-        .single();
-      if (insertError) throw insertError;
-  
-      setCreations(prev => [{
-        id: creation.id,
-        childId: creation.child_id,
-        childName: creation.child_name,
-        age: creation.age,
-        description: creation.description,
-        imageUrl: creation.image_url,
-        likes: 0,
-        likedByUser: false,
-        isPublic: creation.is_public,
-        type: creation.type,
-        completionStatus: creation.completion_status,
-        createdAt: creation.created_at,
-        comments: []
-      }, ...prev]);
-  
-      setShowUploadModal(false);
-      setUploadForm({
-        childName: "",
-        age: "",
-        description: "",
-        isPublic: true,
-        imageFile: null,
-        previewUrl: "",
-        uploadProgress: 0,
-        isUploading: false,
-        shareMethod: 'public'
-      });
-  
-      triggerCelebration(`Your creation has been shared publicly!`);
-    } catch (err: any) {
-      setError(err.message || "Failed to upload creation. Please try again.");
-    } finally {
-      setUploadForm(prev => ({ ...prev, isUploading: false }));
-    }
-  };
 
-  // Clean up blob URLs
-  useEffect(() => {
-    return () => {
-      if (uploadForm.previewUrl) {
-        URL.revokeObjectURL(uploadForm.previewUrl);
-      }
-    };
-  }, [uploadForm.previewUrl]);
+    if (platform === 'twitter') {
+      const twUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(imageUrl)}`;
+      window.open(twUrl, '_blank');
+      return;
+    }
+
+    // Generic Web Share API
+    if (navigator.share) {
+      await navigator.share({ title: shareTitle, text: shareText, url: imageUrl });
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(imageUrl);
+      triggerCelebration("Link copied to clipboard!");
+    } else {
+      setCelebrationText("Copy the image URL to share");
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3000);
+    }
+
+  } catch (err) {
+    console.error("Sharing failed:", err);
+    setError("Sharing failed. Try copying the link manually.");
+  }
+}, [triggerCelebration, supabase]);
+
+// Handle form upload & sharing
+const handleUploadSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!uploadForm.imageFile) return setError("Please select an image to share");
+
+  try {
+    setUploadForm(prev => ({ ...prev, isUploading: true }));
+    await validateImage(uploadForm.imageFile);
+
+    const fileExt = uploadForm.imageFile.name.split('.').pop();
+    const tempFileName = `${uploadForm.shareMethod === 'whatsapp' ? 'temp_' : ''}${generateUniqueId()}.${fileExt}`;
+    const filePath = `${uploadForm.shareMethod === 'whatsapp' ? 'temp-creations' : 'creations'}/${tempFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('creations')
+      .upload(filePath, uploadForm.imageFile, {
+        cacheControl: '3600',
+        upsert: uploadForm.shareMethod === 'whatsapp',
+        contentType: uploadForm.imageFile.type
+      });
+    if (uploadError) throw uploadError;
+
+    const imageUrl = getPublicUrl(filePath);
+
+    // WhatsApp private sharing
+    if (uploadForm.shareMethod === 'whatsapp') {
+      const shareText = `Check out ${uploadForm.childName}'s creation!${uploadForm.description ? `\n${uploadForm.description}` : ''}\n\n${imageUrl}`;
+      const encodedText = encodeURIComponent(shareText);
+
+      const whatsappUrl = isMobileDevice()
+        ? `whatsapp://send?text=${encodedText}`
+        : `https://web.whatsapp.com/send?text=${encodedText}`;
+
+      window.open(whatsappUrl, "_blank");
+
+      // Cleanup temporary file after 1 hour
+      setTimeout(async () => {
+        try {
+          await supabase.storage.from('creations').remove([filePath]);
+        } catch (cleanupError) {
+          console.error("Error cleaning up temporary file:", cleanupError);
+        }
+      }, 3600000);
+
+      setShowUploadModal(false);
+      setUploadForm(defaultUploadForm);
+      triggerCelebration("Shared privately via WhatsApp!");
+      return;
+    }
+
+    // Public upload
+    const { data: children } = await supabase
+      .from('children')
+      .select('id')
+      .eq('parent_id', currentUser.id)
+      .limit(1);
+    const childId = children?.[0]?.id || null;
+
+    const { data: creation, error: insertError } = await supabase
+      .from('creations')
+      .insert({
+        child_id: childId,
+        child_name: uploadForm.childName,
+        age: parseInt(uploadForm.age),
+        description: uploadForm.description,
+        is_public: uploadForm.isPublic,
+        image_url: imageUrl,
+        type: 'art',
+        completion_status: 'completed'
+      })
+      .select()
+      .single();
+    if (insertError) throw insertError;
+
+    setCreations(prev => [{
+      id: creation.id,
+      childId: creation.child_id,
+      childName: creation.child_name,
+      age: creation.age,
+      description: creation.description,
+      imageUrl: creation.image_url,
+      likes: 0,
+      likedByUser: false,
+      isPublic: creation.is_public,
+      type: creation.type,
+      completionStatus: creation.completion_status,
+      createdAt: creation.created_at,
+      comments: []
+    }, ...prev]);
+
+    setShowUploadModal(false);
+    setUploadForm({ ...defaultUploadForm, isPublic: true });
+    triggerCelebration("Your creation has been shared publicly!");
+
+  } catch (err: any) {
+    setError(err.message || "Failed to upload creation. Please try again.");
+  } finally {
+    setUploadForm(prev => ({ ...prev, isUploading: false }));
+  }
+};
+
+// Clean up blob URLs
+useEffect(() => {
+  return () => {
+    if (uploadForm.previewUrl) URL.revokeObjectURL(uploadForm.previewUrl);
+  };
+}, [uploadForm.previewUrl]);
 
 
   return (
@@ -776,28 +728,26 @@ const handleAddComment = useCallback(
         formState={uploadForm}
         setFormState={setUploadForm}
       />
-
-
-
-
-
         <Header />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center mb-8">
-            <div className="mb-4 flex justify-center">
+            <div className="mb-6 flex justify-center">
               {headerImageError ? (
-                <div className="text-6xl">👥</div>
+                <div className="flex items-center justify-center w-full max-h-[600px] bg-gradient-to-r from-purple-200 to-pink-200 rounded-2xl shadow-xl">
+                  <span className="text-6xl">👥</span>
+                </div>
               ) : (
-                <img 
-                  src="/images/community-header.png" 
+                <img
+                  src="/community-header.png"
                   alt="Creative Community"
-                  className="h-24 w-auto object-contain"
+                  className="w-full max-h-[600px] object-cover rounded-2xl shadow-xl transition-transform duration-500 hover:scale-[1.02]"
                   onError={() => setHeaderImageError(true)}
                   loading="lazy"
                 />
               )}
             </div>
+
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
               Creative Community
             </h1>
@@ -833,40 +783,55 @@ const handleAddComment = useCallback(
             </CardContent>
           </Card>
 
-          {/* PikoPal of the Week */}
-          {loadingStates.pikopals ? (
-            <PikopalSkeleton />
-          ) : pikopals[0] ? (
-            <Card className="mb-8 bg-gradient-to-r from-yellow-100 to-orange-100 border-none shadow-xl">
+          {/*{/* 🌟 PikoPal of the Week */}
+        {loadingStates.pikopals ? (
+          <PikopalSkeleton />
+        ) : pikopals[0] ? (
+          <Link href={`/pikopal/${pikopals[0].id}`} passHref>
+            <Card className="mb-8 bg-gradient-to-r from-yellow-100 to-orange-100 border-none shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer">
               <CardHeader>
-                <CardTitle className="flex items-center justify-center text-2xl">
+                <CardTitle className="flex items-center justify-center text-2xl font-bold text-gray-800">
                   <Trophy className="w-8 h-8 mr-3 text-yellow-600" />
                   <span>🌟 Featured Creator</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col items-center">
-                  <div className="text-8xl mb-4 animate-bounce">
-                    {pikopals[0].avatar ? (
-                      <img 
-                        src={pikopals[0].avatar} 
-                        alt={pikopals[0].name}
-                        className="w-24 h-24 rounded-full object-cover mx-auto"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span>{pikopals[0].avatar}</span>
-                    )}
+                <div className="flex flex-col items-center text-center">
+                  {/* Avatar Section */}
+                  <div className="mb-4 animate-bounce">
+                    <img
+                      src={
+                        pikopals[0].avatar
+                          ? pikopals[0].avatar // Supabase storage public URL
+                          : "/default-avatar.png" // fallback placeholder
+                      }
+                      alt={pikopals[0].name}
+                      className="w-24 h-24 rounded-full object-cover mx-auto border-4 border-yellow-300 shadow-md"
+                      loading="lazy"
+                    />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">{pikopals[0].name}</h3>
-                  <p className="text-lg text-yellow-600 font-semibold mb-2">{pikopals[0].title}</p>
-                  <p className="text-center text-gray-700">
-                    Our featured creator this week! Say hello to {pikopals[0].name}! 👋
+
+                  {/* Name + Title */}
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    {pikopals[0].name}
+                  </h3>
+                  {pikopals[0].title && (
+                    <p className="text-lg text-yellow-700 font-medium mb-2">
+                      {pikopals[0].title}
+                    </p>
+                  )}
+
+                  {/* Description */}
+                  <p className="text-gray-700 max-w-xs">
+                    Our featured creator this week! Say hello to{" "}
+                    <span className="font-semibold">{pikopals[0].name}</span> 👋
                   </p>
                 </div>
               </CardContent>
             </Card>
-          ) : null}
+          </Link>
+        ) : null}
+
 
           {/* Creations Grid */}
           <div className="mb-8" ref={creationsContainerRef}>
