@@ -288,6 +288,7 @@ interface BookCover {
   cover_url: string;
   spine_color: string;
   title: string;
+  preview_url?: string; // Added for video preview
 }
 
 interface Mission {
@@ -302,7 +303,7 @@ interface Mission {
   difficulty: number;
   mission_type: string;
   preview_url?: string;
-  category?: string; // New field to categorize missions
+  category?: string;
 }
 
 interface CompletionData {
@@ -323,6 +324,7 @@ interface AudioTrack {
   id: string;
   title: string;
   audio_url: string;
+  preview_url?: string; 
   is_default?: boolean;
 }
 
@@ -654,29 +656,100 @@ const VideoPlayerModal = ({
   );
 };
 
-// Morning Video Card Component - Updated with Music icon
+// Morning Video Card Component - Fixed to work like mission cards
 const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: string) => string }) => {
   const [openVideo, setOpenVideo] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimation();
+
+  // Intersection Observer to detect visibility (same as mission cards)
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.3 }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Animate in when visible (same as mission cards)
+  useEffect(() => {
+    if (isVisible) {
+      controls.start({ opacity: 1, y: 0, transition: { duration: 0.3 } });
+    }
+  }, [isVisible, controls]);
 
   if (!video) return null;
 
+  // Use the same preview logic as mission cards
+  const defaultPreviewUrl = 'https://your-bucket.s3.amazonaws.com/mission-previews/default-preview.mp4';
+  const previewUrl = video.preview_url || defaultPreviewUrl;
+
   return (
     <>
-      <motion.div 
-        className="bg-gradient-to-r from-purple-100 to-blue-100 p-6 rounded-xl mb-8 border-2 border-yellow-300 w-full max-w-[400px] mx-auto cursor-pointer shadow-lg"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => setOpenVideo(true)}
+      <motion.div
+        ref={cardRef}
+        initial={{ opacity: 0, y: 20 }}
+        animate={controls}
+        whileHover={{ y: -5 }}
+        className="w-full max-w-md mx-auto mb-8"
       >
-        <div className="flex flex-col items-center justify-center gap-4 text-center">
-          <div className="p-4 bg-white rounded-full shadow-md">
-            <Music className="h-10 w-10 text-purple-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-purple-800 mb-2">{t('morningMission')}</h3>
-            <p className="text-purple-600">{t('genericSong')}</p>
-          </div>
-        </div>
+        <Card className="relative overflow-hidden border-2 border-purple-200 hover:border-purple-300 transition-all w-full">
+          {/* Card Header with Video Preview - Same as mission cards */}
+          <CardHeader className="pb-2">
+            <div className="flex flex-col gap-2">
+              <div className="w-full aspect-video rounded-xl overflow-hidden shadow-md border border-purple-200 bg-black">
+                {previewUrl && isVisible ? (
+                  <video
+                    key={previewUrl}
+                    src={previewUrl}
+                    autoPlay
+                    loop
+                    muted={isMuted}
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-cover"
+                    onMouseEnter={() => setIsMuted(false)}
+                    onMouseLeave={() => setIsMuted(true)}
+                    onError={(e) => {
+                      console.warn(`Preview failed for morning song: ${previewUrl}`);
+                      e.currentTarget.style.display = "none";
+                    }}
+                    aria-label={`Preview for ${video.title}`}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-500">
+                    <Music className="h-8 w-8" />
+                  </div>
+                )}
+              </div>
+              <CardTitle className="text-lg font-bold text-center">{video.title}</CardTitle>
+            </div>
+          </CardHeader>
+
+          {/* Card Content: Buttons - Same styling as mission cards */}
+          <CardContent className="grid gap-3">
+            <div className="grid gap-2">
+              <Button
+                onClick={() => setOpenVideo(true)}
+                className="w-full gap-2 py-4 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+              >
+                <Video className="h-5 w-5" />
+                <span>{t("watchMagic")}</span>
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-purple-600 text-lg font-semibold p-4 bg-purple-100 rounded-lg">
+              <Sparkles className="h-5 w-5" />
+              <span>{t('morningMission')}</span>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       <AnimatePresence>
@@ -693,7 +766,6 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
     </>
   );
 };
-
 
 // Child Name Input Modal
 const ChildNameModal = ({ 
@@ -916,7 +988,7 @@ function useIsMobile(breakpoint = 768) {
 }
 
 // =====================
-// BOOK CARD
+// BOOK CARD WITH VIDEO PREVIEW
 // =====================
 const BookCard = ({
   day,
@@ -930,66 +1002,68 @@ const BookCard = ({
   day: number;
   onOpen: () => void;
   pageCount: number;
-  coverData?: { cover_url?: string; title?: string; spine_color?: string };
+  coverData?: { cover_url?: string; title?: string; spine_color?: string; preview_url?: string };
   type: "story" | "coloring";
   t: (key: string) => string;
   isAvailable: boolean;
 }) => {
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimation();
 
+  // Intersection Observer to detect visibility
   useEffect(() => {
-    const fetchCoverImage = async () => {
-      if (coverData?.cover_url) {
-        if (coverData.cover_url.startsWith("supabase://")) {
-          const path = coverData.cover_url.replace("supabase://", "");
-          const [bucket, ...filePath] = path.split("/");
-          const { data } = await supabase.storage
-            .from(bucket)
-            .getPublicUrl(filePath.join("/"));
-          setCoverUrl(data.publicUrl);
-        } else {
-          setCoverUrl(coverData.cover_url);
-        }
-      }
-    };
-    fetchCoverImage();
+    if (!cardRef.current) return;
 
-    // Periodic animation
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.3 }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Animate in when visible
+  useEffect(() => {
+    if (isVisible) {
+      controls.start({ opacity: 1, y: 0, transition: { duration: 0.3 } });
+    }
+  }, [isVisible, controls]);
+
+  // Periodic animation
+  useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
       setTimeout(() => setIsAnimating(false), 1000);
     }, 15000);
     return () => clearInterval(interval);
-  }, [coverData]);
+  }, []);
 
-  const defaultSpineColor =
-    type === "story"
-      ? "linear-gradient(to bottom, #6b46c1, #553c9a)"
-      : "linear-gradient(to bottom, #3182ce, #2c5282)";
+  const defaultPreviewUrl = type === "story" 
+    ? 'https://your-bucket.s3.amazonaws.com/book-previews/story-preview.mp4'
+    : 'https://your-bucket.s3.amazonaws.com/book-previews/coloring-preview.mp4';
 
-  const defaultBorderColor =
-    type === "story" ? "border-purple-300" : "border-yellow-300";
+  const previewUrl = coverData?.preview_url || defaultPreviewUrl;
 
-  const defaultButtonGradient =
-    type === "story" ? "from-purple-500 to-pink-500" : "from-blue-500 to-green-500";
+  const defaultSpineColor = type === "story"
+    ? "linear-gradient(to bottom, #6b46c1, #553c9a)"
+    : "linear-gradient(to bottom, #3182ce, #2c5282)";
 
+  const defaultBorderColor = type === "story" ? "border-purple-300" : "border-yellow-300";
+  const defaultButtonGradient = type === "story" ? "from-purple-500 to-pink-500" : "from-blue-500 to-green-500";
   const defaultIcon = type === "story" ? "📖" : "✏️";
 
   return (
     <motion.div
+      ref={cardRef}
       className="relative w-full max-w-[280px] mx-auto h-[320px] perspective-1000 mb-8"
-      initial={{ rotateY: type === "story" ? -5 : 5 }}
-      whileHover={
-        isAvailable
-          ? {
-              y: -10,
-              rotateY: type === "story" ? 5 : -5,
-              transition: { duration: 0.3 },
-            }
-          : {}
-      }
+      initial={{ opacity: 0, y: 20, rotateY: type === "story" ? -5 : 5 }}
+      animate={controls}
+      whileHover={isAvailable ? { y: -10, rotateY: type === "story" ? 5 : -5 } : {}}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
@@ -1012,7 +1086,7 @@ const BookCard = ({
         }
       />
 
-      {/* Cover */}
+      {/* Cover with Video Preview */}
       <motion.div
         className={`absolute inset-0 rounded-lg shadow-xl border-4 ${defaultBorderColor} p-6 flex flex-col items-center text-center overflow-hidden ${
           !isAvailable ? "grayscale opacity-70" : ""
@@ -1027,23 +1101,37 @@ const BookCard = ({
             : {}
         }
       >
-        {coverUrl ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center z-0"
-            style={{ backgroundImage: `url(${coverUrl})` }}
-          />
-        ) : (
-          <div
-            className={`absolute inset-0 bg-gradient-to-br ${
-              type === "story"
-                ? "from-yellow-100 to-pink-100"
-                : "from-blue-100 to-green-100"
-            } z-0`}
-          />
-        )}
+        {/* Video Preview Background */}
+        <div className="absolute inset-0 overflow-hidden rounded-lg">
+          {previewUrl && isVisible ? (
+            <video
+              key={previewUrl}
+              src={previewUrl}
+              autoPlay
+              loop
+              muted={isMuted}
+              playsInline
+              preload="metadata"
+              className="w-full h-full object-cover"
+              onMouseEnter={() => setIsMuted(false)}
+              onMouseLeave={() => setIsMuted(true)}
+              onError={(e) => {
+                console.warn(`Preview failed for ${type} book: ${previewUrl}`);
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${
+                type === "story"
+                  ? "from-yellow-100 to-pink-100"
+                  : "from-blue-100 to-green-100"
+              }`}
+            />
+          )}
+          <div className="absolute inset-0 bg-black/40 z-1" />
+        </div>
         
-        <div className="absolute inset-0 bg-black/10 z-1" />
-
         {/* Content */}
         <div className="relative z-10 w-full h-full flex flex-col">
           <motion.div
@@ -1095,21 +1183,21 @@ const BookCard = ({
         </div>
       </motion.div>
 
-    {/* Hover Curl */}
-    <AnimatePresence>
-      {isHovered && isAvailable && (
-        <motion.div
-          className={`absolute ${
-            type === "story" ? "right-0" : "left-0"
-          } top-0 w-4 h-full z-20`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* Hover Curl */}
+      <AnimatePresence>
+        {isHovered && isAvailable && (
+          <motion.div
+            className={`absolute ${
+              type === "story" ? "right-0" : "left-0"
+            } top-0 w-4 h-full z-20`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -1206,7 +1294,7 @@ const MissionCard = ({
 
     const observer = new IntersectionObserver(
       ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.3 } // consider visible if 30% is on screen
+      { threshold: 0.3 }
     );
 
     observer.observe(cardRef.current);
@@ -1422,7 +1510,6 @@ const MissionsComponent = () => {
     };
 
     missions.forEach(mission => {
-      // Check if mission has a category field
       if (mission.category) {
         switch (mission.category.toLowerCase()) {
           case 'morning':
@@ -1444,7 +1531,6 @@ const MissionsComponent = () => {
             categorized.other.push(mission);
         }
       } else {
-        // Fallback to title-based categorization
         const title = mission.title.toLowerCase();
         if (title.includes('morning') || title.includes('song')) {
           categorized.morning.push(mission);
@@ -1495,7 +1581,6 @@ const MissionsComponent = () => {
           .select("mission_id, completed_at, child_name");
 
         if (!completionsError && dbCompletions) {
-          // Merge with local completions, prioritizing local ones
           setCompletions(prev => {
             const merged = [...prev];
             dbCompletions.forEach(dbCompletion => {
@@ -1507,18 +1592,31 @@ const MissionsComponent = () => {
           });
         }
 
-        // Fetch audio track (now used as morning video)
-        const { data: audioData, error: audioError } = await supabase
-          .from("audio_tracks")
-          .select("*")
-          .eq("is_default", true)
-          .single();
+                  // Map the current date to one of the 5 tracks
+          const currentDate = new Date().getDate(); // 1..31
+          const mappedDay = ((currentDate - 1) % 5) + 1; // loops 1-5
 
-        if (!audioError && audioData) {
-          setAudioTrack(audioData);
-        }
+          try {
+            const { data: audioData, error: audioError } = await supabase
+              .from("audio_tracks")
+              .select("id, title, audio_url, preview_url, day")
+              .eq("day", mappedDay)
+              .single(); // safe now because mappedDay always matches exactly one row
 
-        // Fetch book covers
+            if (audioError) {
+              console.error("Error loading audio track:", audioError.message);
+            } else if (audioData) {
+              console.log(`Audio track for mapped day ${mappedDay} loaded:`, audioData);
+              setAudioTrack(audioData);
+            } else {
+              console.warn("No audio track found for mapped day", mappedDay);
+            }
+          } catch (err) {
+            console.error("Unexpected error fetching morning video:", err);
+          }
+
+
+        // Fetch book covers with preview_url
         const { data: covers, error: coversError } = await supabase
           .from("book_covers")
           .select("*");
@@ -1651,7 +1749,6 @@ const MissionsComponent = () => {
   }, [currentDayData]);
 
   const handleMissionComplete = async (mission: Mission, childName?: string) => {
-    // Check if mission is already completed locally first
     if (completedIds.has(mission.id)) {
       toast.info(t('missionAlreadyCompleted'));
       return;
@@ -1660,11 +1757,9 @@ const MissionsComponent = () => {
     try {
       let childId: string | null = null;
       
-      // If child name is provided, find or create the child
       if (childName && childName.trim() !== '') {
         const trimmedName = childName.trim();
         
-        // First try to find the child by name (get first match if multiple exist)
         const { data: existingChildren, error: findError } = await supabase
           .from('children')
           .select('id')
@@ -1677,10 +1772,8 @@ const MissionsComponent = () => {
         }
 
         if (existingChildren && existingChildren.length > 0) {
-          // Child exists, use their ID
           childId = existingChildren[0].id;
           
-          // Check if this child has already completed this mission
           const { data: existingCompletion, error: completionError } = await supabase
             .from('mission_completions')
             .select('id')
@@ -1698,7 +1791,6 @@ const MissionsComponent = () => {
             return;
           }
         } else {
-          // Child doesn't exist, create a new child record
           const { data: newChild, error: createError } = await supabase
             .from('children')
             .insert([{ name: trimmedName }])
@@ -1713,7 +1805,6 @@ const MissionsComponent = () => {
           childId = newChild.id;
         }
       } else {
-        // For anonymous completions, check if mission is already completed by anyone
         const { data: existingCompletion, error: completionError } = await supabase
           .from('mission_completions')
           .select('id')
@@ -1732,13 +1823,11 @@ const MissionsComponent = () => {
         }
       }
 
-      // Insert completion into Supabase
       const completionData: any = {
         mission_id: mission.id,
         completed_at: new Date().toISOString()
       };
 
-      // Only add child_id if we have one (for anonymous completions, don't set it)
       if (childId) {
         completionData.child_id = childId;
       }
@@ -1750,7 +1839,6 @@ const MissionsComponent = () => {
         .single();
 
       if (error) {
-        // Check if it's a duplicate error (unique constraint violation)
         if (error.code === '23505') {
           toast.info(t('missionAlreadyCompleted'));
           return;
@@ -1758,7 +1846,6 @@ const MissionsComponent = () => {
         throw new Error(`Supabase error: ${error.message} (code: ${error.code})`);
       }
 
-      // Update local state
       const newCompletion = {
         mission_id: mission.id,
         completed_at: new Date().toISOString(),
@@ -1767,10 +1854,8 @@ const MissionsComponent = () => {
 
       setCompletions((prev) => [...prev, newCompletion]);
 
-      // Show success message
       toast.success(t('missionCompleted'));
 
-      // Trigger confetti
       const confetti = await import("canvas-confetti");
       confetti.default({
         particleCount: 50,
@@ -1778,14 +1863,12 @@ const MissionsComponent = () => {
         origin: { y: 0.6 },
       });
 
-      // Check if all missions for the day are completed
       if (currentDayData?.missions.every(m => completedIds.has(m.id) || m.id === mission.id)) {
         setShowDayCompleteModal(true);
       }
     } catch (error) {
       console.error('Error completing mission:', error);
       
-      // Extract error message
       let errorMessage = 'Unknown error';
       if (error instanceof Error) {
         errorMessage = error.message;
@@ -1806,19 +1889,16 @@ const MissionsComponent = () => {
   };
 
   const handleManualCompletion = (mission: Mission) => {
-    // Check if video was watched to completion (for video missions)
     if (mission.mission_type === 'video' && !videoCompletion[mission.id]) {
       toast.error(t('pleaseWatchVideo'));
       return;
     }
 
-    // Check if already completed
     if (completedIds.has(mission.id)) {
       toast.info(t('missionAlreadyCompleted'));
       return;
     }
 
-    // Show child name modal
     setMissionToComplete(mission);
     setShowChildNameModal(true);
   };
@@ -1904,31 +1984,31 @@ const MissionsComponent = () => {
           })}
         </div>
       </section>
-      
+
+      {/* Morning Mission Song Card */}
+      <div className="w-full px-2 mb-8">
+        <MorningVideoCard video={audioTrack} t={t} />
+      </div>
+    
       {/* Morning Mission Section */}
       {categorizedMissions.morning.length > 0 && (
         <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
           <h3 className="text-xl font-bold mb-4 text-center">{t('morningMission')}</h3>
           <div className="grid grid-cols-1 gap-4 md:gap-6 w-full">
-            {categorizedMissions.morning.map((mission, index) => {
-              const completed = completedIds.has(mission.id);
-              const videoWatched = videoCompletion[mission.id];
-
-              return (
-                <MissionCard
-                  key={mission.id}
-                  mission={mission}
-                  completed={completed}
-                  videoWatched={videoWatched}
-                  onVideoOpen={handleVideoOpen}
-                  onManualComplete={handleManualCompletion}
-                  t={t}
-                  index={index}
-                  missionSlides={missionSlides}
-                  setOpenSlides={setOpenSlides}
-                />
-              );
-            })}
+            {categorizedMissions.morning.map((mission, index) => (
+              <MissionCard
+                key={mission.id}
+                mission={mission}
+                completed={completedIds.has(mission.id)}
+                videoWatched={videoCompletion[mission.id]}
+                onVideoOpen={handleVideoOpen}
+                onManualComplete={handleManualCompletion}
+                t={t}
+                index={index}
+                missionSlides={missionSlides}
+                setOpenSlides={setOpenSlides}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -1944,25 +2024,20 @@ const MissionsComponent = () => {
             {categorizedMissions.artistic.length > 0 && (
               <div className="flex flex-col">
                 <h4 className="text-lg font-semibold mb-2 text-center">{t('artisticMission')}</h4>
-                {categorizedMissions.artistic.map((mission, index) => {
-                  const completed = completedIds.has(mission.id);
-                  const videoWatched = videoCompletion[mission.id];
-
-                  return (
-                    <MissionCard
-                      key={mission.id}
-                      mission={mission}
-                      completed={completed}
-                      videoWatched={videoWatched}
-                      onVideoOpen={handleVideoOpen}
-                      onManualComplete={handleManualCompletion}
-                      t={t}
-                      index={index}
-                      missionSlides={missionSlides}
-                      setOpenSlides={setOpenSlides}
-                    />
-                  );
-                })}
+                {categorizedMissions.artistic.map((mission, index) => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    completed={completedIds.has(mission.id)}
+                    videoWatched={videoCompletion[mission.id]}
+                    onVideoOpen={handleVideoOpen}
+                    onManualComplete={handleManualCompletion}
+                    t={t}
+                    index={index}
+                    missionSlides={missionSlides}
+                    setOpenSlides={setOpenSlides}
+                  />
+                ))}
               </div>
             )}
             
@@ -1970,25 +2045,20 @@ const MissionsComponent = () => {
             {categorizedMissions.discovery.length > 0 && (
               <div className="flex flex-col">
                 <h4 className="text-lg font-semibold mb-2 text-center">{t('discoveryMission')}</h4>
-                {categorizedMissions.discovery.map((mission, index) => {
-                  const completed = completedIds.has(mission.id);
-                  const videoWatched = videoCompletion[mission.id];
-
-                  return (
-                    <MissionCard
-                      key={mission.id}
-                      mission={mission}
-                      completed={completed}
-                      videoWatched={videoWatched}
-                      onVideoOpen={handleVideoOpen}
-                      onManualComplete={handleManualCompletion}
-                      t={t}
-                      index={index}
-                      missionSlides={missionSlides}
-                      setOpenSlides={setOpenSlides}
-                    />
-                  );
-                })}
+                {categorizedMissions.discovery.map((mission, index) => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    completed={completedIds.has(mission.id)}
+                    videoWatched={videoCompletion[mission.id]}
+                    onVideoOpen={handleVideoOpen}
+                    onManualComplete={handleManualCompletion}
+                    t={t}
+                    index={index}
+                    missionSlides={missionSlides}
+                    setOpenSlides={setOpenSlides}
+                  />
+                ))}
               </div>
             )}
             
@@ -1996,32 +2066,27 @@ const MissionsComponent = () => {
             {categorizedMissions.movement.length > 0 && (
               <div className="flex flex-col">
                 <h4 className="text-lg font-semibold mb-2 text-center">{t('movementMission')}</h4>
-                {categorizedMissions.movement.map((mission, index) => {
-                  const completed = completedIds.has(mission.id);
-                  const videoWatched = videoCompletion[mission.id];
-
-                  return (
-                    <MissionCard
-                      key={mission.id}
-                      mission={mission}
-                      completed={completed}
-                      videoWatched={videoWatched}
-                      onVideoOpen={handleVideoOpen}
-                      onManualComplete={handleManualCompletion}
-                      t={t}
-                      index={index}
-                      missionSlides={missionSlides}
-                      setOpenSlides={setOpenSlides}
-                    />
-                  );
-                })}
+                {categorizedMissions.movement.map((mission, index) => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    completed={completedIds.has(mission.id)}
+                    videoWatched={videoCompletion[mission.id]}
+                    onVideoOpen={handleVideoOpen}
+                    onManualComplete={handleManualCompletion}
+                    t={t}
+                    index={index}
+                    missionSlides={missionSlides}
+                    setOpenSlides={setOpenSlides}
+                  />
+                ))}
               </div>
             )}
           </div>
         </section>
       )}
       
-      {/* Storybook and Coloring Book Cards */}
+      {/* Storybook and Coloring Book Cards with Video Previews */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-8 mt-6 md:mt-8 px-2 mb-8">
         {storyPages.length > 0 && (
           <BookCard 
@@ -2053,25 +2118,20 @@ const MissionsComponent = () => {
         <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
           <h3 className="text-xl font-bold mb-4 text-center">Afternoon Missions</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full">
-            {categorizedMissions.afternoon.map((mission, index) => {
-              const completed = completedIds.has(mission.id);
-              const videoWatched = videoCompletion[mission.id];
-
-              return (
-                <MissionCard
-                  key={mission.id}
-                  mission={mission}
-                  completed={completed}
-                  videoWatched={videoWatched}
-                  onVideoOpen={handleVideoOpen}
-                  onManualComplete={handleManualCompletion}
-                  t={t}
-                  index={index}
-                  missionSlides={missionSlides}
-                  setOpenSlides={setOpenSlides}
-                />
-              );
-            })}
+            {categorizedMissions.afternoon.map((mission, index) => (
+              <MissionCard
+                key={mission.id}
+                mission={mission}
+                completed={completedIds.has(mission.id)}
+                videoWatched={videoCompletion[mission.id]}
+                onVideoOpen={handleVideoOpen}
+                onManualComplete={handleManualCompletion}
+                t={t}
+                index={index}
+                missionSlides={missionSlides}
+                setOpenSlides={setOpenSlides}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -2187,7 +2247,7 @@ const MissionsComponent = () => {
         )}
       </AnimatePresence>
 
-    {/* Video Player */}
+      {/* Video Player */}
       <AnimatePresence>
         {openVideo && (
           <VideoPlayerModal 
@@ -2200,18 +2260,18 @@ const MissionsComponent = () => {
         )}
       </AnimatePresence>
 
-   {/* Slides Modal */}
-    <AnimatePresence>
-      {openSlides && (
-        <SlidesModal
-          slides={openSlides.slides}
-          mission={openSlides.mission}
-          onClose={() => setOpenSlides(null)}
-          onMissionComplete={handleMissionComplete}
-          t={t}
-        />
-      )}
-    </AnimatePresence>
+      {/* Slides Modal */}
+      <AnimatePresence>
+        {openSlides && (
+          <SlidesModal
+            slides={openSlides.slides}
+            mission={openSlides.mission}
+            onClose={() => setOpenSlides(null)}
+            onMissionComplete={handleMissionComplete}
+            t={t}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };
