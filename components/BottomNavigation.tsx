@@ -56,7 +56,7 @@ export default function BottomNavigation() {
       underlineColor: "bg-purple-500",
     },
     {
-      name: fallbackName("parent", language),
+      name: fallbackName("Guardian", language),
       href: "/parents",
       icon: UserCheck,
       activeColor: "bg-yellow-200 text-yellow-700",
@@ -228,12 +228,12 @@ function fallbackName(key: string, lang: string) {
       sw: "Jumuiya",
       rw: "Umuryango",
     },
-    parent: {
-      en: "Parent",
-      es: "Padre",
-      fr: "Parent",
-      sw: "Mzazi",
-      rw: "Umubyeyi",
+    guardian: {
+      en: "Guardian",
+      es: "Tutor",
+      fr: "Tuteur",
+      sw: "Mlezi",
+      rw: "Umurera",
     },
   };
 

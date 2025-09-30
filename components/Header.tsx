@@ -6,7 +6,7 @@ import { Languages, Smile } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 
 interface HeaderProps {
-  simple?: boolean; // <-- optional prop
+  simple?: boolean;
 }
 
 export default function Header({ simple }: HeaderProps) {
@@ -46,7 +46,7 @@ export default function Header({ simple }: HeaderProps) {
             <h1 className="ml-3 text-2xl font-bold text-pink-600">NIMI</h1>
           </Link>
 
-          {isClient && !simple && ( // Hide language picker if simple
+          {isClient && (
             <div className="relative">
               <button
                 onClick={() => setShowLanguagePicker(!showLanguagePicker)}

@@ -656,15 +656,18 @@ const VideoPlayerModal = ({
   );
 };
 
-// Morning Video Card Component - Fixed to work like mission cards
 const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: string) => string }) => {
+  // Always call hooks first
   const [openVideo, setOpenVideo] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const controls = useAnimation();
 
-  // Intersection Observer to detect visibility (same as mission cards)
+  const defaultPreviewUrl = 'https://your-bucket.s3.amazonaws.com/mission-previews/default-preview.mp4';
+  const previewUrl = video?.preview_url || defaultPreviewUrl;
+
+  // Intersection Observer
   useEffect(() => {
     if (!cardRef.current) return;
 
@@ -677,18 +680,32 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
     return () => observer.disconnect();
   }, []);
 
-  // Animate in when visible (same as mission cards)
+  // Animate in when visible
   useEffect(() => {
     if (isVisible) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.3 } });
     }
   }, [isVisible, controls]);
 
-  if (!video) return null;
-
-  // Use the same preview logic as mission cards
-  const defaultPreviewUrl = 'https://your-bucket.s3.amazonaws.com/mission-previews/default-preview.mp4';
-  const previewUrl = video.preview_url || defaultPreviewUrl;
+  // Render fallback if no video
+  if (!video) {
+    return (
+      <motion.div
+        ref={cardRef}
+        initial={{ opacity: 0, y: 20 }}
+        animate={controls}
+        className="w-full max-w-md mx-auto mb-8"
+      >
+        <Card className="relative overflow-hidden border-2 border-gray-200 w-full">
+          <CardHeader>
+            <div className="flex items-center justify-center h-48 bg-gray-100 text-gray-400">
+              No Morning Video
+            </div>
+          </CardHeader>
+        </Card>
+      </motion.div>
+    );
+  }
 
   return (
     <>
@@ -700,39 +717,31 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
         className="w-full max-w-md mx-auto mb-8"
       >
         <Card className="relative overflow-hidden border-2 border-purple-200 hover:border-purple-300 transition-all w-full">
-          {/* Card Header with Video Preview - Same as mission cards */}
           <CardHeader className="pb-2">
             <div className="flex flex-col gap-2">
               <div className="w-full aspect-video rounded-xl overflow-hidden shadow-md border border-purple-200 bg-black">
-                {previewUrl && isVisible ? (
-                  <video
-                    key={previewUrl}
-                    src={previewUrl}
-                    autoPlay
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    preload="metadata"
-                    className="w-full h-full object-cover"
-                    onMouseEnter={() => setIsMuted(false)}
-                    onMouseLeave={() => setIsMuted(true)}
-                    onError={(e) => {
-                      console.warn(`Preview failed for morning song: ${previewUrl}`);
-                      e.currentTarget.style.display = "none";
-                    }}
-                    aria-label={`Preview for ${video.title}`}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-500">
-                    <Music className="h-8 w-8" />
-                  </div>
-                )}
+                <video
+                  key={previewUrl}
+                  src={previewUrl}
+                  autoPlay={isVisible} // only play when visible
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                  onMouseEnter={() => setIsMuted(false)}
+                  onMouseLeave={() => setIsMuted(true)}
+                  onError={(e) => {
+                    console.warn(`Preview failed for ${video.title}`);
+                    e.currentTarget.style.display = "none";
+                  }}
+                  aria-label={`Preview for ${video.title}`}
+                />
               </div>
               <CardTitle className="text-lg font-bold text-center">{video.title}</CardTitle>
             </div>
           </CardHeader>
 
-          {/* Card Content: Buttons - Same styling as mission cards */}
           <CardContent className="grid gap-3">
             <div className="grid gap-2">
               <Button
@@ -754,7 +763,7 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
 
       <AnimatePresence>
         {openVideo && (
-          <VideoPlayerModal 
+          <VideoPlayerModal
             videoUrl={video.audio_url}
             onClose={() => setOpenVideo(false)}
             mission={{} as Mission}
@@ -766,6 +775,7 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
     </>
   );
 };
+
 
 // Child Name Input Modal
 const ChildNameModal = ({ 
@@ -1993,6 +2003,7 @@ const MissionsComponent = () => {
       {/* Morning Mission Section */}
       {categorizedMissions.morning.length > 0 && (
         <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
+        <h3 className="text-xl font-bold mb-4 text-center">Daily Missions</h3>
           <h3 className="text-xl font-bold mb-4 text-center">{t('morningMission')}</h3>
           <div className="grid grid-cols-1 gap-4 md:gap-6 w-full">
             {categorizedMissions.morning.map((mission, index) => (
@@ -2018,7 +2029,6 @@ const MissionsComponent = () => {
         categorizedMissions.discovery.length > 0 || 
         categorizedMissions.movement.length > 0) && (
         <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
-          <h3 className="text-xl font-bold mb-4 text-center">Daily Missions</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full">
             {/* Artistic Mission */}
             {categorizedMissions.artistic.length > 0 && (

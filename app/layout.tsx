@@ -3,6 +3,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { NimiReaderProvider } from "@/contexts/NimiReaderContext";
 import SupabaseProviderWrapper from "@/components/SupabaseProviderWrapper";
 import { UserProvider } from "@/contexts/UserContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export const metadata = {
   title: "Nimipiko",
@@ -22,7 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NimiReaderProvider>
             <SupabaseProviderWrapper>
               <UserProvider>
+              <ThemeProvider>
                 {children}
+                </ThemeProvider>
               </UserProvider>
             </SupabaseProviderWrapper>
           </NimiReaderProvider>
