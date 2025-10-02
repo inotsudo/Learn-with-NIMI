@@ -23,7 +23,8 @@ const translations: Record<
     | "todaysActivity" | "loading" | "startLearning"
     | "yourStars" | "youHave" | "stars" | "learnToEarn"
     | "surprise" | "unlockedReward" | "seeReward" | "dayStreak"
-    | "todaysVideo" | "watchAndLearn" | "playVideo" | "watchAgain" | "download" | "share",
+    | "todaysVideo" | "watchAndLearn" | "playVideo" | "watchAgain" | "download" | "share"
+    | "myPlaylist" | "playAll" | "emptyPlaylist" | "addVideos" | "dailyMissions" | "addToPlaylist" | "removeFromPlaylist",
     string
   >
 > = {
@@ -55,6 +56,13 @@ const translations: Record<
     watchAgain: "Watch Again",
     download: "Download",
     share: "Share",
+    myPlaylist: "My Playlist 🎵",
+    playAll: "▶ Play All",
+    emptyPlaylist: "Your playlist is empty!",
+    addVideos: "Add videos from Daily Missions to get started! 💫",
+    dailyMissions: "🌞 Daily Missions",
+    addToPlaylist: "Add to playlist",
+    removeFromPlaylist: "Remove from playlist"
   },
   es: {
     goodMorning: "Buenos días",
@@ -84,6 +92,13 @@ const translations: Record<
     watchAgain: "Ver de Nuevo",
     download: "Descargar",
     share: "Compartir",
+    myPlaylist: "Mi Playlist 🎵",
+    playAll: "▶ Reproducir Todo",
+    emptyPlaylist: "¡Tu playlist está vacía!",
+    addVideos: "¡Agrega videos de Misiones Diarias para comenzar! 💫",
+    dailyMissions: "🌞 Misiones Diarias",
+    addToPlaylist: "Agregar a playlist",
+    removeFromPlaylist: "Quitar de playlist"
   },
   fr: {
     goodMorning: "Bonjour",
@@ -113,6 +128,13 @@ const translations: Record<
     watchAgain: "Regarder à Nouveau",
     download: "Télécharger",
     share: "Partager",
+    myPlaylist: "Ma Playlist 🎵",
+    playAll: "▶ Tout Lire",
+    emptyPlaylist: "Votre playlist est vide !",
+    addVideos: "Ajoutez des vidéos des Missions Quotidiennes pour commencer ! 💫",
+    dailyMissions: "🌞 Missions Quotidiennes",
+    addToPlaylist: "Ajouter à la playlist",
+    removeFromPlaylist: "Retirer de la playlist"
   },
   rw: {
     goodMorning: "Mwaramutse",
@@ -142,6 +164,13 @@ const translations: Record<
     watchAgain: "Subiramo",
     download: "Kurotsa",
     share: "Sangiza",
+    myPlaylist: "Playlist Yange 🎵",
+    playAll: "▶ Kurikirana Byose",
+    emptyPlaylist: "Playlist yawe nta kintu!",
+    addVideos: "Ongeramo videwo kuva ku Mishoro y'Umunsi! 💫",
+    dailyMissions: "🌞 Mishoro y'Umunsi",
+    addToPlaylist: "Ongeramo playlist",
+    removeFromPlaylist: "Kuraho playlist"
   },
   sw: {
     goodMorning: "Habari za asubuhi",
@@ -171,6 +200,13 @@ const translations: Record<
     watchAgain: "Tazama Tenna",
     download: "Pakua",
     share: "Shiriki",
+    myPlaylist: "Playlist Yangu 🎵",
+    playAll: "▶ Cheza Zote",
+    emptyPlaylist: "Playlist yako ni tupu!",
+    addVideos: "Ongeza video kutoka kwa Misheni ya Kila Siku kuanza! 💫",
+    dailyMissions: "🌞 Misheni ya Kila Siku",
+    addToPlaylist: "Ongeza kwenye playlist",
+    removeFromPlaylist: "Ondoa playlist"
   },
 };
 
@@ -209,6 +245,68 @@ const Sparkle = () => {
   );
 };
 
+// Video Card Component for consistent styling - Enhanced for larger screens
+const VideoCard = ({ 
+  video, 
+  isInPlaylist = false, 
+  onTogglePlaylist, 
+  onPlay 
+}: { 
+  video: any;
+  isInPlaylist?: boolean;
+  onTogglePlaylist?: (video: any) => void;
+  onPlay?: (video: any) => void;
+}) => {
+  const { language } = useLanguage();
+  const t = (key: keyof typeof translations["en"]) =>
+    translations[language]?.[key] ?? translations.en[key] ?? String(key);
+
+  return (
+    <Card className="bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-300 rounded-2xl shadow-lg flex-shrink-0 w-72 md:w-80 mr-4 md:mr-6 overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105">
+      <CardContent className="p-4 md:p-5">
+        {/* Thumbnail */}
+        <div className="relative mb-3 md:mb-4">
+          <img 
+            src={video.thumbnail_url || "/video-placeholder.jpg"} 
+            alt={video.title}
+            className="w-full h-36 md:h-44 object-cover rounded-xl border-2 border-white shadow-md"
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-20 rounded-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+            <Button
+              onClick={() => onPlay?.(video)}
+              className="rounded-full p-3 bg-white text-purple-600 shadow-lg hover:scale-105 transition"
+              size="sm"
+            >
+              <Play className="w-4 h-4 md:w-5 md:h-5" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Video Info */}
+        <h3 className="font-bold text-gray-800 text-sm md:text-base mb-2 line-clamp-2">
+          {video.title}
+        </h3>
+        
+        {/* Action Button */}
+        {onTogglePlaylist && (
+          <Button
+            onClick={() => onTogglePlaylist(video)}
+            className={`w-full rounded-full text-sm md:text-base font-semibold py-2 md:py-3 ${
+              isInPlaylist 
+                ? "bg-red-100 text-red-600 hover:bg-red-200 border-2 border-red-300" 
+                : "bg-green-100 text-green-600 hover:bg-green-200 border-2 border-green-300"
+            }`}
+            size="sm"
+          >
+            <Heart className={`w-4 h-4 md:w-5 md:h-5 mr-1 ${isInPlaylist ? "fill-red-500" : ""}`} />
+            {isInPlaylist ? t("removeFromPlaylist") : t("addToPlaylist")}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function HomePage() {
   const { language } = useLanguage();
   const t = (key: keyof typeof translations["en"]) =>
@@ -234,6 +332,10 @@ export default function HomePage() {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [showRewardConfetti, setShowRewardConfetti] = useState(false);
   const [giftAnimation, setGiftAnimation] = useState<"idle" | "shake" | "open">("idle");
+  
+  // New states for playlist
+  const [playlistVideos, setPlaylistVideos] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   /* 🔄 Load data on mount */
   useEffect(() => {
@@ -242,6 +344,7 @@ export default function HomePage() {
     void fetchUserData();
     void fetchTodaysMission();
     void fetchTodaysVideo();
+    void fetchPlaylistVideos();
   }, []);
 
   /* 🗣️ Greet child when data is ready / language changes */
@@ -320,6 +423,104 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error("Error in fetchTodaysVideo:", error);
+    }
+  };
+
+  /* ⭐ Fetch playlist videos with join to videos table */
+  const fetchPlaylistVideos = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Using Supabase's join capability to get video details :cite[1]
+      const { data, error } = await supabase
+        .from("playlists")
+        .select(`
+          id,
+          user_id,
+          video_id,
+          created_at,
+          videos (
+            id,
+            title,
+            thumbnail_url,
+            video_url
+          )
+        `)
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching playlist:", error);
+        return;
+      }
+
+      // Transform the data to get video details
+      const videos = data?.map(item => ({
+        ...item.videos,
+        playlist_id: item.id // Keep the playlist entry id for removal
+      })) || [];
+
+      setPlaylistVideos(videos);
+    } catch (error) {
+      console.error("Error in fetchPlaylistVideos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /* 💖 Toggle video in playlist */
+  const togglePlaylist = async (video: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if video is already in playlist
+      const isCurrentlyInPlaylist = playlistVideos.some(v => v.id === video.id);
+
+      if (isCurrentlyInPlaylist) {
+        // Remove from playlist
+        const { error } = await supabase
+          .from("playlists")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("video_id", video.id);
+
+        if (error) throw error;
+
+        // Update local state
+        setPlaylistVideos(prev => prev.filter(v => v.id !== video.id));
+      } else {
+        // Add to playlist
+        const { error } = await supabase
+          .from("playlists")
+          .insert({
+            user_id: user.id,
+            video_id: video.id
+          });
+
+        if (error) throw error;
+
+        // Update local state
+        setPlaylistVideos(prev => [...prev, video]);
+      }
+    } catch (error) {
+      console.error("Error toggling playlist:", error);
+    }
+  };
+
+  /* ▶️ Play All videos from playlist */
+  const handlePlayAll = () => {
+    if (playlistVideos.length > 0 && playlistVideos[0].video_url) {
+      window.open(playlistVideos[0].video_url, '_blank');
+      // Note: For true auto-play all functionality, you might want to implement
+      // a custom video player that queues all playlist videos
+    }
+  };
+
+  /* ▶️ Play single video */
+  const handlePlayVideo = (video: any) => {
+    if (video.video_url) {
+      window.open(video.video_url, '_blank');
     }
   };
 
@@ -465,18 +666,7 @@ export default function HomePage() {
       }
     }
   };
-  const shareWhatsApp = (text: string) => {
-    const encodedText = encodeURIComponent(text);
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  
-    if (isMobile) {
-      // Opens the WhatsApp app on mobile
-      window.open(`whatsapp://send?text=${encodedText}`, "_blank");
-    } else {
-      // Fallback to WhatsApp Web on desktop
-      window.open(`https://api.whatsapp.com/send?text=${encodedText}`, "_blank");
-    }
-  };
+
   const fallbackCopyText = (text: string) => {
     const textArea = document.createElement("textarea");
     textArea.value = text;
@@ -492,7 +682,6 @@ export default function HomePage() {
     }
     document.body.removeChild(textArea);
   };
-  
 
   /* 🐥 Buddy tap interaction */
   const handleBuddyClick = () => {
@@ -588,144 +777,144 @@ export default function HomePage() {
             </p>
           )}
         </div>
-{/* 🎥 Today's Video Card - YouTube style */}
-{todaysVideo && videoUrl && (
-  <Card className="bg-gray-900 border-0 shadow-xl mb-8 relative overflow-hidden">
-    <CardContent className="p-0">
-      <div className="relative">
-        {/* Video thumbnail or player */}
-        {!isPlaying ? (
-          <div className="relative w-full">
-            <img
-              src={thumbnailUrl || "/video-placeholder.jpg"}
-              alt={todaysVideo.title}
-              className="w-full h-56 object-cover"
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-              <Button
-                onClick={handleVideoPlay}
-                className="rounded-full p-4 bg-white text-black shadow-lg hover:scale-105 transition"
-                aria-label="Play Video"
-              >
-                <Play className="w-6 h-6" />
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="relative w-full">
-            <video
-              className="w-full h-56 object-cover"
-              controls
-              autoPlay
-              onEnded={handleVideoComplete}
-              onTimeUpdate={handleVideoProgress}
-            >
-              <source src={videoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
+
+        {/* 🎥 Today's Video Card - YouTube style */}
+        {todaysVideo && videoUrl && (
+          <Card className="bg-gray-900 border-0 shadow-xl mb-8 relative overflow-hidden">
+            <CardContent className="p-0">
+              <div className="relative">
+                {/* Video thumbnail or player */}
+                {!isPlaying ? (
+                  <div className="relative w-full">
+                    <img
+                      src={thumbnailUrl || "/video-placeholder.jpg"}
+                      alt={todaysVideo.title}
+                      className="w-full h-56 md:h-64 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                      <Button
+                        onClick={handleVideoPlay}
+                        className="rounded-full p-4 bg-white text-black shadow-lg hover:scale-105 transition"
+                        aria-label="Play Video"
+                      >
+                        <Play className="w-6 h-6 md:w-8 md:h-8" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full">
+                    <video
+                      className="w-full h-56 md:h-64 object-cover"
+                      controls
+                      autoPlay
+                      onEnded={handleVideoComplete}
+                      onTimeUpdate={handleVideoProgress}
+                    >
+                      <source src={videoUrl} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                )}
+
+                {/* Bottom-right icons */}
+                <div className="absolute bottom-3 right-3 flex space-x-3">
+                  {/* Download */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleDownload}
+                    disabled={isDownloading}
+                    className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full"
+                  >
+                    <Download className="w-5 h-5 text-black" />
+                  </Button>
+
+                  {/* Share */}
+                  <div className="relative">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowShareOptions(!showShareOptions)}
+                      className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full"
+                    >
+                      <Share className="w-5 h-5 text-black" />
+                    </Button>
+
+                    {/* Social media share popup */}
+                    {showShareOptions && videoUrl && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute bottom-12 right-0 bg-white shadow-lg rounded-lg p-2 flex flex-col space-y-2 z-50"
+                      >
+                        {/* WhatsApp */}
+                        <button
+                          onClick={() =>
+                            window.open(
+                              `https://api.whatsapp.com/send?text=${encodeURIComponent(
+                                todaysVideo.title + " " + videoUrl
+                              )}`,
+                              "_blank"
+                            )
+                          }
+                          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+                        >
+                          <img src="/icons/whatsapp.svg" className="w-5 h-5" alt="WhatsApp" />
+                        </button>
+
+                        {/* Facebook */}
+                        <button
+                          onClick={() =>
+                            window.open(
+                              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(videoUrl)}`,
+                              "_blank"
+                            )
+                          }
+                          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+                        >
+                          <img src="/icons/facebook.svg" className="w-5 h-5" alt="Facebook" />
+                        </button>
+
+                        {/* Twitter */}
+                        <button
+                          onClick={() =>
+                            window.open(
+                              `https://twitter.com/intent/tweet?url=${encodeURIComponent(videoUrl)}&text=${encodeURIComponent(
+                                todaysVideo.title
+                              )}`,
+                              "_blank"
+                            )
+                          }
+                          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+                        >
+                          <img src="/icons/twitter.svg" className="w-5 h-5" alt="Twitter" />
+                        </button>
+
+                        {/* Copy Link */}
+                        <button
+                          onClick={() => {
+                            if (typeof navigator !== "undefined" && navigator.clipboard) {
+                              navigator.clipboard.writeText(videoUrl)
+                                .then(() => alert("Video link copied!"))
+                                .catch(() => fallbackCopyText(videoUrl));
+                            } else {
+                              fallbackCopyText(videoUrl);
+                            }
+                          }}
+                          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
+                        >
+                          <img src="/icons/link.svg" className="w-5 h-5" alt="Copy Link" />
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-       {/* Bottom-right icons */}
-<div className="absolute bottom-3 right-3 flex space-x-3">
-  {/* Download */}
-  <Button
-    size="sm"
-    variant="ghost"
-    onClick={handleDownload}
-    disabled={isDownloading}
-    className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full"
-  >
-    <Download className="w-5 h-5 text-black" />
-  </Button>
-
-  {/* Share */}
-  <div className="relative">
-    <Button
-      size="sm"
-      variant="ghost"
-      onClick={() => setShowShareOptions(!showShareOptions)}
-      className="bg-white/90 hover:bg-white shadow-md p-2 rounded-full"
-    >
-      <Share className="w-5 h-5 text-black" />
-    </Button>
-
-    {/* Social media share popup */}
-    {showShareOptions && videoUrl && (
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="absolute bottom-12 right-0 bg-white shadow-lg rounded-lg p-2 flex flex-col space-y-2 z-50"
-      >
-        {/* WhatsApp */}
-        <button
-          onClick={() =>
-            window.open(
-              `https://api.whatsapp.com/send?text=${encodeURIComponent(
-                todaysVideo.title + " " + videoUrl
-              )}`,
-              "_blank"
-            )
-          }
-          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
-        >
-          <img src="/icons/whatsapp.svg" className="w-5 h-5" alt="WhatsApp" />
-        </button>
-
-        {/* Facebook */}
-        <button
-          onClick={() =>
-            window.open(
-              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(videoUrl)}`,
-              "_blank"
-            )
-          }
-          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
-        >
-          <img src="/icons/facebook.svg" className="w-5 h-5" alt="Facebook" />
-        </button>
-
-        {/* Twitter */}
-        <button
-          onClick={() =>
-            window.open(
-              `https://twitter.com/intent/tweet?url=${encodeURIComponent(videoUrl)}&text=${encodeURIComponent(
-                todaysVideo.title
-              )}`,
-              "_blank"
-            )
-          }
-          className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
-        >
-          <img src="/icons/twitter.svg" className="w-5 h-5" alt="Twitter" />
-        </button>
-
-    {/* Copy Link */}
-    <button
-      onClick={() => {
-        if (typeof navigator !== "undefined" && navigator.clipboard) {
-          navigator.clipboard.writeText(videoUrl)
-            .then(() => alert("Video link copied!"))
-            .catch(() => fallbackCopyText(videoUrl));
-        } else {
-          fallbackCopyText(videoUrl);
-        }
-      }}
-      className="flex items-center justify-center p-2 rounded hover:bg-gray-100"
-    >
-      <img src="/icons/link.svg" className="w-5 h-5" alt="Copy Link" />
-    </button>
-
-      </motion.div>
-    )}
-  </div>
-</div>
-
-      </div>
-    </CardContent>
-  </Card>
-)}
         {/* 🎯 Today's Learning - Enhanced for toddlers */}
         <Card className="bg-gradient-to-r from-pink-100 to-purple-100 border-4 border-pink-300 shadow-xl mb-8">
           <CardContent className="p-6 text-center">
@@ -837,6 +1026,39 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </motion.div>
+        )}
+
+        {/* ⭐ My Playlist Section - Only shown when there are liked videos, positioned at the bottom */}
+        {playlistVideos.length > 0 && (
+          <section className="mb-8 mt-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-purple-700">
+                {t("myPlaylist")}
+              </h2>
+              <Button
+                onClick={handlePlayAll}
+                className="bg-green-500 hover:bg-green-600 text-white rounded-full px-4 py-2 font-bold shadow-lg"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                {t("playAll")}
+              </Button>
+            </div>
+
+            {/* Horizontal Scrollable Playlist */}
+            <div className="overflow-x-auto pb-4">
+              <div className="flex space-x-4" style={{ minWidth: 'min-content' }}>
+                {playlistVideos.map((video) => (
+                  <VideoCard
+                    key={video.id}
+                    video={video}
+                    isInPlaylist={true}
+                    onTogglePlaylist={togglePlaylist}
+                    onPlay={handlePlayVideo}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
         )}
       </main>
 

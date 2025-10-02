@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { motion,useAnimation , AnimatePresence } from "framer-motion";
+import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import supabase from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -27,7 +27,9 @@ import { Video } from "lucide-react";
 import { X } from "lucide-react";
 import { Clock } from "lucide-react";
 import { Music } from "lucide-react";
-
+import { Heart } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const t = (
   key: string,
@@ -92,7 +94,15 @@ const translations = {
     movementMission: "Movement Mission",
     zoomMission: "Zoom 2025 Mission",
     toctocMission: "Toctoc Fun",
-    capsuleMission: "Capsule Progress"
+    capsuleMission: "Daily Progress Capsule",
+    videoLiked: "Video added to favorites! 💖",
+    videoLikeError: "Failed to add video to favorites",
+    selectChild: "Select Child",
+    saveToFavorites: "Save to Favorites",
+    noChildrenFound: "No children found. Please add children in your profile.",
+    addChildFirst: "Please add children to your profile first",
+    selectYourProfile: "Select Your Profile",
+    whoIsCompleting: "Who is completing this mission?"
   },
   es: {
     magicalLearning: "Aprendizaje Mágico",
@@ -138,7 +148,15 @@ const translations = {
     movementMission: "Misión de Movimiento",
     zoomMission: "Misión Zoom 2025",
     toctocMission: "Toctoc Divertido",
-    capsuleMission: "Cápsula de Progreso"
+    capsuleMission: "Cápsula de Progreso Diario",
+    videoLiked: "¡Video agregado a favoritos! 💖",
+    videoLikeError: "Error al agregar video a favoritos",
+    selectChild: "Seleccionar Niño",
+    saveToFavorites: "Guardar en Favoritos",
+    noChildrenFound: "No se encontraron niños. Por favor agregue niños en su perfil.",
+    addChildFirst: "Por favor agregue niños a su perfil primero",
+    selectYourProfile: "Selecciona Tu Perfil",
+    whoIsCompleting: "¿Quién está completando esta misión?"
   },
   fr: {
     magicalLearning: "Apprentissage Magique",
@@ -184,7 +202,15 @@ const translations = {
     movementMission: "Mission de Mouvement",
     zoomMission: "Mission Zoom 2025",
     toctocMission: "Toctoc Amusant",
-    capsuleMission: "Capsule de Progrès"
+    capsuleMission: "Capsule de Progrès Quotidien",
+    videoLiked: "Vidéo ajoutée aux favoris! 💖",
+    videoLikeError: "Échec de l'ajout de la vidéo aux favoris",
+    selectChild: "Sélectionner l'Enfant",
+    saveToFavorites: "Enregistrer dans les Favoris",
+    noChildrenFound: "Aucun enfant trouvé. Veuillez ajouter des enfants dans votre profil.",
+    addChildFirst: "Veuillez d'abord ajouter des enfants à votre profil",
+    selectYourProfile: "Sélectionnez Votre Profil",
+    whoIsCompleting: "Qui termine cette mission?"
   },
   rw: {
     magicalLearning: "Kwiga Ubumenyi",
@@ -230,7 +256,15 @@ const translations = {
     movementMission: "Umurimo w'Imikorere",
     zoomMission: "Umurimo wa Zoom 2025",
     toctocMission: "Toctoc Y'ibyishimo",
-    capsuleMission: "Ingingo y'Iterambere"
+    capsuleMission: "Ingingo y'Iterambere rya buri munsi",
+    videoLiked: "Video yongewe mu bibyo! 💖",
+    videoLikeError: "Byanze bikomeje kongeramo video mu bibyo",
+    selectChild: "Hitamo Umwana",
+    saveToFavorites: "Bika mu Bibyo",
+    noChildrenFound: "Ntabwo abana babonetse. Nyamuneka ongeza abana mu rubuga rwawe.",
+    addChildFirst: "Nyamuneka ongeza abana mu rubuga rwawe mbere",
+    selectYourProfile: "Hitamo Umwirondoro",
+    whoIsCompleting: "Ni nde ukomeje iyi mishini?"
   },
   sw: {
     magicalLearning: "Kujifunza Kichawi",
@@ -276,7 +310,15 @@ const translations = {
     movementMission: "Misheni ya Mwendo",
     zoomMission: "Misheni ya Zoom 2025",
     toctocMission: "Toctoc Furaha",
-    capsuleMission: "Kapsuli ya Maendeleo"
+    capsuleMission: "Kapsuli ya Maendeleo ya Kila Siku",
+    videoLiked: "Video imeongezwa kwenye vipendwa! 💖",
+    videoLikeError: "Imeshindwa kuongeza video kwenye vipendwa",
+    selectChild: "Chagua Mtoto",
+    saveToFavorites: "Hifadhi kwenye Vipendwa",
+    noChildrenFound: "Hakuna watoto walopatikana. Tafadhali ongeza watoto kwenye wasifu wako.",
+    addChildFirst: "Tafadhali ongeza watoto kwenye wasifu wako kwanza",
+    selectYourProfile: "Chagua Wasifu Wako",
+    whoIsCompleting: "Nani anakamilisha misheni hii?"
   }
 };
 
@@ -288,7 +330,7 @@ interface BookCover {
   cover_url: string;
   spine_color: string;
   title: string;
-  preview_url?: string; // Added for video preview
+  preview_url?: string;
 }
 
 interface Mission {
@@ -310,6 +352,7 @@ interface CompletionData {
   mission_id: string;
   completed_at: string;
   child_name?: string;
+  child_id?: string;
 }
 
 interface DayData {
@@ -334,6 +377,7 @@ interface StoryPage {
   page_number: number;
   image_url: string;
   text: string;
+  audio_url?: string;
 }
 
 interface ColoringPage {
@@ -341,6 +385,7 @@ interface ColoringPage {
   day: number;
   page_number: number;
   image_url: string;
+  audio_url?: string;
 }
 
 export interface Page {
@@ -350,6 +395,7 @@ export interface Page {
   caption?: string;
   image_alt?: string;
   ocrText?: string;
+  audio_url?: string;
 }
 
 interface FlipBookViewerProps {
@@ -368,7 +414,208 @@ interface Slide {
   description?: string;
 }
 
-// Update the SlidesModal component to properly display images
+interface Child {
+  id: string;
+  name: string;
+  parent_id: string;
+  created_at: string;
+  avatar_url?: string;
+}
+
+// Child Avatar Selection Modal
+const ChildAvatarModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm,
+  children,
+  t
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: (childId: string) => void;
+  children: Child[];
+  t: (key: string) => string;
+}) => {
+  const [selectedChildId, setSelectedChildId] = useState<string>('');
+
+  const handleSubmit = () => {
+    if (selectedChildId) {
+      onConfirm(selectedChildId);
+      setSelectedChildId('');
+    }
+  };
+
+  const getAvatarFallback = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('selectYourProfile')}</DialogTitle>
+          <DialogDescription>
+            {t('whoIsCompleting')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-4">
+            {children.map((child) => (
+              <div
+                key={child.id}
+                className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                  selectedChildId === child.id 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedChildId(child.id)}
+              >
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={child.avatar_url} />
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                    {getAvatarFallback(child.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{child.name}</span>
+              </div>
+            ))}
+            {children.length === 0 && (
+              <p className="text-sm text-red-500 text-center py-4">{t('noChildrenFound')}</p>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
+          <Button onClick={handleSubmit} disabled={!selectedChildId}>{t('submit')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Child Selection Modal for Parents
+const ChildSelectionModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm,
+  children,
+  t
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: (childId: string) => void;
+  children: Child[];
+  t: (key: string) => string;
+}) => {
+  const [selectedChildId, setSelectedChildId] = useState<string>('');
+
+  const handleSubmit = () => {
+    if (selectedChildId) {
+      onConfirm(selectedChildId);
+      setSelectedChildId('');
+    }
+  };
+
+  const getAvatarFallback = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('selectChild')}</DialogTitle>
+          <DialogDescription>
+            Select which child you want to save this video for
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-4">
+            {children.map((child) => (
+              <div
+                key={child.id}
+                className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
+                  selectedChildId === child.id 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedChildId(child.id)}
+              >
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={child.avatar_url} />
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                    {getAvatarFallback(child.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{child.name}</span>
+              </div>
+            ))}
+            {children.length === 0 && (
+              <p className="text-sm text-red-500 text-center py-4">{t('noChildrenFound')}</p>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
+          <Button onClick={handleSubmit} disabled={!selectedChildId}>{t('saveToFavorites')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Child Name Input Modal for Regular Users
+const ChildNameModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm,
+  t 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: (name: string) => void;
+  t: (key: string) => string;
+}) => {
+  const [name, setName] = useState('');
+
+  const handleSubmit = () => {
+    if (name.trim()) {
+      onConfirm(name.trim());
+      setName('');
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('enterChildName')}</DialogTitle>
+          <DialogDescription>
+            Please enter a name to save this video to favorites
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="child-name">{t('childName')}</Label>
+            <Input
+              id="child-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('enterChildName')}
+              onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
+          <Button onClick={handleSubmit} disabled={!name.trim()}>{t('submit')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Update the SlidesModal component with mission completion
 const SlidesModal = ({
   slides,
   onClose,
@@ -379,15 +626,45 @@ const SlidesModal = ({
   slides: { image_url: string; title?: string; description?: string }[];
   onClose: () => void;
   mission: Mission;
-  onMissionComplete: (mission: Mission) => void;
+  onMissionComplete: (mission: Mission, childId?: string) => void;
   t: (key: string) => string;
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [processedSlides, setProcessedSlides] = useState<typeof slides>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [userChildren, setUserChildren] = useState<Child[]>([]);
+  const { user } = useUser();
 
-  // Process Supabase URLs
+  // Fetch user's children
+  const fetchUserChildren = async () => {
+    if (!user) return;
+
+    try {
+      const { data: children, error } = await supabase
+        .from('children')
+        .select('*')
+        .eq('parent_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching children:', error);
+        return;
+      }
+
+      setUserChildren(children || []);
+    } catch (error) {
+      console.error('Error fetching children:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserChildren();
+    }
+  }, [user]);
+
   useEffect(() => {
     const processSlideImages = async () => {
       const processed = await Promise.all(
@@ -414,7 +691,12 @@ const SlidesModal = ({
       setCurrentSlide(currentSlide + 1);
       setImageError(false);
     } else {
-      onMissionComplete(mission);
+      // Show avatar selection when completing mission from slides
+      if (user && user.role === 'parent' && userChildren.length > 0) {
+        setShowAvatarModal(true);
+      } else {
+        onMissionComplete(mission);
+      }
     }
   };
 
@@ -444,6 +726,12 @@ const SlidesModal = ({
     }
   };
 
+  const handleChildSelect = (childId: string) => {
+    onMissionComplete(mission, childId);
+    setShowAvatarModal(false);
+    onClose();
+  };
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
@@ -451,9 +739,10 @@ const SlidesModal = ({
       </div>
     );
   }
-    return (
+
+  return (
+    <>
       <div className="fixed inset-0 z-50 bg-black/90 flex flex-col h-screen">
-        {/* Header */}
         <div className="flex justify-between items-center p-4 bg-black/50 z-50">
           <h2 className="text-white text-lg font-semibold">
             {mission.title} - Slide {currentSlide + 1} of {processedSlides.length}
@@ -465,8 +754,7 @@ const SlidesModal = ({
             ✕
           </button>
         </div>
-  
-        {/* Main Image Area - Takes full height */}
+
         <div className="flex-1 relative overflow-hidden">
           {imageError ? (
             <div className="absolute inset-0 flex items-center justify-center text-white text-center p-4">
@@ -488,10 +776,8 @@ const SlidesModal = ({
             />
           )}
         </div>
-  
-        {/* Bottom Controls */}
+
         <div className="bg-black/70 p-4 backdrop-blur-sm">
-          {/* Navigation Controls */}
           <div className="flex items-center justify-center gap-4 mb-4">
             <button
               onClick={prevSlide}
@@ -514,8 +800,7 @@ const SlidesModal = ({
               {currentSlide === processedSlides.length - 1 ? '✓' : '▶'}
             </button>
           </div>
-  
-          {/* Download Button - Positioned at bottom right */}
+
           <div className="flex justify-end">
             <button
               onClick={downloadSlide}
@@ -528,22 +813,34 @@ const SlidesModal = ({
           </div>
         </div>
       </div>
-    );
-  };
 
-// Video Player Modal with disabled fast-forward and completion tracking
+      {/* Child Avatar Selection Modal */}
+      <ChildAvatarModal
+        isOpen={showAvatarModal}
+        onClose={() => setShowAvatarModal(false)}
+        onConfirm={handleChildSelect}
+        children={userChildren}
+        t={t}
+      />
+    </>
+  );
+};
+
+// Video Player Modal with Like functionality
 const VideoPlayerModal = ({ 
   videoUrl, 
   onClose, 
   mission,
   onMissionComplete,
-  t
+  t,
+  onLikeVideo
 }: { 
   videoUrl: string; 
   onClose: () => void;
   mission: Mission;
   onMissionComplete: (mission: Mission) => void;
   t: (key: string) => string;
+  onLikeVideo: (mission: Mission) => void;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -569,13 +866,11 @@ const VideoPlayerModal = ({
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      // Prevent seeking by resetting if user tries to jump ahead
       if (videoRef.current.currentTime > currentTime + 1) {
         videoRef.current.currentTime = currentTime;
       } else {
         setCurrentTime(videoRef.current.currentTime);
         
-        // Check if video is at least 95% complete
         if (videoRef.current.duration > 0 && 
             videoRef.current.currentTime / videoRef.current.duration >= 0.95 &&
             !hasCompleted) {
@@ -604,6 +899,10 @@ const VideoPlayerModal = ({
       console.error('Error downloading video:', error);
       toast.error('Failed to download video');
     }
+  };
+
+  const handleLikeVideo = () => {
+    onLikeVideo(mission);
   };
 
   return (
@@ -635,6 +934,15 @@ const VideoPlayerModal = ({
         >
           <Download className="h-5 w-5 md:h-6 md:w-6" />
         </button>
+
+        <button
+          onClick={handleLikeVideo}
+          className="absolute top-1 left-12 md:top-2 md:left-12 z-10 text-white text-2xl md:text-3xl bg-black/50 rounded-full p-1 md:p-2 hover:bg-pink-600 transition-colors"
+          aria-label="Like video"
+          title="Add to favorites"
+        >
+          <Heart className="h-5 w-5 md:h-6 md:w-6" />
+        </button>
         
         <video
           ref={videoRef}
@@ -656,18 +964,19 @@ const VideoPlayerModal = ({
   );
 };
 
-const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: string) => string }) => {
-  // Always call hooks first
+// Updated MorningVideoCard with same style as MissionCard
+const MorningVideoCard = ({ video, t, onLikeVideo }: { video: AudioTrack | null; t: (key: string) => string; onLikeVideo: (video: AudioTrack) => void }) => {
   const [openVideo, setOpenVideo] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const controls = useAnimation();
 
   const defaultPreviewUrl = 'https://your-bucket.s3.amazonaws.com/mission-previews/default-preview.mp4';
   const previewUrl = video?.preview_url || defaultPreviewUrl;
 
-  // Intersection Observer
   useEffect(() => {
     if (!cardRef.current) return;
 
@@ -680,14 +989,21 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
     return () => observer.disconnect();
   }, []);
 
-  // Animate in when visible
   useEffect(() => {
     if (isVisible) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.3 } });
     }
   }, [isVisible, controls]);
 
-  // Render fallback if no video
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (video) {
+      setIsLiked(true);
+      onLikeVideo(video);
+      setTimeout(() => setIsLiked(false), 1000);
+    }
+  };
+
   if (!video) {
     return (
       <motion.div
@@ -716,27 +1032,53 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
         whileHover={{ y: -5 }}
         className="w-full max-w-md mx-auto mb-8"
       >
-        <Card className="relative overflow-hidden border-2 border-purple-200 hover:border-purple-300 transition-all w-full">
+        <Card className="relative overflow-hidden border-2 border-purple-200 hover:border-purple-300 transition-all w-full h-full">
+          <button
+            onClick={handleLikeClick}
+            className="absolute top-3 right-3 z-20 bg-white/90 hover:bg-pink-50 rounded-full p-2 transition-all duration-300 shadow-md hover:shadow-lg"
+            aria-label="Like video"
+            title="Add to favorites"
+          >
+            <motion.div
+              animate={isLiked ? { scale: [1, 1.3, 1] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              <Heart 
+                className={`h-5 w-5 ${isLiked ? 'text-pink-500 fill-pink-500' : 'text-gray-600'}`} 
+              />
+            </motion.div>
+          </button>
+
           <CardHeader className="pb-2">
             <div className="flex flex-col gap-2">
-              <div className="w-full aspect-video rounded-xl overflow-hidden shadow-md border border-purple-200 bg-black">
-                <video
-                  key={previewUrl}
-                  src={previewUrl}
-                  autoPlay={isVisible} // only play when visible
-                  loop
-                  muted={isMuted}
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-full object-cover"
-                  onMouseEnter={() => setIsMuted(false)}
-                  onMouseLeave={() => setIsMuted(true)}
-                  onError={(e) => {
-                    console.warn(`Preview failed for ${video.title}`);
-                    e.currentTarget.style.display = "none";
-                  }}
-                  aria-label={`Preview for ${video.title}`}
-                />
+              <div 
+                className="w-full aspect-video rounded-xl overflow-hidden shadow-md border border-purple-200 bg-black relative"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+              >
+                {previewUrl && isVisible ? (
+                  <video
+                    key={previewUrl}
+                    src={previewUrl}
+                    autoPlay
+                    loop
+                    muted={isMuted && !isHovered}
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-cover"
+                    onMouseEnter={() => setIsMuted(false)}
+                    onMouseLeave={() => setIsMuted(true)}
+                    onError={(e) => {
+                      console.warn(`Preview failed for ${video.title}`);
+                      e.currentTarget.style.display = "none";
+                    }}
+                    aria-label={`Preview for ${video.title}`}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-500">
+                    No Preview Available
+                  </div>
+                )}
               </div>
               <CardTitle className="text-lg font-bold text-center">{video.title}</CardTitle>
             </div>
@@ -768,6 +1110,7 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
             onClose={() => setOpenVideo(false)}
             mission={{} as Mission}
             onMissionComplete={() => {}}
+            onLikeVideo={() => onLikeVideo(video)}
             t={t}
           />
         )}
@@ -776,84 +1119,43 @@ const MorningVideoCard = ({ video, t }: { video: AudioTrack | null; t: (key: str
   );
 };
 
-
-// Child Name Input Modal
-const ChildNameModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm,
-  t 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onConfirm: (name: string) => void;
-  t: (key: string) => string;
-}) => {
-  const [name, setName] = useState('');
-
-  const handleSubmit = () => {
-    if (name.trim()) {
-      onConfirm(name.trim());
-      setName('');
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('enterChildName')}</DialogTitle>
-          <DialogDescription>
-            Please enter your child's name to track their progress
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="child-name">{t('childName')}</Label>
-            <Input
-              id="child-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('enterChildName')}
-              onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
-          <Button onClick={handleSubmit} disabled={!name.trim()}>{t('submit')}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
+// Enhanced FlipBookViewer with Audio Support
 const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t }) => {
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const isMobile = useIsMobile();
 
   const { setCurrentContent, isReading, stopReading, startReading } = useNimiReader();
 
-  // Helper to build narration for a page
   const getNarrationForPage = (page?: Page) => {
     if (!page) return "";
     return [page.ocrText, page.text, page.caption].filter(Boolean).join(" ").trim();
   };
 
-  // Preprocess pages: Supabase URLs + OCR
+  // Process page images and audio
   useEffect(() => {
     const processPages = async () => {
       const newPages = await Promise.all(
         pages.map(async (page) => {
           let imageUrl = page.image_url;
+          let audioUrl = page.audio_url;
 
+          // Process image URL
           if (imageUrl.startsWith("supabase://")) {
             const path = imageUrl.replace("supabase://", "");
             const [bucket, ...filePath] = path.split("/");
             const { data } = await supabase.storage.from(bucket).getPublicUrl(filePath.join("/"));
             imageUrl = data.publicUrl;
+          }
+
+          // Process audio URL
+          if (audioUrl && audioUrl.startsWith("supabase://")) {
+            const path = audioUrl.replace("supabase://", "");
+            const [bucket, ...filePath] = path.split("/");
+            const { data } = await supabase.storage.from(bucket).getPublicUrl(filePath.join("/"));
+            audioUrl = data.publicUrl;
           }
 
           let ocrText = "";
@@ -864,26 +1166,72 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
             console.error("OCR failed for page", page.page_number, err);
           }
 
-          return { ...page, image_url: imageUrl, ocrText };
+          return { ...page, image_url: imageUrl, audio_url: audioUrl, ocrText };
         })
       );
 
       setProcessedPages(newPages);
       setIsLoading(false);
 
-      // Read the first page
       const narration = getNarrationForPage(newPages[0]);
       if (narration) setCurrentContent(narration);
+
+      // Play audio for first page if available
+      if (newPages[0]?.audio_url) {
+        playAudioForPage(newPages[0]);
+      }
     };
 
     processPages();
+
+    return () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+    };
   }, [pages]);
 
-  // Handle page change
+  const playAudioForPage = (page: Page) => {
+    // Stop current audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+
+    // Play new audio if available
+    if (page.audio_url) {
+      const audio = new Audio(page.audio_url);
+      audio.preload = "auto";
+      audio.onended = () => {
+        setCurrentAudio(null);
+      };
+      audio.play().catch(error => {
+        console.warn("Audio play failed:", error);
+      });
+      setCurrentAudio(audio);
+    } else {
+      setCurrentAudio(null);
+    }
+  };
+
   const handlePageChange = (newIndex: number) => {
     setCurrentPage(newIndex);
     const narration = getNarrationForPage(processedPages[newIndex]);
     if (narration) setCurrentContent(narration);
+
+    // Play audio for the new page
+    if (processedPages[newIndex]) {
+      playAudioForPage(processedPages[newIndex]);
+    }
+  };
+
+  const stopAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+    }
   };
 
   if (isLoading) {
@@ -896,28 +1244,35 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
-      {/* Header */}
       <div className="flex justify-between items-center p-4 bg-black/50">
         <h2 className="text-white text-lg font-semibold">
           {type === "story" ? t("storyTime") : t("coloringBook")} - {t("flipbook")}
         </h2>
         <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
-          >
-            ✕
-          </button>
+          {/* Audio Controls */}
+          {currentAudio && (
+            <button
+              onClick={stopAudio}
+              className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm"
+            >
+              🔇 Stop Audio
+            </button>
+          )}
           <button
             onClick={() => (isReading ? stopReading() : startReading())}
             className="bg-yellow-500 text-black px-4 py-2 rounded-lg"
           >
             {isReading ? "⏸ Pause" : "▶️ Resume"}
           </button>
+          <button
+            onClick={onClose}
+            className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
+          >
+            ✕
+          </button>
         </div>
       </div>
 
-      {/* Flipbook */}
       <div className="flex-1 flex items-center justify-center overflow-hidden">
         <HTMLFlipBook
           width={isMobile ? 320 : 400}
@@ -950,7 +1305,6 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
               key={idx}
               className="relative flex flex-col justify-between p-6 rounded-[6px] border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white"
             >
-              {/* Paper texture */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -962,8 +1316,14 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
                 }}
               />
 
-              {/* Page content */}
               <div className="relative z-20 flex flex-col justify-between h-full">
+                {/* Audio Indicator */}
+                {page.audio_url && (
+                  <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 text-xs">
+                    🔊
+                  </div>
+                )}
+
                 <div className="flex-1 flex items-center justify-center">
                   <img
                     src={page.image_url}
@@ -981,11 +1341,18 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           ))}
         </HTMLFlipBook>
       </div>
+
+      {/* Audio status indicator */}
+      {currentAudio && (
+        <div className="absolute bottom-4 left-4 bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+          <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+          Playing audio...
+        </div>
+      )}
     </div>
   );
 };
 
-// Hook outside
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -997,9 +1364,7 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-// =====================
-// BOOK CARD WITH VIDEO PREVIEW
-// =====================
+// Updated BookCard with hover unmute functionality
 const BookCard = ({
   day,
   onOpen,
@@ -1024,7 +1389,6 @@ const BookCard = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const controls = useAnimation();
 
-  // Intersection Observer to detect visibility
   useEffect(() => {
     if (!cardRef.current) return;
 
@@ -1037,14 +1401,12 @@ const BookCard = ({
     return () => observer.disconnect();
   }, []);
 
-  // Animate in when visible
   useEffect(() => {
     if (isVisible) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.3 } });
     }
   }, [isVisible, controls]);
 
-  // Periodic animation
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
@@ -1077,7 +1439,6 @@ const BookCard = ({
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      {/* Spine */}
       <motion.div
         className={`absolute ${
           type === "story" ? "left-0 rounded-l-lg" : "right-0 rounded-r-lg"
@@ -1096,7 +1457,6 @@ const BookCard = ({
         }
       />
 
-      {/* Cover with Video Preview */}
       <motion.div
         className={`absolute inset-0 rounded-lg shadow-xl border-4 ${defaultBorderColor} p-6 flex flex-col items-center text-center overflow-hidden ${
           !isAvailable ? "grayscale opacity-70" : ""
@@ -1111,15 +1471,18 @@ const BookCard = ({
             : {}
         }
       >
-        {/* Video Preview Background */}
-        <div className="absolute inset-0 overflow-hidden rounded-lg">
+        <div 
+          className="absolute inset-0 overflow-hidden rounded-lg"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           {previewUrl && isVisible ? (
             <video
               key={previewUrl}
               src={previewUrl}
               autoPlay
               loop
-              muted={isMuted}
+              muted={isMuted && !isHovered}
               playsInline
               preload="metadata"
               className="w-full h-full object-cover"
@@ -1142,7 +1505,6 @@ const BookCard = ({
           <div className="absolute inset-0 bg-black/40 z-1" />
         </div>
         
-        {/* Content */}
         <div className="relative z-10 w-full h-full flex flex-col">
           <motion.div
             className="text-5xl mb-4"
@@ -1193,7 +1555,6 @@ const BookCard = ({
         </div>
       </motion.div>
 
-      {/* Hover Curl */}
       <AnimatePresence>
         {isHovered && isAvailable && (
           <motion.div
@@ -1212,9 +1573,6 @@ const BookCard = ({
   );
 };
 
-// =====================
-// DATE SELECTOR BUTTON
-// =====================
 const DateButton = ({
   date,
   isSelected,
@@ -1265,6 +1623,7 @@ const DateButton = ({
   );
 };
 
+// Updated MissionCard with hover unmute functionality
 const MissionCard = ({
   mission,
   completed,
@@ -1274,7 +1633,8 @@ const MissionCard = ({
   t,
   index,
   missionSlides,
-  setOpenSlides
+  setOpenSlides,
+  onLikeVideo
 }: {
   mission: Mission & { preview_url?: string };
   completed: boolean;
@@ -1285,6 +1645,7 @@ const MissionCard = ({
   index: number;
   missionSlides: Record<string, Slide[]>;
   setOpenSlides: (slides: { slides: Slide[], mission: Mission }) => void;
+  onLikeVideo: (mission: Mission) => void;
 }) => {
   const defaultPreviewUrl = 'https://your-bucket.s3.amazonaws.com/mission-previews/mission-preview-artistic.mp4';
 
@@ -1294,11 +1655,12 @@ const MissionCard = ({
 
   const [isMuted, setIsMuted] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   const controls = useAnimation();
 
-  // Intersection Observer to detect visibility
   useEffect(() => {
     if (!cardRef.current) return;
 
@@ -1311,14 +1673,18 @@ const MissionCard = ({
     return () => observer.disconnect();
   }, []);
 
-  // Animate in when visible
   useEffect(() => {
     if (isVisible) {
       controls.start({ opacity: 1, y: 0, transition: { duration: 0.3, delay: Math.min(index * 0.1, 0.5) } });
     }
   }, [isVisible, controls, index]);
 
-  console.log("Mission Preview URL:", mission.title, previewUrl);
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLiked(true);
+    onLikeVideo(mission);
+    setTimeout(() => setIsLiked(false), 1000);
+  };
 
   return (
     <motion.div
@@ -1335,24 +1701,44 @@ const MissionCard = ({
             : "border-purple-200 hover:border-purple-300"
         }`}
       >
-        {/* Completed Badge */}
         {completed && (
-          <div className="absolute top-3 right-3 bg-green-500 text-white p-1 rounded-full">
+          <div className="absolute top-3 right-3 bg-green-500 text-white p-1 rounded-full z-10">
             <CheckCircle className="h-5 w-5" />
           </div>
         )}
 
-        {/* Video Preview + Title */}
+        {hasVideo && (
+          <button
+            onClick={handleLikeClick}
+            className="absolute top-3 right-12 z-20 bg-white/90 hover:bg-pink-50 rounded-full p-2 transition-all duration-300 shadow-md hover:shadow-lg"
+            aria-label="Like video"
+            title="Add to favorites"
+          >
+            <motion.div
+              animate={isLiked ? { scale: [1, 1.3, 1] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              <Heart 
+                className={`h-5 w-5 ${isLiked ? 'text-pink-500 fill-pink-500' : 'text-gray-600'}`} 
+              />
+            </motion.div>
+          </button>
+        )}
+
         <CardHeader className="pb-2">
           <div className="flex flex-col gap-2">
-            <div className="w-full aspect-video rounded-xl overflow-hidden shadow-md border border-purple-200 bg-black">
+            <div 
+              className="w-full aspect-video rounded-xl overflow-hidden shadow-md border border-purple-200 bg-black"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
               {previewUrl && isVisible ? (
                 <video
                   key={previewUrl}
                   src={previewUrl}
                   autoPlay
                   loop
-                  muted={isMuted}
+                  muted={isMuted && !isHovered}
                   playsInline
                   preload="metadata"
                   className="w-full h-full object-cover"
@@ -1374,7 +1760,6 @@ const MissionCard = ({
           </div>
         </CardHeader>
 
-        {/* Card Content: Buttons */}
         <CardContent className="grid gap-3">
           <div className="grid gap-2">
             {hasVideo && (
@@ -1400,7 +1785,6 @@ const MissionCard = ({
             )}
           </div>
 
-          {/* Complete Mission Button */}
           {!completed ? (
             <Button
               onClick={() => onManualComplete(mission)}
@@ -1431,7 +1815,7 @@ const MissionCard = ({
   );
 };
 
-// Main Component with translations
+// Main Component
 const MissionsComponent = () => {
   const [missionProgram, setMissionProgram] = useState<DayData[]>([]);
   const [selectedDay, setSelectedDay] = useState(1);
@@ -1447,13 +1831,18 @@ const MissionsComponent = () => {
   const [bookCovers, setBookCovers] = useState<BookCover[]>([]);
   const { language } = useLanguage();
   const [showChildNameModal, setShowChildNameModal] = useState(false);
+  const [showChildSelectionModal, setShowChildSelectionModal] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [missionToComplete, setMissionToComplete] = useState<Mission | null>(null);
+  const [videoToLike, setVideoToLike] = useState<Mission | AudioTrack | null>(null);
   const [childNotFound, setChildNotFound] = useState(false);
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const [videoCompletion, setVideoCompletion] = useState<Record<string, boolean>>({});
   const [openSlides, setOpenSlides] = useState<{slides: any[], mission: Mission} | null>(null);
   const [missionSlides, setMissionSlides] = useState<Record<string, any[]>>({});
   const [nimiContent, setNimiContent] = useState<string>("");
+  const [userChildren, setUserChildren] = useState<Child[]>([]);
+  const { user } = useUser();
   
   // Generate dates for the mission program
   const dates = useMemo(() => {
@@ -1483,14 +1872,11 @@ const MissionsComponent = () => {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    // Always make day 1 available
     available.add(1);
     
-    // For each subsequent day, check if current date is past the unlock date
     missionProgram.forEach(day => {
-      if (day.day === 1) return; // Already added
+      if (day.day === 1) return;
       
-      // Calculate unlock date (midnight after day-1 days)
       const unlockDate = new Date(currentYear, currentMonth, currentDay - (day.day - 1));
       unlockDate.setHours(0, 0, 0, 0);
       
@@ -1502,12 +1888,11 @@ const MissionsComponent = () => {
     return available;
   }, [missionProgram]);
 
-  // Check if a day is available
   const isDayAvailable = (day: number) => {
     return availableDays.has(day);
   };
 
-  // Categorize missions
+  // Categorize missions with proper ordering for afternoon missions
   const categorizeMissions = (missions: Mission[]) => {
     const categorized = {
       morning: [] as Mission[],
@@ -1562,7 +1947,136 @@ const MissionsComponent = () => {
       }
     });
 
+    // Sort afternoon missions in specific order: Zoom 2025, Toctoc Fun, Daily Progress Capsule
+    categorized.afternoon.sort((a, b) => {
+      const order = ['zoom 2025', 'toctoc fun', 'daily progress capsule'];
+      const aTitle = a.title.toLowerCase();
+      const bTitle = b.title.toLowerCase();
+      
+      const aIndex = order.findIndex(pattern => aTitle.includes(pattern));
+      const bIndex = order.findIndex(pattern => bTitle.includes(pattern));
+      
+      if (aIndex === -1 && bIndex === -1) return 0;
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      
+      return aIndex - bIndex;
+    });
+
     return categorized;
+  };
+
+  // Get user's children if parent
+  const fetchUserChildren = async () => {
+    if (!user) return;
+
+    try {
+      const { data: children, error } = await supabase
+        .from('children')
+        .select('*')
+        .eq('parent_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching children:', error);
+        return;
+      }
+
+      setUserChildren(children || []);
+    } catch (error) {
+      console.error('Error fetching children:', error);
+    }
+  };
+
+  // Save liked video to playlists table - FIXED VERSION
+  const saveLikedVideo = async (videoData: Mission | AudioTrack, childId?: string, childName?: string) => {
+    try {
+      if (!user) {
+        toast.error('Please log in to save videos');
+        return;
+      }
+
+      // Ensure we have valid data
+      if (!videoData.id) {
+        console.error('Invalid video data:', videoData);
+        toast.error('Invalid video data');
+        return;
+      }
+
+      const playlistData: any = {
+        user_id: user.id,
+        video_id: videoData.id,
+        video_title: 'title' in videoData ? videoData.title : videoData.title,
+        video_url: 'video_url' in videoData ? videoData.video_url : videoData.audio_url,
+        created_at: new Date().toISOString()
+      };
+
+      // Only add child_id if provided and valid
+      if (childId && childId.trim() !== '') {
+        playlistData.child_id = childId;
+      }
+
+      const { data, error } = await supabase
+        .from('playlists')
+        .insert([playlistData])
+        .select();
+
+      if (error) {
+        console.error('Error saving liked video:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        toast.error(t('videoLikeError'));
+        return;
+      }
+
+      toast.success(t('videoLiked'));
+    } catch (error) {
+      console.error('Error saving liked video:', error);
+      toast.error(t('videoLikeError'));
+    }
+  };
+
+  // Handle like video click
+  const handleLikeVideo = (video: Mission | AudioTrack) => {
+    if (!user) {
+      toast.error('Please log in to save videos');
+      return;
+    }
+
+    setVideoToLike(video);
+
+    // Check if user is a parent with children
+    if (user.role === 'parent') {
+      if (userChildren.length > 0) {
+        setShowChildSelectionModal(true);
+      } else {
+        toast.error(t('addChildFirst'));
+      }
+    } else {
+      // Regular user or child - ask for name
+      setShowChildNameModal(true);
+    }
+  };
+
+  // Handle child selection for parents
+  const handleChildSelect = (childId: string) => {
+    if (videoToLike) {
+      saveLikedVideo(videoToLike, childId);
+      setVideoToLike(null);
+      setShowChildSelectionModal(false);
+    }
+  };
+
+  // Handle child name input for regular users
+  const handleChildNameSubmit = (childName: string) => {
+    if (videoToLike) {
+      saveLikedVideo(videoToLike, undefined, childName);
+      setVideoToLike(null);
+      setShowChildNameModal(false);
+    }
   };
 
   // Fetch all data
@@ -1579,22 +2093,21 @@ const MissionsComponent = () => {
         if (missionsError) throw missionsError;
         if (missions) setMissionProgram(groupMissionsByDay(missions));
 
-        // Fetch completions from local storage first
+        // Fetch completions
         const storedCompletions = localStorage.getItem('missionCompletions');
         if (storedCompletions) {
           setCompletions(JSON.parse(storedCompletions));
         }
 
-        // Also fetch from database for persistence
         const { data: dbCompletions, error: completionsError } = await supabase
-          .from("mission_completions")
-          .select("mission_id, completed_at, child_name");
+          .from("completed_missions")
+          .select("mission_id, completed_at, child_name, child_id");
 
         if (!completionsError && dbCompletions) {
           setCompletions(prev => {
             const merged = [...prev];
             dbCompletions.forEach(dbCompletion => {
-              if (!prev.find(c => c.mission_id === dbCompletion.mission_id)) {
+              if (!prev.find(c => c.mission_id === dbCompletion.mission_id && c.child_id === dbCompletion.child_id)) {
                 merged.push(dbCompletion);
               }
             });
@@ -1602,31 +2115,27 @@ const MissionsComponent = () => {
           });
         }
 
-                  // Map the current date to one of the 5 tracks
-          const currentDate = new Date().getDate(); // 1..31
-          const mappedDay = ((currentDate - 1) % 5) + 1; // loops 1-5
+        // Fetch audio track
+        const currentDate = new Date().getDate();
+        const mappedDay = ((currentDate - 1) % 5) + 1;
 
-          try {
-            const { data: audioData, error: audioError } = await supabase
-              .from("audio_tracks")
-              .select("id, title, audio_url, preview_url, day")
-              .eq("day", mappedDay)
-              .single(); // safe now because mappedDay always matches exactly one row
+        try {
+          const { data: audioData, error: audioError } = await supabase
+            .from("audio_tracks")
+            .select("id, title, audio_url, preview_url, day")
+            .eq("day", mappedDay)
+            .single();
 
-            if (audioError) {
-              console.error("Error loading audio track:", audioError.message);
-            } else if (audioData) {
-              console.log(`Audio track for mapped day ${mappedDay} loaded:`, audioData);
-              setAudioTrack(audioData);
-            } else {
-              console.warn("No audio track found for mapped day", mappedDay);
-            }
-          } catch (err) {
-            console.error("Unexpected error fetching morning video:", err);
+          if (audioError) {
+            console.error("Error loading audio track:", audioError.message);
+          } else if (audioData) {
+            setAudioTrack(audioData);
           }
+        } catch (err) {
+          console.error("Unexpected error fetching morning video:", err);
+        }
 
-
-        // Fetch book covers with preview_url
+        // Fetch book covers
         const { data: covers, error: coversError } = await supabase
           .from("book_covers")
           .select("*");
@@ -1645,7 +2154,14 @@ const MissionsComponent = () => {
     fetchAllData();
   }, []);
 
-  // Save completions to local storage whenever they change
+  // Fetch user children when user changes
+  useEffect(() => {
+    if (user) {
+      fetchUserChildren();
+    }
+  }, [user]);
+
+  // Save completions to local storage
   useEffect(() => {
     localStorage.setItem('missionCompletions', JSON.stringify(completions));
   }, [completions]);
@@ -1655,7 +2171,6 @@ const MissionsComponent = () => {
     const fetchDayContent = async () => {
       setIsLoading(true);
       try {
-        // Fetch story pages from storybook bucket
         const { data: storyData, error: storyError } = await supabase
           .from("storybook_pages")
           .select("*")
@@ -1665,7 +2180,6 @@ const MissionsComponent = () => {
         if (storyError) throw storyError;
         setStoryPages(storyData || []);
 
-        // Fetch coloring pages from coloriage bucket
         const { data: coloringData, error: coloringError } = await supabase
           .from("coloring_book_pages")
           .select("*")
@@ -1736,7 +2250,7 @@ const MissionsComponent = () => {
   };
 
   const completedIds = useMemo(
-    () => new Set(completions.map((c) => c.mission_id)),
+    () => new Set(completions.map((c) => `${c.mission_id}-${c.child_id || 'anonymous'}`)),
     [completions]
   );
 
@@ -1758,92 +2272,29 @@ const MissionsComponent = () => {
     return categorizeMissions(currentDayData.missions);
   }, [currentDayData]);
 
-  const handleMissionComplete = async (mission: Mission, childName?: string) => {
-    if (completedIds.has(mission.id)) {
+  // FIXED: Mission completion function
+  const handleMissionComplete = async (mission: Mission, childId?: string) => {
+    const completionKey = `${mission.id}-${childId || 'anonymous'}`;
+    
+    if (completedIds.has(completionKey)) {
       toast.info(t('missionAlreadyCompleted'));
       return;
     }
 
     try {
-      let childId: string | null = null;
-      
-      if (childName && childName.trim() !== '') {
-        const trimmedName = childName.trim();
-        
-        const { data: existingChildren, error: findError } = await supabase
-          .from('children')
-          .select('id')
-          .ilike('name', trimmedName)
-          .limit(1);
-
-        if (findError) {
-          console.error('Error finding child:', findError);
-          throw new Error(`Failed to find child: ${findError.message}`);
-        }
-
-        if (existingChildren && existingChildren.length > 0) {
-          childId = existingChildren[0].id;
-          
-          const { data: existingCompletion, error: completionError } = await supabase
-            .from('mission_completions')
-            .select('id')
-            .eq('mission_id', mission.id)
-            .eq('child_id', childId)
-            .maybeSingle();
-
-          if (completionError) {
-            console.error('Error checking existing completion:', completionError);
-            throw new Error(`Failed to check existing completion: ${completionError.message}`);
-          }
-
-          if (existingCompletion) {
-            toast.info(t('missionAlreadyCompleted'));
-            return;
-          }
-        } else {
-          const { data: newChild, error: createError } = await supabase
-            .from('children')
-            .insert([{ name: trimmedName }])
-            .select('id')
-            .single();
-
-          if (createError) {
-            console.error('Error creating child:', createError);
-            throw new Error(`Failed to create child: ${createError.message}`);
-          }
-
-          childId = newChild.id;
-        }
-      } else {
-        const { data: existingCompletion, error: completionError } = await supabase
-          .from('mission_completions')
-          .select('id')
-          .eq('mission_id', mission.id)
-          .is('child_id', null)
-          .maybeSingle();
-
-        if (completionError) {
-          console.error('Error checking existing completion:', completionError);
-          throw new Error(`Failed to check existing completion: ${completionError.message}`);
-        }
-
-        if (existingCompletion) {
-          toast.info(t('missionAlreadyCompleted'));
-          return;
-        }
-      }
-
+      // Prepare completion data - child_id is optional in your schema
       const completionData: any = {
         mission_id: mission.id,
         completed_at: new Date().toISOString()
       };
 
-      if (childId) {
+      // Only add child_id if provided
+      if (childId && childId.trim() !== '') {
         completionData.child_id = childId;
       }
 
       const { data, error } = await supabase
-        .from('mission_completions')
+        .from('completed_missions')
         .insert([completionData])
         .select()
         .single();
@@ -1859,7 +2310,7 @@ const MissionsComponent = () => {
       const newCompletion = {
         mission_id: mission.id,
         completed_at: new Date().toISOString(),
-        child_name: childName
+        child_id: childId
       };
 
       setCompletions((prev) => [...prev, newCompletion]);
@@ -1873,7 +2324,15 @@ const MissionsComponent = () => {
         origin: { y: 0.6 },
       });
 
-      if (currentDayData?.missions.every(m => completedIds.has(m.id) || m.id === mission.id)) {
+      // Check if all missions for the day are completed
+      const dayMissions = currentDayData?.missions || [];
+      const dayCompletions = completions.filter(c => 
+        dayMissions.some(m => m.id === c.mission_id)
+      );
+      
+      if (dayMissions.every(m => 
+        completions.some(c => c.mission_id === m.id) || m.id === mission.id
+      )) {
         setShowDayCompleteModal(true);
       }
     } catch (error) {
@@ -1904,13 +2363,28 @@ const MissionsComponent = () => {
       return;
     }
 
-    if (completedIds.has(mission.id)) {
+    const completionKey = `${mission.id}-anonymous`;
+    if (completedIds.has(completionKey)) {
       toast.info(t('missionAlreadyCompleted'));
       return;
     }
 
     setMissionToComplete(mission);
-    setShowChildNameModal(true);
+    
+    // Show avatar selection for parents with children, otherwise show name input
+    if (user && user.role === 'parent' && userChildren.length > 0) {
+      setShowAvatarModal(true);
+    } else {
+      setShowChildNameModal(true);
+    }
+  };
+
+  const handleAvatarSelect = (childId: string) => {
+    if (missionToComplete) {
+      handleMissionComplete(missionToComplete, childId);
+      setMissionToComplete(null);
+      setShowAvatarModal(false);
+    }
   };
 
   const handleOpenStorybook = () => {
@@ -1997,7 +2471,7 @@ const MissionsComponent = () => {
 
       {/* Morning Mission Song Card */}
       <div className="w-full px-2 mb-8">
-        <MorningVideoCard video={audioTrack} t={t} />
+        <MorningVideoCard video={audioTrack} t={t} onLikeVideo={handleLikeVideo} />
       </div>
     
       {/* Morning Mission Section */}
@@ -2010,10 +2484,11 @@ const MissionsComponent = () => {
               <MissionCard
                 key={mission.id}
                 mission={mission}
-                completed={completedIds.has(mission.id)}
+                completed={completedIds.has(`${mission.id}-anonymous`)}
                 videoWatched={videoCompletion[mission.id]}
                 onVideoOpen={handleVideoOpen}
                 onManualComplete={handleManualCompletion}
+                onLikeVideo={handleLikeVideo}
                 t={t}
                 index={index}
                 missionSlides={missionSlides}
@@ -2030,7 +2505,6 @@ const MissionsComponent = () => {
         categorizedMissions.movement.length > 0) && (
         <section className="max-w-6xl mx-auto px-2 md:px-4 w-full mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full">
-            {/* Artistic Mission */}
             {categorizedMissions.artistic.length > 0 && (
               <div className="flex flex-col">
                 <h4 className="text-lg font-semibold mb-2 text-center">{t('artisticMission')}</h4>
@@ -2038,10 +2512,11 @@ const MissionsComponent = () => {
                   <MissionCard
                     key={mission.id}
                     mission={mission}
-                    completed={completedIds.has(mission.id)}
+                    completed={completedIds.has(`${mission.id}-anonymous`)}
                     videoWatched={videoCompletion[mission.id]}
                     onVideoOpen={handleVideoOpen}
                     onManualComplete={handleManualCompletion}
+                    onLikeVideo={handleLikeVideo}
                     t={t}
                     index={index}
                     missionSlides={missionSlides}
@@ -2051,7 +2526,6 @@ const MissionsComponent = () => {
               </div>
             )}
             
-            {/* Discovery Mission */}
             {categorizedMissions.discovery.length > 0 && (
               <div className="flex flex-col">
                 <h4 className="text-lg font-semibold mb-2 text-center">{t('discoveryMission')}</h4>
@@ -2059,10 +2533,11 @@ const MissionsComponent = () => {
                   <MissionCard
                     key={mission.id}
                     mission={mission}
-                    completed={completedIds.has(mission.id)}
+                    completed={completedIds.has(`${mission.id}-anonymous`)}
                     videoWatched={videoCompletion[mission.id]}
                     onVideoOpen={handleVideoOpen}
                     onManualComplete={handleManualCompletion}
+                    onLikeVideo={handleLikeVideo}
                     t={t}
                     index={index}
                     missionSlides={missionSlides}
@@ -2072,7 +2547,6 @@ const MissionsComponent = () => {
               </div>
             )}
             
-            {/* Movement Mission */}
             {categorizedMissions.movement.length > 0 && (
               <div className="flex flex-col">
                 <h4 className="text-lg font-semibold mb-2 text-center">{t('movementMission')}</h4>
@@ -2080,10 +2554,11 @@ const MissionsComponent = () => {
                   <MissionCard
                     key={mission.id}
                     mission={mission}
-                    completed={completedIds.has(mission.id)}
+                    completed={completedIds.has(`${mission.id}-anonymous`)}
                     videoWatched={videoCompletion[mission.id]}
                     onVideoOpen={handleVideoOpen}
                     onManualComplete={handleManualCompletion}
+                    onLikeVideo={handleLikeVideo}
                     t={t}
                     index={index}
                     missionSlides={missionSlides}
@@ -2096,7 +2571,7 @@ const MissionsComponent = () => {
         </section>
       )}
       
-      {/* Storybook and Coloring Book Cards with Video Previews */}
+      {/* Storybook and Coloring Book Cards */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-8 mt-6 md:mt-8 px-2 mb-8">
         {storyPages.length > 0 && (
           <BookCard 
@@ -2132,10 +2607,11 @@ const MissionsComponent = () => {
               <MissionCard
                 key={mission.id}
                 mission={mission}
-                completed={completedIds.has(mission.id)}
+                completed={completedIds.has(`${mission.id}-anonymous`)}
                 videoWatched={videoCompletion[mission.id]}
                 onVideoOpen={handleVideoOpen}
                 onManualComplete={handleManualCompletion}
+                onLikeVideo={handleLikeVideo}
                 t={t}
                 index={index}
                 missionSlides={missionSlides}
@@ -2152,11 +2628,32 @@ const MissionsComponent = () => {
         onClose={() => setShowChildNameModal(false)}
         onConfirm={(childName) => {
           if (missionToComplete) {
-            handleMissionComplete(missionToComplete, childName);
+            // For name input, we'll complete without child_id
+            handleMissionComplete(missionToComplete);
+          } else if (videoToLike) {
+            handleChildNameSubmit(childName);
           }
           setShowChildNameModal(false);
           setMissionToComplete(null);
         }}
+        t={t}
+      />
+
+      {/* Child Avatar Selection Modal */}
+      <ChildAvatarModal
+        isOpen={showAvatarModal}
+        onClose={() => setShowAvatarModal(false)}
+        onConfirm={handleAvatarSelect}
+        children={userChildren}
+        t={t}
+      />
+
+      {/* Child Selection Modal for Parents */}
+      <ChildSelectionModal
+        isOpen={showChildSelectionModal}
+        onClose={() => setShowChildSelectionModal(false)}
+        onConfirm={handleChildSelect}
+        children={userChildren}
         t={t}
       />
 
@@ -2233,7 +2730,8 @@ const MissionsComponent = () => {
             pages={storyPages.map(page => ({
               image_url: page.image_url,
               page_number: page.page_number,
-              text: page.text
+              text: page.text,
+              audio_url: page.audio_url
             }))}
             onClose={handleCloseStorybook}
             type="story"
@@ -2248,7 +2746,8 @@ const MissionsComponent = () => {
           <FlipBookViewer  
             pages={coloringPages.map(page => ({
               image_url: page.image_url,
-              page_number: page.page_number
+              page_number: page.page_number,
+              audio_url: page.audio_url
             }))}
             onClose={handleCloseColoringBook}
             type="coloring"
@@ -2265,6 +2764,7 @@ const MissionsComponent = () => {
             onClose={() => setOpenVideo(null)}
             mission={openVideo.mission}
             onMissionComplete={handleVideoComplete}
+            onLikeVideo={handleLikeVideo}
             t={t}
           />
         )}

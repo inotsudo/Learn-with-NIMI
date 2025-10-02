@@ -739,7 +739,7 @@ useEffect(() => {
                 </div>
               ) : (
                 <img
-                  src="/community-header.png"
+                  src="/community.jpeg"
                   alt="Creative Community"
                   className="w-full max-h-[600px] object-cover rounded-2xl shadow-xl transition-transform duration-500 hover:scale-[1.02]"
                   onError={() => setHeaderImageError(true)}
