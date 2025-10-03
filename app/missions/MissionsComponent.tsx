@@ -1987,57 +1987,57 @@ const MissionsComponent = () => {
       console.error('Error fetching children:', error);
     }
   };
-
-  // Save liked video to playlists table - FIXED VERSION
-  const saveLikedVideo = async (videoData: Mission | AudioTrack, childId?: string, childName?: string) => {
-    try {
-      if (!user) {
-        toast.error('Please log in to save videos');
-        return;
-      }
-
-      // Ensure we have valid data
-      if (!videoData.id) {
-        console.error('Invalid video data:', videoData);
-        toast.error('Invalid video data');
-        return;
-      }
-
-      const playlistData: any = {
-        user_id: user.id,
-        video_id: videoData.id,
-        video_title: 'title' in videoData ? videoData.title : videoData.title,
-        video_url: 'video_url' in videoData ? videoData.video_url : videoData.audio_url,
-        created_at: new Date().toISOString()
-      };
-
-      // Only add child_id if provided and valid
-      if (childId && childId.trim() !== '') {
-        playlistData.child_id = childId;
-      }
-
-      const { data, error } = await supabase
-        .from('playlists')
-        .insert([playlistData])
-        .select();
-
-      if (error) {
-        console.error('Error saving liked video:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        toast.error(t('videoLikeError'));
-        return;
-      }
-
-      toast.success(t('videoLiked'));
-    } catch (error) {
-      console.error('Error saving liked video:', error);
-      toast.error(t('videoLikeError'));
+// Save liked video to playlists table - FIXED VERSION
+const saveLikedVideo = async (
+  videoData: Mission | AudioTrack,
+  childId?: string,
+  childName?: string
+) => {
+  try {
+    if (!user) {
+      toast.error("Please log in to save videos");
+      return;
     }
-  };
+
+    if (!videoData.id) {
+      console.error("Invalid video data:", videoData);
+      toast.error("Invalid video data");
+      return;
+    }
+
+    const playlistData = {
+      user_id: user.id,
+      video_id: videoData.id,
+      // Both Mission and AudioTrack have title
+      video_title: videoData.title,
+      // Narrow for url
+      video_url: "video_url" in videoData ? videoData.video_url : videoData.audio_url,
+      created_at: new Date().toISOString(),
+      ...(childId && childId.trim() !== "" ? { child_id: childId } : {}),
+    };
+
+    const { data, error } = await supabase
+      .from("playlists")
+      .insert([playlistData])
+      .select();
+
+    if (error) {
+      console.error("Error saving liked video:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
+      toast.error(t("videoLikeError"));
+      return;
+    }
+
+    toast.success(t("videoLiked"));
+  } catch (error) {
+    console.error("Error saving liked video:", error);
+    toast.error(t("videoLikeError"));
+  }
+};
 
   // Handle like video click
   const handleLikeVideo = (video: Mission | AudioTrack) => {
