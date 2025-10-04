@@ -102,7 +102,15 @@ const translations = {
     noChildrenFound: "No children found. Please add children in your profile.",
     addChildFirst: "Please add children to your profile first",
     selectYourProfile: "Select Your Profile",
-    whoIsCompleting: "Who is completing this mission?"
+    whoIsCompleting: "Who is completing this mission?",
+    selectChildFirst: "Please select a child first",
+    enterYourName: "Enter your name",
+    yourName: "Your Name",
+    saveVideo: "Save Video",
+    dailyProgressCapsule: "Daily Progress Capsule",
+    playAudio: "Play Audio",
+    pauseAudio: "Pause Audio",
+    audioPlaying: "Audio Playing..."
   },
   es: {
     magicalLearning: "Aprendizaje Mágico",
@@ -156,7 +164,15 @@ const translations = {
     noChildrenFound: "No se encontraron niños. Por favor agregue niños en su perfil.",
     addChildFirst: "Por favor agregue niños a su perfil primero",
     selectYourProfile: "Selecciona Tu Perfil",
-    whoIsCompleting: "¿Quién está completando esta misión?"
+    whoIsCompleting: "¿Quién está completando esta misión?",
+    selectChildFirst: "Por favor selecciona un niño primero",
+    enterYourName: "Ingresa tu nombre",
+    yourName: "Tu Nombre",
+    saveVideo: "Guardar Video",
+    dailyProgressCapsule: "Cápsula de Progreso Diario",
+    playAudio: "Reproducir Audio",
+    pauseAudio: "Pausar Audio",
+    audioPlaying: "Audio Reproduciéndose..."
   },
   fr: {
     magicalLearning: "Apprentissage Magique",
@@ -210,7 +226,15 @@ const translations = {
     noChildrenFound: "Aucun enfant trouvé. Veuillez ajouter des enfants dans votre profil.",
     addChildFirst: "Veuillez d'abord ajouter des enfants à votre profil",
     selectYourProfile: "Sélectionnez Votre Profil",
-    whoIsCompleting: "Qui termine cette mission?"
+    whoIsCompleting: "Qui termine cette mission?",
+    selectChildFirst: "Veuillez d'abord sélectionner un enfant",
+    enterYourName: "Entrez votre nom",
+    yourName: "Votre Nom",
+    saveVideo: "Sauvegarder la Vidéo",
+    dailyProgressCapsule: "Capsule de Progrès Quotidien",
+    playAudio: "Lire l'Audio",
+    pauseAudio: "Pause Audio",
+    audioPlaying: "Audio en cours..."
   },
   rw: {
     magicalLearning: "Kwiga Ubumenyi",
@@ -264,7 +288,15 @@ const translations = {
     noChildrenFound: "Ntabwo abana babonetse. Nyamuneka ongeza abana mu rubuga rwawe.",
     addChildFirst: "Nyamuneka ongeza abana mu rubuga rwawe mbere",
     selectYourProfile: "Hitamo Umwirondoro",
-    whoIsCompleting: "Ni nde ukomeje iyi mishini?"
+    whoIsCompleting: "Ni nde ukomeje iyi mishini?",
+    selectChildFirst: "Nyamuneka hitamo umwana mbere",
+    enterYourName: "Andika izina ryawe",
+    yourName: "Izina ryawe",
+    saveVideo: "Bika Video",
+    dailyProgressCapsule: "Ingingo y'Iterambere rya buri munsi",
+    playAudio: "Kina Audio",
+    pauseAudio: "Pause Audio",
+    audioPlaying: "Audio iri gukina..."
   },
   sw: {
     magicalLearning: "Kujifunza Kichawi",
@@ -318,7 +350,15 @@ const translations = {
     noChildrenFound: "Hakuna watoto walopatikana. Tafadhali ongeza watoto kwenye wasifu wako.",
     addChildFirst: "Tafadhali ongeza watoto kwenye wasifu wako kwanza",
     selectYourProfile: "Chagua Wasifu Wako",
-    whoIsCompleting: "Nani anakamilisha misheni hii?"
+    whoIsCompleting: "Nani anakamilisha misheni hii?",
+    selectChildFirst: "Tafadhali chagua mtoto kwanza",
+    enterYourName: "Weka jina lako",
+    yourName: "Jina Lako",
+    saveVideo: "Hifadhi Video",
+    dailyProgressCapsule: "Kapsuli ya Maendeleo ya Kila Siku",
+    playAudio: "Cheza Audio",
+    pauseAudio: "Pause Audio",
+    audioPlaying: "Audio inacheza..."
   }
 };
 
@@ -346,6 +386,7 @@ interface Mission {
   mission_type: string;
   preview_url?: string;
   category?: string;
+  audio_url?: string;
 }
 
 interface CompletionData {
@@ -412,6 +453,7 @@ interface Slide {
   image_url: string;
   title?: string;
   description?: string;
+  audio_url?: string;
 }
 
 interface Child {
@@ -422,7 +464,7 @@ interface Child {
   avatar_url?: string;
 }
 
-// Child Avatar Selection Modal
+// Child Avatar Selection Modal for Mission Completion
 const ChildAvatarModal = ({ 
   isOpen, 
   onClose, 
@@ -493,7 +535,7 @@ const ChildAvatarModal = ({
   );
 };
 
-// Child Selection Modal for Parents
+// Child Selection Modal for Video Likes (Parents)
 const ChildSelectionModal = ({ 
   isOpen, 
   onClose, 
@@ -564,8 +606,8 @@ const ChildSelectionModal = ({
   );
 };
 
-// Child Name Input Modal for Regular Users
-const ChildNameModal = ({ 
+// Name Input Modal for Video Likes (Regular Users)
+const NameInputModal = ({ 
   isOpen, 
   onClose, 
   onConfirm,
@@ -589,33 +631,33 @@ const ChildNameModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('enterChildName')}</DialogTitle>
+          <DialogTitle>{t('enterYourName')}</DialogTitle>
           <DialogDescription>
-            Please enter a name to save this video to favorites
+            Please enter your name to save this video to favorites
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="child-name">{t('childName')}</Label>
+            <Label htmlFor="user-name">{t('yourName')}</Label>
             <Input
-              id="child-name"
+              id="user-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t('enterChildName')}
+              placeholder={t('enterYourName')}
               onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
-          <Button onClick={handleSubmit} disabled={!name.trim()}>{t('submit')}</Button>
+          <Button onClick={handleSubmit} disabled={!name.trim()}>{t('saveVideo')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-// Update the SlidesModal component with mission completion
+// Updated SlidesModal with Audio Support
 const SlidesModal = ({
   slides,
   onClose,
@@ -623,18 +665,20 @@ const SlidesModal = ({
   onMissionComplete,
   t
 }: {
-  slides: { image_url: string; title?: string; description?: string }[];
+  slides: Slide[];
   onClose: () => void;
   mission: Mission;
   onMissionComplete: (mission: Mission, childId?: string) => void;
   t: (key: string) => string;
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [processedSlides, setProcessedSlides] = useState<typeof slides>([]);
+  const [processedSlides, setProcessedSlides] = useState<Slide[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [userChildren, setUserChildren] = useState<Child[]>([]);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const { user } = useUser();
 
   // Fetch user's children
@@ -669,15 +713,30 @@ const SlidesModal = ({
     const processSlideImages = async () => {
       const processed = await Promise.all(
         slides.map(async (slide) => {
-          if (slide.image_url.startsWith("supabase://")) {
-            const path = slide.image_url.replace("supabase://", "");
+          let imageUrl = slide.image_url;
+          let audioUrl = slide.audio_url;
+
+          // Process image URL
+          if (imageUrl.startsWith("supabase://")) {
+            const path = imageUrl.replace("supabase://", "");
             const [bucket, ...filePath] = path.split("/");
             const { data: { publicUrl } } = await supabase.storage
               .from("mission_slides")
               .getPublicUrl(filePath.join("/"));
-            return { ...slide, image_url: publicUrl };
+            imageUrl = publicUrl;
           }
-          return slide;
+
+          // Process audio URL
+          if (audioUrl && audioUrl.startsWith("supabase://")) {
+            const path = audioUrl.replace("supabase://", "");
+            const [bucket, ...filePath] = path.split("/");
+            const { data: { publicUrl } } = await supabase.storage
+              .from("mission_slides")
+              .getPublicUrl(filePath.join("/"));
+            audioUrl = publicUrl;
+          }
+
+          return { ...slide, image_url: imageUrl, audio_url: audioUrl };
         })
       );
       setProcessedSlides(processed);
@@ -686,24 +745,75 @@ const SlidesModal = ({
     processSlideImages();
   }, [slides]);
 
+  // Play audio for current slide
+  const playAudioForSlide = (slide: Slide) => {
+    // Stop current audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+
+    // Play new audio if available
+    if (slide.audio_url) {
+      const audio = new Audio(slide.audio_url);
+      audio.preload = "auto";
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+        setCurrentAudio(null);
+      };
+      audio.play().catch(error => {
+        console.warn("Audio play failed:", error);
+        setIsPlayingAudio(false);
+      });
+      setCurrentAudio(audio);
+      setIsPlayingAudio(true);
+    } else {
+      setCurrentAudio(null);
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const stopAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+      setIsPlayingAudio(false);
+    }
+  };
+
   const nextSlide = () => {
     if (currentSlide < processedSlides.length - 1) {
-      setCurrentSlide(currentSlide + 1);
+      const nextSlideIndex = currentSlide + 1;
+      setCurrentSlide(nextSlideIndex);
       setImageError(false);
+      
+      // Play audio for the new slide
+      if (processedSlides[nextSlideIndex]) {
+        playAudioForSlide(processedSlides[nextSlideIndex]);
+      }
     } else {
       // Show avatar selection when completing mission from slides
       if (user && user.role === 'parent' && userChildren.length > 0) {
         setShowAvatarModal(true);
       } else {
+        // For non-parents or parents without children, complete without child_id
         onMissionComplete(mission);
+        onClose();
       }
     }
   };
 
   const prevSlide = () => {
     if (currentSlide > 0) {
-      setCurrentSlide(currentSlide - 1);
+      const prevSlideIndex = currentSlide - 1;
+      setCurrentSlide(prevSlideIndex);
       setImageError(false);
+      
+      // Play audio for the previous slide
+      if (processedSlides[prevSlideIndex]) {
+        playAudioForSlide(processedSlides[prevSlideIndex]);
+      }
     }
   };
 
@@ -732,6 +842,23 @@ const SlidesModal = ({
     onClose();
   };
 
+  // Auto-play audio when slide changes
+  useEffect(() => {
+    if (processedSlides.length > 0 && processedSlides[currentSlide]?.audio_url) {
+      playAudioForSlide(processedSlides[currentSlide]);
+    }
+  }, [currentSlide, processedSlides]);
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+    };
+  }, [currentAudio]);
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
@@ -747,12 +874,24 @@ const SlidesModal = ({
           <h2 className="text-white text-lg font-semibold">
             {mission.title} - Slide {currentSlide + 1} of {processedSlides.length}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors touch-target"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Audio Controls */}
+            {processedSlides[currentSlide]?.audio_url && (
+              <button
+                onClick={isPlayingAudio ? stopAudio : () => playAudioForSlide(processedSlides[currentSlide])}
+                className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+              >
+                {isPlayingAudio ? '⏸️' : '▶️'} 
+                {isPlayingAudio ? t('pauseAudio') : t('playAudio')}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors touch-target"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 relative overflow-hidden">
@@ -801,10 +940,17 @@ const SlidesModal = ({
             </button>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {isPlayingAudio && (
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                {t('audioPlaying')}
+              </div>
+            )}
+            
             <button
               onClick={downloadSlide}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors touch-target"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors touch-target ml-auto"
               title="Download Slide"
             >
               <Download className="h-4 w-4" />
@@ -1119,20 +1265,14 @@ const MorningVideoCard = ({ video, t, onLikeVideo }: { video: AudioTrack | null;
   );
 };
 
-// Enhanced FlipBookViewer with Audio Support
+// Enhanced FlipBookViewer without Narration
 const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t }) => {
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const isMobile = useIsMobile();
-
-  const { setCurrentContent, isReading, stopReading, startReading } = useNimiReader();
-
-  const getNarrationForPage = (page?: Page) => {
-    if (!page) return "";
-    return [page.ocrText, page.text, page.caption].filter(Boolean).join(" ").trim();
-  };
 
   // Process page images and audio
   useEffect(() => {
@@ -1158,23 +1298,12 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
             audioUrl = data.publicUrl;
           }
 
-          let ocrText = "";
-          try {
-            const { data } = await Tesseract.recognize(imageUrl, "eng");
-            ocrText = data.text.trim();
-          } catch (err) {
-            console.error("OCR failed for page", page.page_number, err);
-          }
-
-          return { ...page, image_url: imageUrl, audio_url: audioUrl, ocrText };
+          return { ...page, image_url: imageUrl, audio_url: audioUrl };
         })
       );
 
       setProcessedPages(newPages);
       setIsLoading(false);
-
-      const narration = getNarrationForPage(newPages[0]);
-      if (narration) setCurrentContent(narration);
 
       // Play audio for first page if available
       if (newPages[0]?.audio_url) {
@@ -1204,25 +1333,18 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
       const audio = new Audio(page.audio_url);
       audio.preload = "auto";
       audio.onended = () => {
+        setIsPlayingAudio(false);
         setCurrentAudio(null);
       };
       audio.play().catch(error => {
         console.warn("Audio play failed:", error);
+        setIsPlayingAudio(false);
       });
       setCurrentAudio(audio);
+      setIsPlayingAudio(true);
     } else {
       setCurrentAudio(null);
-    }
-  };
-
-  const handlePageChange = (newIndex: number) => {
-    setCurrentPage(newIndex);
-    const narration = getNarrationForPage(processedPages[newIndex]);
-    if (narration) setCurrentContent(narration);
-
-    // Play audio for the new page
-    if (processedPages[newIndex]) {
-      playAudioForPage(processedPages[newIndex]);
+      setIsPlayingAudio(false);
     }
   };
 
@@ -1231,6 +1353,16 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
       currentAudio.pause();
       currentAudio.currentTime = 0;
       setCurrentAudio(null);
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const handlePageChange = (newIndex: number) => {
+    setCurrentPage(newIndex);
+
+    // Play audio for the new page
+    if (processedPages[newIndex]) {
+      playAudioForPage(processedPages[newIndex]);
     }
   };
 
@@ -1250,20 +1382,15 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
         </h2>
         <div className="flex gap-2">
           {/* Audio Controls */}
-          {currentAudio && (
+          {processedPages[currentPage]?.audio_url && (
             <button
-              onClick={stopAudio}
-              className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm"
+              onClick={isPlayingAudio ? stopAudio : () => playAudioForPage(processedPages[currentPage])}
+              className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2"
             >
-              🔇 Stop Audio
+              {isPlayingAudio ? '⏸️' : '▶️'} 
+              {isPlayingAudio ? t('pauseAudio') : t('playAudio')}
             </button>
           )}
-          <button
-            onClick={() => (isReading ? stopReading() : startReading())}
-            className="bg-yellow-500 text-black px-4 py-2 rounded-lg"
-          >
-            {isReading ? "⏸ Pause" : "▶️ Resume"}
-          </button>
           <button
             onClick={onClose}
             className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
@@ -1331,11 +1458,6 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
                     className="rounded-md shadow-md object-contain max-h-full max-w-full"
                   />
                 </div>
-                {type === "story" && page.text && (
-                  <p className="mt-4 text-center text-base font-serif text-gray-800 leading-relaxed">
-                    {page.text}
-                  </p>
-                )}
               </div>
             </div>
           ))}
@@ -1343,10 +1465,10 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
       </div>
 
       {/* Audio status indicator */}
-      {currentAudio && (
+      {isPlayingAudio && (
         <div className="absolute bottom-4 left-4 bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          Playing audio...
+          {t('audioPlaying')}
         </div>
       )}
     </div>
@@ -1830,7 +1952,7 @@ const MissionsComponent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [bookCovers, setBookCovers] = useState<BookCover[]>([]);
   const { language } = useLanguage();
-  const [showChildNameModal, setShowChildNameModal] = useState(false);
+  const [showNameInputModal, setShowNameInputModal] = useState(false);
   const [showChildSelectionModal, setShowChildSelectionModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [missionToComplete, setMissionToComplete] = useState<Mission | null>(null);
@@ -1840,7 +1962,6 @@ const MissionsComponent = () => {
   const [videoCompletion, setVideoCompletion] = useState<Record<string, boolean>>({});
   const [openSlides, setOpenSlides] = useState<{slides: any[], mission: Mission} | null>(null);
   const [missionSlides, setMissionSlides] = useState<Record<string, any[]>>({});
-  const [nimiContent, setNimiContent] = useState<string>("");
   const [userChildren, setUserChildren] = useState<Child[]>([]);
   const { user } = useUser();
   
@@ -1987,59 +2108,124 @@ const MissionsComponent = () => {
       console.error('Error fetching children:', error);
     }
   };
-// Save liked video to playlists table - FIXED VERSION
-const saveLikedVideo = async (
-  videoData: Mission | AudioTrack,
-  childId?: string,
-  childName?: string
-) => {
-  try {
-    if (!user) {
-      toast.error("Please log in to save videos");
-      return;
+
+  // ✅ Save liked video to playlists table
+  const saveLikedVideo = async (
+    videoData: Mission | AudioTrack,
+    childNameOrId: string
+  ) => {
+    try {
+      if (!user) {
+        toast.error("Please log in to save videos");
+        return;
+      }
+
+      if (!videoData.id) {
+        toast.error("Invalid video data");
+        return;
+      }
+
+      let childId: string;
+
+      // Check if childNameOrId is a UUID (child ID) or a name
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(childNameOrId);
+
+      if (isUuid) {
+        // It's a child ID from parent selection
+        childId = childNameOrId;
+      } else {
+        // It's a name from regular user input
+        const trimmedName = childNameOrId.trim();
+        if (!trimmedName) {
+          toast.error("Please enter a valid name");
+          return;
+        }
+
+        // Check if child already exists under this parent
+        const { data: childData, error: childError } = await supabase
+          .from("children")
+          .select("id")
+          .eq("name", trimmedName)
+          .eq("parent_id", user.id)
+          .maybeSingle();
+
+        if (childError) {
+          console.error("Error fetching child:", childError);
+          toast.error("Failed to find child");
+          return;
+        }
+
+        // Create child if not found
+        if (!childData) {
+          const { data: newChild, error: insertError } = await supabase
+            .from("children")
+            .insert([
+              {
+                name: trimmedName,
+                parent_id: user.id,
+                created_at: new Date().toISOString(),
+              },
+            ])
+            .select("id")
+            .single();
+
+          if (insertError || !newChild) {
+            console.error("Error creating child:", insertError);
+            toast.error("Failed to create new child");
+            return;
+          }
+
+          childId = newChild.id;
+        } else {
+          childId = childData.id;
+        }
+      }
+
+      // Check if same video is already liked by this child
+      const { data: existing, error: existingError } = await supabase
+        .from("playlists")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("video_id", videoData.id)
+        .eq("child_id", childId)
+        .maybeSingle();
+
+      if (existingError) {
+        console.error("Error checking existing playlist:", existingError);
+        toast.error("Failed to check existing likes");
+        return;
+      }
+
+      if (existing) {
+        toast.info("You already liked this video!");
+        return;
+      }
+
+      // Save video in playlists
+      const { error: insertPlaylistError } = await supabase.from("playlists").insert([
+        {
+          user_id: user.id,
+          video_id: videoData.id,
+          video_title: videoData.title,
+          video_url: "video_url" in videoData ? videoData.video_url : videoData.audio_url,
+          child_id: childId,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (insertPlaylistError) {
+        console.error("Error saving liked video:", insertPlaylistError);
+        toast.error("Could not save liked video");
+        return;
+      }
+
+      toast.success(t('videoLiked'));
+    } catch (err) {
+      console.error("Unexpected error saving liked video:", err);
+      toast.error("Something went wrong");
     }
+  };
 
-    if (!videoData.id) {
-      console.error("Invalid video data:", videoData);
-      toast.error("Invalid video data");
-      return;
-    }
-
-    const playlistData = {
-      user_id: user.id,
-      video_id: videoData.id,
-      // Both Mission and AudioTrack have title
-      video_title: videoData.title,
-      // Narrow for url
-      video_url: "video_url" in videoData ? videoData.video_url : videoData.audio_url,
-      created_at: new Date().toISOString(),
-      ...(childId && childId.trim() !== "" ? { child_id: childId } : {}),
-    };
-
-    const { data, error } = await supabase
-      .from("playlists")
-      .insert([playlistData])
-      .select();
-
-    if (error) {
-      console.error("Error saving liked video:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
-      toast.error(t("videoLikeError"));
-      return;
-    }
-
-    toast.success(t("videoLiked"));
-  } catch (error) {
-    console.error("Error saving liked video:", error);
-    toast.error(t("videoLikeError"));
-  }
-};
-
-  // Handle like video click
   const handleLikeVideo = (video: Mission | AudioTrack) => {
     if (!user) {
       toast.error('Please log in to save videos');
@@ -2048,7 +2234,6 @@ const saveLikedVideo = async (
 
     setVideoToLike(video);
 
-    // Check if user is a parent with children
     if (user.role === 'parent') {
       if (userChildren.length > 0) {
         setShowChildSelectionModal(true);
@@ -2056,12 +2241,11 @@ const saveLikedVideo = async (
         toast.error(t('addChildFirst'));
       }
     } else {
-      // Regular user or child - ask for name
-      setShowChildNameModal(true);
+      setShowNameInputModal(true);
     }
   };
 
-  // Handle child selection for parents
+  // Handle child selection for parents (video likes)
   const handleChildSelect = (childId: string) => {
     if (videoToLike) {
       saveLikedVideo(videoToLike, childId);
@@ -2070,15 +2254,15 @@ const saveLikedVideo = async (
     }
   };
 
-  // Handle child name input for regular users
-  const handleChildNameSubmit = (childName: string) => {
+  // Handle name input for regular users (video likes)
+  const handleNameSubmit = (name: string) => {
     if (videoToLike) {
-      saveLikedVideo(videoToLike, undefined, childName);
+      saveLikedVideo(videoToLike, name);
       setVideoToLike(null);
-      setShowChildNameModal(false);
+      setShowNameInputModal(false);
     }
   };
-
+  
   // Fetch all data
   useEffect(() => {
     const fetchAllData = async () => {
@@ -2272,8 +2456,17 @@ const saveLikedVideo = async (
     return categorizeMissions(currentDayData.missions);
   }, [currentDayData]);
 
-  // FIXED: Mission completion function
+  // FIXED: Mission completion function (slides safe)
   const handleMissionComplete = async (mission: Mission, childId?: string) => {
+    // For slides, we require child selection, for other missions it's optional
+    const isSlideMission = missionSlides[mission.id]?.length > 0;
+    
+    if (isSlideMission && (!childId || childId.trim() === '')) {
+      console.error('No child selected for slide completion!');
+      toast.error(t('selectChildFirst'));
+      return;
+    }
+
     const completionKey = `${mission.id}-${childId || 'anonymous'}`;
     
     if (completedIds.has(completionKey)) {
@@ -2282,14 +2475,13 @@ const saveLikedVideo = async (
     }
 
     try {
-      // Prepare completion data - child_id is optional in your schema
       const completionData: any = {
         mission_id: mission.id,
         completed_at: new Date().toISOString()
       };
 
-      // Only add child_id if provided
-      if (childId && childId.trim() !== '') {
+      // Only include child_id if provided
+      if (childId) {
         completionData.child_id = childId;
       }
 
@@ -2310,7 +2502,7 @@ const saveLikedVideo = async (
       const newCompletion = {
         mission_id: mission.id,
         completed_at: new Date().toISOString(),
-        child_id: childId
+        ...(childId && { child_id: childId })
       };
 
       setCompletions((prev) => [...prev, newCompletion]);
@@ -2329,7 +2521,7 @@ const saveLikedVideo = async (
       const dayCompletions = completions.filter(c => 
         dayMissions.some(m => m.id === c.mission_id)
       );
-      
+
       if (dayMissions.every(m => 
         completions.some(c => c.mission_id === m.id) || m.id === mission.id
       )) {
@@ -2371,11 +2563,11 @@ const saveLikedVideo = async (
 
     setMissionToComplete(mission);
     
-    // Show avatar selection for parents with children, otherwise show name input
+    // Show avatar selection for parents with children, otherwise complete without child_id
     if (user && user.role === 'parent' && userChildren.length > 0) {
       setShowAvatarModal(true);
     } else {
-      setShowChildNameModal(true);
+      handleMissionComplete(mission);
     }
   };
 
@@ -2570,7 +2762,7 @@ const saveLikedVideo = async (
           </div>
         </section>
       )}
-      
+
       {/* Storybook and Coloring Book Cards */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-8 mt-6 md:mt-8 px-2 mb-8">
         {storyPages.length > 0 && (
@@ -2622,24 +2814,15 @@ const saveLikedVideo = async (
         </section>
       )}
 
-      {/* Child Name Input Modal */}
-      <ChildNameModal
-        isOpen={showChildNameModal}
-        onClose={() => setShowChildNameModal(false)}
-        onConfirm={(childName) => {
-          if (missionToComplete) {
-            // For name input, we'll complete without child_id
-            handleMissionComplete(missionToComplete);
-          } else if (videoToLike) {
-            handleChildNameSubmit(childName);
-          }
-          setShowChildNameModal(false);
-          setMissionToComplete(null);
-        }}
+      {/* Name Input Modal for Video Likes */}
+      <NameInputModal
+        isOpen={showNameInputModal}
+        onClose={() => setShowNameInputModal(false)}
+        onConfirm={handleNameSubmit}
         t={t}
       />
 
-      {/* Child Avatar Selection Modal */}
+      {/* Child Avatar Selection Modal for Mission Completion */}
       <ChildAvatarModal
         isOpen={showAvatarModal}
         onClose={() => setShowAvatarModal(false)}
@@ -2648,7 +2831,7 @@ const saveLikedVideo = async (
         t={t}
       />
 
-      {/* Child Selection Modal for Parents */}
+      {/* Child Selection Modal for Parents (Video Likes) */}
       <ChildSelectionModal
         isOpen={showChildSelectionModal}
         onClose={() => setShowChildSelectionModal(false)}
