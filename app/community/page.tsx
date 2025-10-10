@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import DOMPurify from "dompurify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Trophy, Camera, Share2, MessageCircle, Heart, Loader2 } from "lucide-react";
+import { Sparkles, Trophy, Camera, Share2, MessageCircle, Heart, Loader2, Star } from "lucide-react";
 import { CreationCard } from "@/components/community/CreationCard";
 import  UploadModal  from "@/components/community/UploadModal";
 import { NimiChat } from "@/components/community/NimiChat";
@@ -917,25 +917,49 @@ useEffect(() => {
             </CardContent>
           </Card>
     
-          {/* Coming Soon */}
-          <Card className="bg-gradient-to-r from-green-100 to-emerald-100 border-none shadow-xl">
-            <CardContent className="p-8 text-center">
-              <div className="text-6xl mb-4">🚀</div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">More Features Coming!</h3>
-              <p className="text-gray-700 mb-6">We're working on new ways to create and share together!</p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <div className="flex items-center">
-                  <MessageCircle className="w-5 h-5 text-green-600 mr-2" />
-                  <span>Enhanced Comments</span>
+          {/* Our Animated Stars */}
+          <Card className="bg-gradient-to-r from-yellow-100 to-orange-100 border-none shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-center text-2xl">
+                <Star className="w-8 h-8 mr-3 text-yellow-600" />
+                <span>Our Animated Stars</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Side - Original Design */}
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Original Artwork</h3>
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-yellow-300">
+                    <div className="w-full h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mb-4">
+                      <span className="text-6xl">🎨</span>
+                    </div>
+                    <p className="text-gray-700 font-medium">Child's Original Creation</p>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <Heart className="w-5 h-5 text-red-600 mr-2" />
-                  <span>Reactions</span>
+
+                {/* Right Side - Animated Design */}
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Animated Version</h3>
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-orange-300 animate-pulse">
+                    <div className="w-full h-64 bg-gradient-to-br from-orange-100 to-red-100 rounded-xl flex items-center justify-center mb-4 relative overflow-hidden">
+                      <span className="text-6xl animate-bounce">✨</span>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-4xl animate-spin">🌟</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-700 font-medium">Magically Animated!</p>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <Share2 className="w-5 h-5 text-blue-600 mr-2" />
-                  <span>More Sharing Options</span>
-                </div>
+              </div>
+              
+              <div className="text-center mt-6">
+                <p className="text-gray-600 mb-4">
+                  Watch as we bring children's artwork to life with magical animations!
+                </p>
+                <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white">
+                  Learn More
+                </Button>
               </div>
             </CardContent>
           </Card>
