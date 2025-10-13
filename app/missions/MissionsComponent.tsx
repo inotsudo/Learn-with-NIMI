@@ -28,6 +28,11 @@ import { X } from "lucide-react";
 import { Clock } from "lucide-react";
 import { Music } from "lucide-react";
 import { Heart } from "lucide-react";
+import { Eraser } from "lucide-react";
+import { Undo } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { Save } from "lucide-react";
+import { Brush } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -110,7 +115,15 @@ const translations = {
     dailyProgressCapsule: "Daily Progress Capsule",
     playAudio: "Play Audio",
     pauseAudio: "Pause Audio",
-    audioPlaying: "Audio Playing..."
+    audioPlaying: "Audio Playing...",
+    brush: "Brush",
+    eraser: "Eraser",
+    small: "Small",
+    medium: "Medium",
+    large: "Large",
+    undo: "Undo",
+    clear: "Clear",
+    save: "Save"
   },
   es: {
     magicalLearning: "Aprendizaje Mágico",
@@ -172,7 +185,15 @@ const translations = {
     dailyProgressCapsule: "Cápsula de Progreso Diario",
     playAudio: "Reproducir Audio",
     pauseAudio: "Pausar Audio",
-    audioPlaying: "Audio Reproduciéndose..."
+    audioPlaying: "Audio Reproduciéndose...",
+    brush: "Pincel",
+    eraser: "Borrador",
+    small: "Pequeño",
+    medium: "Mediano",
+    large: "Grande",
+    undo: "Deshacer",
+    clear: "Limpiar",
+    save: "Guardar"
   },
   fr: {
     magicalLearning: "Apprentissage Magique",
@@ -234,7 +255,15 @@ const translations = {
     dailyProgressCapsule: "Capsule de Progrès Quotidien",
     playAudio: "Lire l'Audio",
     pauseAudio: "Pause Audio",
-    audioPlaying: "Audio en cours..."
+    audioPlaying: "Audio en cours...",
+    brush: "Pinceau",
+    eraser: "Gomme",
+    small: "Petit",
+    medium: "Moyen",
+    large: "Grand",
+    undo: "Annuler",
+    clear: "Effacer",
+    save: "Sauvegarder"
   },
   rw: {
     magicalLearning: "Kwiga Ubumenyi",
@@ -296,7 +325,15 @@ const translations = {
     dailyProgressCapsule: "Ingingo y'Iterambere rya buri munsi",
     playAudio: "Kina Audio",
     pauseAudio: "Pause Audio",
-    audioPlaying: "Audio iri gukina..."
+    audioPlaying: "Audio iri gukina...",
+    brush: "Burashi",
+    eraser: "Icyo gukuramo",
+    small: "Gato",
+    medium: "Hagati",
+    large: "Kinini",
+    undo: "Garura",
+    clear: "Sukura",
+    save: "Bika"
   },
   sw: {
     magicalLearning: "Kujifunza Kichawi",
@@ -358,7 +395,15 @@ const translations = {
     dailyProgressCapsule: "Kapsuli ya Maendeleo ya Kila Siku",
     playAudio: "Cheza Audio",
     pauseAudio: "Pause Audio",
-    audioPlaying: "Audio inacheza..."
+    audioPlaying: "Audio inacheza...",
+    brush: "Brashi",
+    eraser: "Kifutio",
+    small: "Ndogo",
+    medium: "Wastani",
+    large: "Kubwa",
+    undo: "Tengua",
+    clear: "Futa",
+    save: "Hifadhi"
   }
 };
 
@@ -462,6 +507,13 @@ interface Child {
   parent_id: string;
   created_at: string;
   avatar_url?: string;
+}
+
+// Fabric.js dynamic import
+let fabric: any;
+if (typeof window !== "undefined") {
+  // @ts-ignore
+  fabric = require("fabric").fabric;
 }
 
 // Child Avatar Selection Modal for Mission Completion
@@ -1265,212 +1317,541 @@ const MorningVideoCard = ({ video, t, onLikeVideo }: { video: AudioTrack | null;
   );
 };
 
-// Enhanced FlipBookViewer without Narration
+// Enhanced Coloring Toolbar Component
+const ColoringToolbar = ({
+  currentColor,
+  setCurrentColor,
+  brushSize,
+  setBrushSize,
+  isEraser,
+  setIsEraser,
+  undo,
+  clearCanvas,
+  saveCanvas,
+  t,
+  isMobile
+}: {
+  currentColor: string;
+  setCurrentColor: (color: string) => void;
+  brushSize: number;
+  setBrushSize: (size: number) => void;
+  isEraser: boolean;
+  setIsEraser: (isEraser: boolean) => void;
+  undo: () => void;
+  clearCanvas: () => void;
+  saveCanvas: () => void;
+  t: (key: string) => string;
+  isMobile: boolean;
+}) => {
+  const [isCollapsed, setIsCollapsed] = useState(isMobile);
+  const colors = [
+    "#ff0000", "#ff9900", "#ffff00", "#33cc33", 
+    "#3399ff", "#9900ff", "#000000", "#ffffff"
+  ];
+  
+  const brushSizes = [
+    { size: 5, label: t('small') },
+    { size: 10, label: t('medium') },
+    { size: 15, label: t('large') }
+  ];
+
+  return (
+    <motion.div
+      className={`fixed ${
+        isMobile ? 'bottom-4 left-1/2 transform -translate-x-1/2' : 'top-4 right-4'
+      } z-50 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-300 overflow-hidden`}
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Collapse Toggle Button */}
+      {isMobile && (
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white flex items-center justify-center gap-2"
+        >
+          <Palette className="h-5 w-5" />
+          <span>{isCollapsed ? t('brush') : t('hideTools')}</span>
+        </button>
+      )}
+
+      {(!isMobile || !isCollapsed) && (
+        <div className={`p-4 ${isMobile ? 'max-h-[70vh] overflow-y-auto' : ''}`}>
+          {/* Color Palette */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold mb-2 text-gray-700">{t('brush')}</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => {
+                    setCurrentColor(color);
+                    setIsEraser(false);
+                  }}
+                  className={`w-10 h-10 rounded-full border-3 transition-all duration-200 hover:scale-110 ${
+                    currentColor === color && !isEraser 
+                      ? "border-blue-500 shadow-lg" 
+                      : "border-gray-300 hover:border-gray-400"
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={color === "#ffffff" ? "White" : color}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Brush Size */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold mb-2 text-gray-700">{t('brush')} {t('size')}</h3>
+            <div className="flex gap-3 justify-center">
+              {brushSizes.map(({ size, label }) => (
+                <button
+                  key={size}
+                  onClick={() => setBrushSize(size)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
+                    brushSize === size 
+                      ? "bg-blue-100 border-2 border-blue-500" 
+                      : "bg-gray-100 border-2 border-transparent hover:bg-gray-200"
+                  }`}
+                >
+                  <div
+                    className="rounded-full bg-black"
+                    style={{ width: size, height: size }}
+                  />
+                  <span className="text-xs text-gray-600">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Eraser Toggle */}
+          <div className="mb-4">
+            <button
+              onClick={() => setIsEraser(!isEraser)}
+              className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                isEraser 
+                  ? "bg-red-500 text-white shadow-lg" 
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Eraser className="h-5 w-5" />
+              <span>{isEraser ? t('brush') : t('eraser')}</span>
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={undo}
+              className="py-3 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center gap-1 transition-colors"
+              title={t('undo')}
+            >
+              <Undo className="h-4 w-4" />
+              {!isMobile && <span className="text-sm">{t('undo')}</span>}
+            </button>
+            
+            <button
+              onClick={clearCanvas}
+              className="py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg flex items-center justify-center gap-1 transition-colors"
+              title={t('clear')}
+            >
+              <Trash2 className="h-4 w-4" />
+              {!isMobile && <span className="text-sm">{t('clear')}</span>}
+            </button>
+            
+            <button
+              onClick={saveCanvas}
+              className="py-3 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg flex items-center justify-center gap-1 transition-colors"
+              title={t('save')}
+            >
+              <Save className="h-4 w-4" />
+              {!isMobile && <span className="text-sm">{t('save')}</span>}
+            </button>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
 const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t }) => {
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const isMobile = useIsMobile();
 
-  // Process page images and audio
+  // Canvas and drawing state
+  const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
+  const fabricRefs = useRef<(any | null)[]>([]);
+  const [canvasesInitialized, setCanvasesInitialized] = useState<boolean[]>([]);
+
+  // Drawing tools state
+  const [currentColor, setCurrentColor] = useState("#ff0000");
+  const [brushSize, setBrushSize] = useState(5);
+  const [isEraser, setIsEraser] = useState(false);
+  const [undoStack, setUndoStack] = useState<string[][]>([]);
+  const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkSize = () => setIsMobile(window.innerWidth < 768);
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
+  }, []);
+
+  // Process pages
   useEffect(() => {
     const processPages = async () => {
-      const newPages = await Promise.all(
+      const processed = await Promise.all(
         pages.map(async (page) => {
           let imageUrl = page.image_url;
-          let audioUrl = page.audio_url;
-
-          // Process image URL
+          
           if (imageUrl.startsWith("supabase://")) {
             const path = imageUrl.replace("supabase://", "");
             const [bucket, ...filePath] = path.split("/");
-            const { data } = await supabase.storage.from(bucket).getPublicUrl(filePath.join("/"));
-            imageUrl = data.publicUrl;
+            const { data: { publicUrl } } = await supabase.storage
+              .from(bucket)
+              .getPublicUrl(filePath.join("/"));
+            imageUrl = publicUrl;
           }
-
-          // Process audio URL
-          if (audioUrl && audioUrl.startsWith("supabase://")) {
-            const path = audioUrl.replace("supabase://", "");
-            const [bucket, ...filePath] = path.split("/");
-            const { data } = await supabase.storage.from(bucket).getPublicUrl(filePath.join("/"));
-            audioUrl = data.publicUrl;
-          }
-
-          return { ...page, image_url: imageUrl, audio_url: audioUrl };
+          
+          return { ...page, image_url: imageUrl };
         })
       );
-
-      setProcessedPages(newPages);
+      
+      setProcessedPages(processed);
+      setCanvasesInitialized(new Array(processed.length).fill(false));
+      setUndoStack(new Array(processed.length).fill([]));
       setIsLoading(false);
-
-      // Play audio for first page if available
-      if (newPages[0]?.audio_url) {
-        playAudioForPage(newPages[0]);
+      
+      if (processed[0]?.audio_url) {
+        playAudioForPage(processed[0]);
       }
     };
-
+    
     processPages();
-
+    
     return () => {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-      }
+      stopAudio();
+      // Clean up Fabric canvases
+      fabricRefs.current.forEach(canvas => {
+        if (canvas) {
+          canvas.dispose();
+        }
+      });
     };
   }, [pages]);
 
+  // Audio controls
   const playAudioForPage = (page: Page) => {
-    // Stop current audio
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-    }
-
-    // Play new audio if available
-    if (page.audio_url) {
-      const audio = new Audio(page.audio_url);
-      audio.preload = "auto";
-      audio.onended = () => {
-        setIsPlayingAudio(false);
-        setCurrentAudio(null);
-      };
-      audio.play().catch(error => {
-        console.warn("Audio play failed:", error);
-        setIsPlayingAudio(false);
-      });
-      setCurrentAudio(audio);
-      setIsPlayingAudio(true);
-    } else {
-      setCurrentAudio(null);
+    stopAudio();
+    if (!page.audio_url) return;
+    
+    const audio = new Audio(page.audio_url);
+    audio.preload = "auto";
+    audio.onended = () => setIsPlayingAudio(false);
+    audio.play().catch((error) => {
+      console.warn("Audio play failed:", error);
       setIsPlayingAudio(false);
-    }
+    });
+    setCurrentAudio(audio);
+    setIsPlayingAudio(true);
   };
 
   const stopAudio = () => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-      setCurrentAudio(null);
-      setIsPlayingAudio(false);
-    }
+    if (!currentAudio) return;
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    setCurrentAudio(null);
+    setIsPlayingAudio(false);
   };
 
   const handlePageChange = (newIndex: number) => {
     setCurrentPage(newIndex);
-
-    // Play audio for the new page
     if (processedPages[newIndex]) {
       playAudioForPage(processedPages[newIndex]);
     }
   };
 
+  // Initialize Fabric.js for coloring book pages
+  const initializeCanvas = useRef((index: number) => {
+    if (type !== "coloring" || !fabric || canvasesInitialized[index]) return;
+
+    const canvasEl = canvasRefs.current[index];
+    const imgEl = canvasEl?.closest('.page-content')?.querySelector('img') as HTMLImageElement;
+
+    if (!canvasEl || !imgEl) return;
+
+    const setupCanvas = () => {
+      // Set canvas dimensions to match image
+      const container = canvasEl.parentElement;
+      if (container) {
+        canvasEl.width = container.clientWidth;
+        canvasEl.height = container.clientHeight;
+      }
+
+      // Dispose previous Fabric canvas if exists
+      if (fabricRefs.current[index]) {
+        fabricRefs.current[index].dispose();
+      }
+
+      // Create new Fabric canvas
+      const canvas = new fabric.Canvas(canvasEl, {
+        isDrawingMode: true,
+        selection: false,
+        preserveObjectStacking: true,
+        renderOnAddRemove: true,
+      });
+
+      // Configure drawing brush
+      const brush = new fabric.PencilBrush(canvas);
+      brush.color = isEraser ? "#ffffff" : currentColor;
+      brush.width = brushSize;
+      canvas.freeDrawingBrush = brush;
+
+      // Handle path creation for undo functionality
+      canvas.on("path:created", () => {
+        const currentStack = [...(undoStack[index] || [])];
+        currentStack.push(JSON.stringify(canvas.toJSON()));
+        setUndoStack(prev => {
+          const newStack = [...prev];
+          newStack[index] = currentStack.slice(-10); // Keep last 10 states
+          return newStack;
+        });
+      });
+
+      fabricRefs.current[index] = canvas;
+      
+      // Mark as initialized
+      setCanvasesInitialized(prev => {
+        const newState = [...prev];
+        newState[index] = true;
+        return newState;
+      });
+    };
+
+    if (imgEl.complete) {
+      setupCanvas();
+    } else {
+      imgEl.onload = setupCanvas;
+    }
+  });
+
+  // Update canvas when drawing tools change
+  useEffect(() => {
+    if (type !== "coloring" || !fabricRefs.current[currentPage]) return;
+
+    const canvas = fabricRefs.current[currentPage];
+    if (!canvas) return;
+
+    const brush = new fabric.PencilBrush(canvas);
+    brush.color = isEraser ? "#ffffff" : currentColor;
+    brush.width = brushSize;
+    canvas.freeDrawingBrush = brush;
+  }, [currentColor, brushSize, isEraser, currentPage, type]);
+
+  // Reinitialize canvas when page changes
+  useEffect(() => {
+    if (type === "coloring" && processedPages.length > 0) {
+      initializeCanvas.current(currentPage);
+    }
+  }, [currentPage, type, processedPages.length]);
+
+  // Drawing actions
+  const undo = () => {
+    const canvas = fabricRefs.current[currentPage];
+    const currentUndoStack = undoStack[currentPage] || [];
+    
+    if (!canvas || currentUndoStack.length < 2) return;
+    
+    const previousState = currentUndoStack[currentUndoStack.length - 2];
+    if (previousState) {
+      canvas.loadFromJSON(previousState, () => {
+        canvas.renderAll();
+        setUndoStack(prev => {
+          const newStack = [...prev];
+          newStack[currentPage] = currentUndoStack.slice(0, -1);
+          return newStack;
+        });
+      });
+    }
+  };
+
+  const clearCanvas = () => {
+    const canvas = fabricRefs.current[currentPage];
+    if (!canvas) return;
+    
+    canvas.clear();
+    setUndoStack(prev => {
+      const newStack = [...prev];
+      newStack[currentPage] = [];
+      return newStack;
+    });
+  };
+
+  const saveCanvas = () => {
+    const canvas = fabricRefs.current[currentPage];
+    if (!canvas) return;
+    
+    const link = document.createElement("a");
+    link.download = `colored-page-${currentPage + 1}-${Date.now()}.png`;
+    link.href = canvas.toDataURL({
+      format: "png",
+      quality: 1,
+      multiplier: 2 // Higher resolution
+    });
+    link.click();
+    
+    toast.success("Drawing saved successfully!");
+  };
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
-        <div className="text-4xl animate-pulse">📖</div>
+        <div className="text-4xl animate-pulse text-white">📖</div>
       </div>
     );
   }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
-      <div className="flex justify-between items-center p-4 bg-black/50">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 bg-black/50 z-40">
         <h2 className="text-white text-lg font-semibold">
           {type === "story" ? t("storyTime") : t("coloringBook")} - {t("flipbook")}
         </h2>
         <div className="flex gap-2">
-          {/* Audio Controls */}
           {processedPages[currentPage]?.audio_url && (
-            <button
+            <button 
               onClick={isPlayingAudio ? stopAudio : () => playAudioForPage(processedPages[currentPage])}
-              className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors"
             >
-              {isPlayingAudio ? '⏸️' : '▶️'} 
-              {isPlayingAudio ? t('pauseAudio') : t('playAudio')}
+              {isPlayingAudio ? "⏸️" : "▶️"} 
+              {isPlayingAudio ? t("pauseAudio") : t("playAudio")}
             </button>
           )}
-          <button
+          <button 
             onClick={onClose}
-            className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
+            className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors touch-target"
           >
             ✕
           </button>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center overflow-hidden">
+      {/* Flipbook Container */}
+      <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
         <HTMLFlipBook
-          width={isMobile ? 320 : 400}
-          height={isMobile ? 480 : 550}
-          showCover
-          usePortrait
-          mobileScrollSupport
-          flippingTime={isMobile ? 1500 : 800}
+          width={isMobile ? 320 : 500}
+          height={isMobile ? 480 : 600}
+          showCover={true}
+          usePortrait={true}
+          mobileScrollSupport={true}
+          flippingTime={isMobile ? 1000 : 600}
           size="fixed"
-          className="shadow-2xl rounded-lg"
-          style={{}}
+          className="shadow-2xl rounded-lg bg-white"
           onFlip={(e: any) => handlePageChange(e.data)}
           startPage={0}
           minWidth={300}
           maxWidth={600}
           minHeight={400}
           maxHeight={800}
-          drawShadow
-          autoSize
-          clickEventForward
-          useMouseEvents
-          swipeDistance={30}
-          showPageCorners
+          drawShadow={true}
+          autoSize={true}
+          clickEventForward={true}
+          useMouseEvents={!isMobile}
+          swipeDistance={isMobile ? 30 : 0}
+          showPageCorners={true}
           disableFlipByClick={false}
           startZIndex={0}
           maxShadowOpacity={0.5}
         >
-          {processedPages.map((page, idx) => (
-            <div
-              key={idx}
-              className="relative flex flex-col justify-between p-6 rounded-[6px] border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white"
+          {processedPages.map((page, index) => (
+            <div 
+              key={index} 
+              className="relative flex flex-col justify-between p-4 rounded-[6px] border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white page-container"
             >
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  backgroundImage: "url('/paper-texture.png')",
-                  backgroundSize: "cover",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "center",
-                  opacity: 0.05,
-                }}
+              <div 
+                className="absolute inset-0 pointer-events-none" 
+                style={{ 
+                  backgroundImage: "url('/paper-texture.png')", 
+                  backgroundSize: "cover", 
+                  opacity: 0.05 
+                }} 
               />
-
-              <div className="relative z-20 flex flex-col justify-between h-full">
-                {/* Audio Indicator */}
+              
+              <div className="relative z-20 flex flex-col justify-between h-full page-content">
                 {page.audio_url && (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 text-xs">
+                  <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 text-xs z-30">
                     🔊
                   </div>
                 )}
-
-                <div className="flex-1 flex items-center justify-center">
-                  <img
-                    src={page.image_url}
-                    alt={page.image_alt || `Page ${idx + 1}`}
-                    className="rounded-md shadow-md object-contain max-h-full max-w-full"
+                
+                <div className="flex-1 flex items-center justify-center relative">
+                  <img 
+                    src={page.image_url} 
+                    alt={page.image_alt || `Page ${index + 1}`} 
+                    className="rounded-md shadow-md object-contain max-h-full max-w-full select-none"
+                    draggable={false}
                   />
+                  
+                  {type === "coloring" && (
+                    <canvas
+                      ref={(el: HTMLCanvasElement | null) => { 
+                        canvasRefs.current[index] = el;
+                      }}
+                      className="absolute top-0 left-0 w-full h-full z-20 pointer-events-auto touch-action-none"
+                      style={{
+                        cursor: isEraser ? `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${brushSize * 2}" height="${brushSize * 2}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="white" stroke="black" stroke-width="2"/></svg>') ${brushSize} ${brushSize}, auto` 
+                                 : `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${brushSize * 2}" height="${brushSize * 2}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="${currentColor.replace('#', '%23')}" stroke="black" stroke-width="2"/></svg>') ${brushSize} ${brushSize}, auto`
+                      }}
+                    />
+                  )}
                 </div>
+                
+                {page.text && (
+                  <div className="mt-4 p-3 bg-white/80 backdrop-blur-sm rounded-lg border">
+                    <p className="text-sm text-gray-700 text-center">{page.text}</p>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </HTMLFlipBook>
       </div>
 
-      {/* Audio status indicator */}
+      {/* Coloring Toolbar */}
+      {type === "coloring" && (
+        <ColoringToolbar
+          currentColor={currentColor}
+          setCurrentColor={setCurrentColor}
+          brushSize={brushSize}
+          setBrushSize={setBrushSize}
+          isEraser={isEraser}
+          setIsEraser={setIsEraser}
+          undo={undo}
+          clearCanvas={clearCanvas}
+          saveCanvas={saveCanvas}
+          t={t}
+          isMobile={isMobile}
+        />
+      )}
+
+      {/* Audio Playing Indicator */}
       {isPlayingAudio && (
-        <div className="absolute bottom-4 left-4 bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+        <div className="absolute bottom-4 left-4 bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2 z-40">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          {t('audioPlaying')}
+          {t("audioPlaying")}
         </div>
       )}
+
+      {/* Page Indicator */}
+      <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-2 rounded-lg text-sm z-40">
+        {t("pageCount", { current: currentPage + 1, total: processedPages.length })}
+      </div>
     </div>
   );
 };
