@@ -7,7 +7,7 @@ import Navbar from './Navbar'
 import DashboardHome from './DashboardHome'
 
 const tables = [
-  'activities', 'admins', 'audio_tracks', 'book_covers', 'child_preferences',
+  'activities', 'admins', 'audio_tracks', 'animated_creations', 'book_covers', 'child_preferences',
   'children', 'coloring_book_pages', 'comments', 'creations', 'enrollments',
   'likes', 'manual_payments', 'mission_completions', 'missions', 'parent_notes',
   'preferences', 'progress', 'profiles', 'rewards', 'storybook_pages',

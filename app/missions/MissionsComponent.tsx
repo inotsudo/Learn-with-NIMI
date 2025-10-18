@@ -123,7 +123,12 @@ const translations = {
     large: "Large",
     undo: "Undo",
     clear: "Clear",
-    save: "Save"
+    save: "Save",
+    hideTools: "Hide Tools",
+    size: "Size",
+    drawingTools: "Drawing Tools",
+    selectColor: "Select Color",
+    brushSize: "Brush Size"
   },
   es: {
     magicalLearning: "Aprendizaje Mágico",
@@ -193,7 +198,12 @@ const translations = {
     large: "Grande",
     undo: "Deshacer",
     clear: "Limpiar",
-    save: "Guardar"
+    save: "Guardar",
+    hideTools: "Ocultar Herramientas",
+    size: "Tamaño",
+    drawingTools: "Herramientas de Dibujo",
+    selectColor: "Seleccionar Color",
+    brushSize: "Tamaño del Pincel"
   },
   fr: {
     magicalLearning: "Apprentissage Magique",
@@ -263,7 +273,12 @@ const translations = {
     large: "Grand",
     undo: "Annuler",
     clear: "Effacer",
-    save: "Sauvegarder"
+    save: "Sauvegarder",
+    hideTools: "Masquer les Outils",
+    size: "Taille",
+    drawingTools: "Outils de Dessin",
+    selectColor: "Sélectionner la Couleur",
+    brushSize: "Taille du Pinceau"
   },
   rw: {
     magicalLearning: "Kwiga Ubumenyi",
@@ -333,7 +348,12 @@ const translations = {
     large: "Kinini",
     undo: "Garura",
     clear: "Sukura",
-    save: "Bika"
+    save: "Bika",
+    hideTools: "Hisha Ibikoresho",
+    size: "Ingano",
+    drawingTools: "Ibikoresho byo Gushushanya",
+    selectColor: "Hitamo Ibara",
+    brushSize: "Ingano ya Burashi"
   },
   sw: {
     magicalLearning: "Kujifunza Kichawi",
@@ -403,7 +423,12 @@ const translations = {
     large: "Kubwa",
     undo: "Tengua",
     clear: "Futa",
-    save: "Hifadhi"
+    save: "Hifadhi",
+    hideTools: "Ficha Zana",
+    size: "Ukubwa",
+    drawingTools: "Zana za Kuchora",
+    selectColor: "Chagua Rangi",
+    brushSize: "Ukubwa wa Brashi"
   }
 };
 
@@ -515,6 +540,189 @@ if (typeof window !== "undefined") {
   // @ts-ignore
   fabric = require("fabric").fabric;
 }
+
+// Enhanced Coloring Toolbar Component - Matches your image style
+const ColoringToolbar = ({
+  currentColor,
+  setCurrentColor,
+  brushSize,
+  setBrushSize,
+  isEraser,
+  setIsEraser,
+  undo,
+  clearCanvas,
+  saveCanvas,
+  t,
+  isMobile
+}: {
+  currentColor: string;
+  setCurrentColor: (color: string) => void;
+  brushSize: number;
+  setBrushSize: (size: number) => void;
+  isEraser: boolean;
+  setIsEraser: (isEraser: boolean) => void;
+  undo: () => void;
+  clearCanvas: () => void;
+  saveCanvas: () => void;
+  t: (key: string) => string;
+  isMobile: boolean;
+}) => {
+  const [isCollapsed, setIsCollapsed] = useState(isMobile);
+  
+  const colors = [
+    "#ff0000", "#ff9900", "#ffff00", "#33cc33", 
+    "#3399ff", "#9900ff", "#ff00ff", "#000000", "#ffffff"
+  ];
+  
+  const brushSizes = [
+    { size: 5, label: t('small') },
+    { size: 10, label: t('medium') },
+    { size: 15, label: t('large') }
+  ];
+
+  return (
+    <motion.div
+      className={`fixed ${
+        isMobile ? 'bottom-4 left-1/2 transform -translate-x-1/2' : 'top-4 right-4'
+      } z-50 bg-gray-900/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700 overflow-hidden transition-all duration-300`}
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      style={{
+        width: isMobile ? (isCollapsed ? 'auto' : '90vw') : '280px',
+        maxWidth: isMobile ? '400px' : '280px'
+      }}
+    >
+      {/* Collapse Toggle Button - Mobile Only */}
+      {isMobile && (
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white flex items-center justify-center gap-2 shadow-lg"
+        >
+          <Palette className="h-5 w-5" />
+          <span className="font-semibold">
+            {isCollapsed ? t('drawingTools') : t('hideTools')}
+          </span>
+        </button>
+      )}
+
+      {(!isMobile || !isCollapsed) && (
+        <div className={`p-3 ${isMobile ? 'max-h-[70vh] overflow-y-auto' : ''}`}>
+          {/* Color Palette */}
+          <div className="mb-3">
+            <h4 className="text-sm font-semibold mb-2 text-white flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              {t('selectColor')}
+            </h4>
+            <div className="grid grid-cols-5 gap-1">
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => {
+                    setCurrentColor(color);
+                    setIsEraser(false);
+                  }}
+                  className={`w-8 h-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                    currentColor === color && !isEraser 
+                      ? "border-white shadow-lg scale-110" 
+                      : "border-gray-600 hover:border-gray-400"
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={color === "#ffffff" ? "White" : color}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Brush Size */}
+          <div className="mb-3">
+            <h4 className="text-sm font-semibold mb-2 text-white flex items-center gap-2">
+              <Brush className="h-4 w-4" />
+              {t('brushSize')}
+            </h4>
+            <div className="flex gap-2 justify-between">
+              {brushSizes.map(({ size, label }) => (
+                <button
+                  key={size}
+                  onClick={() => setBrushSize(size)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all flex-1 ${
+                    brushSize === size 
+                      ? "bg-blue-600 border border-blue-400 shadow-md" 
+                      : "bg-gray-800 border border-gray-600 hover:bg-gray-700"
+                  }`}
+                >
+                  <div
+                    className="rounded-full bg-white transition-all"
+                    style={{ width: size, height: size }}
+                  />
+                  <span className="text-xs text-white font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tool Selection */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              onClick={() => setIsEraser(false)}
+              className={`py-2 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold text-sm ${
+                !isEraser 
+                  ? "bg-blue-600 text-white shadow-lg" 
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600"
+              }`}
+            >
+              <Brush className="h-4 w-4" />
+              <span>{t('brush')}</span>
+            </button>
+            
+            <button
+              onClick={() => setIsEraser(true)}
+              className={`py-2 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold text-sm ${
+                isEraser 
+                  ? "bg-red-600 text-white shadow-lg" 
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600"
+              }`}
+            >
+              <Eraser className="h-4 w-4" />
+              <span>{t('eraser')}</span>
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={undo}
+              className="py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg flex items-center justify-center gap-1 transition-colors font-medium text-sm border border-gray-600"
+              title={t('undo')}
+            >
+              <Undo className="h-4 w-4" />
+              {!isMobile && <span className="text-sm">{t('undo')}</span>}
+            </button>
+            
+            <button
+              onClick={clearCanvas}
+              className="py-2 bg-red-800 hover:bg-red-700 text-white rounded-lg flex items-center justify-center gap-1 transition-colors font-medium text-sm border border-red-600"
+              title={t('clear')}
+            >
+              <Trash2 className="h-4 w-4" />
+              {!isMobile && <span className="text-sm">{t('clear')}</span>}
+            </button>
+            
+            <button
+              onClick={saveCanvas}
+              className="py-2 bg-green-800 hover:bg-green-700 text-white rounded-lg flex items-center justify-center gap-1 transition-colors font-medium text-sm border border-green-600"
+              title={t('save')}
+            >
+              <Save className="h-4 w-4" />
+              {!isMobile && <span className="text-sm">{t('save')}</span>}
+            </button>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
 
 // Child Avatar Selection Modal for Mission Completion
 const ChildAvatarModal = ({ 
@@ -1317,163 +1525,7 @@ const MorningVideoCard = ({ video, t, onLikeVideo }: { video: AudioTrack | null;
   );
 };
 
-// Enhanced Coloring Toolbar Component
-const ColoringToolbar = ({
-  currentColor,
-  setCurrentColor,
-  brushSize,
-  setBrushSize,
-  isEraser,
-  setIsEraser,
-  undo,
-  clearCanvas,
-  saveCanvas,
-  t,
-  isMobile
-}: {
-  currentColor: string;
-  setCurrentColor: (color: string) => void;
-  brushSize: number;
-  setBrushSize: (size: number) => void;
-  isEraser: boolean;
-  setIsEraser: (isEraser: boolean) => void;
-  undo: () => void;
-  clearCanvas: () => void;
-  saveCanvas: () => void;
-  t: (key: string) => string;
-  isMobile: boolean;
-}) => {
-  const [isCollapsed, setIsCollapsed] = useState(isMobile);
-  const colors = [
-    "#ff0000", "#ff9900", "#ffff00", "#33cc33", 
-    "#3399ff", "#9900ff", "#000000", "#ffffff"
-  ];
-  
-  const brushSizes = [
-    { size: 5, label: t('small') },
-    { size: 10, label: t('medium') },
-    { size: 15, label: t('large') }
-  ];
-
-  return (
-    <motion.div
-      className={`fixed ${
-        isMobile ? 'bottom-4 left-1/2 transform -translate-x-1/2' : 'top-4 right-4'
-      } z-50 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-300 overflow-hidden`}
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* Collapse Toggle Button */}
-      {isMobile && (
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white flex items-center justify-center gap-2"
-        >
-          <Palette className="h-5 w-5" />
-          <span>{isCollapsed ? t('brush') : t('hideTools')}</span>
-        </button>
-      )}
-
-      {(!isMobile || !isCollapsed) && (
-        <div className={`p-4 ${isMobile ? 'max-h-[70vh] overflow-y-auto' : ''}`}>
-          {/* Color Palette */}
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold mb-2 text-gray-700">{t('brush')}</h3>
-            <div className="grid grid-cols-4 gap-2">
-              {colors.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => {
-                    setCurrentColor(color);
-                    setIsEraser(false);
-                  }}
-                  className={`w-10 h-10 rounded-full border-3 transition-all duration-200 hover:scale-110 ${
-                    currentColor === color && !isEraser 
-                      ? "border-blue-500 shadow-lg" 
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                  style={{ backgroundColor: color }}
-                  title={color === "#ffffff" ? "White" : color}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Brush Size */}
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold mb-2 text-gray-700">{t('brush')} {t('size')}</h3>
-            <div className="flex gap-3 justify-center">
-              {brushSizes.map(({ size, label }) => (
-                <button
-                  key={size}
-                  onClick={() => setBrushSize(size)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-                    brushSize === size 
-                      ? "bg-blue-100 border-2 border-blue-500" 
-                      : "bg-gray-100 border-2 border-transparent hover:bg-gray-200"
-                  }`}
-                >
-                  <div
-                    className="rounded-full bg-black"
-                    style={{ width: size, height: size }}
-                  />
-                  <span className="text-xs text-gray-600">{label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Eraser Toggle */}
-          <div className="mb-4">
-            <button
-              onClick={() => setIsEraser(!isEraser)}
-              className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
-                isEraser 
-                  ? "bg-red-500 text-white shadow-lg" 
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              <Eraser className="h-5 w-5" />
-              <span>{isEraser ? t('brush') : t('eraser')}</span>
-            </button>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={undo}
-              className="py-3 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center gap-1 transition-colors"
-              title={t('undo')}
-            >
-              <Undo className="h-4 w-4" />
-              {!isMobile && <span className="text-sm">{t('undo')}</span>}
-            </button>
-            
-            <button
-              onClick={clearCanvas}
-              className="py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg flex items-center justify-center gap-1 transition-colors"
-              title={t('clear')}
-            >
-              <Trash2 className="h-4 w-4" />
-              {!isMobile && <span className="text-sm">{t('clear')}</span>}
-            </button>
-            
-            <button
-              onClick={saveCanvas}
-              className="py-3 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg flex items-center justify-center gap-1 transition-colors"
-              title={t('save')}
-            >
-              <Save className="h-4 w-4" />
-              {!isMobile && <span className="text-sm">{t('save')}</span>}
-            </button>
-          </div>
-        </div>
-      )}
-    </motion.div>
-  );
-};
-
+// Enhanced FlipBookViewer with no white background
 const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t }) => {
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1491,7 +1543,6 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
   const [brushSize, setBrushSize] = useState(5);
   const [isEraser, setIsEraser] = useState(false);
   const [undoStack, setUndoStack] = useState<string[][]>([]);
-  const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -1717,9 +1768,9 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
+    <div className="fixed inset-0 z-50 flex flex-col bg-gray-900">
       {/* Header */}
-      <div className="flex justify-between items-center p-4 bg-black/50 z-40">
+      <div className="flex justify-between items-center p-4 bg-gray-800/80 z-40">
         <h2 className="text-white text-lg font-semibold">
           {type === "story" ? t("storyTime") : t("coloringBook")} - {t("flipbook")}
         </h2>
@@ -1727,7 +1778,7 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           {processedPages[currentPage]?.audio_url && (
             <button 
               onClick={isPlayingAudio ? stopAudio : () => playAudioForPage(processedPages[currentPage])}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors"
             >
               {isPlayingAudio ? "⏸️" : "▶️"} 
               {isPlayingAudio ? t("pauseAudio") : t("playAudio")}
@@ -1735,7 +1786,7 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           )}
           <button 
             onClick={onClose}
-            className="text-white text-2xl bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors touch-target"
+            className="text-white text-2xl bg-gray-700 rounded-full p-2 hover:bg-gray-600 transition-colors touch-target"
           >
             ✕
           </button>
@@ -1752,8 +1803,9 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           mobileScrollSupport={true}
           flippingTime={isMobile ? 1000 : 600}
           size="fixed"
-          className="shadow-2xl rounded-lg bg-white"
+          className="shadow-2xl"
           onFlip={(e: any) => handlePageChange(e.data)}
+          style={{}}
           startPage={0}
           minWidth={300}
           maxWidth={600}
@@ -1772,17 +1824,9 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           {processedPages.map((page, index) => (
             <div 
               key={index} 
-              className="relative flex flex-col justify-between p-4 rounded-[6px] border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white page-container"
+              className="relative flex flex-col justify-between overflow-hidden bg-transparent page-container"
             >
-              <div 
-                className="absolute inset-0 pointer-events-none" 
-                style={{ 
-                  backgroundImage: "url('/paper-texture.png')", 
-                  backgroundSize: "cover", 
-                  opacity: 0.05 
-                }} 
-              />
-              
+              {/* No white background - completely transparent */}
               <div className="relative z-20 flex flex-col justify-between h-full page-content">
                 {page.audio_url && (
                   <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 text-xs z-30">
@@ -1794,8 +1838,11 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
                   <img 
                     src={page.image_url} 
                     alt={page.image_alt || `Page ${index + 1}`} 
-                    className="rounded-md shadow-md object-contain max-h-full max-w-full select-none"
+                    className="object-contain max-h-full max-w-full select-none"
                     draggable={false}
+                    style={{
+                      background: 'transparent'
+                    }}
                   />
                   
                   {type === "coloring" && (
@@ -1813,8 +1860,8 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
                 </div>
                 
                 {page.text && (
-                  <div className="mt-4 p-3 bg-white/80 backdrop-blur-sm rounded-lg border">
-                    <p className="text-sm text-gray-700 text-center">{page.text}</p>
+                  <div className="mt-4 p-3 bg-black/50 backdrop-blur-sm rounded-lg border border-gray-600">
+                    <p className="text-sm text-white text-center">{page.text}</p>
                   </div>
                 )}
               </div>
@@ -1849,9 +1896,10 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
       )}
 
       {/* Page Indicator */}
-      <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-2 rounded-lg text-sm z-40">
-        {t("pageCount", { current: currentPage + 1, total: processedPages.length })}
+      <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-2 rounded-lg text-sm z-40">
+        Page {currentPage + 1} of {processedPages.length}
       </div>
+
     </div>
   );
 };
@@ -1866,8 +1914,7 @@ function useIsMobile(breakpoint = 768) {
   }, [breakpoint]);
   return isMobile;
 }
-
-// Updated BookCard with hover unmute functionality
+// Enhanced BookCard component
 const BookCard = ({
   day,
   onOpen,
@@ -1928,7 +1975,7 @@ const BookCard = ({
     ? "linear-gradient(to bottom, #6b46c1, #553c9a)"
     : "linear-gradient(to bottom, #3182ce, #2c5282)";
 
-  const defaultBorderColor = type === "story" ? "border-purple-300" : "border-yellow-300";
+  const defaultBorderColor = type === "story" ? "border-purple-400" : "border-blue-400";
   const defaultButtonGradient = type === "story" ? "from-purple-500 to-pink-500" : "from-blue-500 to-green-500";
   const defaultIcon = type === "story" ? "📖" : "✏️";
 
@@ -1961,10 +2008,10 @@ const BookCard = ({
       />
 
       <motion.div
-        className={`absolute inset-0 rounded-lg shadow-xl border-4 ${defaultBorderColor} p-6 flex flex-col items-center text-center overflow-hidden ${
+        className={`absolute inset-0 rounded-lg shadow-xl border-2 ${defaultBorderColor} p-6 flex flex-col items-center text-center overflow-hidden ${
           !isAvailable ? "grayscale opacity-70" : ""
         }`}
-        style={{ transformStyle: "preserve-3d" }}
+        style={{ transformStyle: "preserve-3d", background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)' }}
         animate={
           isAnimating && isAvailable
             ? {
@@ -2000,8 +2047,8 @@ const BookCard = ({
             <div
               className={`absolute inset-0 bg-gradient-to-br ${
                 type === "story"
-                  ? "from-yellow-100 to-pink-100"
-                  : "from-blue-100 to-green-100"
+                  ? "from-purple-900/50 to-pink-900/50"
+                  : "from-blue-900/50 to-green-900/50"
               }`}
             />
           )}
@@ -2035,7 +2082,7 @@ const BookCard = ({
 
           {!isAvailable ? (
             <motion.div
-              className="mt-auto gap-2 py-3 px-4 bg-gradient-to-r from-gray-400 to-gray-600 text-white w-full rounded-lg font-bold text-center"
+              className="mt-auto gap-2 py-3 px-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white w-full rounded-lg font-bold text-center border border-gray-600"
             >
               <Clock className="h-5 w-5 inline mr-2" />
               {t("comingSoon")}
@@ -2043,7 +2090,7 @@ const BookCard = ({
           ) : (
             <motion.button
               onClick={onOpen}
-              className={`mt-auto gap-2 py-3 px-4 bg-gradient-to-r ${defaultButtonGradient} text-white w-full rounded-lg font-bold`}
+              className={`mt-auto gap-2 py-3 px-4 bg-gradient-to-r ${defaultButtonGradient} text-white w-full rounded-lg font-bold border border-white/20`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -2068,13 +2115,14 @@ const BookCard = ({
             animate={{ opacity: 0.1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"></div>
           </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
   );
 };
+
 
 const DateButton = ({
   date,

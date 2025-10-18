@@ -155,38 +155,51 @@ export const NimiChat = ({
   return (
     <div className="h-full flex flex-col bg-gray-50 rounded-xl shadow-lg p-4">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto mb-4 p-3 space-y-3 bg-white rounded-xl border border-gray-200">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-gray-400 h-full">
-            <div className="text-5xl mb-2">🤖</div>
-            <p>Hello {currentUser.name}!</p>
-            <p>Start chatting 😊</p>
-          </div>
-        ) : (
-          messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.sender==='nimi'?'justify-start':'justify-end'}`}>
-              <div className="flex items-start max-w-xs md:max-w-md">
-                {msg.sender==='nimi' && <div className="w-10 h-10 rounded-full flex items-center justify-center mr-2 mt-1 bg-gradient-to-br from-purple-400 to-pink-500 text-white text-lg font-bold shadow-lg border border-white">🤖</div>}
-                <div className={`px-4 py-2 rounded-2xl text-sm md:text-base ${msg.sender==='nimi'?'bg-purple-100 text-gray-800 rounded-tl-none border border-purple-200':'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-tr-none'}`}>{msg.text}</div>
-                {msg.sender==='user' && <div className="w-10 h-10 rounded-full flex items-center justify-center ml-2 mt-1 bg-gradient-to-br from-indigo-400 to-blue-500 text-white text-lg font-bold shadow-lg border border-white">{currentUser.avatar}</div>}
-              </div>
-            </div>
-          ))
-        )}
-        {isTyping && (
-          <div className="flex justify-start items-center space-x-2">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center border border-purple-200">
-              <span className="text-lg">🤖</span>
-            </div>
-            <div className="w-16 h-6 bg-purple-100 rounded-full flex justify-between items-center px-2">
-              <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"/>
-              <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-150"/>
-              <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-300"/>
-            </div>
-          </div>
-        )}
-        <div ref={chatEndRef} />
+<div className="flex-1 overflow-y-auto mb-4 p-3 space-y-3 bg-white rounded-xl border border-gray-200">
+  {messages.length === 0 ? (
+    <div className="flex flex-col items-center justify-center text-gray-400 h-full">
+      <div className="w-16 h-16 mb-2 rounded-full overflow-hidden">
+        <img src="/path/to/nimi-logo.jpg" alt="Nimi Logo" className="w-full h-full object-cover" />
       </div>
+      <p>Hello {currentUser.name}!</p>
+      <p>Start chatting 😊</p>
+    </div>
+  ) : (
+    messages.map((msg, i) => (
+      <div key={i} className={`flex ${msg.sender === 'nimi' ? 'justify-start' : 'justify-end'}`}>
+        <div className="flex items-start max-w-xs md:max-w-md">
+          {msg.sender === 'nimi' && (
+            <div className="w-10 h-10 rounded-full flex items-center justify-center mr-2 mt-1 shadow-lg border border-white overflow-hidden">
+              <img src="nimi-logo.jpg" alt="Nimi Logo" className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className={`px-4 py-2 rounded-2xl text-sm md:text-base ${msg.sender === 'nimi' ? 'bg-purple-100 text-gray-800 rounded-tl-none border border-purple-200' : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-tr-none'}`}>
+            {msg.text}
+          </div>
+          {msg.sender === 'user' && (
+            <div className="w-10 h-10 rounded-full flex items-center justify-center ml-2 mt-1 bg-gradient-to-br from-indigo-400 to-blue-500 text-white text-lg font-bold shadow-lg border border-white">
+              {currentUser.avatar}
+            </div>
+          )}
+        </div>
+      </div>
+    ))
+  )}
+  {isTyping && (
+    <div className="flex justify-start items-center space-x-2">
+      <div className="w-10 h-10 rounded-full flex items-center justify-center border border-purple-200 overflow-hidden">
+        <img src="nimi-logo.jpg" alt="Nimi Logo" className="w-full h-full object-cover" />
+      </div>
+      <div className="w-16 h-6 bg-purple-100 rounded-full flex justify-between items-center px-2">
+        <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" />
+        <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-150" />
+        <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-300" />
+      </div>
+    </div>
+  )}
+  <div ref={chatEndRef} />
+</div>
+
 
       <ErrorMessage />
 
