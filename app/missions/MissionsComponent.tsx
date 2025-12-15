@@ -33,6 +33,11 @@ import { Undo } from "lucide-react";
 import { Trash2 } from "lucide-react";
 import { Save } from "lucide-react";
 import { Brush } from "lucide-react";
+import { Layers } from "lucide-react";
+import { Eye } from "lucide-react";
+import { EyeOff } from "lucide-react";
+import { Plus } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { useUser } from "@/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -128,7 +133,19 @@ const translations = {
     size: "Size",
     drawingTools: "Drawing Tools",
     selectColor: "Select Color",
-    brushSize: "Brush Size"
+    brushSize: "Brush Size",
+    coloringMode: "Coloring Mode",
+    exitColoringMode: "Exit Coloring Mode",
+    newLayer: "New Layer",
+    layers: "Layers",
+    opacity: "Opacity",
+    mergeAll: "Merge All",
+    downloadImage: "Download Image",
+    activeLayer: "Active Layer",
+    visibility: "Visibility",
+    deleteLayer: "Delete Layer",
+    layer: "Layer",
+    digitalDrawing: "Digital Drawing"
   },
   es: {
     magicalLearning: "Aprendizaje Mágico",
@@ -203,7 +220,19 @@ const translations = {
     size: "Tamaño",
     drawingTools: "Herramientas de Dibujo",
     selectColor: "Seleccionar Color",
-    brushSize: "Tamaño del Pincel"
+    brushSize: "Tamaño del Pincel",
+    coloringMode: "Modo Colorear",
+    exitColoringMode: "Salir del Modo Colorear",
+    newLayer: "Nueva Capa",
+    layers: "Capas",
+    opacity: "Opacidad",
+    mergeAll: "Combinar Todo",
+    downloadImage: "Descargar Imagen",
+    activeLayer: "Capa Activa",
+    visibility: "Visibilidad",
+    deleteLayer: "Eliminar Capa",
+    layer: "Capa",
+    digitalDrawing: "Dibujo Digital"
   },
   fr: {
     magicalLearning: "Apprentissage Magique",
@@ -278,7 +307,19 @@ const translations = {
     size: "Taille",
     drawingTools: "Outils de Dessin",
     selectColor: "Sélectionner la Couleur",
-    brushSize: "Taille du Pinceau"
+    brushSize: "Taille du Pinceau",
+    coloringMode: "Mode Coloriage",
+    exitColoringMode: "Quitter le Mode Coloriage",
+    newLayer: "Nouveau Calque",
+    layers: "Calques",
+    opacity: "Opacité",
+    mergeAll: "Fusionner Tout",
+    downloadImage: "Télécharger l'Image",
+    activeLayer: "Calque Actif",
+    visibility: "Visibilité",
+    deleteLayer: "Supprimer le Calque",
+    layer: "Calque",
+    digitalDrawing: "Dessin Numérique"
   },
   rw: {
     magicalLearning: "Kwiga Ubumenyi",
@@ -353,7 +394,19 @@ const translations = {
     size: "Ingano",
     drawingTools: "Ibikoresho byo Gushushanya",
     selectColor: "Hitamo Ibara",
-    brushSize: "Ingano ya Burashi"
+    brushSize: "Ingano ya Burashi",
+    coloringMode: "Uburyo bwo Gupaka",
+    exitColoringMode: "Sohoka mu Buryo bwo Gupaka",
+    newLayer: "Akadomo Gashya",
+    layers: "Utudomo",
+    opacity: "Guhagarara",
+    mergeAll: "Kwangiza Byose",
+    downloadImage: "Kuramo Ishusho",
+    activeLayer: "Akadomo Gikora",
+    visibility: "Kureba",
+    deleteLayer: "Kuraho Akadomo",
+    layer: "Akadomo",
+    digitalDrawing: "Gushushanya kuri Ordinateur"
   },
   sw: {
     magicalLearning: "Kujifunza Kichawi",
@@ -428,7 +481,19 @@ const translations = {
     size: "Ukubwa",
     drawingTools: "Zana za Kuchora",
     selectColor: "Chagua Rangi",
-    brushSize: "Ukubwa wa Brashi"
+    brushSize: "Ukubwa wa Brashi",
+    coloringMode: "Hali ya Kuchora",
+    exitColoringMode: "Toka Kwenye Hali ya Kuchora",
+    newLayer: "Tabaka Mpya",
+    layers: "Tabaka",
+    opacity: "Ukungu",
+    mergeAll: "Unganisha Yote",
+    downloadImage: "Pakua Picha",
+    activeLayer: "Tabaka Inayotumika",
+    visibility: "Kuonekana",
+    deleteLayer: "Futa Tabaka",
+    layer: "Tabaka",
+    digitalDrawing: "Mchoro Dijitali"
   }
 };
 
@@ -534,6 +599,15 @@ interface Child {
   avatar_url?: string;
 }
 
+// Layer interface for digital drawing
+interface DrawingLayer {
+  id: string;
+  name: string;
+  visible: boolean;
+  canvas: any; // Fabric.js canvas
+  undoStack: string[]; // JSON states for undo
+}
+
 // Fabric.js dynamic import
 let fabric: any;
 if (typeof window !== "undefined") {
@@ -541,8 +615,806 @@ if (typeof window !== "undefined") {
   fabric = require("fabric").fabric;
 }
 
-// Enhanced Coloring Toolbar Component - Matches your image style
+// Digital Drawing Component with Layers
+const DigitalDrawingViewer = ({ 
+  pages, 
+  onClose, 
+  t 
+}: { 
+  pages: Page[]; 
+  onClose: () => void; 
+  t: (key: string) => string;
+}) => {
+  const [processedPages, setProcessedPages] = useState<Page[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Drawing state
+  const [currentColor, setCurrentColor] = useState("#ff0000");
+  const [brushSize, setBrushSize] = useState(5);
+  const [opacity, setOpacity] = useState(100);
+  const [isEraser, setIsEraser] = useState(false);
+  
+  // Layers state
+  const [layers, setLayers] = useState<DrawingLayer[]>([]);
+  const [activeLayerIndex, setActiveLayerIndex] = useState(0);
+  
+  // Refs
+  const containerRef = useRef<HTMLDivElement>(null);
+  const baseImageRef = useRef<HTMLImageElement>(null);
+  const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
+  const fabricRefs = useRef<(any | null)[]>([]);
+
+  // Initialize layers
+  useEffect(() => {
+    if (processedPages.length === 0) return;
+
+    const initialLayers: DrawingLayer[] = [
+      {
+        id: 'layer-1',
+        name: t('layer') + ' 1',
+        visible: true,
+        canvas: null,
+        undoStack: []
+      }
+    ];
+    
+    setLayers(initialLayers);
+    setActiveLayerIndex(0);
+  }, [processedPages, t]);
+
+  // Process pages
+  useEffect(() => {
+    const processPages = async () => {
+      const processed = await Promise.all(
+        pages.map(async (page) => {
+          let imageUrl = page.image_url;
+          
+          if (imageUrl.startsWith("supabase://")) {
+            const path = imageUrl.replace("supabase://", "");
+            const [bucket, ...filePath] = path.split("/");
+            const { data: { publicUrl } } = await supabase.storage
+              .from(bucket)
+              .getPublicUrl(filePath.join("/"));
+            imageUrl = publicUrl;
+          }
+          
+          return { ...page, image_url: imageUrl };
+        })
+      );
+      
+      setProcessedPages(processed);
+      setIsLoading(false);
+    };
+    
+    processPages();
+    
+    return () => {
+      // Clean up Fabric canvases
+      fabricRefs.current.forEach(canvas => {
+        if (canvas) {
+          canvas.dispose();
+        }
+      });
+    };
+  }, [pages]);
+
+  // Initialize canvases when layers change
+  useEffect(() => {
+    if (!fabric || layers.length === 0 || !baseImageRef.current) return;
+
+    const initializeCanvases = async () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const width = container.clientWidth / 2 - 20;
+      const height = container.clientHeight - 100;
+
+      layers.forEach((layer, index) => {
+        const canvasEl = canvasRefs.current[index];
+        if (!canvasEl) return;
+
+        // Dispose previous canvas
+        if (fabricRefs.current[index]) {
+          fabricRefs.current[index].dispose();
+        }
+
+        // Create new canvas
+        const canvas = new fabric.Canvas(canvasEl, {
+          isDrawingMode: true,
+          selection: false,
+          preserveObjectStacking: true,
+          renderOnAddRemove: true,
+          width: width,
+          height: height,
+        });
+
+        // Configure brush
+        const brush = new fabric.PencilBrush(canvas);
+        brush.color = isEraser ? "#ffffff" : currentColor;
+        brush.width = brushSize;
+        brush.opacity = opacity / 100;
+        canvas.freeDrawingBrush = brush;
+
+        // Handle path creation for undo
+        canvas.on("path:created", () => {
+          const currentStack = [...(layers[index].undoStack || [])];
+          currentStack.push(JSON.stringify(canvas.toJSON()));
+          
+          setLayers(prev => prev.map((l, i) => 
+            i === index 
+              ? { ...l, undoStack: currentStack.slice(-20) } // Keep last 20 states
+              : l
+          ));
+        });
+
+        fabricRefs.current[index] = canvas;
+        
+        // Update layer with canvas reference
+        setLayers(prev => prev.map((l, i) => 
+          i === index ? { ...l, canvas } : l
+        ));
+      });
+    };
+
+    if (baseImageRef.current.complete) {
+      initializeCanvases();
+    } else {
+      baseImageRef.current.onload = initializeCanvases;
+    }
+  }, [layers.length, currentColor, brushSize, opacity, isEraser]);
+
+  // Update canvas when drawing tools change
+  useEffect(() => {
+    if (!fabric || layers.length === 0) return;
+
+    layers.forEach((layer, index) => {
+      const canvas = fabricRefs.current[index];
+      if (!canvas) return;
+
+      const brush = new fabric.PencilBrush(canvas);
+      brush.color = isEraser ? "#ffffff" : currentColor;
+      brush.width = brushSize;
+      brush.opacity = opacity / 100;
+      canvas.freeDrawingBrush = brush;
+    });
+  }, [currentColor, brushSize, opacity, isEraser, layers]);
+
+  // Layer management functions
+  const addLayer = () => {
+    const newLayer: DrawingLayer = {
+      id: `layer-${Date.now()}`,
+      name: `${t('layer')} ${layers.length + 1}`,
+      visible: true,
+      canvas: null,
+      undoStack: []
+    };
+    
+    setLayers(prev => [...prev, newLayer]);
+    setActiveLayerIndex(layers.length);
+  };
+
+  const deleteLayer = (index: number) => {
+    if (layers.length <= 1) return;
+    
+    // Dispose canvas
+    if (fabricRefs.current[index]) {
+      fabricRefs.current[index].dispose();
+      fabricRefs.current[index] = null;
+    }
+    
+    setLayers(prev => prev.filter((_, i) => i !== index));
+    
+    if (activeLayerIndex >= index) {
+      setActiveLayerIndex(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const toggleLayerVisibility = (index: number) => {
+    setLayers(prev => prev.map((layer, i) => 
+      i === index ? { ...layer, visible: !layer.visible } : layer
+    ));
+  };
+
+  const updateLayerName = (index: number, name: string) => {
+    setLayers(prev => prev.map((layer, i) => 
+      i === index ? { ...layer, name } : layer
+    ));
+  };
+
+  // Drawing actions for active layer
+  const undo = () => {
+    const canvas = fabricRefs.current[activeLayerIndex];
+    const currentUndoStack = layers[activeLayerIndex]?.undoStack || [];
+    
+    if (!canvas || currentUndoStack.length < 2) return;
+    
+    const previousState = currentUndoStack[currentUndoStack.length - 2];
+    if (previousState) {
+      canvas.loadFromJSON(previousState, () => {
+        canvas.renderAll();
+        setLayers(prev => prev.map((layer, i) => 
+          i === activeLayerIndex 
+            ? { ...layer, undoStack: currentUndoStack.slice(0, -1) }
+            : layer
+        ));
+      });
+    }
+  };
+
+  const clearLayer = () => {
+    const canvas = fabricRefs.current[activeLayerIndex];
+    if (!canvas) return;
+    
+    canvas.clear();
+    setLayers(prev => prev.map((layer, i) => 
+      i === activeLayerIndex ? { ...layer, undoStack: [] } : layer
+    ));
+  };
+
+  const mergeAllLayers = () => {
+    if (!fabric || layers.length === 0) return;
+
+    const activeCanvas = fabricRefs.current[activeLayerIndex];
+    if (!activeCanvas) return;
+
+    // For now, just clear other layers and move their content to active layer
+    layers.forEach((layer, index) => {
+      if (index !== activeLayerIndex && fabricRefs.current[index]) {
+        const otherCanvas = fabricRefs.current[index];
+        const objects = otherCanvas.getObjects();
+        
+        objects.forEach((obj: any) => {
+          activeCanvas.add(obj);
+        });
+        
+        otherCanvas.clear();
+        setLayers(prev => prev.map((l, i) => 
+          i === index ? { ...l, undoStack: [] } : l
+        ));
+      }
+    });
+
+    activeCanvas.renderAll();
+  };
+
+  const downloadMergedImage = () => {
+    if (!fabric || !baseImageRef.current) return;
+
+    // Create a temporary canvas for merging
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    if (!ctx) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const width = container.clientWidth / 2 - 20;
+    const height = container.clientHeight - 100;
+
+    tempCanvas.width = width * 2;
+    tempCanvas.height = height;
+
+    // Draw base image (twice for both pages)
+    ctx.drawImage(baseImageRef.current, 0, 0, width, height);
+    ctx.drawImage(baseImageRef.current, width, 0, width, height);
+
+    // Draw all visible layers
+    layers.forEach((layer, index) => {
+      if (layer.visible && fabricRefs.current[index]) {
+        const canvas = fabricRefs.current[index];
+        const dataURL = canvas.toDataURL({
+          format: "png",
+          quality: 1,
+          multiplier: 2
+        });
+        
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, width, height);
+          ctx.drawImage(img, width, 0, width, height);
+          
+          // Create download link
+          const link = document.createElement("a");
+          link.download = `nimi-piko-coloring-${Date.now()}.png`;
+          link.href = tempCanvas.toDataURL({
+            format: "png",
+            quality: 1
+          });
+          link.click();
+        };
+        img.src = dataURL;
+      }
+    });
+  };
+
+  const colors = [
+    "#ff0000", "#ff9900", "#ffff00", "#33cc33", 
+    "#3399ff", "#9900ff", "#ff00ff", "#000000", "#ffffff"
+  ];
+
+  const brushSizes = [3, 8, 15];
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+        <div className="text-4xl animate-pulse text-white">🎨</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-gray-900">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 bg-gray-800/80 z-40">
+        <h2 className="text-white text-lg font-semibold">
+          {t('digitalDrawing')} - NIMI ET PIKO
+        </h2>
+        <div className="flex gap-2">
+          <button 
+            onClick={onClose}
+            className="text-white text-2xl bg-gray-700 rounded-full p-2 hover:bg-gray-600 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Color Palette */}
+        <div className="w-20 bg-gray-800/90 border-r border-gray-700 flex flex-col items-center py-4 space-y-6">
+          {/* Color Palette */}
+          <div className="space-y-3">
+            {colors.map((color) => (
+              <button
+                key={color}
+                onClick={() => {
+                  setCurrentColor(color);
+                  setIsEraser(false);
+                }}
+                className={`w-10 h-10 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                  currentColor === color && !isEraser 
+                    ? "border-white shadow-lg scale-110" 
+                    : "border-gray-500 hover:border-gray-300"
+                }`}
+                style={{ backgroundColor: color }}
+                title={color === "#ffffff" ? "White" : color}
+              />
+            ))}
+          </div>
+
+          {/* Brush Size */}
+          <div className="space-y-3">
+            {brushSizes.map((size) => (
+              <button
+                key={size}
+                onClick={() => setBrushSize(size)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                  brushSize === size 
+                    ? "bg-blue-500 border-2 border-white" 
+                    : "bg-gray-700 hover:bg-gray-600 border-2 border-transparent"
+                }`}
+                title={`Size: ${size}`}
+              >
+                <div
+                  className="rounded-full bg-white"
+                  style={{ width: size / 2, height: size / 2 }}
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Tool Selection */}
+          <div className="space-y-3">
+            <button
+              onClick={() => setIsEraser(false)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                !isEraser 
+                  ? "bg-blue-500 text-white shadow-lg" 
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+              title={t('brush')}
+            >
+              <Brush className="h-5 w-5" />
+            </button>
+            
+            <button
+              onClick={() => setIsEraser(true)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                isEraser 
+                  ? "bg-red-500 text-white shadow-lg" 
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+              title={t('eraser')}
+            >
+              <Eraser className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Main Drawing Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Top Toolbar */}
+          <div className="bg-gray-800/80 border-b border-gray-700 p-3 flex items-center gap-4">
+            <Button
+              onClick={undo}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
+            >
+              <Undo className="h-4 w-4" />
+              {t('undo')}
+            </Button>
+
+            <Button
+              onClick={addLayer}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
+            >
+              <Plus className="h-4 w-4" />
+              {t('newLayer')}
+            </Button>
+
+            <div className="flex items-center gap-2 text-white">
+              <span className="text-sm">{t('brushSize')}:</span>
+              <Slider
+                value={[brushSize]}
+                onValueChange={([value]) => setBrushSize(value)}
+                min={1}
+                max={30}
+                step={1}
+                className="w-24"
+              />
+              <span className="text-sm w-8">{brushSize}px</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-white">
+              <span className="text-sm">{t('opacity')}:</span>
+              <Slider
+                value={[opacity]}
+                onValueChange={([value]) => setOpacity(value)}
+                min={10}
+                max={100}
+                step={5}
+                className="w-24"
+              />
+              <span className="text-sm w-12">{opacity}%</span>
+            </div>
+
+            <Button
+              onClick={mergeAllLayers}
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-blue-600 text-white border-blue-500 hover:bg-blue-700 ml-auto"
+            >
+              <Layers className="h-4 w-4" />
+              {t('mergeAll')}
+            </Button>
+
+            <Button
+              onClick={downloadMergedImage}
+              size="sm"
+              className="gap-2 bg-green-600 text-white hover:bg-green-700"
+            >
+              <Download className="h-4 w-4" />
+              {t('downloadImage')}
+            </Button>
+          </div>
+
+          {/* Drawing Canvas Area */}
+          <div ref={containerRef} className="flex-1 flex p-4 gap-4 overflow-auto">
+            {/* Two pages side by side */}
+            {[0, 1].map((pageIndex) => (
+              <div key={pageIndex} className="flex-1 flex flex-col">
+                <div className="text-white text-center mb-2 font-semibold">
+                  NIMI ET PIKO - {t('page')} {pageIndex + 1}
+                </div>
+                <div className="relative flex-1 border-2 border-gray-600 rounded-lg bg-white">
+                  {/* Base Image */}
+                  <img
+                    ref={pageIndex === 0 ? baseImageRef : undefined}
+                    src={processedPages[0]?.image_url}
+                    alt={`Coloring Page ${pageIndex + 1}`}
+                    className="absolute inset-0 w-full h-full object-contain"
+                  />
+                  
+                  {/* Drawing Layers */}
+                  {layers.map((layer, layerIndex) => (
+                    layer.visible && (
+                      <canvas
+                        key={layer.id}
+                        ref={(el: HTMLCanvasElement | null) => { 
+                          canvasRefs.current[layerIndex] = el;
+                        }}
+                        className={`absolute inset-0 w-full h-full ${
+                          activeLayerIndex === layerIndex ? 'cursor-crosshair' : 'cursor-default'
+                        }`}
+                        style={{
+                          pointerEvents: activeLayerIndex === layerIndex ? 'auto' : 'none',
+                          cursor: isEraser 
+                            ? `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${brushSize * 2}" height="${brushSize * 2}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="white" stroke="black" stroke-width="2"/></svg>') ${brushSize} ${brushSize}, auto` 
+                            : `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${brushSize * 2}" height="${brushSize * 2}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="${currentColor.replace('#', '%23')}" stroke="black" stroke-width="2"/></svg>') ${brushSize} ${brushSize}, auto`
+                        }}
+                      />
+                    )
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Sidebar - Layers Panel */}
+        <div className="w-64 bg-gray-800/90 border-l border-gray-700 p-4">
+          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <Layers className="h-4 w-4" />
+            {t('layers')}
+          </h3>
+          
+          <div className="space-y-2">
+            {layers.map((layer, index) => (
+              <div
+                key={layer.id}
+                className={`p-2 rounded border transition-all cursor-pointer ${
+                  activeLayerIndex === index
+                    ? 'bg-blue-600 border-blue-400'
+                    : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+                }`}
+                onClick={() => setActiveLayerIndex(index)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 flex-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLayerVisibility(index);
+                      }}
+                      className="text-white hover:text-gray-300"
+                    >
+                      {layer.visible ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
+                    </button>
+                    
+                    <Input
+                      value={layer.name}
+                      onChange={(e) => updateLayerName(index, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-6 text-sm bg-transparent border-none text-white p-0 focus:ring-0"
+                    />
+                  </div>
+                  
+                  {layers.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteLayer(index);
+                      }}
+                      className="text-red-400 hover:text-red-300 ml-2"
+                      title={t('deleteLayer')}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                
+                {activeLayerIndex === index && (
+                  <div className="mt-2 flex gap-1">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        undo();
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-6 text-xs bg-gray-600 border-gray-500 text-white"
+                    >
+                      {t('undo')}
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearLayer();
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-6 text-xs bg-red-600 border-red-500 text-white"
+                    >
+                      {t('clear')}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <Button
+            onClick={addLayer}
+            variant="outline"
+            size="sm"
+            className="w-full mt-4 gap-2 bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
+          >
+            <Plus className="h-4 w-4" />
+            {t('newLayer')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Coloring Toolbar Component
 const ColoringToolbar = ({
+  isOpen,
+  onClose,
+  currentColor,
+  setCurrentColor,
+  brushSize,
+  setBrushSize,
+  isEraser,
+  setIsEraser,
+  undo,
+  clearCanvas,
+  saveCanvas,
+  t
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  currentColor: string;
+  setCurrentColor: (color: string) => void;
+  brushSize: number;
+  setBrushSize: (size: number) => void;
+  isEraser: boolean;
+  setIsEraser: (isEraser: boolean) => void;
+  undo: () => void;
+  clearCanvas: () => void;
+  saveCanvas: () => void;
+  t: (key: string) => string;
+}) => {
+  const colors = [
+    "#ff0000", "#ff9900", "#ffff00", "#33cc33", 
+    "#3399ff", "#9900ff", "#ff00ff", "#000000", "#ffffff"
+  ];
+  
+  const brushSizes = [5, 10, 15];
+
+  return (
+    <>
+      {/* Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed inset-0 z-40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Toolbar */}
+      <motion.div
+        className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50 bg-white/95 backdrop-blur-sm rounded-r-2xl shadow-2xl border border-gray-200 border-l-0 overflow-hidden"
+        initial={{ x: -80 }}
+        animate={{ x: isOpen ? 0 : -80 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+      >
+        <div className="w-20 py-4 flex flex-col items-center space-y-6">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors mb-2"
+            title={t('exitColoringMode')}
+          >
+            <X className="h-5 w-5 text-gray-600" />
+          </button>
+
+          {/* Color Palette */}
+          <div className="space-y-3">
+            {colors.map((color) => (
+              <button
+                key={color}
+                onClick={() => {
+                  setCurrentColor(color);
+                  setIsEraser(false);
+                }}
+                className={`w-10 h-10 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                  currentColor === color && !isEraser 
+                    ? "border-gray-800 shadow-lg scale-110" 
+                    : "border-gray-300 hover:border-gray-400"
+                }`}
+                style={{ backgroundColor: color }}
+                title={color === "#ffffff" ? "White" : color}
+              />
+            ))}
+          </div>
+
+          {/* Brush Size */}
+          <div className="space-y-3">
+            {brushSizes.map((size) => (
+              <button
+                key={size}
+                onClick={() => setBrushSize(size)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                  brushSize === size 
+                    ? "bg-blue-100 border-2 border-blue-500" 
+                    : "bg-gray-100 hover:bg-gray-200 border-2 border-transparent"
+                }`}
+                title={`Size: ${size}`}
+              >
+                <div
+                  className="rounded-full bg-gray-600"
+                  style={{ width: size / 2, height: size / 2 }}
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Tool Selection */}
+          <div className="space-y-3">
+            <button
+              onClick={() => setIsEraser(false)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                !isEraser 
+                  ? "bg-blue-500 text-white shadow-lg" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+              title={t('brush')}
+            >
+              <Brush className="h-5 w-5" />
+            </button>
+            
+            <button
+              onClick={() => setIsEraser(true)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                isEraser 
+                  ? "bg-red-500 text-white shadow-lg" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+              title={t('eraser')}
+            >
+              <Eraser className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={undo}
+              className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+              title={t('undo')}
+            >
+              <Undo className="h-5 w-5" />
+            </button>
+            
+            <button
+              onClick={clearCanvas}
+              className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+              title={t('clear')}
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+            
+            <button
+              onClick={saveCanvas}
+              className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+              title={t('save')}
+            >
+              <Save className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
+};
+
+// Updated Mobile Coloring Toolbar
+const MobileColoringToolbar = ({
   currentColor,
   setCurrentColor,
   brushSize,
@@ -574,30 +1446,26 @@ const ColoringToolbar = ({
     "#3399ff", "#9900ff", "#ff00ff", "#000000", "#ffffff"
   ];
   
-  const brushSizes = [
-    { size: 5, label: t('small') },
-    { size: 10, label: t('medium') },
-    { size: 15, label: t('large') }
-  ];
+  const brushSizes = [5, 10, 15];
 
   return (
     <motion.div
       className={`fixed ${
         isMobile ? 'bottom-4 left-1/2 transform -translate-x-1/2' : 'top-4 right-4'
-      } z-50 bg-gray-900/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700 overflow-hidden transition-all duration-300`}
+      } z-50 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300`}
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3 }}
       style={{
-        width: isMobile ? (isCollapsed ? 'auto' : '90vw') : '280px',
-        maxWidth: isMobile ? '400px' : '280px'
+        width: isMobile ? (isCollapsed ? 'auto' : '90vw') : 'auto',
+        maxWidth: isMobile ? '400px' : 'auto'
       }}
     >
       {/* Collapse Toggle Button - Mobile Only */}
       {isMobile && (
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white flex items-center justify-center gap-2 shadow-lg"
         >
           <Palette className="h-5 w-5" />
           <span className="font-semibold">
@@ -607,14 +1475,10 @@ const ColoringToolbar = ({
       )}
 
       {(!isMobile || !isCollapsed) && (
-        <div className={`p-3 ${isMobile ? 'max-h-[70vh] overflow-y-auto' : ''}`}>
-          {/* Color Palette */}
-          <div className="mb-3">
-            <h4 className="text-sm font-semibold mb-2 text-white flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              {t('selectColor')}
-            </h4>
-            <div className="grid grid-cols-5 gap-1">
+        <div className={`p-4 ${isMobile ? 'max-h-[70vh] overflow-y-auto' : ''}`}>
+          <div className="flex flex-col items-center space-y-4">
+            {/* Color Palette */}
+            <div className="flex flex-wrap justify-center gap-2">
               {colors.map((color) => (
                 <button
                   key={color}
@@ -624,105 +1488,95 @@ const ColoringToolbar = ({
                   }}
                   className={`w-8 h-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
                     currentColor === color && !isEraser 
-                      ? "border-white shadow-lg scale-110" 
-                      : "border-gray-600 hover:border-gray-400"
+                      ? "border-gray-800 shadow-lg scale-110" 
+                      : "border-gray-300 hover:border-gray-400"
                   }`}
                   style={{ backgroundColor: color }}
                   title={color === "#ffffff" ? "White" : color}
                 />
               ))}
             </div>
-          </div>
 
-          {/* Brush Size */}
-          <div className="mb-3">
-            <h4 className="text-sm font-semibold mb-2 text-white flex items-center gap-2">
-              <Brush className="h-4 w-4" />
-              {t('brushSize')}
-            </h4>
-            <div className="flex gap-2 justify-between">
-              {brushSizes.map(({ size, label }) => (
+            {/* Brush Size */}
+            <div className="flex gap-2 justify-center">
+              {brushSizes.map((size) => (
                 <button
                   key={size}
                   onClick={() => setBrushSize(size)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all flex-1 ${
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                     brushSize === size 
-                      ? "bg-blue-600 border border-blue-400 shadow-md" 
-                      : "bg-gray-800 border border-gray-600 hover:bg-gray-700"
+                      ? "bg-blue-100 border-2 border-blue-500" 
+                      : "bg-gray-100 hover:bg-gray-200 border-2 border-transparent"
                   }`}
+                  title={`Size: ${size}`}
                 >
                   <div
-                    className="rounded-full bg-white transition-all"
-                    style={{ width: size, height: size }}
+                    className="rounded-full bg-gray-600"
+                    style={{ width: size / 2, height: size / 2 }}
                   />
-                  <span className="text-xs text-white font-medium">{label}</span>
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Tool Selection */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <button
-              onClick={() => setIsEraser(false)}
-              className={`py-2 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold text-sm ${
-                !isEraser 
-                  ? "bg-blue-600 text-white shadow-lg" 
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600"
-              }`}
-            >
-              <Brush className="h-4 w-4" />
-              <span>{t('brush')}</span>
-            </button>
-            
-            <button
-              onClick={() => setIsEraser(true)}
-              className={`py-2 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold text-sm ${
-                isEraser 
-                  ? "bg-red-600 text-white shadow-lg" 
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600"
-              }`}
-            >
-              <Eraser className="h-4 w-4" />
-              <span>{t('eraser')}</span>
-            </button>
-          </div>
+            {/* Tool Selection */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsEraser(false)}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  !isEraser 
+                    ? "bg-blue-500 text-white shadow-lg" 
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title={t('brush')}
+              >
+                <Brush className="h-5 w-5" />
+              </button>
+              
+              <button
+                onClick={() => setIsEraser(true)}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  isEraser 
+                    ? "bg-red-500 text-white shadow-lg" 
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title={t('eraser')}
+              >
+                <Eraser className="h-5 w-5" />
+              </button>
+            </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={undo}
-              className="py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg flex items-center justify-center gap-1 transition-colors font-medium text-sm border border-gray-600"
-              title={t('undo')}
-            >
-              <Undo className="h-4 w-4" />
-              {!isMobile && <span className="text-sm">{t('undo')}</span>}
-            </button>
-            
-            <button
-              onClick={clearCanvas}
-              className="py-2 bg-red-800 hover:bg-red-700 text-white rounded-lg flex items-center justify-center gap-1 transition-colors font-medium text-sm border border-red-600"
-              title={t('clear')}
-            >
-              <Trash2 className="h-4 w-4" />
-              {!isMobile && <span className="text-sm">{t('clear')}</span>}
-            </button>
-            
-            <button
-              onClick={saveCanvas}
-              className="py-2 bg-green-800 hover:bg-green-700 text-white rounded-lg flex items-center justify-center gap-1 transition-colors font-medium text-sm border border-green-600"
-              title={t('save')}
-            >
-              <Save className="h-4 w-4" />
-              {!isMobile && <span className="text-sm">{t('save')}</span>}
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={undo}
+                className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+                title={t('undo')}
+              >
+                <Undo className="h-5 w-5" />
+              </button>
+              
+              <button
+                onClick={clearCanvas}
+                className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+                title={t('clear')}
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+              
+              <button
+                onClick={saveCanvas}
+                className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
+                title={t('save')}
+              >
+                <Save className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
       )}
     </motion.div>
   );
 };
-
 
 // Child Avatar Selection Modal for Mission Completion
 const ChildAvatarModal = ({ 
@@ -1525,13 +2379,17 @@ const MorningVideoCard = ({ video, t, onLikeVideo }: { video: AudioTrack | null;
   );
 };
 
-// Enhanced FlipBookViewer with no white background
+// Enhanced FlipBookViewer with Digital Drawing Option
 const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t }) => {
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [showDigitalDrawing, setShowDigitalDrawing] = useState(false);
+
+  // Coloring mode state
+  const [isColoringMode, setIsColoringMode] = useState(false);
 
   // Canvas and drawing state
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
@@ -1625,6 +2483,16 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
     if (processedPages[newIndex]) {
       playAudioForPage(processedPages[newIndex]);
     }
+  };
+
+  // Toggle coloring mode
+  const toggleColoringMode = () => {
+    setIsColoringMode(!isColoringMode);
+  };
+
+  // Open digital drawing mode
+  const openDigitalDrawing = () => {
+    setShowDigitalDrawing(true);
   };
 
   // Initialize Fabric.js for coloring book pages
@@ -1767,6 +2635,16 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
     );
   }
 
+  if (showDigitalDrawing) {
+    return (
+      <DigitalDrawingViewer 
+        pages={pages}
+        onClose={() => setShowDigitalDrawing(false)}
+        t={t}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-900">
       {/* Header */}
@@ -1775,6 +2653,32 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           {type === "story" ? t("storyTime") : t("coloringBook")} - {t("flipbook")}
         </h2>
         <div className="flex gap-2">
+          {/* Digital Drawing Button */}
+          {type === "coloring" && (
+            <button
+              onClick={openDigitalDrawing}
+              className="px-4 py-2 rounded-lg flex items-center gap-2 bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium"
+            >
+              <Layers className="h-4 w-4" />
+              {t('digitalDrawing')}
+            </button>
+          )}
+          
+          {/* Coloring Mode Toggle Button */}
+          {type === "coloring" && (
+            <button
+              onClick={toggleColoringMode}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium ${
+                isColoringMode 
+                  ? "bg-blue-600 text-white" 
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+            >
+              <Palette className="h-4 w-4" />
+              {isColoringMode ? t('exitColoringMode') : t('coloringMode')}
+            </button>
+          )}
+          
           {processedPages[currentPage]?.audio_url && (
             <button 
               onClick={isPlayingAudio ? stopAudio : () => playAudioForPage(processedPages[currentPage])}
@@ -1814,10 +2718,10 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
           drawShadow={true}
           autoSize={true}
           clickEventForward={true}
-          useMouseEvents={!isMobile}
+          useMouseEvents={!isMobile && !isColoringMode}
           swipeDistance={isMobile ? 30 : 0}
           showPageCorners={true}
-          disableFlipByClick={false}
+          disableFlipByClick={isColoringMode}
           startZIndex={0}
           maxShadowOpacity={0.5}
         >
@@ -1870,9 +2774,27 @@ const FlipBookViewer: React.FC<FlipBookViewerProps> = ({ pages, onClose, type, t
         </HTMLFlipBook>
       </div>
 
-      {/* Coloring Toolbar */}
-      {type === "coloring" && (
+      {/* Left Side Coloring Toolbar */}
+      {type === "coloring" && !isMobile && (
         <ColoringToolbar
+          isOpen={isColoringMode}
+          onClose={toggleColoringMode}
+          currentColor={currentColor}
+          setCurrentColor={setCurrentColor}
+          brushSize={brushSize}
+          setBrushSize={setBrushSize}
+          isEraser={isEraser}
+          setIsEraser={setIsEraser}
+          undo={undo}
+          clearCanvas={clearCanvas}
+          saveCanvas={saveCanvas}
+          t={t}
+        />
+      )}
+
+      {/* Mobile Coloring Toolbar */}
+      {type === "coloring" && isMobile && isColoringMode && (
+        <MobileColoringToolbar
           currentColor={currentColor}
           setCurrentColor={setCurrentColor}
           brushSize={brushSize}
@@ -1914,6 +2836,7 @@ function useIsMobile(breakpoint = 768) {
   }, [breakpoint]);
   return isMobile;
 }
+
 // Enhanced BookCard component
 const BookCard = ({
   day,
