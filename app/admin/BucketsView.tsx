@@ -4,8 +4,7 @@ import supabase from "@/lib/supabaseClient";
 
 interface FileEntry {
   name: string
-  updated_at?: string
-  size?: number
+  updated_at?: string | null
 }
 
 export default function BucketsView() {
@@ -25,7 +24,11 @@ export default function BucketsView() {
       console.error('Error fetching files:', error)
       setFiles([])
     } else {
-      setFiles(data)
+      const mapped: FileEntry[] = data.map(f => ({
+        name: f.name,
+        updated_at: f.updated_at ?? undefined,
+      }))
+      setFiles(mapped)
     }
     setLoading(false)
   }
@@ -74,7 +77,6 @@ export default function BucketsView() {
           <thead className="bg-gray-200">
             <tr>
               <th className="p-2 border">File Name</th>
-              <th className="p-2 border">Size</th>
               <th className="p-2 border">Last Modified</th>
               <th className="p-2 border">Actions</th>
             </tr>
@@ -82,7 +84,7 @@ export default function BucketsView() {
           <tbody>
             {files.length === 0 && (
               <tr>
-                <td className="p-2 border text-center" colSpan={4}>
+                <td className="p-2 border text-center" colSpan={3}>
                   No files in this bucket
                 </td>
               </tr>
@@ -90,7 +92,6 @@ export default function BucketsView() {
             {files.map(f => (
               <tr key={f.name}>
                 <td className="p-2 border">{f.name}</td>
-                <td className="p-2 border">{f.size ?? '-'}</td>
                 <td className="p-2 border">{f.updated_at ?? '-'}</td>
                 <td className="p-2 border flex gap-2">
                   <a
