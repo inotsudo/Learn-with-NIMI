@@ -917,10 +917,11 @@ const DigitalDrawingViewer = ({
           // Create download link
           const link = document.createElement("a");
           link.download = `nimi-piko-coloring-${Date.now()}.png`;
-          link.href = tempCanvas.toDataURL({
-            format: "png",
-            quality: 1
-          });
+          // link.href = tempCanvas.toDataURL({
+          //   format: "png",
+          //   quality: 1
+          // });
+          link.href = tempCanvas.toDataURL("image/png", 1);
           link.click();
         };
         img.src = dataURL;
