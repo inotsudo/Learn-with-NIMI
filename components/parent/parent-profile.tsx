@@ -12,6 +12,7 @@ import { useUser } from "@/contexts/UserContext";
 import supabase from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useSession } from "@supabase/auth-helpers-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export function UserProfileMenu() {
   const session = useSession();
@@ -24,6 +25,7 @@ export function UserProfileMenu() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initial = useMemo(() => (profile?.name?.[0] || "U").toUpperCase(), [profile?.name]);
+  const { supported: pushSupported, isSubscribed: pushSubscribed, loading: pushLoading, error: pushError, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications();
 
   // --- Save profile ---
   const saveProfile = async () => {
@@ -31,17 +33,9 @@ export function UserProfileMenu() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from("users")
-        .update({
-          name: profile.name,
-          avatar_url: profile.avatar_url,
-          bio: profile.bio,
-          date_of_birth: profile.date_of_birth,
-          preferred_language: profile.preferred_language,
-          notify_email: profile.notify_email,
-          notify_sms: profile.notify_sms,
-        })
-        .eq("auth_user_id", session.user.id)
+        .from("parents")
+        .update({ name: profile.name })
+        .eq("id", session.user.id)
         .select()
         .single();
 
@@ -211,6 +205,16 @@ export function UserProfileMenu() {
             <div className="font-medium">SMS Notifications</div>
             <Switch checked={profile.notify_sms} onCheckedChange={(v) => updateProfile?.({ ...profile, notify_sms: v })} disabled={isLoading} />
           </div>
+
+          {pushSupported && (
+            <div className="grid gap-1">
+              <div className="flex items-center justify-between">
+                <div className="font-medium">Push Notifications</div>
+                <Switch checked={pushSubscribed} onCheckedChange={(v) => (v ? pushSubscribe() : pushUnsubscribe())} disabled={pushLoading || isLoading} />
+              </div>
+              {pushError && <p className="text-xs text-red-600">{pushError}</p>}
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="font-medium">Subscription</div>

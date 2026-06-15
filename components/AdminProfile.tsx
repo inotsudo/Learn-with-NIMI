@@ -34,7 +34,7 @@ export default function AdminProfile() {
         } = await supabase.auth.getUser();
 
         if (userError || !user) {
-          router.push("/login");
+          router.push("/loginpage");
           return;
         }
 

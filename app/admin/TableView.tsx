@@ -1,70 +1,60 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import supabase from "@/lib/supabaseClient";
-import { Card, CardContent } from "@/components/ui/card";
+import { SkeletonTable } from './Skeleton'
 
 interface TableViewProps {
+  /** Table name, or "table:rowId" to scroll to and highlight a specific row */
   table: string;
+}
+
+function formatHeader(key: string) {
+  return key.replace(/_/g, ' ')
+}
+
+function formatCell(val: unknown) {
+  if (val === null || val === undefined) {
+    return <span className="text-gray-300">—</span>
+  }
+  if (typeof val === "boolean") {
+    return (
+      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+        val ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'
+      }`}>
+        {val ? 'true' : 'false'}
+      </span>
+    )
+  }
+  if (typeof val === "object") {
+    return <span className="font-mono text-xs text-gray-500">{JSON.stringify(val)}</span>
+  }
+  return String(val)
 }
 
 export default function TableView({ table }: TableViewProps) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const highlightRef = useRef<HTMLTableRowElement>(null);
+
+  const [tableName, highlightId] = table.split(':');
 
   useEffect(() => {
     const fetchRows = async () => {
       setLoading(true);
       try {
-        const tableName = table.toLowerCase(); // enforce lowercase table name
-        let data: any[] = [];
+        const lowerName = tableName.toLowerCase(); // enforce lowercase table name
+        // Map legacy table names to current schema
+        const resolvedTable = lowerName === "profiles" || lowerName === "users" ? "parents" : lowerName;
 
-        if (tableName === "profiles") {
-          // Join with users/admins to show friendly emails
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .select(`
-              id,
-              full_name,
-              bio,
-              avatar_url,
-              created_at,
-              updated_at,
-              users:user_id ( id, email ),
-              admins:admin_id ( id, email )
-            `);
+        const { data, error } = await supabase
+          .from(resolvedTable)
+          .select("*");
 
-          if (profileError) throw profileError;
-
-          data = profileData.map((p) => ({
-            id: p.id,
-            full_name: p.full_name,
-            bio: p.bio,
-            avatar_url: p.avatar_url,
-            created_at: p.created_at,
-            updated_at: p.updated_at,
-            owner:
-              // if there are multiple, join their emails with commas
-              (p.users && Array.isArray(p.users) && p.users.length > 0
-                ? p.users.map((u: any) => u.email).join(", ")
-                : null) ??
-              (p.admins && Array.isArray(p.admins) && p.admins.length > 0
-                ? p.admins.map((a: any) => a.email).join(", ")
-                : null) ??
-              "⚠️ Orphan (no linked user/admin)",
-          }));
-        } else {
-          const { data: normalData, error: normalError } = await supabase
-            .from(tableName)
-            .select("*");
-
-          if (normalError) throw normalError;
-          data = normalData || [];
-        }
-
-        setRows(data);
+        if (error) throw error;
+        setRows(data || []);
       } catch (err: any) {
-        console.error(`Error fetching table "${table}":`, err);
+        console.error(`Error fetching table "${tableName}":`, err);
         setRows([]);
       } finally {
         setLoading(false);
@@ -72,40 +62,68 @@ export default function TableView({ table }: TableViewProps) {
     };
 
     fetchRows();
-  }, [table]);
+  }, [tableName]);
+
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [rows, highlightId]);
+
+  const title = tableName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
   return (
-    <Card className="p-4">
-      <CardContent>
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800">{title}</h2>
+          {!loading && rows.length > 0 && (
+            <span className="text-sm font-semibold text-gray-400">
+              {rows.length} row{rows.length === 1 ? '' : 's'}
+            </span>
+          )}
+        </div>
+
         {loading ? (
-          <p>Loading {table}...</p>
+          <div className="p-6">
+            <SkeletonTable rows={8} cols={5} />
+          </div>
         ) : rows.length === 0 ? (
-          <p>No data found in {table}</p>
+          <p className="px-6 py-10 text-center text-gray-400 text-sm">No data found in {title}</p>
         ) : (
-          <table className="w-full border-collapse border border-gray-300">
-            <thead>
-              <tr>
-                {Object.keys(rows[0]).map((key) => (
-                  <th key={key} className="border border-gray-300 px-2 py-1">
-                    {key}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => (
-                <tr key={i}>
-                  {Object.values(row).map((val, j) => (
-                    <td key={j} className="border border-gray-300 px-2 py-1">
-                      {typeof val === "object" ? JSON.stringify(val) : String(val)}
-                    </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {Object.keys(rows[0]).map((key) => (
+                    <th key={key} className="px-4 py-2.5 text-left font-semibold text-gray-500 uppercase text-xs tracking-wide whitespace-nowrap">
+                      {formatHeader(key)}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {rows.map((row, i) => {
+                  const isHighlighted = highlightId !== undefined && String(row.id) === highlightId
+                  return (
+                  <tr
+                    key={i}
+                    ref={isHighlighted ? highlightRef : undefined}
+                    className={`transition ${isHighlighted ? 'bg-indigo-50 hover:bg-indigo-50' : 'hover:bg-gray-50/70'}`}
+                  >
+                    {Object.values(row).map((val, j) => (
+                      <td key={j} className="px-4 py-2.5 text-gray-700 whitespace-nowrap">
+                        {formatCell(val)}
+                      </td>
+                    ))}
+                  </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

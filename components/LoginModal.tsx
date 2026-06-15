@@ -22,7 +22,7 @@ export default function LoginModal({
         <Button
           onClick={() => {
             onClose();
-            router.push("/login");
+            router.push("/loginpage");
           }}
         >
           Login Now

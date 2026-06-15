@@ -9,9 +9,9 @@ export const metadata = {
   title: "Nimipiko",
   description: "Daily little victory",
   icons: {
-    icon: "/nimi-logo-circle.png",
-    shortcut: "/nimi-logo-circle.png",
-    apple: "/nimi-logo-circle.png",
+    icon: "/nimi-logo.png",
+    shortcut: "/nimi-logo.png",
+    apple: "/nimi-logo.png",
   },
 };
 

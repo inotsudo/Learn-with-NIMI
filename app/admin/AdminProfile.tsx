@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react'
 import supabase from "@/lib/supabaseClient";
+import { ShieldCheck, Pencil, Lock, Eye, EyeOff } from 'lucide-react'
+import { Skeleton, SkeletonForm } from './Skeleton'
 
 export default function AdminProfile() {
   const [profile, setProfile] = useState<any>(null)
@@ -9,7 +11,9 @@ export default function AdminProfile() {
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState<any>({})
   const [password, setPassword] = useState<string>('')
+  const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState<string>('')
+  const [error, setError] = useState<string>('')
 
   // Fetch current admin
   const fetchProfile = async () => {
@@ -34,31 +38,44 @@ export default function AdminProfile() {
 
   const handleSaveProfile = async () => {
     if (!profile) return
+    setMessage('')
+    setError('')
     try {
-      const { error } = await supabase
+      const emailChanged = formData.email !== profile.email
+      const { error: updateError } = await supabase
         .from('admins')
-        .update(formData)
+        .update({ name: formData.name, email: formData.email })
         .eq('id', profile.id)
-      if (error) throw error
+      if (updateError) throw updateError
+
+      if (emailChanged) {
+        const { error: authError } = await supabase.auth.updateUser({ email: formData.email })
+        if (authError) throw authError
+      }
+
       setProfile(formData)
       setEditing(false)
-      setMessage('Profile updated successfully!')
+      setMessage(emailChanged
+        ? 'Profile updated! Check your inbox to confirm the new email address.'
+        : 'Profile updated successfully!')
     } catch (err) {
       console.error(err)
-      setMessage('Error updating profile')
+      setError(err instanceof Error ? err.message : 'Error updating profile')
     }
   }
 
   const handleChangePassword = async () => {
     if (!password) return
+    setMessage('')
+    setError('')
     try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) throw error
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) throw updateError
       setPassword('')
       setMessage('Password updated successfully!')
     } catch (err) {
       console.error(err)
-      setMessage('Error updating password')
+      setError(err instanceof Error ? err.message : 'Error updating password')
     }
   }
 
@@ -66,78 +83,136 @@ export default function AdminProfile() {
     fetchProfile()
   }, [])
 
-  if (loading) return <div className="p-4">Loading profile...</div>
-  if (!profile) return <div className="p-4">Profile not found</div>
+  if (loading) {
+    return (
+      <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <Skeleton className="w-14 h-14 rounded-full flex-shrink-0" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full flex-shrink-0" />
+          </div>
+          <SkeletonForm fields={3} />
+        </div>
+      </div>
+    )
+  }
+  if (!profile) {
+    return <div className="p-6 lg:p-8 text-gray-400 text-sm">Profile not found</div>
+  }
+
+  const initial = (profile.name?.[0] || profile.email?.[0] || 'A').toUpperCase()
 
   return (
-    <div className="flex-1 p-4 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Admin Profile</h2>
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+      <div>
+        <h2 className="text-2xl font-extrabold text-gray-800">My Profile</h2>
+        <p className="text-gray-500 text-sm mt-1">Manage your admin account details</p>
+      </div>
 
-      {message && <div className="mb-4 text-green-600">{message}</div>}
-
-      {editing ? (
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block font-semibold mb-1">Name</label>
-            <input
-              type="text"
-              value={formData.name || ''}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email || ''}
-              onChange={e => setFormData({ ...formData, email: e.target.value })}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              onClick={handleSaveProfile}
-            >
-              Save
-            </button>
-            <button
-              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-              onClick={() => setEditing(false)}
-            >
-              Cancel
-            </button>
-          </div>
+      {message && (
+        <div className="rounded-xl px-4 py-2.5 text-sm font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+          {message}
         </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <p><strong>Name:</strong> {profile.name}</p>
-          <p><strong>Email:</strong> {profile.email}</p>
-          <p><strong>Role:</strong> {profile.role}</p>
-          <button
-            className="mt-3 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-max"
-            onClick={() => setEditing(true)}
-          >
-            Edit Profile
-          </button>
+      )}
+      {error && (
+        <div className="rounded-xl px-4 py-2.5 text-sm font-semibold bg-red-50 text-red-600 border border-red-100">
+          {error}
         </div>
       )}
 
-      {/* Password Change */}
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Change Password</h3>
-        <div className="flex flex-col gap-2 max-w-sm">
-          <input
-            type="password"
-            placeholder="New password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="border px-3 py-2 rounded"
-          />
+      {/* Profile card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+            {initial}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-lg font-bold text-gray-800 truncate">{profile.name || 'Admin'}</p>
+            <p className="text-gray-500 text-sm truncate">{profile.email}</p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wide flex-shrink-0">
+            <ShieldCheck className="w-3.5 h-3.5" /> {profile.role}
+          </span>
+        </div>
+
+        {editing ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block font-semibold text-gray-600 text-xs uppercase tracking-wide mb-1.5">Name</label>
+              <input
+                type="text"
+                value={formData.name || ''}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-gray-600 text-xs uppercase tracking-wide mb-1.5">Email</label>
+              <input
+                type="email"
+                value={formData.email || ''}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveProfile}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => { setEditing(false); setFormData(profile) }}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold px-4 py-2 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
           <button
-            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 w-max"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg transition"
+          >
+            <Pencil className="w-3.5 h-3.5" /> Edit Profile
+          </button>
+        )}
+      </div>
+
+      {/* Password card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 className="text-base font-bold text-gray-800 mb-1">Change Password</h3>
+        <p className="text-gray-500 text-sm mb-4">Update the password used to sign in to the admin console</p>
+        <div className="max-w-sm space-y-3">
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="New password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg pl-10 pr-10 py-2 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(p => !p)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <button
             onClick={handleChangePassword}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
           >
             Update Password
           </button>

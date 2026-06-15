@@ -1,0 +1,21 @@
+-- ============================================================
+--  NIMIPIKO — 022: Clean up stray "histoire" test mission
+--
+--  Migration 021 deactivated "histoire" sequence 2 ("New Mission" /
+--  "Mission Artistique"), a leftover test mission created during
+--  earlier admin-CMS verification (Round 21 publish-flow check). But
+--  Ange's child_progress already had a completion against it (recorded
+--  TODAY during that same verification), and get_daily_missions'
+--  single-mission "show last completed" branch looks up the chosen
+--  mission by `child_progress`'s last-completed sequence WITHOUT
+--  filtering on `missions.active` — so "histoire" was still showing
+--  "Mission Artistique" instead of the real "Mission Historique".
+--
+--  Fix: delete the stray mission outright. `mission_versions` and
+--  `child_progress` both reference missions(id) on delete cascade, so
+--  this also removes its versions and Ange's stray completion in one
+--  go — restoring "histoire" to its single real mission (seq=1,
+--  "Mission Historique", en/fr/rw).
+-- ============================================================
+
+delete from missions where category_slug = 'histoire' and sequence = 2;

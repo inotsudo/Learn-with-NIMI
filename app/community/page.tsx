@@ -1,1252 +1,356 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef, RefObject } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { v4 as uuidv4 } from "uuid";
-import DOMPurify from "dompurify";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Sparkles, Trophy, Camera, Share2, MessageCircle, Heart, Loader2, Star, Zap } from "lucide-react";
-import { CreationCard } from "@/components/community/CreationCard";
+import React, { useState, useEffect, useCallback, useMemo, useRef, RefObject } from "react";
+import { ImagePlus, Loader2 } from "lucide-react";
+import AppShell from "@/components/layout/AppShell";
+import supabase from "@/lib/supabaseClient";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getChildren, type Child } from "@/lib/queries";
+import GalleryHeader, { type GalleryFilter } from "@/components/community/GalleryHeader";
+import GalleryCard from "@/components/community/GalleryCard";
 import UploadModal from "@/components/community/UploadModal";
-import { NimiChat } from "@/components/community/NimiChat";
-import type { Comment as AppComment } from "@/components/community/types";
 import { CelebrationBanner } from "@/components/community/CelebrationBanner";
 import { ErrorToast } from "@/components/community/ErrorToast";
-import { Creation, UploadFormState, ShareMethod, PikoPal, UserMessage } from "@/components/community/types";
-import Header from "@/components/Header";
-import BottomNavigation from "@/components/BottomNavigation";
-import { Skeleton } from "@/components/ui/skeleton";
+import type { Creation } from "@/components/community/types";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import { useSupabaseQuery } from "@/hooks/useSupabaseQuery";
-import { useNimiChat } from "@/hooks/useNimiChat";
-import Link from "next/link";
+import { useCreationUpload } from "@/hooks/useCreationUpload";
 
-// Error Boundary Component
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
-  constructor(props: { children: React.ReactNode }) {
+const ACTIVE_CHILD_KEY = "nimipiko_active_child";
+const PAGE_SIZE = 12;
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  t: (key: string) => string;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, { hasError: boolean }> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('CommunityPage Error:', error, errorInfo);
+    console.error("CommunityPage Error:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
+      const { t } = this.props;
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
             <div className="text-6xl mb-4">😵</div>
-            <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+            <h1 className="text-2xl font-bold mb-4">{t("somethingWentWrongTitle")}</h1>
             <p className="text-gray-600 mb-6">
-              We're having trouble loading the community page. Please try refreshing.
+              {t("communityErrorBody")}
             </p>
             <button
               onClick={() => window.location.reload()}
               className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-3 rounded-full font-medium"
             >
-              Reload Page
+              {t("reloadPageBtn")}
             </button>
           </div>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
 
-// Skeleton Components
-const PikopalSkeleton = () => (
-  <Card className="mb-8 bg-gradient-to-r from-yellow-100 to-orange-100 border-none shadow-xl">
-    <CardHeader>
-      <CardTitle className="flex items-center justify-center text-2xl">
-        <Skeleton className="w-8 h-8 mr-3 rounded-full" />
-        <Skeleton className="h-8 w-48" />
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="flex flex-col items-center">
-        <Skeleton className="w-24 h-24 rounded-full mb-4" />
-        <Skeleton className="h-6 w-32 mb-2" />
-        <Skeleton className="h-5 w-48 mb-2" />
-        <Skeleton className="h-4 w-64" />
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const CreationCardSkeleton = () => (
-  <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-    <Skeleton className="h-60 w-full" />
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          <Skeleton className="h-10 w-10 rounded-full mr-2" />
-          <div>
-            <Skeleton className="h-4 w-24 mb-1" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-        </div>
-        <Skeleton className="h-5 w-10" />
-      </div>
-      <Skeleton className="h-4 w-full mb-2" />
-      <Skeleton className="h-4 w-3/4 mb-4" />
-      <div className="flex justify-between">
-        <Skeleton className="h-9 w-9 rounded-full" />
-        <Skeleton className="h-9 w-9 rounded-full" />
-        <Skeleton className="h-9 w-9 rounded-full" />
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const CommentSkeleton = () => (
-  <div className="flex items-start space-x-3 animate-pulse">
-    <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-    <div className="flex-1 space-y-2">
-      <Skeleton className="h-4 w-24" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-3/4" />
-    </div>
-  </div>
-);
-
-// Interface for animated creations
-interface AnimatedCreation {
-  id: string;
-  creation_id: string;
-  animation_url: string;
-  animation_type: string;
-  created_at: string;
+function mapCreation(c: any, currentUserId: string, unknownLabel: string): Creation {
+  return {
+    id: c.id,
+    childName: c.child_name || unknownLabel,
+    age: c.age,
+    description: c.description,
+    imageUrl: c.image_url,
+    likes: c.likes?.length || 0,
+    likedByUser: c.likes?.some((l: any) => l.user_id === currentUserId) || false,
+    isPublic: c.is_public !== undefined ? c.is_public : true,
+    type: c.type || "art",
+    completionStatus: c.completion_status || "completed",
+    createdAt: c.created_at,
+    status: c.status || "approved",
+  };
 }
 
-const CommunityPage = () => {
-  const supabase = createClientComponentClient();
+function toggleLike(list: Creation[], id: string, liked: boolean): Creation[] {
+  return list.map(c => c.id === id ? { ...c, likedByUser: liked, likes: liked ? c.likes + 1 : c.likes - 1 } : c);
+}
+
+export default function CommunityPage() {
+  const { t } = useLanguage();
+
   const [creations, setCreations] = useState<Creation[]>([]);
-  const [pikopals, setPikopals] = useState<PikoPal[]>([]);
-  const [loadingStates, setLoadingStates] = useState({
-    creations: true,
-    pikopals: true,
-    user: true,
-    comments: {} as Record<string, boolean>,
-    likes: {} as Record<string, boolean>,
-    initialLoad: true,
-    featured: true
-  });
+  const [myCreations, setMyCreations] = useState<Creation[]>([]);
+  const [activeChild, setActiveChild] = useState<Child | null>(null);
+  const [currentUser, setCurrentUser] = useState({ id: "", name: "Guest", avatar: "👤" });
   const [error, setError] = useState<string | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationText, setCelebrationText] = useState("");
-  const [currentUser, setCurrentUser] = useState({
-    id: "",
-    name: "Guest",
-    avatar: "👤",
-    avatarUrl: ""
-  });
-  const [headerImageError, setHeaderImageError] = useState(false);
   const [hasMoreCreations, setHasMoreCreations] = useState(true);
   const [page, setPage] = useState(0);
-  const [featuredCreations, setFeaturedCreations] = useState<{
-    original: Creation[];
-    animated: (Creation & { animationData: AnimatedCreation })[];
-  }>({
-    original: [],
-    animated: []
+  const [loadingStates, setLoadingStates] = useState({
+    creations: true,
+    user: true,
+    likes: {} as Record<string, boolean>,
+    initialLoad: true,
   });
+  const [loadingMine, setLoadingMine] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<GalleryFilter>("all");
+  const [viewMode, setViewMode] = useState<"all" | "mine">("all");
 
   const observerTarget = useRef<HTMLDivElement>(null);
-  const creationsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Upload form state
-  const [uploadForm, setUploadForm] = useState<UploadFormState>({
-    childName: "",
-    age: "",
-    description: "",
-    isPublic: true,
-    imageFile: null,
-    previewUrl: "",
-    uploadProgress: 0,
-    isUploading: false,
-    shareMethod: "public",
-  });
-
-  // Use custom hooks for data fetching
-  const { data: userData, loading: userLoading } = useSupabaseQuery(
-    () => supabase.auth.getUser().then(({ data: { user } }) => user),
-    [supabase]
-  );
-
-  // Nimi chat hook
-  const { messages: nimiMessages, isTyping: isNimiTyping, sendMessage: handleNimiSend } = useNimiChat(currentUser);
-
-  // Generate unique ID
-  const generateUniqueId = () => uuidv4();
-
-  // Validate image file
-  const validateImage = async (file: File): Promise<boolean> => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      throw new Error('Please upload JPG, PNG, GIF, or WebP images only');
-    }
-
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      throw new Error('Image must be smaller than 5MB');
-    }
-
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        URL.revokeObjectURL(img.src);
-        if (img.width > 4000 || img.height > 4000) {
-          reject(new Error('Image dimensions too large (max 4000x4000 pixels)'));
-        } else {
-          resolve(true);
-        }
-      };
-      img.onerror = () => reject(new Error('Invalid image file'));
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  // Fetch current user
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      try {
-        if (userData) {
-          // Try both tables
-          const userQuery = supabase.from("users").select("*").eq("auth_user_id", userData.id).maybeSingle();
-          const profileQuery = supabase.from("profiles").select("*").eq("id", userData.id).maybeSingle();
-
-          const { data: profileData } = await Promise.race([
-            userQuery,
-            profileQuery,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), 5000))
-          ]) as any;
-
-          if (profileData) {
-            setCurrentUser({
-              id: userData.id,
-              name: profileData.full_name || userData.email?.split("@")[0] || "User",
-              avatar: profileData.avatar_url || "👤",
-              avatarUrl: profileData.avatar_url || ""
-            });
-          }
-        }
-      } catch (err: any) {
-        console.error("Error fetching user:", err);
-        setCurrentUser({
-          id: "guest",
-          name: "Guest",
-          avatar: "👤",
-          avatarUrl: ""
-        });
-      } finally {
-        setLoadingStates(prev => ({ ...prev, user: false }));
-      }
-    };
-
-    if (userData) {
-      getCurrentUser();
-    } else if (!userLoading) {
-      setLoadingStates(prev => ({ ...prev, user: false }));
-    }
-  }, [userData, userLoading, supabase]);
-
-  // Fetch public creations with pagination
-  const fetchCreations = useCallback(async (pageNum: number = 0, refresh: boolean = false) => {
-    try {
-      if (refresh) {
-        setLoadingStates(prev => ({ ...prev, creations: true }));
-        setPage(0);
-      }
-
-      const PAGE_SIZE = 9;
-      const from = pageNum * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-
-      const { data, error, count } = await supabase
-        .from("creations")
-        .select(`
-          *,
-          comments:comments(id, creation_id, author, author_avatar, content, created_at),
-          likes:likes(id, user_id)
-        `, { count: 'exact' })
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedCreations: Creation[] = data.map((c: any) => ({
-          id: c.id,
-          childId: c.child_id,
-          childName: c.child_name || "Unknown",
-          age: c.age,
-          description: c.description,
-          imageUrl: c.image_url,
-          likes: c.likes?.length || 0,
-          likedByUser: c.likes?.some((l: any) => l.user_id === currentUser.id) || false,
-          isPublic: c.is_public !== undefined ? c.is_public : true,
-          type: c.type || "art",
-          completionStatus: c.completion_status || "completed",
-          createdAt: c.created_at,
-          comments: (c.comments || []).map((comment: any) => ({
-            id: comment.id,
-            creation_id: comment.creation_id,
-            author: comment.author || "Anonymous",
-            author_avatar: comment.author_avatar || "👤",
-            content: comment.content,
-            created_at: comment.created_at
-          }))
-        }));
-
-        setCreations(prev => refresh ? formattedCreations : [...prev, ...formattedCreations]);
-        setHasMoreCreations((count || 0) > to + 1);
-      }
-    } catch (err) {
-      setError("Couldn't load creations. Please try refreshing the page.");
-      console.error(err);
-    } finally {
-      setLoadingStates(prev => ({ ...prev, creations: false, initialLoad: false }));
-    }
-  }, [currentUser.id, supabase]);
-
-  // Initial fetch and refresh
-  useEffect(() => {
-    fetchCreations(0, true);
-  }, [fetchCreations]);
-
-  useInfiniteScroll(observerTarget as RefObject<HTMLElement>, () => {
-    if (!loadingStates.creations && hasMoreCreations) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchCreations(nextPage, false);
-    }
-  });
-
-  const fetchPikopals = useCallback(async () => {
-    try {
-      setLoadingStates((prev) => ({ ...prev, pikopals: true }));
-
-      // Fetch children ordered by points
-      const { data: children, error: childrenError } = await supabase
-        .from("children")
-        .select("*")
-        .order("points", { ascending: false })
-        .limit(5);
-
-      if (childrenError) throw childrenError;
-
-      if (children && children.length > 0) {
-        const pikopalsData = children.map((child) => {
-          let publicUrl = "";
-          if (child.avatar_url) {
-            // Generate public URL from Supabase storage path
-            const { data } = supabase.storage
-              .from("avatars")
-              .getPublicUrl(child.avatar_url);
-            publicUrl = data.publicUrl;
-          }
-
-          const count = child.achievements ?? 0;
-          return {
-            id: child.id,
-            name: child.name,
-            age: child.age,
-            achievements: count,
-            streak: child.streak || 0,
-            avatar: publicUrl || "default-avatar.png",
-            avatarUrl: publicUrl,
-            title:
-              count > 10
-                ? "Master Creator"
-                : count > 5
-                  ? "Creative Explorer"
-                  : "Rising Star",
-          };
-        });
-
-        setPikopals(pikopalsData);
-      }
-    } catch (err) {
-      console.error("Error fetching pikopals:", err);
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, pikopals: false }));
-    }
-  }, [supabase]);
-
-  useEffect(() => {
-    fetchPikopals();
-  }, [fetchPikopals]);
-
-  // Fetch featured creations with animations
-  const fetchFeaturedCreations = useCallback(async () => {
-    try {
-      setLoadingStates(prev => ({ ...prev, featured: true }));
-
-      // Fetch featured original creations
-      const { data: featuredData, error: featuredError } = await supabase
-        .from("creations")
-        .select(`
-          *,
-          comments:comments(id, creation_id, author, author_avatar, content, created_at),
-          likes:likes(id, user_id)
-        `)
-        .eq("is_featured", true)
-        .order("created_at", { ascending: false })
-        .limit(2);
-
-      if (featuredError) throw featuredError;
-
-      // Fetch animated creations with their original creation data
-      const { data: animatedData, error: animatedError } = await supabase
-        .from("animated_creations")
-        .select(`
-          *,
-          creations!inner(*, comments:comments(id, creation_id, author, author_avatar, content, created_at), likes:likes(id, user_id))
-        `)
-        .order("created_at", { ascending: false })
-        .limit(2);
-
-      if (animatedError) throw animatedError;
-
-      // Format original featured creations
-      const formattedOriginals: Creation[] = (featuredData || []).map((c: any) => ({
-        id: c.id,
-        childId: c.child_id,
-        childName: c.child_name || "Unknown",
-        age: c.age,
-        description: c.description,
-        imageUrl: c.image_url,
-        likes: c.likes?.length || 0,
-        likedByUser: c.likes?.some((l: any) => l.user_id === currentUser.id) || false,
-        isPublic: c.is_public !== undefined ? c.is_public : true,
-        type: c.type || "art",
-        completionStatus: c.completion_status || "completed",
-        createdAt: c.created_at,
-        comments: (c.comments || []).map((comment: any) => ({
-          id: comment.id,
-          creation_id: comment.creation_id,
-          author: comment.author || "Anonymous",
-          author_avatar: comment.author_avatar || "👤",
-          content: comment.content,
-          created_at: comment.created_at
-        }))
-      }));
-
-    const formattedAnimated: (Creation & { animationData: AnimatedCreation })[] = 
-  (animatedData || [])
-    .filter((item: any) => !!item.creations) // ensure creations is not null
-    .map((item: any) => ({
-      id: item.creations.id,
-      childId: item.creations.child_id,
-      childName: item.creations.child_name || "Unknown",
-      age: item.creations.age,
-      description: item.creations.description,
-      imageUrl: item.creations.image_url,
-      likes: item.creations.likes?.length || 0,
-      likedByUser: item.creations.likes?.some((l: any) => l.user_id === currentUser.id) || false,
-      isPublic: item.creations.is_public !== undefined ? item.creations.is_public : true,
-      type: item.creations.type || "art",
-      completionStatus: item.creations.completion_status || "completed",
-      createdAt: item.creations.created_at,
-      comments: (item.creations.comments || []).map((comment: any) => ({
-        id: comment.id,
-        creation_id: comment.creation_id,
-        author: comment.author || "Anonymous",
-        author_avatar: comment.author_avatar || "👤",
-        content: comment.content,
-        created_at: comment.created_at
-      })),
-      animationData: {
-        id: item.id,
-        creation_id: item.creation_id,
-        animation_url: item.animation_url,
-        animation_type: item.animation_type,
-        created_at: item.created_at
-      }
-    }));
-
-
-      setFeaturedCreations({
-        original: formattedOriginals,
-        animated: formattedAnimated
-      });
-
-    } catch (err) {
-      console.error("Error fetching featured creations:", err);
-      setError("Couldn't load featured creations");
-    } finally {
-      setLoadingStates(prev => ({ ...prev, featured: false }));
-    }
-  }, [currentUser.id, supabase]);
-
-  // Call this function in useEffect
-  useEffect(() => {
-    fetchFeaturedCreations();
-  }, [fetchFeaturedCreations]);
-
-  // Celebration animation
   const triggerCelebration = useCallback((text: string) => {
     setCelebrationText(text);
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 3000);
   }, []);
 
-  // Handle like/unlike
-  const handleLike = useCallback(async (creationId: string) => {
+  // Load active child (for "My Gallery")
+  useEffect(() => {
+    void (async () => {
+      const list = await getChildren();
+      const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
+      setActiveChild(list.find(c => c.id === savedId) ?? list[0] ?? null);
+    })();
+  }, []);
+
+  // Load current user (for likes)
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase.from("parents").select("name").eq("id", user.id).maybeSingle();
+          setCurrentUser({
+            id: user.id,
+            name: profile?.name || user.email?.split("@")[0] || "User",
+            avatar: "👤",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      } finally {
+        setLoadingStates(prev => ({ ...prev, user: false }));
+      }
+    })();
+  }, []);
+
+  // Fetch community creations with pagination
+  const fetchCreations = useCallback(async (pageNum: number, refresh: boolean) => {
     try {
-      const creation = creations.find(c => c.id === creationId);
-      if (!creation) return;
+      if (refresh) setLoadingStates(prev => ({ ...prev, creations: true }));
+      const from = pageNum * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
 
-      const newLikeState = !creation.likedByUser;
+      const { data, error, count } = await supabase
+        .from("creations")
+        .select(`*, likes:likes(id, user_id)`, { count: "exact" })
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
-      // Set loading state for this like
-      setLoadingStates(prev => ({
-        ...prev,
-        likes: { ...prev.likes, [creationId]: true }
-      }));
+      if (error) throw error;
 
-      // Optimistic update
-      setCreations(prev => prev.map(c => c.id === creationId ? {
-        ...c,
-        likedByUser: newLikeState,
-        likes: newLikeState ? c.likes + 1 : c.likes - 1
-      } : c));
+      const formatted = (data ?? []).map((c: any) => mapCreation(c, currentUser.id, t("unknownChildLabel")));
+      setCreations(prev => refresh ? formatted : [...prev, ...formatted]);
+      setHasMoreCreations((count || 0) > to + 1);
+    } catch (err) {
+      console.error(err);
+      setError(t("loadArtworkErrorMsg"));
+    } finally {
+      setLoadingStates(prev => ({ ...prev, creations: false, initialLoad: false }));
+    }
+  }, [currentUser.id, t]);
 
+  useEffect(() => {
+    fetchCreations(0, true);
+  }, [fetchCreations]);
+
+  useInfiniteScroll(observerTarget as RefObject<HTMLElement>, () => {
+    if (viewMode === "all" && !loadingStates.creations && hasMoreCreations) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchCreations(nextPage, false);
+    }
+  });
+
+  // Fetch only the active child's own creations ("My Gallery")
+  const fetchMyCreations = useCallback(async () => {
+    if (!activeChild) return;
+    try {
+      setLoadingMine(true);
+      const { data, error } = await supabase
+        .from("creations")
+        .select(`*, likes:likes(id, user_id)`)
+        .eq("child_id", activeChild.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setMyCreations((data ?? []).map((c: any) => mapCreation(c, currentUser.id, t("unknownChildLabel"))));
+    } catch (err) {
+      console.error(err);
+      setError(t("loadMyGalleryErrorMsg"));
+    } finally {
+      setLoadingMine(false);
+    }
+  }, [activeChild, currentUser.id, t]);
+
+  // Like / unlike, with optimistic updates on whichever list is shown
+  const handleLike = useCallback(async (creationId: string) => {
+    const source = viewMode === "mine" ? myCreations : creations;
+    const creation = source.find(c => c.id === creationId);
+    if (!creation) return;
+
+    const newLikeState = !creation.likedByUser;
+
+    setLoadingStates(prev => ({ ...prev, likes: { ...prev.likes, [creationId]: true } }));
+    setCreations(prev => toggleLike(prev, creationId, newLikeState));
+    setMyCreations(prev => toggleLike(prev, creationId, newLikeState));
+
+    try {
       if (newLikeState) {
         await supabase.from("likes").insert({ creation_id: creationId, user_id: currentUser.id });
       } else {
         await supabase.from("likes").delete().eq("creation_id", creationId).eq("user_id", currentUser.id);
       }
-
-      if (newLikeState && creation) {
-        triggerCelebration(`You liked ${creation.childName}'s creation!`);
-      }
     } catch (err) {
       console.error(err);
-      setError("Couldn't update like. Please try again.");
-      fetchCreations(0, true); // rollback
+      setError(t("updateLikeErrorMsg"));
+      setCreations(prev => toggleLike(prev, creationId, !newLikeState));
+      setMyCreations(prev => toggleLike(prev, creationId, !newLikeState));
     } finally {
-      setLoadingStates(prev => ({
-        ...prev,
-        likes: { ...prev.likes, [creationId]: false }
-      }));
+      setLoadingStates(prev => ({ ...prev, likes: { ...prev.likes, [creationId]: false } }));
     }
-  }, [creations, currentUser.id, fetchCreations, supabase, triggerCelebration]);
+  }, [creations, myCreations, viewMode, currentUser.id, t]);
 
-  // Handle add comment
-  const handleAddComment = useCallback(
-    async (creationId: string, content: string) => {
-      console.log("[DEBUG] handleAddComment received content:", content);
-
-      const sanitizedContent = DOMPurify.sanitize(content?.trim());
-      if (!sanitizedContent) return false;
-
-      const tempId = `temp-${Date.now()}`;
-
-      // Use currentUser instead of undefined "user"
-      const tempComment: AppComment = {
-        id: tempId,
-        creationId,
-        author: currentUser?.name || "Guest",
-        authorAvatar: currentUser?.avatar || "",
-        content: sanitizedContent,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Optimistic UI update
-      setCreations(prev =>
-        prev.map(c =>
-          c.id === creationId
-            ? { ...c, comments: [...(c.comments || []), tempComment] }
-            : c
-        )
-      );
-
-      try {
-        // Insert into Supabase
-        console.log("[DEBUG] Inserting into Supabase:", sanitizedContent);
-        const { data, error } = await supabase
-          .from("comments")
-          .insert({
-            creation_id: creationId,
-            author: currentUser?.name || "Guest",
-            author_avatar: currentUser?.avatar || "",
-            content: sanitizedContent,
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        // Map DB fields → AppComment fields
-        const dbComment: AppComment = {
-          id: data.id,
-          creationId: data.creation_id,
-          author: data.author,
-          authorAvatar: data.author_avatar,
-          content: data.content,
-          createdAt: data.created_at,
-        };
-
-        // Replace temp with DB result
-        setCreations(prev =>
-          prev.map(c =>
-            c.id === creationId
-              ? {
-                ...c,
-                comments: [
-                  ...(c.comments?.filter(comment => comment.id !== tempId) || []),
-                  dbComment,
-                ],
-              }
-              : c
-          )
-        );
-
-        return true;
-      } catch (err) {
-        console.error("Error adding comment:", err);
-
-        // Rollback optimistic update
-        setCreations(prev =>
-          prev.map(c =>
-            c.id === creationId
-              ? {
-                ...c,
-                comments:
-                  c.comments?.filter(comment => comment.id !== tempId) || [],
-              }
-              : c
-          )
-        );
-
-        return false;
-      }
+  const { uploadForm, setUploadForm, showUploadModal, setShowUploadModal, handleUploadSubmit } = useCreationUpload({
+    parentId: currentUser.id,
+    childId: activeChild?.id ?? null,
+    // New uploads start "pending" — they don't join the approved-only "All"
+    // feed yet, but refresh "My Gallery" so the parent sees it awaiting review.
+    onCreated: () => {
+      if (viewMode === "mine") fetchMyCreations();
     },
-    [currentUser, supabase, setCreations]
-  );
+    onError: setError,
+    onCelebrate: triggerCelebration,
+  });
 
-  // Default upload form state
-  const defaultUploadForm = {
-    childName: "",
-    age: "",
-    description: "",
-    isPublic: false,
-    imageFile: null as File | null,
-    previewUrl: "",
-    uploadProgress: 0,
-    isUploading: false,
-    shareMethod: 'whatsapp' as 'whatsapp' | 'public'
-  };
-
-  // Helper: Get public URL from Supabase storage
-  const getPublicUrl = (imageUrl: string): string => {
-    if (imageUrl.startsWith('http')) return imageUrl;
-    const pathParts = imageUrl.split('/creations/');
-    const fileName = pathParts[pathParts.length - 1];
-    const { data: { publicUrl } } = supabase.storage
-      .from('creations')
-      .getPublicUrl(fileName);
-    return publicUrl;
-  };
-
-  // Helper: Detect if device is mobile
-  const isMobileDevice = (): boolean => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  // Share via WhatsApp
-  const shareViaWhatsApp = async (creation: Creation) => {
-    try {
-      const imageUrl = getPublicUrl(creation.imageUrl);
-      const shareText = `${creation.description || "Check out this amazing creation!"}\n\nBy ${creation.childName} (age ${creation.age})`;
-      const encodedText = encodeURIComponent(`${shareText}\n\n${imageUrl}`);
-
-      const whatsappUrl = isMobileDevice()
-        ? `whatsapp://send?text=${encodedText}`
-        : `https://web.whatsapp.com/send?text=${encodedText}`;
-
-      const newWindow = window.open(whatsappUrl, '_blank');
-      if (!newWindow) setError("Could not open WhatsApp. Please copy the link manually.");
-    } catch (err) {
-      console.error("WhatsApp sharing failed:", err);
-      setError("WhatsApp sharing failed. Try copying the link manually.");
+  const toggleMyGallery = () => {
+    if (viewMode === "all") {
+      setViewMode("mine");
+      if (myCreations.length === 0) fetchMyCreations();
+    } else {
+      setViewMode("all");
     }
   };
 
-  // Share creation on multiple platforms
-  const shareCreation = useCallback(async (creation: Creation, platform?: string) => {
-    try {
-      const imageUrl = getPublicUrl(creation.imageUrl);
-      const shareText = `${creation.description || "Check out this amazing creation!"}\n\nBy ${creation.childName} (age ${creation.age})`;
-      const shareTitle = `Art by ${creation.childName}`;
-
-      if (platform === 'whatsapp') {
-        await shareViaWhatsApp(creation);
-        return;
+  const displayedCreations = useMemo(() => {
+    const source = viewMode === "mine" ? myCreations : creations;
+    const q = search.trim().toLowerCase();
+    return source.filter(c => {
+      if (filter !== "all" && c.type !== filter) return false;
+      if (q) {
+        const matchesDesc = c.description?.toLowerCase().includes(q);
+        const matchesName = c.childName?.toLowerCase().includes(q);
+        if (!matchesDesc && !matchesName) return false;
       }
+      return true;
+    });
+  }, [creations, myCreations, viewMode, filter, search]);
 
-      if (platform === 'facebook') {
-        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(imageUrl)}&quote=${encodeURIComponent(shareText)}`;
-        window.open(fbUrl, '_blank');
-        return;
-      }
-
-      if (platform === 'twitter') {
-        const twUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(imageUrl)}`;
-        window.open(twUrl, '_blank');
-        return;
-      }
-
-      // Generic Web Share API
-      if (navigator.share) {
-        await navigator.share({ title: shareTitle, text: shareText, url: imageUrl });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(imageUrl);
-        triggerCelebration("Link copied to clipboard!");
-      } else {
-        setCelebrationText("Copy the image URL to share");
-        setShowCelebration(true);
-        setTimeout(() => setShowCelebration(false), 3000);
-      }
-
-    } catch (err) {
-      console.error("Sharing failed:", err);
-      setError("Sharing failed. Try copying the link manually.");
-    }
-  }, [triggerCelebration, supabase]);
-
-  // Handle form upload & sharing
-  const handleUploadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadForm.imageFile) return setError("Please select an image to share");
-
-    try {
-      setUploadForm(prev => ({ ...prev, isUploading: true }));
-      await validateImage(uploadForm.imageFile);
-
-      const fileExt = uploadForm.imageFile.name.split('.').pop();
-      const tempFileName = `${uploadForm.shareMethod === 'whatsapp' ? 'temp_' : ''}${generateUniqueId()}.${fileExt}`;
-      const filePath = `${uploadForm.shareMethod === 'whatsapp' ? 'temp-creations' : 'creations'}/${tempFileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('creations')
-        .upload(filePath, uploadForm.imageFile, {
-          cacheControl: '3600',
-          upsert: uploadForm.shareMethod === 'whatsapp',
-          contentType: uploadForm.imageFile.type
-        });
-      if (uploadError) throw uploadError;
-
-      const imageUrl = getPublicUrl(filePath);
-
-      // WhatsApp private sharing
-      if (uploadForm.shareMethod === 'whatsapp') {
-        const shareText = `Check out ${uploadForm.childName}'s creation!${uploadForm.description ? `\n${uploadForm.description}` : ''}\n\n${imageUrl}`;
-        const encodedText = encodeURIComponent(shareText);
-
-        const whatsappUrl = isMobileDevice()
-          ? `whatsapp://send?text=${encodedText}`
-          : `https://web.whatsapp.com/send?text=${encodedText}`;
-
-        window.open(whatsappUrl, "_blank");
-
-        // Cleanup temporary file after 1 hour
-        setTimeout(async () => {
-          try {
-            await supabase.storage.from('creations').remove([filePath]);
-          } catch (cleanupError) {
-            console.error("Error cleaning up temporary file:", cleanupError);
-          }
-        }, 3600000);
-
-        setShowUploadModal(false);
-        setUploadForm(defaultUploadForm);
-        triggerCelebration("Shared privately via WhatsApp!");
-        return;
-      }
-
-      // Public upload
-      const { data: children } = await supabase
-        .from('children')
-        .select('id')
-        .eq('parent_id', currentUser.id)
-        .limit(1);
-      const childId = children?.[0]?.id || null;
-
-      const { data: creation, error: insertError } = await supabase
-        .from('creations')
-        .insert({
-          child_id: childId,
-          child_name: uploadForm.childName,
-          age: parseInt(uploadForm.age),
-          description: uploadForm.description,
-          is_public: uploadForm.isPublic,
-          image_url: imageUrl,
-          type: 'art',
-          completion_status: 'completed'
-        })
-        .select()
-        .single();
-      if (insertError) throw insertError;
-
-      setCreations(prev => [{
-        id: creation.id,
-        childId: creation.child_id,
-        childName: creation.child_name,
-        age: creation.age,
-        description: creation.description,
-        imageUrl: creation.image_url,
-        likes: 0,
-        likedByUser: false,
-        isPublic: creation.is_public,
-        type: creation.type,
-        completionStatus: creation.completion_status,
-        createdAt: creation.created_at,
-        comments: []
-      }, ...prev]);
-
-      setShowUploadModal(false);
-      setUploadForm({ ...defaultUploadForm, isPublic: true });
-      triggerCelebration("Your creation has been shared publicly!");
-
-    } catch (err: any) {
-      setError(err.message || "Failed to upload creation. Please try again.");
-    } finally {
-      setUploadForm(prev => ({ ...prev, isUploading: false }));
-    }
-  };
-
-  // Function to mark a creation as featured
-  const featureCreation = useCallback(async (creationId: string) => {
-    try {
-      const { error } = await supabase
-        .from("creations")
-        .update({ is_featured: true })
-        .eq("id", creationId);
-
-      if (error) throw error;
-
-      triggerCelebration("Creation featured successfully!");
-      fetchFeaturedCreations(); // Refresh the featured section
-    } catch (err) {
-      console.error("Error featuring creation:", err);
-      setError("Couldn't feature creation");
-    }
-  }, [supabase, triggerCelebration, fetchFeaturedCreations]);
-
-  // Function to create an animated version
-  const createAnimatedVersion = useCallback(async (creationId: string, animationUrl: string) => {
-    try {
-      const { error } = await supabase
-        .from("animated_creations")
-        .insert({
-          creation_id: creationId,
-          animation_url: animationUrl,
-          animation_type: 'magic'
-        });
-
-      if (error) throw error;
-
-      triggerCelebration("Animation created successfully!");
-      fetchFeaturedCreations(); // Refresh the featured section
-    } catch (err) {
-      console.error("Error creating animation:", err);
-      setError("Couldn't create animated version");
-    }
-  }, [supabase, triggerCelebration, fetchFeaturedCreations]);
-
-  // Clean up blob URLs
-  useEffect(() => {
-    return () => {
-      if (uploadForm.previewUrl) URL.revokeObjectURL(uploadForm.previewUrl);
-    };
-  }, [uploadForm.previewUrl]);
+  const isInitialLoading = viewMode === "all" ? loadingStates.initialLoad : loadingMine;
+  const sourceEmpty = viewMode === "all" ? creations.length === 0 : myCreations.length === 0;
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-        <CelebrationBanner isVisible={showCelebration} text={celebrationText} />
-        <ErrorToast error={error} onDismiss={() => setError(null)} />
+    <ErrorBoundary t={t}>
+      <AppShell>
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
+          <CelebrationBanner isVisible={showCelebration} text={celebrationText} />
+          <ErrorToast error={error} onDismiss={() => setError(null)} />
+          <UploadModal
+            open={showUploadModal}
+            onClose={() => !uploadForm.isUploading && setShowUploadModal(false)}
+            onSubmit={handleUploadSubmit}
+            formState={uploadForm}
+            setFormState={setUploadForm}
+          />
 
-        <UploadModal
-          open={showUploadModal}
-          onClose={() => !uploadForm.isUploading && setShowUploadModal(false)}
-          onSubmit={handleUploadSubmit}
-          formState={uploadForm}
-          setFormState={setUploadForm}
-        />
-        <Header />
+          <main className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+            <GalleryHeader search={search} onSearchChange={setSearch} filter={filter} onFilterChange={setFilter} />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center mb-8">
-            <div className="mb-6 flex justify-center">
-              {headerImageError ? (
-                <div className="flex items-center justify-center w-full max-h-[600px] bg-gradient-to-r from-purple-200 to-pink-200 rounded-2xl shadow-xl">
-                  <span className="text-6xl">👥</span>
-                </div>
-              ) : (
-                <img
-                  src="/community.jpeg"
-                  alt="Creative Community"
-                  className="w-full max-h-[800px] object-cover rounded-2xl shadow-xl transition-transform duration-500 hover:scale-[1.02]"
-                  onError={() => setHeaderImageError(true)}
-                  loading="lazy"
-                />
-              )}
-            </div>
-
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-              Creative Community
-            </h1>
-            <p className="text-xl text-gray-700 mb-6">
-              Share, explore, and celebrate creativity together!
-            </p>
-          </div>
-
-          {/* Upload Card */}
-          <Card className="mb-8 bg-gradient-to-r from-pink-100 to-purple-100 border-none shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-center text-2xl">
-                <Sparkles className="w-8 h-8 mr-3 text-pink-600" />
-                <span>Share Your Creation!</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Button
-                onClick={() => setShowUploadModal(true)}
-                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-8 py-6 rounded-full text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110"
-                disabled={loadingStates.user}
-              >
-                {loadingStates.user ? (
-                  <Loader2 className="w-8 h-8 mr-3 animate-spin" />
-                ) : (
-                  <Camera className="w-8 h-8 mr-3" />
-                )}
-                Share Your Work
-              </Button>
-              <p className="text-sm text-gray-600 mt-4">
-                Share publicly or privately with friends on WhatsApp
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* PikoPal of the Week */}
-          {loadingStates.pikopals ? (
-            <PikopalSkeleton />
-          ) : pikopals[0] ? (
-            <Link href={`/pikopal/${pikopals[0].id}`} passHref>
-              <Card className="mb-8 bg-gradient-to-r from-yellow-100 to-orange-100 border-none shadow-xl hover:shadow-2xl transition-shadow duration-300 cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-center text-2xl font-bold text-gray-800">
-                    <Trophy className="w-8 h-8 mr-3 text-yellow-600" />
-                    <span>🌟 Featured Creator</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center text-center">
-                    {/* Avatar Section */}
-                    <div className="mb-4 animate-bounce">
-                      <img
-                        src={
-                          pikopals[0].avatar
-                            ? pikopals[0].avatar
-                            : "/default-avatar.png"
-                        }
-                        alt={pikopals[0].name}
-                        className="w-24 h-24 rounded-full object-cover mx-auto border-4 border-yellow-300 shadow-md"
-                        loading="lazy"
-                      />
+            {isInitialLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden animate-pulse">
+                    <div className="aspect-square bg-gray-100" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-3 w-2/3 bg-gray-100 rounded" />
+                      <div className="h-4 w-full bg-gray-100 rounded" />
                     </div>
-
-                    {/* Name + Title */}
-                    <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                      {pikopals[0].name}
-                    </h3>
-                    {pikopals[0].title && (
-                      <p className="text-lg text-yellow-700 font-medium mb-2">
-                        {pikopals[0].title}
-                      </p>
-                    )}
-
-                    {/* Description */}
-                    <p className="text-gray-700 max-w-xs">
-                      Our featured creator this week! Say hello to{" "}
-                      <span className="font-semibold">{pikopals[0].name}</span> 👋
-                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : null}
-
-          {/* Creations Grid */}
-          <div className="mb-8" ref={creationsContainerRef}>
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center">
-              <Sparkles className="w-8 h-8 mr-3 text-pink-500" />
-              Community Creations
-            </h2>
-
-            {loadingStates.initialLoad ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array(6).fill(null).map((_, i) => (
-                  <CreationCardSkeleton key={`skeleton-${i}`} />
                 ))}
               </div>
-            ) : creations.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🖼️</div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                  No Creations Yet
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Be the first to share your amazing creation! The community is waiting to see what you'll create.
-                </p>
-                <Button
-                  onClick={() => setShowUploadModal(true)}
-                  className="bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                >
-                  Share Your First Creation
-                </Button>
+            ) : displayedCreations.length === 0 ? (
+              <div className="flex flex-col items-center text-center gap-2 py-12 mt-4">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                  <ImagePlus className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="font-black text-gray-700">{sourceEmpty ? t("noArtworkTitle") : t("noResultsFound")}</p>
+                {sourceEmpty && <p className="text-gray-400 text-sm">{t("noArtworkBody")}</p>}
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {creations.map((creation) => (
-                    <CreationCard
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
+                  {displayedCreations.map(creation => (
+                    <GalleryCard
                       key={creation.id}
                       creation={creation}
-                      currentUser={currentUser}
                       onLike={handleLike}
-                      onAddComment={handleAddComment}
-                      onShare={shareCreation}
-                      isLoadingComment={loadingStates.comments[creation.id] || false}
                       isLoadingLike={loadingStates.likes[creation.id] || false}
                     />
                   ))}
                 </div>
 
-                {/* Infinite scroll target */}
-                <div ref={observerTarget} className="h-10 flex items-center justify-center mt-6">
-                  {loadingStates.creations && (
-                    <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-                  )}
-                  {!hasMoreCreations && creations.length > 0 && (
-                    <p className="text-gray-500 text-center"></p>
-                  )}
-                </div>
+                {viewMode === "all" && (
+                  <div ref={observerTarget} className="h-10 flex items-center justify-center mt-6">
+                    {loadingStates.creations && <Loader2 className="w-6 h-6 animate-spin text-purple-500" />}
+                  </div>
+                )}
               </>
             )}
-          </div>
 
-          {/* Nimi Chat */}
-          <Card className="mb-8 bg-gradient-to-br from-indigo-50 to-purple-50 border border-purple-100 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center text-2xl">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-3 shadow-sm border border-purple-200 overflow-hidden">
-                  <img 
-                    src="/nimi-logo.jpg" 
-                    alt="Nimi Logo" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Chat with Nimi
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <NimiChat
-                messages={nimiMessages}
-                isTyping={isNimiTyping}
-                onSend={handleNimiSend}
-                currentUser={currentUser}
-                voiceEnabled={true}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Our Animated Stars */}
-          <Card className="bg-gradient-to-r from-yellow-100 to-orange-100 border-none shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-center text-2xl">
-                <Zap className="w-8 h-8 mr-3 text-yellow-600" />
-                <span>Our Animated Stars</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              {loadingStates.featured ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Skeleton for Original */}
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Original Artwork</h3>
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-yellow-300">
-                      <Skeleton className="w-full h-64 rounded-xl mb-4" />
-                      <Skeleton className="h-6 w-48 mx-auto" />
-                    </div>
-                  </div>
-                  {/* Skeleton for Animated */}
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Animated Version</h3>
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-orange-300">
-                      <Skeleton className="w-full h-64 rounded-xl mb-4" />
-                      <Skeleton className="h-6 w-48 mx-auto" />
-                    </div>
-                  </div>
-                </div>
-              ) : featuredCreations.original.length === 0 && featuredCreations.animated.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-4">✨</div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                    No Featured Creations Yet
-                  </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Amazing creations will appear here once they're featured and animated!
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Left Side - Original Featured Creations */}
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Featured Originals</h3>
-                    <div className="space-y-6">
-                      {featuredCreations.original.slice(0, 2).map((creation) => (
-                        <div key={creation.id} className="bg-white rounded-2xl p-6 shadow-lg border-2 border-yellow-300 hover:shadow-xl transition-all duration-300">
-                          <div className="w-full h-64 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl flex items-center justify-center mb-4 overflow-hidden">
-                            {creation.imageUrl ? (
-                              <img
-                                src={getPublicUrl(creation.imageUrl)}
-                                alt={creation.description}
-                                className="w-full h-full object-cover rounded-xl"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <span className="text-6xl">🎨</span>
-                            )}
-                          </div>
-                          <div className="text-center">
-                            <p className="text-gray-700 font-medium mb-2">{creation.childName}'s Artwork</p>
-                            <p className="text-sm text-gray-600 mb-2">{creation.description}</p>
-                            <div className="flex justify-center items-center space-x-4 text-sm text-gray-500">
-                              <span>Age: {creation.age}</span>
-                              <span>❤️ {creation.likes}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {featuredCreations.original.length === 0 && (
-                        <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-yellow-300 border-dashed">
-                          <div className="w-full h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center mb-4">
-                            <span className="text-6xl text-gray-400">🖼️</span>
-                          </div>
-                          <p className="text-gray-500 font-medium">No featured originals yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right Side - Animated Creations */}
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Magically Animated</h3>
-                    <div className="space-y-6">
-                      {featuredCreations.animated.slice(0, 2).map((item) => (
-                        <div key={item.animationData.id} className="bg-white rounded-2xl p-6 shadow-lg border-2 border-orange-300 hover:shadow-xl transition-all duration-300 animate-pulse">
-                          <div className="w-full h-64 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            {item.animationData.animation_url ? (
-                              <>
-                                <img
-                                  src={getPublicUrl(item.animationData.animation_url)}
-                                  alt={`Animated version of ${item.description}`}
-                                  className="w-full h-full object-cover rounded-xl"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-br from-orange-200/20 to-red-200/20 flex items-center justify-center">
-                                  <span className="text-4xl animate-bounce">✨</span>
-                                </div>
-                              </>
-                            ) : item.imageUrl ? (
-                              <>
-                                <img
-                                  src={getPublicUrl(item.imageUrl)}
-                                  alt={item.description}
-                                  className="w-full h-full object-cover rounded-xl"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-br from-orange-200/20 to-red-200/20 flex items-center justify-center">
-                                  <span className="text-4xl animate-spin">🌟</span>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="relative">
-                                <span className="text-6xl">🎨</span>
-                                <span className="absolute -top-2 -right-2 text-2xl animate-ping">✨</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-center">
-                            <p className="text-gray-700 font-medium mb-2">{item.childName}'s Animation</p>
-                            <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                            <div className="flex justify-center items-center space-x-4 text-sm text-gray-500">
-                              <span>Age: {item.age}</span>
-                              <span>❤️ {item.likes}</span>
-                              <span className="flex items-center text-orange-600">
-                                <Zap className="w-4 h-4 mr-1" />
-                                {item.animationData.animation_type}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {featuredCreations.animated.length === 0 && (
-                        <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-orange-300 border-dashed">
-                          <div className="w-full h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center mb-4">
-                            <span className="text-6xl text-gray-400">⚡</span>
-                          </div>
-                          <p className="text-gray-500 font-medium">No animations yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="text-center mt-8">
-                <p className="text-gray-600 mb-4 max-w-2xl mx-auto">
-                  Watch as we bring children's artwork to life with magical animations!
-                  Featured creations are selected based on community engagement and creativity.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button
-                    onClick={() => setShowUploadModal(true)}
-                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
-                  >
-                    Share Your Creation
-                  </Button>
-                  <Button
-                    onClick={fetchFeaturedCreations}
-                    variant="outline"
-                    className="border-orange-300 text-orange-600 hover:bg-orange-50"
-                  >
-                    Refresh Featured
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-
-        <BottomNavigation />
-      </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
+              <button
+                onClick={() => setShowUploadModal(true)}
+                disabled={loadingStates.user}
+                className="bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t("uploadArtworkBtn")}
+              </button>
+              <button
+                onClick={toggleMyGallery}
+                className={`font-black rounded-full px-6 py-2.5 shadow transition ${
+                  viewMode === "mine"
+                    ? "bg-purple-600 text-white"
+                    : "border-2 border-purple-200 text-purple-600 bg-white hover:bg-purple-50"
+                }`}
+              >
+                {t("myGalleryBtn")}
+              </button>
+            </div>
+          </main>
+        </div>
+      </AppShell>
     </ErrorBoundary>
   );
-};
-
-export default CommunityPage;
+}

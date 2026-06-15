@@ -38,35 +38,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchProfile = async (userId: string) => {
       try {
-        // Fetch profile from profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
+        const { data: parentData, error: parentError } = await supabase
+          .from("parents")
           .select("*")
           .eq("id", userId)
           .single();
 
-        if (profileError && profileError.code !== "PGRST116") {
-          console.error("Failed to fetch profile:", profileError.message);
-          setProfile(null);
-          return;
+        if (parentError && parentError.code !== "PGRST116") {
+          console.error("Failed to fetch parent profile:", parentError.message);
         }
 
-        // Fetch admin record if exists
-        const { data: adminData, error: adminError } = await supabase
-          .from("admins")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        if (adminError && adminError.code !== "PGRST116") {
-          console.error("Failed to fetch admin record:", adminError.message);
-        }
-
-        // Merge data
         setProfile({
-          ...profileData,
-          isAdmin: !!adminData, // true if found in admins
-          ...(adminData || {}),
+          ...(parentData || {}),
+          full_name: parentData?.name ?? null,
+          isAdmin: false,
         });
       } catch (err) {
         console.error("Unexpected error fetching profile:", err);
@@ -90,7 +75,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
         if (event === "SIGNED_OUT") {
-          router.push("/login");
+          router.push("/loginpage");
         }
 
         setLoading(false);

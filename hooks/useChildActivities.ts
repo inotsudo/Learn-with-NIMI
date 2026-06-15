@@ -1,60 +1,44 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import supabase from "@/lib/supabaseClient"
+import { useEffect, useState } from "react";
+import supabase from "@/lib/supabaseClient";
 
 export interface Activity {
-  id: string
-  child_id: string
-  mission_id: string
-  completed: boolean
-  completed_at?: string
-  created_at?: string
-  mission?: { name: string; description?: string }
+  id: string;
+  child_id: string;
+  mission_id: string;
+  completed_at: string | null;
+  mission?: { title: string; type: string };
 }
 
 export function useChildActivities(childId?: string) {
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [isReady, setIsReady] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadActivities = async () => {
+    const load = async () => {
       try {
-        let data: Activity[] = []
+        if (!childId) { setActivities([]); setIsReady(true); return; }
 
-        if (childId) {
-          // Fetch activities for a specific child
-          const { data: fetchedData, error: fetchError } = await supabase
-            .from("activities")
-            .select("id, child_id, mission_id, completed, completed_at, created_at, missions(name, description)")
-            .eq("child_id", childId)
+        const { data, error: fetchError } = await supabase
+          .from("child_progress")
+          .select("id, child_id, mission_id, completed_at, missions(title, type)")
+          .eq("child_id", childId)
+          .order("completed_at", { ascending: false });
 
-          if (fetchError) throw fetchError
-          data = fetchedData || []
-        } else {
-          // No childId provided (guest or fallback): fetch public activities or empty array
-          const { data: publicData, error: publicError } = await supabase
-            .from("activities")
-            .select("id, child_id, mission_id, completed, completed_at, created_at, missions(name, description)")
-            .limit(5) // optional: show sample/public activities
-          
-          if (publicError) throw publicError
-          data = publicData || []
-        }
-
-        setActivities(data)
+        if (fetchError) throw fetchError;
+        setActivities((data ?? []) as Activity[]);
       } catch (err: any) {
-        console.error("Failed to load activities:", err)
-        setError(err.message || "Unknown error")
-        setActivities([]) // fallback
+        console.error("Failed to load activities:", err);
+        setError(err.message || "Unknown error");
+        setActivities([]);
       } finally {
-        setIsReady(true)
+        setIsReady(true);
       }
-    }
+    };
+    load();
+  }, [childId]);
 
-    loadActivities()
-  }, [childId])
-
-  return { activities, isReady, error }
+  return { activities, isReady, error };
 }

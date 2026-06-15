@@ -28,7 +28,7 @@ export default function ResetPassword() {
       setPassword(""); // clear the field for retry
     } else {
       setMessage("✅ Password updated successfully! Redirecting...");
-      setTimeout(() => router.push("/login"), 2000);
+      setTimeout(() => router.push("/loginpage"), 2000);
     }
   };
   

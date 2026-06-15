@@ -6,20 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { CreationType, UploadFormState } from "./types";
 
-export type ShareMethod = "public" | "whatsapp";
-
-export interface UploadFormState {
-  childName: string;
-  age: string;
-  description: string;
-  isPublic: boolean;
-  imageFile: File | null;
-  previewUrl: string;
-  uploadProgress: number;
-  isUploading: boolean;
-  shareMethod: ShareMethod;
-}
+const CREATION_TYPES: { id: CreationType; emoji: string; labelKey: string }[] = [
+  { id: "art", emoji: "🎨", labelKey: "creationTypeArt" },
+  { id: "coloring", emoji: "🖍️", labelKey: "creationTypeColoring" },
+  { id: "story", emoji: "📖", labelKey: "creationTypeStory" },
+];
 
 export default function UploadModal({
   open,
@@ -34,6 +28,7 @@ export default function UploadModal({
   formState: UploadFormState;
   setFormState: React.Dispatch<React.SetStateAction<UploadFormState>>;
 }) {
+  const { t } = useLanguage();
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null); // ✅ Use ref instead of ID
 
@@ -66,13 +61,13 @@ export default function UploadModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Upload Artwork</DialogTitle>
+          <DialogTitle>{t("uploadArtworkTitle")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Child Name */}
           <Input
-            placeholder="Child's Name"
+            placeholder={t("creationChildNamePlaceholder")}
             value={formState.childName}
             onChange={(e) =>
               setFormState((prev) => ({ ...prev, childName: e.target.value }))
@@ -82,7 +77,7 @@ export default function UploadModal({
 
           {/* Age */}
           <Input
-            placeholder="Age"
+            placeholder={t("agePlaceholder")}
             value={formState.age}
             onChange={(e) =>
               setFormState((prev) => ({ ...prev, age: e.target.value }))
@@ -92,7 +87,7 @@ export default function UploadModal({
 
           {/* Description */}
           <Textarea
-            placeholder="Description"
+            placeholder={t("descriptionPlaceholder")}
             value={formState.description}
             onChange={(e) =>
               setFormState((prev) => ({ ...prev, description: e.target.value }))
@@ -122,7 +117,7 @@ export default function UploadModal({
                 />
               </div>
             ) : (
-              <p>Drag & drop or click to select an image</p>
+              <p>{t("dragDropImageLabel")}</p>
             )}
             <input
               ref={fileInputRef} // ✅ ref
@@ -134,9 +129,32 @@ export default function UploadModal({
             />
           </div>
 
+          {/* Creation Type Selection */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">{t("chooseTypeLabel")}</label>
+            <div className="flex gap-2">
+              {CREATION_TYPES.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setFormState((prev) => ({ ...prev, creationType: option.id }))}
+                  disabled={formState.isUploading}
+                  className={`flex-1 flex flex-col items-center gap-1 rounded-lg border-2 py-2 text-xs font-bold transition-colors ${
+                    formState.creationType === option.id
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-gray-200 text-gray-500"
+                  }`}
+                >
+                  <span className="text-lg">{option.emoji}</span>
+                  {t(option.labelKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Share Method Selection */}
           <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium">Sharing Method</label>
+            <label className="text-sm font-medium">{t("sharingMethodLabel")}</label>
             <div className="flex space-x-6">
               {/* Public option */}
               <label className="flex items-center space-x-2 cursor-pointer">
@@ -154,7 +172,7 @@ export default function UploadModal({
                   }
                   disabled={formState.isUploading}
                 />
-                <span>Public</span>
+                <span>{t("sharePubliclyLabel")}</span>
               </label>
 
               {/* WhatsApp option */}
@@ -173,7 +191,7 @@ export default function UploadModal({
                   }
                   disabled={formState.isUploading}
                 />
-                <span>WhatsApp</span>
+                <span>{t("shareWhatsappLabel")}</span>
               </label>
             </div>
           </div>
@@ -183,7 +201,7 @@ export default function UploadModal({
             onClick={(e) => onSubmit(e)} // ✅ Pass event
             disabled={formState.isUploading || !formState.imageFile}
           >
-            {formState.isUploading ? "Uploading..." : "Upload"}
+            {formState.isUploading ? t("uploadingLabel") : t("uploadBtnLabel")}
           </Button>
         </div>
       </DialogContent>

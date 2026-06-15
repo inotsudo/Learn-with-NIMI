@@ -1,75 +1,91 @@
-'use client';
+"use client";
 
-import dynamic from 'next/dynamic';
-import { useLanguage } from '@/contexts/LanguageContext';
-import Header from '@/components/Header';
-import BottomNavigation from '@/components/BottomNavigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  getChildren, getActiveStories, getCurriculumMissions,
+} from "@/lib/queries";
+import { FALLBACK_THEME, type ActivityCategory } from "@/app/_activityData";
+import AppShell from "@/components/layout/AppShell";
+import DailyAdventureBanner from "@/components/missions/DailyAdventureBanner";
+import DailyAdventureGrid, { DailyChampionCTA } from "@/components/missions/DailyAdventureGrid";
+import DailyAdventureSidebar from "@/components/missions/DailyAdventureSidebar";
 
-// Translation dictionary for all supported languages
-const translations = {
-  en: {
-    loading: "Loading missions...",
-  },
-  es: {
-    loading: "Cargando misiones...",
-  },
-  fr: {
-    loading: "Chargement des missions...",
-  },
-  rw: {
-    loading: "Kuringaniza imirimo...",
-  },
-  sw: {
-    loading: "Inapakia misheni...",
-  }
-};
-const MissionsComponent = dynamic(
-  () => import('./MissionsComponent'),
-  { 
-    ssr: false,
-    loading: () => {
-      const { language } = useLanguage();
-
-      // Type-safe translation function
-      const t = (key: string) => {
-        const translationObj = translations[language] as Record<string, string> 
-          || translations.en as Record<string, string>;
-        return translationObj[key] || (translations.en as Record<string, string>)[key] || key;
-      };
-
-      return (
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-grow flex flex-col items-center justify-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-            <p className="text-gray-600">{t('loading')}</p>
-          </main>
-          <BottomNavigation />
-        </div>
-      );
-    }
-  }
-);
-
+const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 export default function MissionsPage() {
-  const { language } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const [hasChildren, setHasChildren] = useState(true);
+  const [theme, setTheme] = useState(FALLBACK_THEME);
+  const [level, setLevel] = useState(1);
+  const [completedInLevel, setCompletedInLevel] = useState<Set<ActivityCategory>>(new Set());
 
   useEffect(() => {
     setMounted(true);
+    void loadProgress();
   }, []);
+
+  const loadProgress = async () => {
+    const list = await getChildren();
+    if (list.length === 0) {
+      setHasChildren(false);
+      return;
+    }
+
+    const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
+    const child = list.find(c => c.id === savedId) ?? list[0];
+
+    const [curriculumMissions, stories] = await Promise.all([
+      getCurriculumMissions(child.id),
+      getActiveStories(),
+    ]);
+
+    if (stories[0]?.theme_title && stories[0]?.theme_emoji) {
+      setTheme({ title: stories[0].theme_title, emoji: stories[0].theme_emoji });
+    }
+
+    setLevel(curriculumMissions[0]?.level ?? 1);
+    setCompletedInLevel(new Set(
+      curriculumMissions.filter(m => m.completed).map(m => m.category)
+    ));
+  };
 
   if (!mounted) return null;
 
+  if (!hasChildren) {
+    return (
+      <AppShell>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
+          <p className="text-gray-600 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
+          <Link href="/" className="bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
+            Go Home
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-purple-50 overflow-x-hidden">
-      <Header />
-      <main className="max-w-6xl mx-auto flex-grow px-3 sm:px-4 py-4 sm:py-6 w-full">
-        <MissionsComponent />
-      </main>
-      <BottomNavigation />
-    </div>
+    <AppShell>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
+        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+          <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
+            <div className="space-y-4">
+              <DailyAdventureBanner themeTitle={theme.title} themeEmoji={theme.emoji} level={level} />
+              <DailyAdventureGrid completedInLevel={completedInLevel} />
+              <DailyChampionCTA activitiesCompleted={completedInLevel.size} />
+
+              <div className="lg:hidden">
+                <DailyAdventureSidebar activitiesCompleted={completedInLevel.size} />
+              </div>
+            </div>
+
+            <div className="hidden lg:block sticky top-4">
+              <DailyAdventureSidebar activitiesCompleted={completedInLevel.size} />
+            </div>
+          </div>
+        </main>
+      </div>
+    </AppShell>
   );
 }

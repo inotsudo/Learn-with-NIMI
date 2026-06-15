@@ -28,7 +28,9 @@ const config: Config = {
         'piko-purple': '#5e548e',
         'piko-cream': '#f0e6d2',
         'piko-peach': '#ffb7b2',
-        'piko-paper': '#f9f7f2'
+        'piko-paper': '#f9f7f2',
+        'sidebar-indigo': '#3730A3',
+        'sidebar-purple': '#4C1D95'
       },
       animation: {
         "bounce-slow": "bounce 2s infinite",

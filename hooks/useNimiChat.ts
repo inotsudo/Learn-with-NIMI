@@ -1,94 +1,128 @@
-import { useState, useCallback } from "react";
-import { UserMessage } from "@/components/community/types";
+"use client";
 
-export const useNimiChat = (currentUser: { id: string; name: string }) => {
-  const [messages, setMessages] = useState<UserMessage[]>([
-    { sender: 'nimi', text: "Hello friend! I'm Nimi!\n\nWhat's on your mind today?" }
-  ]);
+import { useCallback, useRef, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { speakText, stopSpeaking } from "@/lib/speech";
+
+export interface ChatMessage {
+  from: "nimi" | "user";
+  text: string;
+}
+
+interface UseNimiChatOptions {
+  childName: string;
+  onExchangeComplete?: () => void;
+}
+
+function lastNimiText(messages: ChatMessage[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].from === "nimi") return messages[i].text;
+  }
+  return "";
+}
+
+export function useNimiChat(initialMessages: ChatMessage[], { childName, onExchangeComplete }: UseNimiChatOptions) {
+  const { language, t } = useLanguage();
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isTyping, setIsTyping] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const lastReplyRef = useRef(lastNimiText(initialMessages));
 
-  const sendMessage = useCallback(async (message: string) => {
+  const stopReading = useCallback(() => {
+    stopSpeaking();
+    setIsSpeaking(false);
+  }, []);
+
+  const toggleSpeak = useCallback(() => {
+    if (isSpeaking) {
+      stopReading();
+      return;
+    }
+    const text = lastReplyRef.current;
+    if (!text.trim()) return;
+    void speakText(text, language, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+    });
+  }, [isSpeaking, language, stopReading]);
+
+  const send = useCallback(async (text: string) => {
+    const msg = text.trim();
+    if (!msg || isTyping) return;
+
+    stopReading();
+
+    const history: ChatMessage[] = [...messages, { from: "user", text: msg }];
+    setMessages([...history, { from: "nimi", text: "" }]);
     setIsTyping(true);
-    setMessages(prev => [...prev, { sender: 'user', text: message }]);
-    
+
+    const updateReply = (replyText: string) => {
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { from: "nimi", text: replyText };
+        return next;
+      });
+    };
+
     try {
-      // Add a temporary typing indicator
-      setMessages(prev => [...prev, { sender: 'nimi', text: '...' }]);
-      
-      const response = await fetch('/api/nimi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/nimi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: message }],
-          childName: currentUser.name,
-          language: "en"
-        })
+          messages: history.map(m => ({
+            role: m.from === "nimi" ? "assistant" : "user",
+            content: m.text,
+          })),
+          language,
+          childName,
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!res.ok || !res.body) throw new Error("AI request failed");
 
-      const reader = response.body?.getReader();
+      const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let aiMessage = '';
-      
-      if (reader) {
-        // Remove the typing indicator
-        setMessages(prev => prev.slice(0, -1));
-        
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim());
-          
-          for (const line of lines) {
-            if (line.startsWith('data:')) {
-              try {
-                const data = JSON.parse(line.substring(5));
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-                if (data.content) {
-                  aiMessage += data.content;
-                  // Update the last message with new content
-                  setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage?.sender === 'nimi') {
-                      return [...prev.slice(0, -1), { sender: 'nimi', text: aiMessage }];
-                    }
-                    return [...prev, { sender: 'nimi', text: aiMessage }];
-                  });
-                }
-              } catch (err) {
-                console.error("Error parsing chunk:", err);
-              }
+      let buffer = "";
+      let reply = "";
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() || "";
+
+        for (const chunk of chunks) {
+          const line = chunk.trim();
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (data === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              reply += parsed.content;
+              updateReply(reply);
             }
+          } catch {
+            // skip malformed chunk
           }
         }
       }
-    } catch (error) {
-      console.error("Error:", error);
-      // Remove typing indicator and show error message
-      setMessages(prev => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.text === '...') {
-          return [...prev.slice(0, -1), { 
-            sender: 'nimi', 
-            text: "Sorry, I'm having trouble thinking right now. Could you try again?" 
-          }];
-        }
-        return [...prev, { 
-          sender: 'nimi', 
-          text: "Sorry, I'm having trouble thinking right now. Could you try again?" 
-        }];
-      });
+
+      if (!reply.trim()) {
+        updateReply(t("chatErrorMsg"));
+      } else {
+        onExchangeComplete?.();
+        lastReplyRef.current = reply;
+      }
+    } catch {
+      updateReply(t("chatErrorMsg"));
     } finally {
       setIsTyping(false);
     }
-  }, [currentUser.name]);
+  }, [messages, isTyping, language, childName, t, onExchangeComplete, stopReading]);
 
-  return { messages, isTyping, sendMessage };
-};
+  return { messages, setMessages, isTyping, send, isSpeaking, toggleSpeak };
+}
