@@ -55,7 +55,7 @@ interface Props {
 
 export default function StoryJourney({ completedSteps }: Props) {
   return (
-    <div className="bg-white border-2 border-purple-200 rounded-2xl shadow-md p-4 sm:p-5">
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 sm:p-5">
       <h2 className="text-center font-black text-purple-700 text-[13px] sm:text-sm lg:text-[15px] uppercase tracking-wide mb-4">
         COMPLETE ALL 6 STEPS TO EARN YOUR STORY CERTIFICATE!
       </h2>
@@ -82,12 +82,12 @@ export default function StoryJourney({ completedSteps }: Props) {
                     <img src={step.isPiko ? "/piko-logo-circle.png.png" : "/nimi-logo-circle.png"}
                       alt={step.isPiko ? "PIKO" : "NIMI"}
                       className="w-[60px] h-[60px] rounded-full object-cover border-4 border-white shadow-md" />
-                    <div className="absolute -bottom-1.5 -right-1.5 bg-white rounded-full w-7 h-7 flex items-center justify-center text-base shadow border border-gray-100 leading-none">
+                    <div className="absolute -bottom-1.5 -right-1.5 bg-white/10 backdrop-blur rounded-full w-7 h-7 flex items-center justify-center text-base shadow border border-white/15 leading-none">
                       {step.emoji}
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-500 text-[9px] text-center px-2 mb-2 leading-snug min-h-[26px]">
+                <p className="text-purple-300 text-[9px] text-center px-2 mb-2 leading-snug min-h-[26px]">
                   {step.description}
                 </p>
                 <div className="px-2.5 pb-3">
@@ -103,7 +103,7 @@ export default function StoryJourney({ completedSteps }: Props) {
           if (idx < STORY_STEPS.length - 1) {
             return [card, (
               <div key={`a${idx}`} className="flex items-center justify-center w-5 flex-shrink-0 self-center">
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <ChevronRight className="w-4 h-4 text-purple-300" />
               </div>
             )];
           }
@@ -133,12 +133,12 @@ export default function StoryJourney({ completedSteps }: Props) {
                     <img src={step.isPiko ? "/piko-logo-circle.png.png" : "/nimi-logo-circle.png"}
                       alt={step.isPiko ? "PIKO" : "NIMI"}
                       className="w-14 h-14 rounded-full object-cover border-4 border-white shadow-md" />
-                    <div className="absolute -bottom-1.5 -right-1.5 bg-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-gray-100 leading-none">
+                    <div className="absolute -bottom-1.5 -right-1.5 bg-white/10 backdrop-blur rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-white/15 leading-none">
                       {step.emoji}
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-500 text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
+                <p className="text-purple-300 text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
                   {step.description}
                 </p>
                 <div className="px-2.5 pb-3">
@@ -177,12 +177,12 @@ export default function StoryJourney({ completedSteps }: Props) {
                       <img src={step.isPiko ? "/piko-logo-circle.png.png" : "/nimi-logo-circle.png"}
                         alt={step.isPiko ? "PIKO" : "NIMI"}
                         className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-4 border-white shadow-md" />
-                      <div className="absolute -bottom-1.5 -right-1.5 bg-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-gray-100 leading-none">
+                      <div className="absolute -bottom-1.5 -right-1.5 bg-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-white/15 leading-none">
                         {step.emoji}
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-500 text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
+                  <p className="text-purple-300 text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
                     {step.description}
                   </p>
                   <div className="px-2.5 pb-3">
@@ -196,7 +196,7 @@ export default function StoryJourney({ completedSteps }: Props) {
               </Link>
             );
             if (idx < STORY_STEPS.length - 1) {
-              return [card, <ChevronRight key={`ma${idx}`} className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />];
+              return [card, <ChevronRight key={`ma${idx}`} className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />];
             }
             return [card];
           })}

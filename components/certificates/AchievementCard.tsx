@@ -11,9 +11,9 @@ interface Props {
 }
 
 const TIER_STYLES: Record<AchievementTier, { border: string; iconBg: string; text: string }> = {
-  languageExplorer: { border: "border-amber-300", iconBg: "bg-amber-500", text: "text-amber-600" },
-  explorer: { border: "border-purple-300", iconBg: "bg-purple-500", text: "text-purple-600" },
-  categoryMaster: { border: "border-blue-300", iconBg: "bg-blue-500", text: "text-blue-600" },
+  languageExplorer: { border: "border-amber-300", iconBg: "bg-amber-500", text: "text-amber-300" },
+  explorer: { border: "border-purple-300", iconBg: "bg-purple-500", text: "text-purple-300" },
+  categoryMaster: { border: "border-blue-300", iconBg: "bg-blue-500", text: "text-blue-300" },
 };
 
 export default function AchievementCard({ item, earnedAt, childName }: Props) {
@@ -23,8 +23,8 @@ export default function AchievementCard({ item, earnedAt, childName }: Props) {
 
   return (
     <div
-      className={`relative bg-white rounded-2xl border-4 border-dashed shadow-sm p-5 text-center ${
-        earned ? style.border : "border-gray-200 grayscale opacity-80"
+      className={`relative bg-white/10 backdrop-blur rounded-2xl border-4 border-dashed shadow-sm p-5 text-center ${
+        earned ? style.border : "border-white/20 grayscale opacity-80"
       }`}
     >
       <span className="absolute top-2 left-2 text-yellow-400 text-sm">⭐</span>
@@ -35,21 +35,21 @@ export default function AchievementCard({ item, earnedAt, childName }: Props) {
           {item.emoji}
         </div>
       ) : (
-        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto shadow-md">
-          <Lock className="w-7 h-7 text-gray-400" />
+        <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur flex items-center justify-center mx-auto shadow-md">
+          <Lock className="w-7 h-7 text-purple-200" />
         </div>
       )}
-      <p className={`font-black text-xs uppercase tracking-wide mt-3 ${earned ? style.text : "text-gray-400"}`}>
+      <p className={`font-black text-xs uppercase tracking-wide mt-3 ${earned ? style.text : "text-purple-300"}`}>
         {fillTemplate(t(item.titleKey), item.titleParams)}
       </p>
       {earned ? (
-        <p className="text-gray-700 font-bold text-sm mt-1">
+        <p className="text-purple-100 font-bold text-sm mt-1">
           {t("awardedTo").replace("{name}", childName.toUpperCase())}
         </p>
       ) : (
-        <p className="text-gray-400 font-bold text-sm mt-1">{t("certLockedMessage")}</p>
+        <p className="text-purple-300 font-bold text-sm mt-1">{t("certLockedMessage")}</p>
       )}
-      <p className="text-gray-400 text-xs mt-1 px-1">{fillTemplate(t(item.descKey), item.descParams)}</p>
+      <p className="text-purple-300 text-xs mt-1 px-1">{fillTemplate(t(item.descKey), item.descParams)}</p>
     </div>
   );
 }

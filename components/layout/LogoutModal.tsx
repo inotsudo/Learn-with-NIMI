@@ -75,16 +75,16 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
             </div>
 
             {/* White confirmation card */}
-            <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full mt-6 text-center">
+            <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full mt-6 text-center">
               <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl shadow-inner"
                 style={{ background: "linear-gradient(145deg, #e9d5ff, #c084fc)" }}>
                 🚪
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-black text-gray-800 mt-4">
+              <h2 className="text-xl sm:text-2xl font-black text-white mt-4">
                 {t("logoutConfirmTitle")}
               </h2>
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="text-purple-200 text-sm mt-2">
                 {t("logoutConfirmSubtitle")}
               </p>
 
@@ -99,7 +99,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
                 <button
                   onClick={onClose}
                   disabled={signingOut}
-                  className="flex-1 border-2 border-purple-300 text-purple-700 font-black rounded-full py-3 text-sm hover:bg-purple-50 transition disabled:opacity-60"
+                  className="flex-1 border-2 border-white/20 text-purple-100 font-black rounded-full py-3 text-sm hover:bg-white/10 transition disabled:opacity-60"
                 >
                   {t("logoutConfirmCancel")}
                 </button>
@@ -108,23 +108,23 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
 
             {/* Farewell speech bubble + Nimi BYE illustration */}
             <div className="flex items-end gap-4 mt-8">
-              <div className="relative bg-white border-2 border-purple-300 rounded-2xl px-4 py-3 shadow-xl max-w-[220px]">
+              <div className="relative bg-white/10 backdrop-blur border-2 border-white/20 rounded-2xl px-4 py-3 shadow-xl max-w-[220px]">
                 <span className="absolute top-2 right-2 text-yellow-400 text-sm leading-none">★</span>
                 <span className="absolute bottom-2 left-2 text-purple-400 text-xs leading-none">✦</span>
-                <p className="text-sm font-bold text-gray-800 leading-snug">
+                <p className="text-sm font-bold text-white leading-snug">
                   {t("logoutFarewell")}
                 </p>
                 <span className="absolute -right-[12px] top-1/2 -translate-y-1/2 w-0 h-0"
                   style={{ borderTop: "9px solid transparent", borderBottom: "9px solid transparent", borderLeft: "12px solid #d8b4fe" }} />
                 <span className="absolute -right-[9px] top-1/2 -translate-y-1/2 w-0 h-0"
-                  style={{ borderTop: "7px solid transparent", borderBottom: "7px solid transparent", borderLeft: "9px solid white" }} />
+                  style={{ borderTop: "7px solid transparent", borderBottom: "7px solid transparent", borderLeft: "9px solid rgba(255,255,255,0.15)" }} />
               </div>
 
               <div className="relative shrink-0">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-yellow-400 shadow-xl">
                   <img src="/nimi-logo-circle.png" alt="NIMI" className="w-full h-full object-cover" />
                 </div>
-                <div className="absolute -bottom-2 -right-3 bg-white text-purple-700 text-[10px] font-black px-2 py-0.5 rounded-md shadow-md border-2 border-purple-300 rotate-6">
+                <div className="absolute -bottom-2 -right-3 bg-white/10 backdrop-blur text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-md border-2 border-white/20 rotate-6">
                   BYE!
                 </div>
               </div>

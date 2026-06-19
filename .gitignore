@@ -41,3 +41,5 @@ replacements.txt
 core.122681
 core.*
 .env.local
+.vercel
+.env*

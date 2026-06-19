@@ -28,7 +28,7 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
   const title = creation.description?.trim() || t("myCreationFallback").replace("{name}", creation.childName);
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-white/10 backdrop-blur rounded-2xl border-2 border-white/15 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       <div className="relative aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center overflow-hidden">
         {creation.imageUrl ? (
           <img
@@ -57,15 +57,15 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
           <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${avatarColorFor(creation.childName)} flex items-center justify-center text-white text-[10px] font-black shrink-0`}>
             {creation.childName?.[0]?.toUpperCase() || "?"}
           </div>
-          <p className="text-xs font-bold text-gray-500 truncate">{creation.childName}</p>
+          <p className="text-xs font-bold text-purple-300 truncate">{creation.childName}</p>
         </div>
 
-        <p className="text-sm font-black text-gray-800 truncate">{title}</p>
+        <p className="text-sm font-black text-white truncate">{title}</p>
 
         <button
           onClick={() => onLike(creation.id)}
           disabled={isLoadingLike}
-          className="flex items-center gap-1 mt-2 text-sm font-bold text-gray-500 hover:text-pink-500 transition-colors"
+          className="flex items-center gap-1 mt-2 text-sm font-bold text-purple-300 hover:text-pink-500 transition-colors"
         >
           {isLoadingLike ? (
             <Loader2 className="w-4 h-4 animate-spin" />

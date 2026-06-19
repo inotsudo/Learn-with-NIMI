@@ -91,6 +91,9 @@ export interface MissionVersionRow {
   content_json: Record<string, unknown>
   published: boolean
   status: ContentStatus
+  revision_number: number
+  is_current: boolean
+  created_at: string
 }
 
 export interface MissionRow {
@@ -101,7 +104,41 @@ export interface MissionRow {
   duration_minutes: number
   category_slug: string
   active: boolean
+  story_id: string | null
   mission_versions: MissionVersionRow[]
+}
+
+// The editable row for a language: the is_current=true revision (may be a
+// draft sitting alongside a still-published older revision).
+export function currentVersion(m: MissionRow, lang: Lang): MissionVersionRow | undefined {
+  return m.mission_versions.find(v => v.language === lang && v.is_current)
+}
+
+// The row learners actually see for a language (may differ from
+// currentVersion while a draft revision is being edited).
+export function publishedVersion(m: MissionRow, lang: Lang): MissionVersionRow | undefined {
+  return m.mission_versions.find(v => v.language === lang && v.published)
+}
+
+export type CoverageLevel = 'single' | 'partial' | 'full'
+
+export interface TranslationCoverage {
+  level: CoverageLevel
+  count: number
+}
+
+// Counts languages with a non-empty current title — pure client-side
+// classification, no schema change.
+export function translationCoverage(m: MissionRow): TranslationCoverage {
+  const count = LANGUAGES.filter(lang => (currentVersion(m, lang)?.title ?? '').trim().length > 0).length
+  const level: CoverageLevel = count >= 3 ? 'full' : count === 2 ? 'partial' : 'single'
+  return { level, count }
+}
+
+export const COVERAGE_META: Record<CoverageLevel, { label: string; badge: string }> = {
+  single:  { label: '🌐 Single Language',  badge: 'bg-gray-100 text-gray-500' },
+  partial: { label: '🌐 Partial (2/3)',    badge: 'bg-amber-50 text-amber-600' },
+  full:    { label: '🌐 Fully Translated', badge: 'bg-emerald-50 text-emerald-600' },
 }
 
 export interface StoryPageVersionRow {

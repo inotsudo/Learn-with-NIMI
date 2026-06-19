@@ -29,9 +29,9 @@ export default function WatchContent({ mission, onComplete, completed, saving }:
       )}
 
       {mission.subtitle && (
-        <div className="bg-white rounded-2xl p-4 border-2 border-green-100 shadow-sm flex items-start gap-2">
-          <Star className="w-5 h-5 text-green-600 fill-green-100 shrink-0 mt-0.5" />
-          <p className="text-gray-600 text-sm leading-relaxed">{mission.subtitle}</p>
+        <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border-2 border-white/15 shadow-sm flex items-start gap-2">
+          <Star className="w-5 h-5 text-green-300 fill-green-300/30 shrink-0 mt-0.5" />
+          <p className="text-purple-100 text-sm leading-relaxed">{mission.subtitle}</p>
         </div>
       )}
 

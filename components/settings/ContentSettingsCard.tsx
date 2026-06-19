@@ -39,12 +39,12 @@ export default function ContentSettingsCard() {
   };
 
   return (
-    <div className="bg-white border-2 border-gray-100 rounded-2xl shadow-sm p-4">
-      <h3 className="font-black text-gray-800 mb-2">{t("contentSettingsTitle")}</h3>
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
+      <h3 className="font-black text-white mb-2">{t("contentSettingsTitle")}</h3>
 
-      <div className="relative flex items-center justify-between py-3 border-b border-gray-100">
-        <span className="font-bold text-sm text-gray-700">{t("languageLabel")}</span>
-        <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
+      <div className="relative flex items-center justify-between py-3 border-b border-white/15">
+        <span className="font-bold text-sm text-purple-100">{t("languageLabel")}</span>
+        <div className="flex items-center gap-1.5 text-sm font-bold text-purple-300">
           <span>{currentLabel}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>
@@ -60,17 +60,17 @@ export default function ContentSettingsCard() {
         </select>
       </div>
 
-      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-        <span className="font-bold text-sm text-gray-700">{t("readingLevelLabel")}</span>
-        <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
+      <div className="flex items-center justify-between py-3 border-b border-white/15">
+        <span className="font-bold text-sm text-purple-100">{t("readingLevelLabel")}</span>
+        <div className="flex items-center gap-1.5 text-sm font-bold text-purple-300">
           <span>{t("readingLevelValue")}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>
       </div>
 
       <div className="flex items-center justify-between py-3 last:border-0">
-        <span className="font-bold text-sm text-gray-700">{t("contentFilterLabel")}</span>
-        <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
+        <span className="font-bold text-sm text-purple-100">{t("contentFilterLabel")}</span>
+        <div className="flex items-center gap-1.5 text-sm font-bold text-purple-300">
           <span>{t("contentFilterValue")}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>

@@ -16,10 +16,10 @@ const SKILL_GROUPS: { icon: string; titleKey: string; categories: ActivityCatego
 ];
 
 const LEVEL_STYLES = {
-  notStarted: { key: "levelNotStarted", bg: "bg-gray-100", text: "text-gray-500" },
-  beginner: { key: "levelBeginner", bg: "bg-blue-100", text: "text-blue-600" },
-  growing: { key: "levelGrowing", bg: "bg-amber-100", text: "text-amber-600" },
-  mastered: { key: "levelMastered", bg: "bg-green-100", text: "text-green-600" },
+  notStarted: { key: "levelNotStarted", bg: "bg-white/10", text: "text-purple-300" },
+  beginner: { key: "levelBeginner", bg: "bg-blue-400/20", text: "text-blue-200" },
+  growing: { key: "levelGrowing", bg: "bg-amber-400/20", text: "text-amber-200" },
+  mastered: { key: "levelMastered", bg: "bg-green-400/20", text: "text-green-200" },
 } as const;
 
 function getLevel(pct: number, total: number): keyof typeof LEVEL_STYLES {
@@ -35,8 +35,8 @@ export default function SkillsTab({ categoryProgress }: Props) {
   return (
     <div className="space-y-4 mt-4">
       <div>
-        <p className="font-black text-gray-800 text-lg">{t("skillsPageTitle")}</p>
-        <p className="text-gray-500 text-sm">{t("skillsPageSubtitle")}</p>
+        <p className="font-black text-white text-lg">{t("skillsPageTitle")}</p>
+        <p className="text-purple-300 text-sm">{t("skillsPageSubtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -51,20 +51,20 @@ export default function SkillsTab({ categoryProgress }: Props) {
           const level = LEVEL_STYLES[getLevel(pct, total)];
 
           return (
-            <div key={group.titleKey} className="bg-white border-2 border-gray-100 rounded-2xl shadow-sm p-4">
+            <div key={group.titleKey} className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{group.icon}</span>
-                  <p className="font-black text-gray-800 text-sm">{t(group.titleKey)}</p>
+                  <p className="font-black text-white text-sm">{t(group.titleKey)}</p>
                 </div>
                 <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${level.bg} ${level.text}`}>
                   {t(level.key)}
                 </span>
               </div>
-              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full bg-gradient-to-r ${group.color}`} style={{ width: `${pct}%` }} />
               </div>
-              <p className="text-gray-400 text-xs mt-1.5">{pct}%</p>
+              <p className="text-purple-300 text-xs mt-1.5">{pct}%</p>
             </div>
           );
         })}

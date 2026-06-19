@@ -26,6 +26,7 @@ import LanguageJourneyCard from "@/components/parents/LanguageJourneyCard";
 import AchievementCenterCard from "@/components/parents/AchievementCenterCard";
 import LearningInsightsCard from "@/components/parents/LearningInsightsCard";
 import ProgressTimelineCard from "@/components/parents/ProgressTimelineCard";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -130,9 +131,10 @@ export default function ParentsZonePage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
-          <p className="text-gray-600 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
+          <AuthBackground />
+          <p className="relative z-10 text-purple-100 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
+          <Link href="/" className="relative z-10 bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
             Go Home
           </Link>
         </div>
@@ -143,13 +145,14 @@ export default function ParentsZonePage() {
   if (loadError) {
     return (
       <AppShell>
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
-          <p className="text-5xl mb-1">😵</p>
-          <p className="font-bold text-gray-600">{t("missionLoadErrorTitle")}</p>
-          <p className="text-sm text-gray-400 -mt-2">{t("missionLoadErrorHint")}</p>
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
+          <AuthBackground />
+          <p className="relative z-10 text-5xl mb-1">😵</p>
+          <p className="relative z-10 font-bold text-purple-100">{t("missionLoadErrorTitle")}</p>
+          <p className="relative z-10 text-sm text-purple-300 -mt-2">{t("missionLoadErrorHint")}</p>
           <button
             onClick={() => setReloadKey(k => k + 1)}
-            className="px-6 py-2 rounded-full bg-blue-500 text-white font-black text-sm shadow-md hover:bg-blue-600 transition"
+            className="relative z-10 px-6 py-2 rounded-full bg-blue-500 text-white font-black text-sm shadow-md hover:bg-blue-600 transition"
           >
             {t("tryAgainBtn")}
           </button>
@@ -160,7 +163,8 @@ export default function ParentsZonePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+        <AuthBackground />
         <CelebrationBanner isVisible={showCelebration} text={celebrationText} />
         <ErrorToast error={error} onDismiss={() => setError(null)} />
         <UploadModal
@@ -171,7 +175,7 @@ export default function ParentsZonePage() {
           setFormState={setUploadForm}
         />
 
-        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full flex flex-col gap-4">
+        <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full flex flex-col gap-4">
           <ParentsZoneHeader onUploadClick={() => setShowUploadModal(true)} />
 
           {alerts.length > 0 && <AttentionAlertsCard alerts={alerts} />}

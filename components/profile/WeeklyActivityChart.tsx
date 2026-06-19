@@ -12,8 +12,8 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white border-2 border-indigo-100 rounded-2xl shadow-md p-4">
-      <p className="font-black text-gray-800 mb-4">{t("weeklyActivityTitle")}</p>
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
+      <p className="font-black text-white mb-4">{t("weeklyActivityTitle")}</p>
       <div className="flex items-end justify-between gap-2 h-32">
         {weekCounts.map((count, i) => {
           const pct = Math.min((count / 8) * 100, 100);
@@ -23,7 +23,7 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
                 className="w-full rounded-t-lg bg-gradient-to-t from-purple-500 to-pink-400 min-h-[4px]"
                 style={{ height: `${pct}%` }}
               />
-              <span className="text-[10px] font-bold text-gray-400">{DAY_LABELS[i]}</span>
+              <span className="text-[10px] font-bold text-purple-300">{DAY_LABELS[i]}</span>
             </div>
           );
         })}

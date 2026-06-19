@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { User, Mail, Lock, Eye, EyeOff, UserPlus, Star, Sparkles } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import AuthBackground from "@/components/auth/AuthBackground";
-import GoogleIcon from "@/components/auth/GoogleIcon";
+// import GoogleIcon from "@/components/auth/GoogleIcon";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -105,8 +105,8 @@ export default function SignupPage() {
           </p>
 
           <div className="mt-10 flex flex-col items-center lg:items-start gap-2">
-            <div className="bg-white rounded-2xl rounded-bl-sm shadow-lg px-4 py-3 max-w-[220px] ml-0 sm:ml-10">
-              <p className="text-sm font-bold text-purple-700 text-center leading-snug">
+            <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3 max-w-[220px] ml-0 sm:ml-10">
+              <p className="text-sm font-bold text-white text-center leading-snug">
                 I can&apos;t wait to see what we&apos;ll create together! ✨
               </p>
             </div>
@@ -119,105 +119,105 @@ export default function SignupPage() {
         </div>
 
         {/* Right: sign-up card */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
+        <div className="w-full max-w-md mx-auto lg:mx-0 bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
 
           <div className="flex flex-col items-center text-center mb-1">
-            <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-3">
-              <UserPlus className="w-7 h-7 text-purple-600" />
+            <div className="w-16 h-16 rounded-full bg-purple-400/20 flex items-center justify-center mb-3">
+              <UserPlus className="w-7 h-7 text-purple-200" />
             </div>
-            <h2 className="font-black text-2xl text-gray-800">Sign Up</h2>
-            <p className="text-gray-500 text-sm mt-1">Create your account to begin your creative journey.</p>
+            <h2 className="font-black text-2xl text-white">Sign Up</h2>
+            <p className="text-purple-200 text-sm mt-1">Create your account to begin your creative journey.</p>
           </div>
 
           {error && (
-            <div className="rounded-xl p-2.5 text-center text-sm font-semibold bg-red-100 text-red-600">
+            <div className="rounded-xl p-2.5 text-center text-sm font-semibold bg-red-500/10 text-red-300">
               {error}
             </div>
           )}
 
           {/* Full Name */}
-          <div className="flex items-center gap-3 border-2 border-gray-200 rounded-2xl px-3 py-2 focus-within:border-purple-400 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-purple-600" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
+            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-purple-200" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-gray-700">Full Name</label>
+              <label className="block text-xs font-bold text-purple-100">Full Name</label>
               <input
                 type="text" value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Enter your full name"
                 disabled={loading}
-                className="w-full text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus:outline-none bg-transparent" />
+                className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
           </div>
 
           {/* Email */}
-          <div className="flex items-center gap-3 border-2 border-gray-200 rounded-2xl px-3 py-2 focus-within:border-purple-400 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-              <Mail className="w-4 h-4 text-purple-600" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
+            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
+              <Mail className="w-4 h-4 text-purple-200" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-gray-700">Email Address</label>
+              <label className="block text-xs font-bold text-purple-100">Email Address</label>
               <input
                 type="email" value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email address"
                 disabled={loading}
-                className="w-full text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus:outline-none bg-transparent" />
+                className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
           </div>
 
           {/* Password */}
-          <div className="flex items-center gap-3 border-2 border-gray-200 rounded-2xl px-3 py-2 focus-within:border-purple-400 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-              <Lock className="w-4 h-4 text-purple-600" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
+            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-4 h-4 text-purple-200" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-gray-700">Password</label>
+              <label className="block text-xs font-bold text-purple-100">Password</label>
               <input
                 type={showPassword ? "text" : "password"} value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Create a password"
                 disabled={loading}
-                className="w-full text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus:outline-none bg-transparent" />
+                className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
             <button type="button" onClick={() => setShowPassword(p => !p)}
-              className="flex-shrink-0 text-gray-400 hover:text-purple-600 transition">
+              className="flex-shrink-0 text-purple-200 hover:text-white transition">
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
 
           {/* Confirm Password */}
-          <div className="flex items-center gap-3 border-2 border-gray-200 rounded-2xl px-3 py-2 focus-within:border-purple-400 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-              <Lock className="w-4 h-4 text-purple-600" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
+            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-4 h-4 text-purple-200" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-gray-700">Confirm Password</label>
+              <label className="block text-xs font-bold text-purple-100">Confirm Password</label>
               <input
                 type={showConfirmPassword ? "text" : "password"} value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && signup()}
                 placeholder="Confirm your password"
                 disabled={loading}
-                className="w-full text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus:outline-none bg-transparent" />
+                className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
             <button type="button" onClick={() => setShowConfirmPassword(p => !p)}
-              className="flex-shrink-0 text-gray-400 hover:text-purple-600 transition">
+              className="flex-shrink-0 text-purple-200 hover:text-white transition">
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
 
           {/* Terms */}
-          <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer">
+          <label className="flex items-start gap-2 text-sm text-purple-200 cursor-pointer">
             <input
               type="checkbox"
               checked={agreed}
               onChange={e => setAgreed(e.target.checked)}
               className="w-4 h-4 mt-0.5 accent-purple-600 rounded flex-shrink-0" />
             <span>
-              I agree to the <span className="text-purple-600 font-bold">Terms of Service</span> and{" "}
-              <span className="text-purple-600 font-bold">Privacy Policy</span>
+              I agree to the <span className="text-white font-bold">Terms of Service</span> and{" "}
+              <span className="text-white font-bold">Privacy Policy</span>
             </span>
           </label>
 
@@ -233,24 +233,24 @@ export default function SignupPage() {
           </motion.button>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs font-bold text-gray-400">OR</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="text-xs font-bold text-purple-300">OR</span>
+            <div className="flex-1 h-px bg-white/20" />
           </div>
 
           <motion.button
             onClick={signupWithGoogle}
             disabled={googleLoading}
             whileTap={{ scale: 0.97 }}
-            className="w-full border-2 border-gray-200 hover:border-purple-300 rounded-2xl py-3 flex items-center justify-center gap-2 font-bold text-gray-700 transition disabled:opacity-60"
+            className="w-full border-2 border-white/20 hover:border-purple-300 rounded-2xl py-3 flex items-center justify-center gap-2 font-bold text-white transition disabled:opacity-60"
           >
-            <GoogleIcon />
-            {googleLoading ? "Connecting..." : "Sign up with Google"}
+            {/* <GoogleIcon /> */}
+            {/* {googleLoading ? "Connecting..." : "Sign up with Google"} */}
           </motion.button>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-purple-200">
             Already have an account?{" "}
-            <Link href="/loginpage" className="text-purple-600 font-bold hover:underline">
+            <Link href="/loginpage" className="text-white font-bold hover:underline">
               Log in
             </Link>
           </p>
@@ -262,8 +262,8 @@ export default function SignupPage() {
         <img
           src="/nimi-logo-circle.png" alt="NIMI"
           className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 shadow-md flex-shrink-0" />
-        <div className="bg-white/95 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3">
-          <p className="text-sm font-bold text-purple-700 leading-snug">
+        <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3">
+          <p className="text-sm font-bold text-white leading-snug">
             Every great adventure starts with a single step. Let&apos;s go! ✨
           </p>
         </div>

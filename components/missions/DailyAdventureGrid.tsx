@@ -22,10 +22,10 @@ export default function DailyAdventureGrid({ completedInLevel }: DailyAdventureG
           <motion.div
             whileHover={{ scale: 1.04, y: -4 }}
             whileTap={{ scale: 0.97 }}
-            className={`relative bg-white border-2 ${activity.borderColor} rounded-2xl shadow-sm hover:shadow-xl transition-all flex flex-col items-center pt-4 pb-3 px-2 h-full cursor-pointer`}
+            className={`relative bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm hover:shadow-xl transition-all flex flex-col items-center pt-4 pb-3 px-2 h-full cursor-pointer`}
           >
             {/* Number badge */}
-            <div className={`absolute top-2 left-2 w-6 h-6 ${activity.numBg} rounded-full flex items-center justify-center text-white font-black text-[11px] shadow`}>
+            <div className={`absolute top-2 left-2 w-6 h-6 ${activity.numBgGlass} backdrop-blur border border-white/20 ${activity.numTextGlass} rounded-full flex items-center justify-center font-black text-[11px] shadow`}>
               {activity.number}
             </div>
 
@@ -36,15 +36,15 @@ export default function DailyAdventureGrid({ completedInLevel }: DailyAdventureG
                 alt={activity.mascot.toUpperCase()}
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow"
               />
-              <div className="absolute -bottom-1 -right-1 bg-white rounded-full w-7 h-7 flex items-center justify-center text-base shadow border border-gray-100 leading-none">
+              <div className="absolute -bottom-1 -right-1 bg-white/10 backdrop-blur rounded-full w-7 h-7 flex items-center justify-center text-base shadow border border-white/20 leading-none">
                 {activity.emoji}
               </div>
             </div>
 
-            <p className={`font-black text-gray-800 text-xs sm:text-sm uppercase text-center leading-tight`}>
+            <p className={`font-black text-white text-xs sm:text-sm uppercase text-center leading-tight`}>
               {t(activity.titleKey)}
             </p>
-            <p className="text-gray-500 text-[10px] sm:text-[11px] text-center leading-snug mt-0.5 min-h-[28px]">
+            <p className="text-purple-200 text-[10px] sm:text-[11px] text-center leading-snug mt-0.5 min-h-[28px]">
               {t(activity.subtitleKey)}
             </p>
 

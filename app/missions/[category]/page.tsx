@@ -89,15 +89,15 @@ export default function MissionCategoryPage() {
 
   const renderContent = () => {
     if (loading) {
-      return <div className="text-center py-12 text-gray-400 font-bold">{t("loadingStory")}</div>;
+      return <div className="text-center py-12 text-purple-300 font-bold">{t("loadingStory")}</div>;
     }
 
     if (loadError) {
       return (
-        <div className="bg-white rounded-3xl shadow-md p-6 text-center">
+        <div className="bg-white/10 backdrop-blur rounded-3xl shadow-md p-6 text-center">
           <p className="text-5xl mb-3">😵</p>
-          <p className="font-bold text-gray-600">{t("missionLoadErrorTitle")}</p>
-          <p className="text-sm text-gray-400 mt-1 mb-4">{t("missionLoadErrorHint")}</p>
+          <p className="font-bold text-purple-200">{t("missionLoadErrorTitle")}</p>
+          <p className="text-sm text-purple-300 mt-1 mb-4">{t("missionLoadErrorHint")}</p>
           <button
             onClick={() => setReloadKey(k => k + 1)}
             className="px-6 py-2 rounded-full bg-blue-500 text-white font-black text-sm shadow-md hover:bg-blue-600 transition"
@@ -110,10 +110,10 @@ export default function MissionCategoryPage() {
 
     if (!mission) {
       return (
-        <div className="bg-white rounded-3xl shadow-md p-6 text-center">
+        <div className="bg-white/10 backdrop-blur rounded-3xl shadow-md p-6 text-center">
           <p className="text-5xl mb-3">{activity.emoji}</p>
-          <p className="font-bold text-gray-600">{t("noPagesTitle")}</p>
-          <p className="text-sm text-gray-400 mt-1">{t("noPagesHint")}</p>
+          <p className="font-bold text-purple-200">{t("noPagesTitle")}</p>
+          <p className="text-sm text-purple-300 mt-1">{t("noPagesHint")}</p>
         </div>
       );
     }
@@ -134,10 +134,10 @@ export default function MissionCategoryPage() {
         return <StoryContent mission={mission} storyPages={storyPages} onComplete={handleComplete} completed={completed} saving={saving} />;
       default:
         return (
-          <div className="bg-white rounded-3xl shadow-md p-6 text-center">
+          <div className="bg-white/10 backdrop-blur rounded-3xl shadow-md p-6 text-center">
             <p className="text-5xl mb-3">{activity.emoji}</p>
-            <p className="font-bold text-gray-600">{t("noPagesTitle")}</p>
-            <p className="text-sm text-gray-400 mt-1">{t("noPagesHint")}</p>
+            <p className="font-bold text-purple-200">{t("noPagesTitle")}</p>
+            <p className="text-sm text-purple-300 mt-1">{t("noPagesHint")}</p>
           </div>
         );
     }

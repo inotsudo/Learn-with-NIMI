@@ -13,6 +13,7 @@ import ProfileBadgesRow from "@/components/profile/ProfileBadgesRow";
 import AccountSettingsCard from "@/components/profile/AccountSettingsCard";
 import AppPreferencesCard from "@/components/profile/AppPreferencesCard";
 import type { Language } from "@/contexts/LanguageContext";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -47,9 +48,10 @@ export default function MyProfilePage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
-          <p className="text-gray-600 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
+          <AuthBackground />
+          <p className="relative z-10 text-purple-100 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
+          <Link href="/" className="relative z-10 bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
             Go Home
           </Link>
         </div>
@@ -59,14 +61,15 @@ export default function MyProfilePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
-        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+        <AuthBackground />
+        <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="font-black text-2xl sm:text-3xl text-gray-800">{t("myProfileTitle")}</h1>
-              <p className="text-gray-500 text-sm mt-1">{t("myProfileSubtitle")}</p>
+              <h1 className="font-black text-2xl sm:text-3xl text-white">{t("myProfileTitle")}</h1>
+              <p className="text-purple-200 text-sm mt-1">{t("myProfileSubtitle")}</p>
             </div>
-            <button className="border-2 border-purple-200 text-purple-600 bg-white font-black rounded-full px-5 py-2.5 text-sm hover:bg-purple-50 transition flex items-center gap-2">
+            <button className="border-2 border-white/20 text-purple-100 bg-white/10 backdrop-blur font-black rounded-full px-5 py-2.5 text-sm hover:bg-white/20 transition flex items-center gap-2">
               <Edit className="w-4 h-4" /> {t("editProfile")}
             </button>
           </div>

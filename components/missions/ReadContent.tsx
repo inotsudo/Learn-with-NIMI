@@ -21,7 +21,7 @@ export default function ReadContent({ mission, onComplete, completed, saving }: 
   return (
     <div className="space-y-4">
       {mission.subtitle && (
-        <p className="text-gray-600 font-bold text-sm text-center">{mission.subtitle}</p>
+        <p className="text-purple-200 font-bold text-sm text-center">{mission.subtitle}</p>
       )}
 
       {pdfUrl && (

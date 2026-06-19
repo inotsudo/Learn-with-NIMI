@@ -32,11 +32,11 @@ export default function LanguageSwitchDialog({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.85, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5 text-center"
+            className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl w-full max-w-sm p-5 text-center"
           >
             <p className="text-3xl mb-2">🌍</p>
-            <h3 className="font-black text-gray-800 text-lg">{t("switchLanguageTitle")}</h3>
-            <p className="text-gray-500 text-sm mt-2">
+            <h3 className="font-black text-white text-lg">{t("switchLanguageTitle")}</h3>
+            <p className="text-purple-200 text-sm mt-2">
               {t("switchLanguageBody")
                 .replace("{language}", LANG_LABELS[pendingLanguage])
                 .replace("{name}", childName ?? "")
@@ -53,7 +53,7 @@ export default function LanguageSwitchDialog({
               <button
                 onClick={onCancel}
                 disabled={switching}
-                className="flex-1 border-2 border-purple-200 text-purple-700 font-black rounded-full py-2.5 text-sm hover:bg-purple-50 transition disabled:opacity-60"
+                className="flex-1 border-2 border-white/20 text-purple-100 font-black rounded-full py-2.5 text-sm hover:bg-white/10 transition disabled:opacity-60"
               >
                 {t("cancel")}
               </button>

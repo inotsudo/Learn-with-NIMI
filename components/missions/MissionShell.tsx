@@ -7,6 +7,7 @@ import AppShell from "@/components/layout/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ACTIVITIES, type ActivityConfig } from "@/app/_activityData";
 import type { CurriculumMission } from "@/lib/queries";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 interface MissionShellProps {
   activity: ActivityConfig;
@@ -35,28 +36,29 @@ export default function MissionShell({ activity, mission, completedCount, comple
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
-        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full space-y-4">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+        <AuthBackground />
+        <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full space-y-4">
 
           {/* Header row */}
           <div className="flex items-center gap-3">
             <Link href="/missions"
-              className="flex items-center gap-1 text-purple-700 font-bold text-sm hover:text-purple-900 transition shrink-0">
+              className="flex items-center gap-1 text-purple-200 font-bold text-sm hover:text-white transition shrink-0">
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline">{t("backToAdventure")}</span>
             </Link>
 
             <div className="flex-1 text-center min-w-0">
-              <h1 className="font-black text-lg sm:text-2xl text-gray-800 truncate">
+              <h1 className="font-black text-lg sm:text-2xl text-white truncate">
                 {activity.emoji} {title}
               </h1>
               {subtitle && (
-                <p className="text-gray-500 text-xs sm:text-sm font-semibold truncate">{subtitle}</p>
+                <p className="text-purple-200 text-xs sm:text-sm font-semibold truncate">{subtitle}</p>
               )}
             </div>
 
             <button onClick={() => setSoundOn(s => !s)}
-              className="w-9 h-9 rounded-full bg-white border-2 border-purple-100 shadow-sm flex items-center justify-center text-purple-600 hover:bg-purple-50 transition shrink-0"
+              className="w-9 h-9 rounded-full bg-white/10 backdrop-blur border-2 border-white/15 shadow-sm flex items-center justify-center text-purple-200 hover:bg-white/20 transition shrink-0"
               aria-label={soundOn ? t("pauseLabel") : t("playSongLabel")}>
               {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -68,7 +70,7 @@ export default function MissionShell({ activity, mission, completedCount, comple
               {t("curriculumLevelMastered").replace("{level}", String(level))}
             </div>
           ) : completed ? (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-3 text-center text-green-700 font-bold text-sm">
+            <div className="bg-green-400/20 backdrop-blur border border-green-300/30 rounded-2xl p-3 text-center text-green-200 font-bold text-sm">
               {t("missionCompletedLabel")}
             </div>
           ) : null}
@@ -77,24 +79,24 @@ export default function MissionShell({ activity, mission, completedCount, comple
           <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-4 lg:items-start space-y-4 lg:space-y-0">
             <div>{children}</div>
 
-            <div className="bg-white border-2 border-purple-200 rounded-2xl shadow-md p-4 space-y-3">
-              <p className="font-black text-gray-800 text-sm">{t("missionProgressTitle")}</p>
+            <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 space-y-3">
+              <p className="font-black text-white text-sm">{t("missionProgressTitle")}</p>
 
               <div>
-                <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
                   <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all"
                     style={{ width: `${progressPct}%` }} />
                 </div>
-                <p className="text-center font-black text-purple-700 text-lg mt-2">
+                <p className="text-center font-black text-white text-lg mt-2">
                   {completedCount}/{ACTIVITIES.length}
                 </p>
               </div>
 
-              <p className="text-gray-500 text-xs text-center">{t("missionProgressDesc")}</p>
+              <p className="text-purple-300 text-xs text-center">{t("missionProgressDesc")}</p>
 
-              <div className={`rounded-xl p-2.5 text-center border ${completed ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
-                <p className="text-[10px] font-black uppercase tracking-wide text-gray-500">{t("rewardLabel")}</p>
-                <p className="text-lg font-black text-yellow-600">⭐ {stars}</p>
+              <div className={`rounded-xl p-2.5 text-center border backdrop-blur ${completed ? "bg-green-400/20 border-green-300/30" : "bg-yellow-400/20 border-yellow-300/30"}`}>
+                <p className="text-[10px] font-black uppercase tracking-wide text-purple-200">{t("rewardLabel")}</p>
+                <p className="text-lg font-black text-yellow-200">⭐ {stars}</p>
               </div>
             </div>
           </div>
@@ -110,7 +112,7 @@ export default function MissionShell({ activity, mission, completedCount, comple
               </div>
             </div>
             <Link href={nextHref}
-              className="bg-white text-purple-700 font-black rounded-full px-5 py-2.5 text-sm shrink-0 hover:bg-purple-50 transition">
+              className="bg-white/15 backdrop-blur border border-white/25 text-white font-black rounded-full px-5 py-2.5 text-sm shrink-0 hover:bg-white/25 transition">
               {nextLabel}
             </Link>
           </div>

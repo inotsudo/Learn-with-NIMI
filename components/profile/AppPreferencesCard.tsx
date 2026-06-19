@@ -51,28 +51,28 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
   };
 
   return (
-    <div className="bg-white border-2 border-gray-100 rounded-2xl shadow-sm p-4">
-      <h3 className="font-black text-gray-800 mb-2">{t("appPreferencesTitle")}</h3>
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
+      <h3 className="font-black text-white mb-2">{t("appPreferencesTitle")}</h3>
 
-      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-        <span className="font-bold text-sm text-gray-700">{t("soundLabel")}</span>
+      <div className="flex items-center justify-between py-3 border-b border-white/15">
+        <span className="font-bold text-sm text-purple-100">{t("soundLabel")}</span>
         <ToggleSwitch on={soundOn} onClick={() => setSoundOn(v => !v)} />
       </div>
 
-      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-        <span className="font-bold text-sm text-gray-700">{t("musicLabel")}</span>
+      <div className="flex items-center justify-between py-3 border-b border-white/15">
+        <span className="font-bold text-sm text-purple-100">{t("musicLabel")}</span>
         <ToggleSwitch on={musicOn} onClick={() => setMusicOn(v => !v)} />
       </div>
 
-      <div className="flex items-center justify-between py-3 border-b border-gray-100">
-        <span className="font-bold text-sm text-gray-700">{t("languageLabel")}</span>
+      <div className="flex items-center justify-between py-3 border-b border-white/15">
+        <span className="font-bold text-sm text-purple-100">{t("languageLabel")}</span>
         <select
           value={language}
           onChange={e => {
             const newLang = e.target.value as Language;
             if (newLang !== language) setPendingLanguage(newLang);
           }}
-          className="bg-gray-50 border-2 border-gray-100 rounded-full px-3 py-1.5 text-sm font-bold text-gray-600"
+          className="bg-white/5 border-2 border-white/15 rounded-full px-3 py-1.5 text-sm font-bold text-purple-200"
         >
           {LANGS.map(lang => (
             <option key={lang.code} value={lang.code}>{lang.flag} {lang.label}</option>
@@ -81,8 +81,8 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
       </div>
 
       <div className="flex items-center justify-between py-3 last:border-0">
-        <span className="font-bold text-sm text-gray-700">{t("appThemeLabel")}</span>
-        <div className="flex items-center gap-1.5 bg-gray-50 border-2 border-gray-100 rounded-full px-3 py-1.5 text-sm font-bold text-gray-600">
+        <span className="font-bold text-sm text-purple-100">{t("appThemeLabel")}</span>
+        <div className="flex items-center gap-1.5 bg-white/5 border-2 border-white/15 rounded-full px-3 py-1.5 text-sm font-bold text-purple-200">
           <span>🎨 {t("themeColorful")}</span>
           <ChevronDown className="w-4 h-4" />
         </div>

@@ -3,13 +3,14 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
 import {
   Search, SlidersHorizontal, LayoutGrid, Eye, Bell, ChevronDown, Plus,
-  MoreVertical, Pencil, Copy, ArrowUpDown, Trash2, ChevronLeft, ChevronRight,
+  MoreVertical, Pencil, Copy, ArrowUpDown, Archive, ArchiveRestore, ChevronLeft, ChevronRight,
   Star, ListChecks, Menu, AlertCircle, RefreshCw, X,
 } from 'lucide-react'
-import { ACCENT, CATEGORY_META, FALLBACK_META, TYPE_META, STATUS_META, type MissionType, type MissionRow } from './missionMeta'
+import { ACCENT, CATEGORY_META, FALLBACK_META, TYPE_META, STATUS_META, LANGUAGES, LANGUAGE_META, COVERAGE_META, currentVersion, translationCoverage, type MissionType, type MissionRow } from './missionMeta'
 import MissionEditor from './MissionEditor'
 import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
+import ArchiveImpactModal, { type ArchiveUsage } from './ArchiveImpactModal'
 
 interface MissionManagerProps {
   categorySlug: string
@@ -36,6 +37,14 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
   const [notifCount, setNotifCount] = useState(0)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [defaultType, setDefaultType] = useState<MissionType>('sing')
+  const [levelUsage, setLevelUsage] = useState<Record<string, number[]>>({})
+  const [levelUnitUsage, setLevelUnitUsage] = useState<Record<string, ArchiveUsage[]>>({})
+  const [archiveTarget, setArchiveTarget] = useState<MissionRow | null>(null)
+  const [levelAssignments, setLevelAssignments] = useState<Record<number, string>>({})
+  const [availableLevels, setAvailableLevels] = useState<number[]>([1])
+  const [createLevel, setCreateLevel] = useState(1)
+  const [showArchived, setShowArchived] = useState(false)
+  const lastCategoryRef = useRef<string | null>(null)
 
   const meta = CATEGORY_META[categorySlug] ?? FALLBACK_META
   const accent = ACCENT[meta.accent]
@@ -44,15 +53,48 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
     setLoading(true)
     setLoadError(null)
     try {
-      const { data, error } = await supabase
-        .from('missions')
-        .select('id, type, sequence, stars, duration_minutes, category_slug, active, mission_versions(id, language, title, subtitle, tip_text, media_url, content_json, published, status)')
-        .eq('category_slug', categorySlug)
-        .order('sequence')
+      const [{ data, error }, { data: lmData, error: lmError }, { data: levelsData, error: levelsError }] = await Promise.all([
+        supabase
+          .from('missions')
+          .select('id, type, sequence, stars, duration_minutes, category_slug, active, story_id, mission_versions(id, language, title, subtitle, tip_text, media_url, content_json, published, status, revision_number, is_current, created_at)')
+          .eq('category_slug', categorySlug)
+          .order('sequence'),
+        supabase
+          .from('level_missions')
+          .select('level_number, unit_number, mission_id')
+          .eq('category_slug', categorySlug),
+        supabase
+          .from('curriculum_levels')
+          .select('level_number')
+          .order('level_number'),
+      ])
       if (error) throw error
+      if (lmError) throw lmError
+      if (levelsError) throw levelsError
       const rows = (data ?? []) as unknown as MissionRow[]
       setMissions(rows)
       setSelectedId(prev => (prev && rows.some(m => m.id === prev)) ? prev : (rows[0]?.id ?? null))
+      const usage: Record<string, number[]> = {}
+      const unitUsage: Record<string, ArchiveUsage[]> = {}
+      const assignments: Record<number, string> = {}
+      for (const row of lmData ?? []) {
+        (usage[row.mission_id] ??= []).push(row.level_number)
+        ;(unitUsage[row.mission_id] ??= []).push({ level_number: row.level_number, unit_number: row.unit_number })
+        assignments[row.level_number] = row.mission_id
+      }
+      for (const ids of Object.values(usage)) ids.sort((a, b) => a - b)
+      for (const list of Object.values(unitUsage)) list.sort((a, b) => a.level_number - b.level_number || a.unit_number - b.unit_number)
+      setLevelUsage(usage)
+      setLevelUnitUsage(unitUsage)
+      setLevelAssignments(assignments)
+      const levels = (levelsData ?? []).map(l => l.level_number)
+      const allLevels = levels.length > 0 ? levels : [1]
+      setAvailableLevels(allLevels)
+      if (lastCategoryRef.current !== categorySlug) {
+        lastCategoryRef.current = categorySlug
+        const defaultLevel = allLevels.find(l => !(l in assignments)) ?? allLevels[0]
+        setCreateLevel(defaultLevel)
+      }
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Failed to load missions.')
     } finally {
@@ -109,14 +151,23 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
   const totalStars = useMemo(() => missions.reduce((sum, m) => sum + (m.stars ?? 0), 0), [missions])
   const currentType: MissionType = (missions[0]?.type as MissionType) ?? defaultType
 
+  const archivedCount = useMemo(
+    () => missions.filter(m => currentVersion(m, 'en')?.status === 'archived').length,
+    [missions]
+  )
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return missions
+    let list = missions
+    if (!showArchived) {
+      list = list.filter(m => currentVersion(m, 'en')?.status !== 'archived')
+    }
+    if (!search.trim()) return list
     const q = search.toLowerCase()
-    return missions.filter(m => {
-      const enTitle = m.mission_versions.find(v => v.language === 'en')?.title ?? ''
+    return list.filter(m => {
+      const enTitle = currentVersion(m, 'en')?.title ?? ''
       return enTitle.toLowerCase().includes(q)
     })
-  }, [missions, search])
+  }, [missions, search, showArchived])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageClamped = Math.min(page, totalPages)
@@ -131,6 +182,18 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
 
   const handleCreate = async () => {
     setActionError(null)
+    const existingMissionId = levelAssignments[createLevel]
+    if (existingMissionId) {
+      const existing = missions.find(x => x.id === existingMissionId)
+      const existingTitle = (existing && currentVersion(existing, 'en')?.title) ?? 'a mission'
+      const ok = await confirm({
+        title: `Replace Level ${createLevel} → ${meta.label}?`,
+        message: `Level ${createLevel} is currently using "${existingTitle}" for ${meta.label}. Creating a new mission here will replace it in Level ${createLevel} — the old mission stays as an unused draft (you can archive it separately). Continue?`,
+        confirmLabel: 'Create & Replace',
+        danger: false,
+      })
+      if (!ok) return
+    }
     setCreating(true)
     try {
       const maxSeq = missions.reduce((max, m) => Math.max(max, m.sequence), 0)
@@ -145,6 +208,10 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
         subtitle: '', tip_text: '', media_url: '', content_json: {}, status: 'draft',
       })
       if (versionError) throw versionError
+      const { error: levelError } = await supabase
+        .from('level_missions')
+        .upsert({ level_number: createLevel, unit_number: 1, category_slug: categorySlug, mission_id: newMission.id }, { onConflict: 'level_number,unit_number,category_slug' })
+      if (levelError) throw levelError
       await fetchMissions()
       setSelectedId(newMission.id)
     } catch (err) {
@@ -165,7 +232,7 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
         .select()
         .single()
       if (error) throw error
-      const versions = m.mission_versions.map(v => ({
+      const versions = m.mission_versions.filter(v => v.is_current).map(v => ({
         mission_id: dup.id, language: v.language, title: v.title + ' (Copy)',
         subtitle: v.subtitle, tip_text: v.tip_text, media_url: v.media_url,
         content_json: v.content_json, status: 'draft',
@@ -183,21 +250,53 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
     }
   }
 
-  const handleDelete = async (m: MissionRow) => {
-    const title = m.mission_versions.find(v => v.language === 'en')?.title ?? 'this mission'
-    const ok = await confirm({
-      title: `Delete "${title}"?`,
-      message: "This also deletes its translations and any learners' completion records for it. This cannot be undone.",
-    })
-    if (!ok) return
+  const runArchive = async (m: MissionRow) => {
     setActionError(null)
     setMutatingId(m.id)
     try {
-      const { error } = await supabase.from('missions').delete().eq('id', m.id)
+      // admin_archive_lesson (migration 042) archives ALL versions across all
+      // revisions and languages atomically. The previous direct-update only
+      // touched is_current=true rows, leaving a published sibling revision
+      // (is_current=false) still visible to learners.
+      const { error } = await supabase.rpc('admin_archive_lesson', { p_mission_id: m.id })
       if (error) throw error
       await fetchMissions()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to delete mission.')
+      setActionError(err instanceof Error ? err.message : 'Failed to archive mission.')
+    } finally {
+      setMutatingId(null)
+    }
+  }
+
+  const handleArchive = async (m: MissionRow) => {
+    const usages = levelUnitUsage[m.id]
+    if (usages && usages.length > 0) {
+      setArchiveTarget(m)
+      return
+    }
+    const title = currentVersion(m, 'en')?.title ?? 'this mission'
+    const ok = await confirm({
+      title: `Archive "${title}"?`,
+      message: `Archive "${title}"? It will no longer be visible to learners. Its content and completion history are kept — you can restore it to Draft later.`,
+      confirmLabel: 'Archive',
+      danger: false,
+    })
+    if (!ok) return
+    await runArchive(m)
+  }
+
+  const handleRestore = async (m: MissionRow) => {
+    setActionError(null)
+    setMutatingId(m.id)
+    try {
+      // admin_restore_lesson (migration 042) restores the is_current revision
+      // of each language from 'archived' → 'draft'. missions.active stays false
+      // until the admin explicitly re-publishes.
+      const { error } = await supabase.rpc('admin_restore_lesson', { p_mission_id: m.id })
+      if (error) throw error
+      await fetchMissions()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to restore mission.')
     } finally {
       setMutatingId(null)
     }
@@ -286,7 +385,19 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
             </div>
           </div>
         </div>
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end mt-4 items-center gap-2">
+          <label className="text-xs font-bold text-gray-500 hidden sm:inline">Add to</label>
+          <select
+            value={createLevel}
+            onChange={e => setCreateLevel(Number(e.target.value))}
+            className="border border-gray-200 bg-white rounded-full px-3 py-2.5 text-sm font-bold text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-200"
+          >
+            {availableLevels.map(lvl => (
+              <option key={lvl} value={lvl}>
+                Level {lvl}{levelAssignments[lvl] ? ' (replace existing)' : ' (empty)'}
+              </option>
+            ))}
+          </select>
           <button
             onClick={handleCreate}
             disabled={creating}
@@ -330,9 +441,23 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
             </button>
           </div>
 
+          {archivedCount > 0 && (
+            <div className="px-4 pb-2 flex-shrink-0">
+              <button
+                onClick={() => setShowArchived(s => !s)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition ${
+                  showArchived ? 'bg-zinc-100 text-zinc-600 border-zinc-200' : 'bg-white text-gray-400 border-gray-100 hover:bg-gray-50'
+                }`}
+              >
+                <Archive size={12} /> {showArchived ? 'Hide' : 'Show'} Archived ({archivedCount})
+              </button>
+            </div>
+          )}
+
           <div className="px-3 py-3 space-y-2 lg:flex-1 lg:overflow-y-auto lg:min-h-0" onClick={() => setOpenMenuId(null)}>
             {pageRows.map(m => {
-              const en = m.mission_versions.find(v => v.language === 'en')
+              const en = currentVersion(m, 'en')
+              const coverage = translationCoverage(m)
               const isSelected = m.id === selectedId
               return (
                 <div
@@ -350,7 +475,7 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-800 truncate text-sm">{en?.title ?? 'Untitled'}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500">
                           <Star size={11} className="fill-amber-400" /> {m.stars}
                         </span>
@@ -362,6 +487,24 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
                             Inactive — hidden from learners
                           </span>
                         )}
+                        {levelUsage[m.id] && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-600">
+                            Used in {levelUsage[m.id].length === 1 ? `Level ${levelUsage[m.id][0]}` : `Levels ${levelUsage[m.id].join(', ')}`}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-50 border border-gray-100 text-gray-500">
+                          {LANGUAGES.map(lang => {
+                            const pub = m.mission_versions.find(v => v.language === lang)?.published
+                            return (
+                              <span key={lang} className={pub ? 'text-emerald-600' : 'text-gray-300'}>
+                                {LANGUAGE_META[lang].flag}{pub ? '✓' : '✗'}
+                              </span>
+                            )
+                          })}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${COVERAGE_META[coverage.level].badge}`}>
+                          {COVERAGE_META[coverage.level].label}
+                        </span>
                       </div>
                     </div>
                     <button
@@ -389,9 +532,15 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
                         <ArrowUpDown size={14} className="text-gray-400" /> Change Order
                       </button>
                       <div className="border-t border-gray-100 my-1" />
-                      <button onClick={() => { handleDelete(m); setOpenMenuId(null) }} disabled={mutatingId === m.id} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                        <Trash2 size={14} /> {mutatingId === m.id ? 'Deleting...' : 'Delete'}
-                      </button>
+                      {en?.status === 'archived' ? (
+                        <button onClick={() => { handleRestore(m); setOpenMenuId(null) }} disabled={mutatingId === m.id} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                          <ArchiveRestore size={14} /> {mutatingId === m.id ? 'Restoring...' : 'Restore to Draft'}
+                        </button>
+                      ) : (
+                        <button onClick={() => { handleArchive(m); setOpenMenuId(null) }} disabled={mutatingId === m.id} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                          <Archive size={14} /> {mutatingId === m.id ? 'Archiving...' : 'Archive'}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -447,6 +596,15 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
         </div>
       </div>
       {dialog}
+      {archiveTarget && (
+        <ArchiveImpactModal
+          missionLabel={currentVersion(archiveTarget, 'en')?.title ?? meta.label}
+          usages={levelUnitUsage[archiveTarget.id] ?? []}
+          onCancel={() => setArchiveTarget(null)}
+          onArchiveAnyway={() => { const m = archiveTarget; setArchiveTarget(null); runArchive(m) }}
+          onReplaceLesson={() => { setArchiveTarget(null); onNavigate('curriculum') }}
+        />
+      )}
     </div>
   )
 }

@@ -76,7 +76,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
         />
       )}
 
-      <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-purple-100 text-center">
+      <div className="bg-white/10 backdrop-blur rounded-3xl shadow-xl p-6 border-2 border-white/15 text-center">
         <div className="flex items-center justify-center gap-4 mb-4">
           <motion.img src="/nimi-logo-circle.png" alt="NIMI"
             animate={{ y: [0, -6, 0] }}
@@ -88,19 +88,19 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
             className="w-16 h-16 rounded-full object-cover border-4 border-blue-300 shadow-lg" />
         </div>
 
-        <p className="font-black text-purple-700 text-lg">{mission.title}</p>
-        {mission.subtitle && <p className="text-gray-500 text-sm">{mission.subtitle}</p>}
+        <p className="font-black text-white text-lg">{mission.title}</p>
+        {mission.subtitle && <p className="text-purple-200 text-sm">{mission.subtitle}</p>}
 
         {songUrl ? (
           <>
-            <div className="w-full bg-gray-100 rounded-full h-2.5 my-4 overflow-hidden">
+            <div className="w-full bg-white/10 rounded-full h-2.5 my-4 overflow-hidden">
               <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all"
                 style={{ width: `${progress}%` }} />
             </div>
 
             <div className="flex items-center justify-center gap-4">
               <button onClick={repeat}
-                className="w-12 h-12 rounded-full bg-purple-100 hover:bg-purple-200 flex items-center justify-center text-purple-700 transition"
+                className="w-12 h-12 rounded-full bg-purple-400/20 hover:bg-purple-400/30 flex items-center justify-center text-purple-200 transition"
                 aria-label={t("repeatLabel")}>
                 <RotateCcw className="w-5 h-5" />
               </button>
@@ -116,7 +116,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
               </button>
 
               <button onClick={readAlong}
-                className="w-12 h-12 rounded-full bg-pink-100 hover:bg-pink-200 flex items-center justify-center text-pink-700 transition"
+                className="w-12 h-12 rounded-full bg-pink-400/20 hover:bg-pink-400/30 flex items-center justify-center text-pink-200 transition"
                 aria-label={t("readToMeLabel")}>
                 <Mic className="w-5 h-5" />
               </button>
@@ -129,18 +129,18 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
               aria-label={t("readToMeLabel")}>
               <Mic className="w-7 h-7 text-white" />
             </button>
-            <p className="text-xs font-black text-purple-700 uppercase">{t("readToMeLabel")}</p>
+            <p className="text-xs font-black text-white uppercase">{t("readToMeLabel")}</p>
           </div>
         )}
       </div>
 
       {lyrics.length > 0 && (
-        <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100">
+        <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/15">
           <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-            <p className="font-black text-purple-700 text-xs uppercase">🎵 {t("songLyricsTitle")}</p>
+            <p className="font-black text-white text-xs uppercase">🎵 {t("songLyricsTitle")}</p>
             <button onClick={() => setKaraoke(k => !k)}
               className={`text-xs font-black rounded-full px-3 py-1 transition ${
-                karaoke ? "bg-purple-600 text-white" : "bg-white text-purple-700 border border-purple-200"
+                karaoke ? "bg-purple-600 text-white" : "bg-white/10 text-white border border-white/20"
               }`}>
               🎤 {t("karaokeModeLabel")}
             </button>
@@ -149,7 +149,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
             {lyrics.map((line, i) => (
               <p key={i}
                 className={`text-sm font-semibold rounded-lg px-2 py-1 transition-colors ${
-                  karaoke && i === activeLine ? "bg-purple-200 text-purple-800" : "text-gray-600"
+                  karaoke && i === activeLine ? "bg-purple-400/30 text-white" : "text-purple-100"
                 }`}>
                 {line}
               </p>

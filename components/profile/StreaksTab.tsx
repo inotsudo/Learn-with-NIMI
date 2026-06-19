@@ -45,28 +45,28 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
   return (
     <div className="space-y-4 mt-4">
       <div>
-        <p className="font-black text-gray-800 text-lg">{t("streaksPageTitle")}</p>
-        <p className="text-gray-500 text-sm">{t("streaksPageSubtitle")}</p>
+        <p className="font-black text-white text-lg">{t("streaksPageTitle")}</p>
+        <p className="text-purple-300 text-sm">{t("streaksPageSubtitle")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white border-2 border-orange-200 rounded-2xl shadow-sm p-4 text-center">
+        <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4 text-center">
           <p className="font-black text-3xl text-orange-500">🔥 {current}</p>
-          <p className="text-gray-500 text-xs font-semibold mt-1">{t("currentStreakLabel")}</p>
+          <p className="text-purple-300 text-xs font-semibold mt-1">{t("currentStreakLabel")}</p>
         </div>
-        <div className="bg-white border-2 border-purple-200 rounded-2xl shadow-sm p-4 text-center">
-          <p className="font-black text-3xl text-purple-600">🏆 {longest}</p>
-          <p className="text-gray-500 text-xs font-semibold mt-1">{t("longestStreakLabel")}</p>
+        <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4 text-center">
+          <p className="font-black text-3xl text-purple-200">🏆 {longest}</p>
+          <p className="text-purple-300 text-xs font-semibold mt-1">{t("longestStreakLabel")}</p>
         </div>
       </div>
 
       <WeekStreakCard weekStreak={weekStreak} activityDates={activityDates} />
 
-      <div className="bg-white border-2 border-indigo-100 rounded-2xl shadow-sm p-4">
-        <p className="font-black text-gray-800 mb-3">{t("activityCalendarTitle")}</p>
+      <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
+        <p className="font-black text-white mb-3">{t("activityCalendarTitle")}</p>
         <div className="grid grid-cols-7 gap-1.5 mb-1.5">
           {DAY_LABELS.map((label, i) => (
-            <span key={i} className="text-[10px] font-bold text-gray-400 text-center">{label}</span>
+            <span key={i} className="text-[10px] font-bold text-purple-300 text-center">{label}</span>
           ))}
         </div>
         <div className="space-y-1.5">
@@ -76,7 +76,7 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
                 <div
                   key={di}
                   className={`aspect-square rounded-md ${
-                    day.future ? "bg-gray-50" : day.active ? "bg-green-500" : "bg-gray-100"
+                    day.future ? "bg-white/5" : day.active ? "bg-green-500" : "bg-white/10"
                   }`}
                 />
               ))}

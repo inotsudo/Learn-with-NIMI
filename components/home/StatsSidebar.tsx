@@ -28,19 +28,19 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
   return (
     <div className="flex flex-col gap-4">
       {/* Streak card */}
-      <div className="bg-white border-2 border-orange-200 rounded-2xl shadow-md p-4">
-        <h3 className="font-black text-gray-800 text-[12px] mb-3 text-center tracking-wide">
+      <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
+        <h3 className="font-black text-white text-[12px] mb-3 text-center tracking-wide">
           🔥 {t("dayStreak").replace("{count}", String(streakCount))}
         </h3>
         <div className="flex items-center justify-between">
           {DAY_LABELS.map((label, i) => (
             <div key={i} className="flex flex-col items-center gap-1">
-              <span className="text-[9px] font-bold text-gray-400">{label}</span>
+              <span className="text-[9px] font-bold text-purple-300">{label}</span>
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
                   weekStreak[i]
                     ? "bg-orange-500 border-orange-500 text-white"
-                    : "bg-white border-gray-200 text-gray-300"
+                    : "bg-white/10 border-white/20 text-white/40"
                 }`}
               >
                 {weekStreak[i] && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
@@ -48,16 +48,16 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-gray-400 text-center mt-3 leading-snug">
+        <p className="text-[10px] text-purple-300 text-center mt-3 leading-snug">
           {t("streakEncouragement")}
         </p>
       </div>
 
       {/* Badges preview */}
-      <div className="bg-white border-2 border-yellow-200 rounded-2xl shadow-md p-4">
+      <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-black text-gray-800 text-[12px] tracking-wide">{t("myBadges")}</h3>
-          <Link href="/user-profile" className="text-[10px] font-bold text-purple-600 hover:underline">
+          <h3 className="font-black text-white text-[12px] tracking-wide">{t("myBadges")}</h3>
+          <Link href="/user-profile" className="text-[10px] font-bold text-purple-200 hover:underline">
             {t("viewAll")}
           </Link>
         </div>
@@ -66,14 +66,14 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
             <div
               key={i}
               className={`w-9 h-9 rounded-full flex items-center justify-center text-base shadow-sm ${
-                i < badgeCount ? badge.bg : "bg-gray-100 opacity-50"
+                i < badgeCount ? badge.bg : "bg-white/10 opacity-50"
               }`}
             >
               {badge.emoji}
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-gray-400 text-center mt-2 leading-snug">
+        <p className="text-[10px] text-purple-300 text-center mt-2 leading-snug">
           {badgeCount > 0 ? t("badgesEarned").replace("{count}", String(badgeCount)) : t("noBadgesYet")}
         </p>
       </div>
@@ -91,11 +91,11 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
       </Link>
 
       {/* Today's stars */}
-      <div className="bg-white border-2 border-yellow-200 rounded-2xl shadow-md p-4 text-center">
-        <p className="text-[11px] font-bold text-gray-700">{t("todayStarsLabel")}</p>
+      <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 text-center">
+        <p className="text-[11px] font-bold text-purple-100">{t("todayStarsLabel")}</p>
         <p className="text-2xl font-black text-yellow-500 mt-1">⭐ {todayStars}</p>
         {todayStars === 0 && (
-          <p className="text-[9px] text-gray-400 mt-1 leading-snug">{t("keepLearningStars")}</p>
+          <p className="text-[9px] text-purple-300 mt-1 leading-snug">{t("keepLearningStars")}</p>
         )}
       </div>
     </div>

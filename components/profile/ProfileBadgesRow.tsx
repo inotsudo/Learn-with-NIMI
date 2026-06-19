@@ -15,10 +15,10 @@ export default function ProfileBadgesRow() {
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white border-2 border-yellow-200 rounded-2xl shadow-md p-4">
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-black text-gray-800">{t("myBadges")}</h3>
-        <Link href="/user-profile" className="text-sm font-bold text-purple-600 hover:underline">
+        <h3 className="font-black text-white">{t("myBadges")}</h3>
+        <Link href="/user-profile" className="text-sm font-bold text-purple-200 hover:underline">
           {t("viewAll")}
         </Link>
       </div>
@@ -28,7 +28,7 @@ export default function ProfileBadgesRow() {
             <div className={`w-14 h-14 ${badge.bg} rounded-full flex items-center justify-center text-2xl shadow-md`}>
               {badge.emoji}
             </div>
-            <p className="text-[11px] text-center font-bold text-gray-600 leading-tight">
+            <p className="text-[11px] text-center font-bold text-purple-200 leading-tight">
               {t(badge.titleKey)}
             </p>
           </div>

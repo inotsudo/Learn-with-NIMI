@@ -1,11 +1,17 @@
 import webpush from "web-push";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
+const VAPID_CONFIGURED = Boolean(
+  process.env.VAPID_SUBJECT && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
 );
+
+if (VAPID_CONFIGURED) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT!,
+    process.env.VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+}
 
 export interface PushPayload {
   title: string;
@@ -20,6 +26,8 @@ export async function sendPushToParent(
   parentId: string,
   payload: PushPayload
 ): Promise<{ sent: number }> {
+  if (!VAPID_CONFIGURED) return { sent: 0 };
+
   const { data: subs } = await sb
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")

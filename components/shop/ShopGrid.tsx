@@ -21,11 +21,11 @@ export default function ShopGrid({ filter, balance, ownedIds, purchasingId, onBu
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center text-center gap-2 py-12">
-        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-          <Gift className="w-8 h-8 text-gray-400" />
+        <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur flex items-center justify-center">
+          <Gift className="w-8 h-8 text-purple-200" />
         </div>
-        <p className="font-black text-gray-700">{t("noToysTitle")}</p>
-        <p className="text-gray-400 text-sm">{t("noToysBody")}</p>
+        <p className="font-black text-white">{t("noToysTitle")}</p>
+        <p className="text-purple-300 text-sm">{t("noToysBody")}</p>
       </div>
     );
   }

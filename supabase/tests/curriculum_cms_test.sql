@@ -54,6 +54,13 @@ declare
   v_version_status  text;
   v_version_pub     boolean;
   v_version_title   text;
+  v_orig_current    boolean;
+  v_new_title       text;
+  v_new_subtitle    text;
+  v_new_status      text;
+  v_new_pub         boolean;
+  v_new_current     boolean;
+  v_new_revnum      integer;
 
   v_level           integer;
   v_total           integer;
@@ -162,7 +169,10 @@ begin
   raise notice 'Scenario 4 PASSED: unknown category_slug rejected, nothing persisted';
 
   -- ════════════════════════════════════════════════════════
-  -- Scenario 5: Re-import preserves status/published
+  -- Scenario 5: Re-importing a published version creates a new
+  -- draft revision instead of editing it live (migration 037,
+  -- Goal 2 — "prevent live editing of published content" applies
+  -- to bulk import too)
   -- ════════════════════════════════════════════════════════
   -- Simulate the 9001/en version having already been reviewed & published
   update mission_versions set status = 'published' where mission_id = v_mission_9001 and language = 'en';
@@ -173,15 +183,28 @@ begin
 
   assert (v_result->>'missions_created')::int = 0, format('Scenario 5 FAILED: missions_created = %s, expected 0', v_result->>'missions_created');
   assert (v_result->>'versions_created')::int = 0, format('Scenario 5 FAILED: versions_created = %s, expected 0', v_result->>'versions_created');
-  assert (v_result->>'versions_updated')::int = 1, format('Scenario 5 FAILED: versions_updated = %s, expected 1', v_result->>'versions_updated');
+  assert (v_result->>'versions_updated')::int = 0, format('Scenario 5 FAILED: versions_updated = %s, expected 0', v_result->>'versions_updated');
+  assert (v_result->>'revisions_created')::int = 1, format('Scenario 5 FAILED: revisions_created = %s, expected 1', v_result->>'revisions_created');
 
-  select title, status, published into v_version_title, v_version_status, v_version_pub
-    from mission_versions where mission_id = v_mission_9001 and language = 'en';
-  assert v_version_title = 'Test Discovery EN (edited)', format('Scenario 5 FAILED: title not updated, got "%s"', v_version_title);
-  assert v_version_status = 'published', format('Scenario 5 FAILED: status changed to "%s", expected "published"', v_version_status);
-  assert v_version_pub = true, 'Scenario 5 FAILED: published should remain true';
+  -- Original published revision (rev 1) is untouched, just demoted to is_current=false
+  select title, status, published, is_current into v_version_title, v_version_status, v_version_pub, v_orig_current
+    from mission_versions where mission_id = v_mission_9001 and language = 'en' and revision_number = 1;
+  assert v_version_title = 'Test Discovery EN', format('Scenario 5 FAILED: original title changed to "%s"', v_version_title);
+  assert v_version_status = 'published', format('Scenario 5 FAILED: original status changed to "%s", expected "published"', v_version_status);
+  assert v_version_pub = true, 'Scenario 5 FAILED: original published should remain true';
+  assert v_orig_current = false, 'Scenario 5 FAILED: original revision should no longer be is_current';
 
-  raise notice 'Scenario 5 PASSED: re-import updated content but preserved status=published/published=true';
+  -- New draft revision (rev 2) holds the imported content and is now current
+  select title, subtitle, status, published, is_current, revision_number
+    into v_new_title, v_new_subtitle, v_new_status, v_new_pub, v_new_current, v_new_revnum
+    from mission_versions where mission_id = v_mission_9001 and language = 'en' and is_current = true;
+  assert v_new_title = 'Test Discovery EN (edited)', format('Scenario 5 FAILED: new revision title = "%s"', v_new_title);
+  assert v_new_subtitle = 'updated subtitle', format('Scenario 5 FAILED: new revision subtitle = "%s"', v_new_subtitle);
+  assert v_new_status = 'draft', format('Scenario 5 FAILED: new revision status = "%s", expected "draft"', v_new_status);
+  assert v_new_pub = false, 'Scenario 5 FAILED: new revision published should be false';
+  assert v_new_revnum = 2, format('Scenario 5 FAILED: new revision_number = %s, expected 2', v_new_revnum);
+
+  raise notice 'Scenario 5 PASSED: re-importing over a published version created a new draft revision (rev 2), leaving published rev 1 untouched';
 
   -- ════════════════════════════════════════════════════════
   -- Scenario 6: Content workflow draft -> review -> published -> archived

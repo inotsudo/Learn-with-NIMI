@@ -11,6 +11,7 @@ import ShopBanner from "@/components/shop/ShopBanner";
 import type { ShopItem } from "@/components/shop/_shopData";
 import { CelebrationBanner } from "@/components/community/CelebrationBanner";
 import { ErrorToast } from "@/components/community/ErrorToast";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -83,22 +84,23 @@ export default function RewardShopPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+        <AuthBackground />
         <CelebrationBanner isVisible={showCelebration} text={t("shopUnlockedCelebration")} />
         <ErrorToast error={error} onDismiss={() => setError(null)} />
 
-        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+        <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           {loading ? (
             <div className="space-y-4 animate-pulse">
-              <div className="h-10 w-2/3 bg-white/60 rounded-xl" />
-              <div className="h-8 w-1/2 bg-white/60 rounded-full" />
+              <div className="h-10 w-2/3 bg-white/10 rounded-xl" />
+              <div className="h-8 w-1/2 bg-white/10 rounded-full" />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden">
-                    <div className="aspect-square bg-gray-100" />
+                  <div key={i} className="bg-white/10 backdrop-blur rounded-2xl border-2 border-white/15 overflow-hidden">
+                    <div className="aspect-square bg-white/10" />
                     <div className="p-3 space-y-2">
-                      <div className="h-3 w-2/3 bg-gray-100 rounded" />
-                      <div className="h-4 w-full bg-gray-100 rounded" />
+                      <div className="h-3 w-2/3 bg-white/10 rounded" />
+                      <div className="h-4 w-full bg-white/10 rounded" />
                     </div>
                   </div>
                 ))}

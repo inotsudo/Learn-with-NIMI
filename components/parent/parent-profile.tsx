@@ -26,6 +26,7 @@ export function UserProfileMenu() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initial = useMemo(() => (profile?.name?.[0] || "U").toUpperCase(), [profile?.name]);
   const { supported: pushSupported, isSubscribed: pushSubscribed, loading: pushLoading, error: pushError, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications();
+  const [notifLoading, setNotifLoading] = useState(false);
 
   // --- Save profile ---
   const saveProfile = async () => {
@@ -132,6 +133,26 @@ export function UserProfileMenu() {
     }
   };
 
+  // --- Notification prefs (auto-save on toggle) ---
+  const saveNotificationPref = async (field: "notify_email" | "notify_sms", value: boolean) => {
+    if (!session?.user?.id || !profile) return;
+    updateProfile?.({ ...profile, [field]: value });
+    setNotifLoading(true);
+    try {
+      const { error } = await supabase.from("parents").update({ [field]: value }).eq("id", session.user.id);
+      if (error) throw error;
+      toast({
+        title: value ? "Notifications enabled" : "Notifications disabled",
+        description: `${field === "notify_email" ? "Email" : "SMS"} notifications have been ${value ? "turned on" : "turned off"}.`,
+      });
+    } catch {
+      updateProfile?.({ ...profile, [field]: !value });
+      toast({ title: "Error", description: "Could not save your preference. Please try again.", variant: "destructive" });
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
   if (!profile) return null;
 
   return (
@@ -196,25 +217,52 @@ export function UserProfileMenu() {
             <Input id="preferred_language" value={profile.preferred_language || ""} onChange={(e) => updateProfile?.({ ...profile, preferred_language: e.target.value })} disabled={isLoading} />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="font-medium">Email Notifications</div>
-            <Switch checked={profile.notify_email} onCheckedChange={(v) => updateProfile?.({ ...profile, notify_email: v })} disabled={isLoading} />
-          </div>
+          {/* Notification Preferences */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Notification Preferences</p>
 
-          <div className="flex items-center justify-between">
-            <div className="font-medium">SMS Notifications</div>
-            <Switch checked={profile.notify_sms} onCheckedChange={(v) => updateProfile?.({ ...profile, notify_sms: v })} disabled={isLoading} />
-          </div>
-
-          {pushSupported && (
-            <div className="grid gap-1">
-              <div className="flex items-center justify-between">
-                <div className="font-medium">Push Notifications</div>
-                <Switch checked={pushSubscribed} onCheckedChange={(v) => (v ? pushSubscribe() : pushUnsubscribe())} disabled={pushLoading || isLoading} />
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Email Notifications</p>
+                <p className="text-xs text-gray-400 mt-0.5">Progress reports and updates from NIMIPIKO STUDIO</p>
               </div>
-              {pushError && <p className="text-xs text-red-600">{pushError}</p>}
+              <Switch
+                checked={!!profile.notify_email}
+                onCheckedChange={(v) => saveNotificationPref("notify_email", v)}
+                disabled={notifLoading || isLoading}
+              />
             </div>
-          )}
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">SMS Notifications</p>
+                <p className="text-xs text-gray-400 mt-0.5">Important alerts sent directly to your phone</p>
+              </div>
+              <Switch
+                checked={!!profile.notify_sms}
+                onCheckedChange={(v) => saveNotificationPref("notify_sms", v)}
+                disabled={notifLoading || isLoading}
+              />
+            </div>
+
+            {pushSupported && (
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Push Notifications</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Instant alerts on this device</p>
+                </div>
+                <Switch
+                  checked={pushSubscribed}
+                  onCheckedChange={(v) => (v ? pushSubscribe() : pushUnsubscribe())}
+                  disabled={pushLoading || notifLoading || isLoading}
+                />
+              </div>
+            )}
+
+            {pushError && (
+              <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{pushError}</p>
+            )}
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="font-medium">Subscription</div>

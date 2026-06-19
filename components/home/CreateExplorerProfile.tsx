@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { createChild } from "@/lib/queries";
 import type { Child, FavoriteCategory } from "@/lib/queries";
 import { AVATARS } from "./CreateChildModal";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 const AGE_GROUPS: { value: number; key: string }[] = [
   { value: 4, key: "ageGroup3to5" },
@@ -31,10 +32,10 @@ const REWARD_ITEMS: {
   iconBg: string;
   iconColor: string;
 }[] = [
-  { icon: Star, titleKey: "earnStarsTitle", descKey: "earnStarsDesc", bg: "bg-yellow-50", iconBg: "bg-yellow-200", iconColor: "text-yellow-700" },
-  { icon: Award, titleKey: "collectBadgesTitle", descKey: "collectBadgesDesc", bg: "bg-purple-50", iconBg: "bg-purple-200", iconColor: "text-purple-700" },
-  { icon: GraduationCap, titleKey: "getCertificatesTitle", descKey: "getCertificatesDesc", bg: "bg-blue-50", iconBg: "bg-blue-200", iconColor: "text-blue-700" },
-  { icon: BookOpen, titleKey: "readStoriesTitle", descKey: "readStoriesDesc", bg: "bg-pink-50", iconBg: "bg-pink-200", iconColor: "text-pink-700" },
+  { icon: Star, titleKey: "earnStarsTitle", descKey: "earnStarsDesc", bg: "bg-yellow-400/20", iconBg: "bg-yellow-400/20", iconColor: "text-yellow-200" },
+  { icon: Award, titleKey: "collectBadgesTitle", descKey: "collectBadgesDesc", bg: "bg-purple-400/20", iconBg: "bg-purple-400/20", iconColor: "text-purple-200" },
+  { icon: GraduationCap, titleKey: "getCertificatesTitle", descKey: "getCertificatesDesc", bg: "bg-blue-400/20", iconBg: "bg-blue-400/20", iconColor: "text-blue-200" },
+  { icon: BookOpen, titleKey: "readStoriesTitle", descKey: "readStoriesDesc", bg: "bg-pink-400/20", iconBg: "bg-pink-400/20", iconColor: "text-pink-200" },
 ];
 
 interface Props {
@@ -67,7 +68,8 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] relative overflow-hidden">
+      <AuthBackground />
       {/* Decorative floating emoji */}
       <div className="hidden sm:block pointer-events-none select-none">
         {[
@@ -88,20 +90,20 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
         ))}
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 sm:py-10 relative">
+      <main className="max-w-6xl mx-auto px-4 py-8 sm:py-10 relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="font-black text-2xl sm:text-4xl text-purple-700">
+          <h1 className="font-black text-2xl sm:text-4xl text-white">
             ✨ {t("welcomeFutureExplorer")} ✨
           </h1>
-          <p className="text-gray-600 mt-2 max-w-xl mx-auto">{t("createProfileSubtitle")}</p>
+          <p className="text-purple-200 mt-2 max-w-xl mx-auto">{t("createProfileSubtitle")}</p>
         </div>
 
         <div className="lg:grid lg:grid-cols-[180px_1fr_280px] lg:gap-6 lg:items-start">
           {/* Left mascot + speech bubble */}
           <div className="hidden lg:flex lg:flex-col lg:items-center lg:gap-3">
-            <div className="bg-white border-2 border-purple-200 rounded-2xl rounded-bl-sm shadow-md px-4 py-3 text-center">
-              <p className="text-sm font-bold text-gray-700 leading-snug">{t("nimiOnboardingBubble")}</p>
+            <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-md px-4 py-3 text-center">
+              <p className="text-sm font-bold text-white leading-snug">{t("nimiOnboardingBubble")}</p>
             </div>
             <motion.img
               src="/nimi-logo-circle.png" alt="NIMI"
@@ -111,19 +113,19 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
           </div>
 
           {/* Center form card */}
-          <div className="bg-white rounded-3xl shadow-xl border-2 border-purple-100 p-5 sm:p-8">
+          <div className="bg-white/10 backdrop-blur rounded-3xl shadow-xl border-2 border-white/15 p-5 sm:p-8">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Smile className="w-5 h-5 text-purple-600" />
+              <div className="w-9 h-9 bg-purple-400/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <Smile className="w-5 h-5 text-purple-200" />
               </div>
-              <h2 className="font-black text-lg text-gray-800 flex-1">{t("createProfileCardTitle")}</h2>
+              <h2 className="font-black text-lg text-white flex-1">{t("createProfileCardTitle")}</h2>
               <Sparkles className="w-5 h-5 text-yellow-400" />
             </div>
 
             <div className="space-y-5">
               {/* Step 1: name */}
               <div>
-                <label className="flex items-center gap-2 font-bold text-gray-700 text-sm mb-2">
+                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
                   <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">1</span>
                   {t("whatShouldWeCallYou")}
                 </label>
@@ -133,19 +135,19 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                   onKeyDown={e => e.key === "Enter" && handleSubmit()}
                   placeholder={t("explorerNamePlaceholder")}
                   maxLength={30}
-                  className="w-full border-2 border-purple-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 focus:outline-none focus:border-purple-500 transition placeholder:text-gray-300" />
+                  className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition placeholder:text-white/40" />
               </div>
 
               {/* Step 2: age group */}
-              <div className="pt-5 border-t border-gray-100">
-                <label className="flex items-center gap-2 font-bold text-gray-700 text-sm mb-2">
+              <div className="pt-5 border-t border-white/15">
+                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
                   <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
                   {t("chooseAgeGroup")}
                 </label>
                 <select
                   value={age}
                   onChange={e => setAge(Number(e.target.value))}
-                  className="w-full border-2 border-purple-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 focus:outline-none focus:border-purple-500 transition bg-white"
+                  className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition"
                 >
                   {AGE_GROUPS.map(g => (
                     <option key={g.key} value={g.value}>{t(g.key)}</option>
@@ -154,15 +156,15 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
               </div>
 
               {/* Step 3: favorite adventure */}
-              <div className="pt-5 border-t border-gray-100">
-                <label className="flex items-center gap-2 font-bold text-gray-700 text-sm mb-2">
+              <div className="pt-5 border-t border-white/15">
+                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
                   <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
                   {t("pickFavoriteAdventure")}
                 </label>
                 <select
                   value={favorite}
                   onChange={e => setFavorite(e.target.value as FavoriteCategory)}
-                  className="w-full border-2 border-purple-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 focus:outline-none focus:border-purple-500 transition bg-white"
+                  className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition"
                 >
                   {FAVORITE_CATEGORIES.map(c => (
                     <option key={c.value} value={c.value}>{t(c.key)}</option>
@@ -171,8 +173,8 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
               </div>
 
               {/* Step 4: avatar */}
-              <div className="pt-5 border-t border-gray-100">
-                <label className="flex items-center gap-2 font-bold text-gray-700 text-sm mb-2">
+              <div className="pt-5 border-t border-white/15">
+                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
                   <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">4</span>
                   {t("chooseYourAvatar")}
                 </label>
@@ -184,7 +186,7 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                       className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition border-2 ${
                         avatar === a
                           ? "border-purple-500 bg-purple-50 scale-110 shadow"
-                          : "border-transparent bg-gray-100 hover:bg-purple-50"
+                          : "border-transparent bg-white/10 hover:bg-purple-50"
                       }`}
                     >
                       {a}
@@ -214,35 +216,35 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
 
           {/* Right sidebar */}
           <div className="mt-6 lg:mt-0 space-y-4">
-            <div className="bg-white rounded-2xl border-2 border-purple-100 shadow-md p-4">
-              <p className="font-black text-gray-800 mb-3 flex items-center gap-1.5">
+            <div className="bg-white/10 backdrop-blur rounded-2xl border-2 border-white/15 shadow-md p-4">
+              <p className="font-black text-white mb-3 flex items-center gap-1.5">
                 🏆 {t("adventureAwaitsTitle")}
               </p>
               <div className="space-y-2.5">
                 {REWARD_ITEMS.map(item => (
-                  <div key={item.titleKey} className={`rounded-xl p-3 flex items-start gap-3 ${item.bg}`}>
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${item.iconBg}`}>
+                  <div key={item.titleKey} className={`rounded-xl p-3 flex items-start gap-3 backdrop-blur border border-white/10 ${item.bg}`}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 backdrop-blur border border-white/20 ${item.iconBg}`}>
                       <item.icon className={`w-4 h-4 ${item.iconColor}`} />
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-gray-800">{t(item.titleKey)}</p>
-                      <p className="text-xs text-gray-500">{t(item.descKey)}</p>
+                      <p className="font-bold text-sm text-white">{t(item.titleKey)}</p>
+                      <p className="text-xs text-purple-300">{t(item.descKey)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-100 p-4">
-              <p className="font-black text-purple-700 mb-1 flex items-center gap-1.5">
-                <Gift className="w-4 h-4" /> {t("welcomeGiftTitle")}
+            <div className="bg-white/10 backdrop-blur rounded-2xl border-2 border-white/15 p-4">
+              <p className="font-black text-white mb-1 flex items-center gap-1.5">
+                <Gift className="w-4 h-4 text-pink-300" /> {t("welcomeGiftTitle")}
               </p>
-              <p className="text-sm text-gray-600">{t("welcomeGiftDesc")}</p>
+              <p className="text-sm text-purple-300">{t("welcomeGiftDesc")}</p>
             </div>
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-8 flex items-center justify-center gap-1.5">
+        <p className="text-center text-xs text-purple-300 mt-8 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5" /> {t("infoSafetyNote")}
         </p>
       </main>

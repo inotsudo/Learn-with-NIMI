@@ -19,8 +19,8 @@ export default function StatsRow({
   const stats = [
     {
       icon: ListChecks,
-      iconBg: "bg-indigo-100",
-      iconColor: "text-indigo-600",
+      iconBg: "bg-indigo-400/20",
+      iconColor: "text-indigo-200",
       borderColor: "border-indigo-100",
       value: activitiesCompleted,
       suffix: t("statOfTotal").replace("{total}", String(activitiesTotal)),
@@ -28,8 +28,8 @@ export default function StatsRow({
     },
     {
       icon: Star,
-      iconBg: "bg-yellow-100",
-      iconColor: "text-yellow-500",
+      iconBg: "bg-yellow-400/20",
+      iconColor: "text-yellow-200",
       borderColor: "border-yellow-100",
       value: starsCollected,
       suffix: "",
@@ -37,8 +37,8 @@ export default function StatsRow({
     },
     {
       icon: Award,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
+      iconBg: "bg-purple-400/20",
+      iconColor: "text-purple-200",
       borderColor: "border-purple-100",
       value: badgesEarned,
       suffix: "",
@@ -46,8 +46,8 @@ export default function StatsRow({
     },
     {
       icon: GraduationCap,
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
+      iconBg: "bg-green-400/20",
+      iconColor: "text-green-200",
       borderColor: "border-green-100",
       value: certificates,
       suffix: "",
@@ -58,15 +58,15 @@ export default function StatsRow({
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {stats.map((stat, i) => (
-        <div key={i} className={`bg-white border-2 ${stat.borderColor} rounded-2xl shadow-sm p-4`}>
+        <div key={i} className={`bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4`}>
           <div className={`w-10 h-10 ${stat.iconBg} rounded-full flex items-center justify-center mb-2`}>
             <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
           </div>
-          <p className="font-black text-2xl text-gray-800">
+          <p className="font-black text-2xl text-white">
             {stat.value}
-            {stat.suffix && <span className="text-sm text-gray-400 font-bold">{stat.suffix}</span>}
+            {stat.suffix && <span className="text-sm text-purple-300 font-bold">{stat.suffix}</span>}
           </p>
-          <p className="text-gray-500 text-xs font-semibold mt-0.5">{stat.label}</p>
+          <p className="text-purple-200 text-xs font-semibold mt-0.5">{stat.label}</p>
         </div>
       ))}
     </div>

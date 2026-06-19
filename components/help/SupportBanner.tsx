@@ -19,7 +19,7 @@ export default function SupportBanner() {
           <p className="text-purple-100 text-sm mt-0.5">{t("stillNeedHelpDesc")}</p>
         </div>
       </div>
-      <button className="flex items-center gap-2 bg-white text-purple-700 font-black rounded-full px-5 py-2.5 text-sm shrink-0 hover:bg-purple-50 transition">
+      <button className="flex items-center gap-2 bg-white/15 backdrop-blur border border-white/25 text-white font-black rounded-full px-5 py-2.5 text-sm shrink-0 hover:bg-white/25 transition">
         <Mail className="w-4 h-4" />
         {t("emailSupportBtn")}
       </button>

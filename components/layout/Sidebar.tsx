@@ -113,7 +113,7 @@ export default function Sidebar({ activeChild, level, weekStreak, streakCount, i
         )}
         <div className="min-w-0">
           <p className="font-black text-white truncate">{childName}</p>
-          <span className="inline-block mt-1 text-[11px] font-bold bg-nimi-gold text-indigo-900 px-2.5 py-0.5 rounded-full">
+          <span className="inline-block mt-1 text-[11px] font-bold bg-yellow-400/20 backdrop-blur border border-yellow-300/30 text-yellow-200 px-2.5 py-0.5 rounded-full">
             {t("levelExplorer").replace("{level}", String(level))}
           </span>
         </div>

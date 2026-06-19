@@ -24,7 +24,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
 
       {/* Background sparkles */}
       {[...Array(20)].map((_, i) => (

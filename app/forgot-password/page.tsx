@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Lock, Shield, Sparkles } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import AuthBackground from "@/components/auth/AuthBackground";
-import GoogleIcon from "@/components/auth/GoogleIcon";
+// import GoogleIcon from "@/components/auth/GoogleIcon";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -80,8 +80,8 @@ export default function ForgotPasswordPage() {
           </p>
 
           <div className="mt-10 flex flex-col items-center lg:items-start gap-2">
-            <div className="bg-white rounded-2xl rounded-bl-sm shadow-lg px-4 py-3 max-w-[220px] ml-0 sm:ml-10">
-              <p className="text-sm font-bold text-purple-700 text-center leading-snug">
+            <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3 max-w-[220px] ml-0 sm:ml-10">
+              <p className="text-sm font-bold text-white text-center leading-snug">
                 No problem! Let&apos;s get you back on track! ✨
               </p>
             </div>
@@ -94,28 +94,28 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Right: forgot password card */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
+        <div className="w-full max-w-md mx-auto lg:mx-0 bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
 
           <div className="flex flex-col items-center text-center mb-1">
-            <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-3">
-              <Lock className="w-7 h-7 text-purple-600" />
+            <div className="w-16 h-16 rounded-full bg-purple-400/20 flex items-center justify-center mb-3">
+              <Lock className="w-7 h-7 text-purple-200" />
             </div>
-            <h2 className="font-black text-2xl text-gray-800">Forgot Password?</h2>
-            <p className="text-gray-500 text-sm mt-1">
+            <h2 className="font-black text-2xl text-white">Forgot Password?</h2>
+            <p className="text-purple-200 text-sm mt-1">
               No worries! Enter your email and we&apos;ll send you a link to reset your password.
             </p>
           </div>
 
           {(error || message) && (
-            <div className={`rounded-xl p-2.5 text-center text-sm font-semibold ${error ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
+            <div className={`rounded-xl p-2.5 text-center text-sm font-semibold ${error ? "bg-red-500/10 text-red-300" : "bg-green-500/10 text-green-300"}`}>
               {error || message}
             </div>
           )}
 
           {/* Email */}
           <div>
-            <label className="flex items-center gap-1.5 font-bold text-gray-700 text-sm mb-1.5">
-              <Mail className="w-4 h-4 text-purple-600" /> Email Address
+            <label className="flex items-center gap-1.5 font-bold text-purple-100 text-sm mb-1.5">
+              <Mail className="w-4 h-4 text-purple-300" /> Email Address
             </label>
             <input
               type="email"
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
               onKeyDown={e => e.key === "Enter" && handleResetPassword()}
               placeholder="Enter your email address"
               disabled={loading}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 focus:outline-none focus:border-purple-500 transition placeholder:text-gray-400" />
+              className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-300 transition placeholder:text-white/40" />
           </div>
 
           <motion.button
@@ -138,24 +138,24 @@ export default function ForgotPasswordPage() {
           </motion.button>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs font-bold text-gray-400">OR</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="text-xs font-bold text-purple-300">OR</span>
+            <div className="flex-1 h-px bg-white/20" />
           </div>
 
           <motion.button
             onClick={loginWithGoogle}
             disabled={googleLoading}
             whileTap={{ scale: 0.97 }}
-            className="w-full border-2 border-gray-200 hover:border-purple-300 rounded-2xl py-3 flex items-center justify-center gap-2 font-bold text-gray-700 transition disabled:opacity-60"
+            className="w-full border-2 border-white/20 hover:border-purple-300 rounded-2xl py-3 flex items-center justify-center gap-2 font-bold text-white transition disabled:opacity-60"
           >
-            <GoogleIcon />
-            {googleLoading ? "Connecting..." : "Continue with Google"}
+            {/* <GoogleIcon /> */}
+            {/* {googleLoading ? "Connecting..." : "Continue with Google"} */}
           </motion.button>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-purple-200">
             Remember your password?{" "}
-            <Link href="/loginpage" className="text-purple-600 font-bold hover:underline">
+            <Link href="/loginpage" className="text-white font-bold hover:underline">
               Back to Login
             </Link>
           </p>
@@ -167,8 +167,8 @@ export default function ForgotPasswordPage() {
         <img
           src="/nimipiko.png" alt="NIMI"
           className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 shadow-md flex-shrink-0" />
-        <div className="bg-white/95 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3">
-          <p className="text-sm font-bold text-purple-700 leading-snug">
+        <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3">
+          <p className="text-sm font-bold text-white leading-snug">
             You&apos;ve got this! Every adventure starts with a fresh step. 💜
           </p>
         </div>

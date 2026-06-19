@@ -14,6 +14,7 @@ import { ErrorToast } from "@/components/community/ErrorToast";
 import type { Creation } from "@/components/community/types";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useCreationUpload } from "@/hooks/useCreationUpload";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 const PAGE_SIZE = 12;
@@ -41,11 +42,11 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, { hasError: bool
     if (this.state.hasError) {
       const { t } = this.props;
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d]">
+          <div className="text-center p-8 bg-white/10 backdrop-blur border-2 border-white/15 rounded-lg shadow-lg max-w-md">
             <div className="text-6xl mb-4">😵</div>
-            <h1 className="text-2xl font-bold mb-4">{t("somethingWentWrongTitle")}</h1>
-            <p className="text-gray-600 mb-6">
+            <h1 className="text-2xl font-bold mb-4 text-white">{t("somethingWentWrongTitle")}</h1>
+            <p className="text-purple-200 mb-6">
               {t("communityErrorBody")}
             </p>
             <button
@@ -274,7 +275,8 @@ export default function CommunityPage() {
   return (
     <ErrorBoundary t={t}>
       <AppShell>
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+          <AuthBackground />
           <CelebrationBanner isVisible={showCelebration} text={celebrationText} />
           <ErrorToast error={error} onDismiss={() => setError(null)} />
           <UploadModal
@@ -285,28 +287,28 @@ export default function CommunityPage() {
             setFormState={setUploadForm}
           />
 
-          <main className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+          <main className="relative z-10 max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
             <GalleryHeader search={search} onSearchChange={setSearch} filter={filter} onFilterChange={setFilter} />
 
             {isInitialLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden animate-pulse">
-                    <div className="aspect-square bg-gray-100" />
+                  <div key={i} className="bg-white/10 backdrop-blur rounded-2xl border-2 border-white/15 overflow-hidden animate-pulse">
+                    <div className="aspect-square bg-white/10" />
                     <div className="p-3 space-y-2">
-                      <div className="h-3 w-2/3 bg-gray-100 rounded" />
-                      <div className="h-4 w-full bg-gray-100 rounded" />
+                      <div className="h-3 w-2/3 bg-white/10 rounded" />
+                      <div className="h-4 w-full bg-white/10 rounded" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : displayedCreations.length === 0 ? (
               <div className="flex flex-col items-center text-center gap-2 py-12 mt-4">
-                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                  <ImagePlus className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+                  <ImagePlus className="w-8 h-8 text-purple-200" />
                 </div>
-                <p className="font-black text-gray-700">{sourceEmpty ? t("noArtworkTitle") : t("noResultsFound")}</p>
-                {sourceEmpty && <p className="text-gray-400 text-sm">{t("noArtworkBody")}</p>}
+                <p className="font-black text-white">{sourceEmpty ? t("noArtworkTitle") : t("noResultsFound")}</p>
+                {sourceEmpty && <p className="text-purple-200 text-sm">{t("noArtworkBody")}</p>}
               </div>
             ) : (
               <>
@@ -342,7 +344,7 @@ export default function CommunityPage() {
                 className={`font-black rounded-full px-6 py-2.5 shadow transition ${
                   viewMode === "mine"
                     ? "bg-purple-600 text-white"
-                    : "border-2 border-purple-200 text-purple-600 bg-white hover:bg-purple-50"
+                    : "border-2 border-white/20 text-purple-200 bg-white/10 backdrop-blur hover:bg-white/20"
                 }`}
               >
                 {t("myGalleryBtn")}

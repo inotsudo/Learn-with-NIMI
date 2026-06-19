@@ -30,7 +30,7 @@ export default function DashboardHero({ childName, themeTitle, themeEmoji, level
   const { t } = useLanguage();
 
   return (
-    <div className="relative bg-white border-2 border-purple-200 rounded-3xl shadow-md p-4 sm:p-6 overflow-hidden">
+    <div className="relative bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-md p-4 sm:p-6 overflow-hidden">
       {/* Current level pill */}
       {level !== undefined && (
         <div className="relative z-10 flex justify-end mb-2">
@@ -70,10 +70,10 @@ export default function DashboardHero({ childName, themeTitle, themeEmoji, level
         </motion.div>
 
         <div className="text-center">
-          <h1 className="font-black text-gray-800 text-lg sm:text-2xl leading-tight">
+          <h1 className="font-black text-white text-lg sm:text-2xl leading-tight">
             {t(greetingKey()).replace("{name}", childName)}
           </h1>
-          <p className="text-gray-500 text-xs sm:text-sm font-semibold mt-0.5">
+          <p className="text-purple-300 text-xs sm:text-sm font-semibold mt-0.5">
             {t("dashboardSubtitle")}
           </p>
         </div>

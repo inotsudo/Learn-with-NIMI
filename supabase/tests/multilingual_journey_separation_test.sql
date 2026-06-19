@@ -64,9 +64,21 @@ begin
 
   -- ================================================================
   -- Setup: drive the SAME child through three independent journeys —
-  -- en (full Level 1, advances to Level 2), fr (7/8, stays Level 1),
-  -- rw (2/8, stays Level 1) — switching children.language between
-  -- blocks exactly as updateChildLanguage() does from the UI.
+  -- en (full Level 1, advances to Level 2), fr (7/8 -> Level 2, see
+  -- note below), rw (2/8, stays Level 1) — switching children.language
+  -- between blocks exactly as updateChildLanguage() does from the UI.
+  --
+  -- Migration 037 (Phase BK.1, Goal 5) note: the live level-1 "morning"
+  -- mission has no published fr/rw mission_versions row, while OTHER
+  -- "morning" missions (the daily-rotation pool) ARE published in fr/rw
+  -- — so category_effective_language('morning','fr'/'rw') resolves to
+  -- 'fr'/'rw', and that level-1 slot can never be served to fr/rw
+  -- learners (no fallback to 'en' for this specific mission). Before
+  -- 037, this meant fr/rw children were PERMANENTLY stuck at Level 1
+  -- (8 raw slots, only 7 ever completable). level_slot_available()
+  -- now excludes this unavailable slot from the total, so completing
+  -- the other 7/7 available Level-1 categories correctly completes
+  -- Level 1 for fr too.
   -- ================================================================
 
   -- en: complete all 8 Level-1 categories -> advances to Level 2
@@ -100,13 +112,15 @@ begin
   v_level := get_current_level(v_child_id, 'en');
   assert v_level = 2, format('Scenario 1 FAILED: en level = %s, expected 2', v_level);
 
+  -- fr: 7/7 *available* Level-1 categories complete (level-1 "morning"
+  -- is excluded by level_slot_available — see note above) -> Level 2
   v_level := get_current_level(v_child_id, 'fr');
-  assert v_level = 1, format('Scenario 1 FAILED: fr level = %s, expected 1', v_level);
+  assert v_level = 2, format('Scenario 1 FAILED: fr level = %s, expected 2', v_level);
 
   v_level := get_current_level(v_child_id, 'rw');
   assert v_level = 1, format('Scenario 1 FAILED: rw level = %s, expected 1', v_level);
 
-  raise notice 'Scenario 1 PASSED: en=Level 2, fr=Level 1, rw=Level 1 — independent levels on the same child';
+  raise notice 'Scenario 1 PASSED: en=Level 2, fr=Level 2 (7/7 available), rw=Level 1 — independent levels on the same child';
 
   -- ================================================================
   -- Scenario 2: Independent mission completion
@@ -137,9 +151,11 @@ begin
   where child_id = v_child_id and language = 'en' and type = 'badge' and slug = 'level-1-complete-en';
   assert v_count = 1, 'Scenario 3 FAILED: level-1-complete-en badge missing';
 
+  -- fr completed 7/7 *available* Level-1 categories (see migration 037
+  -- note above) -> level-1-complete-fr IS awarded
   select count(*) into v_count from child_achievements
   where child_id = v_child_id and language = 'fr' and type = 'badge' and slug = 'level-1-complete-fr';
-  assert v_count = 0, 'Scenario 3 FAILED: level-1-complete-fr should not exist (fr only at 7/8)';
+  assert v_count = 1, 'Scenario 3 FAILED: level-1-complete-fr missing (fr completed 7/7 available Level-1 categories)';
 
   select count(*) into v_count from child_achievements
   where child_id = v_child_id and language = 'rw' and type = 'badge' and slug = 'level-1-complete-rw';
@@ -187,7 +203,7 @@ begin
 
   -- fr/rw levels remain unaffected by en finishing its full curriculum
   v_level := get_current_level(v_child_id, 'fr');
-  assert v_level = 1, format('Scenario 4 FAILED: fr level changed to %s after en finished its curriculum, expected still 1', v_level);
+  assert v_level = 2, format('Scenario 4 FAILED: fr level changed to %s after en finished its curriculum, expected still 2', v_level);
 
   v_level := get_current_level(v_child_id, 'rw');
   assert v_level = 1, format('Scenario 4 FAILED: rw level changed to %s after en finished its curriculum, expected still 1', v_level);

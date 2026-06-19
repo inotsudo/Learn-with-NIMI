@@ -62,7 +62,7 @@ export default function TalkToNimi({ childName }: Props) {
   const showMic = micSupported && language !== "rw";
 
   return (
-    <div className="bg-white border-2 border-purple-200 rounded-2xl shadow-md overflow-hidden flex flex-col h-full">
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md overflow-hidden flex flex-col h-full">
 
       {/* Header */}
       <div className="bg-purple-700 px-3 py-2.5 flex items-center gap-2 flex-shrink-0">
@@ -80,7 +80,7 @@ export default function TalkToNimi({ childName }: Props) {
       </div>
 
       {/* Chat area */}
-      <div className="flex-1 px-3 pt-3 flex flex-col bg-gradient-to-b from-purple-50/40 to-white min-h-0">
+      <div className="flex-1 px-3 pt-3 flex flex-col min-h-0">
         <div ref={messagesRef} className="flex-1 space-y-2.5 overflow-y-auto mb-3 min-h-0">
           {messages.map((msg, idx) => {
             const isLast = idx === messages.length - 1;
@@ -94,7 +94,7 @@ export default function TalkToNimi({ childName }: Props) {
                 )}
                 <div className={`text-[10.5px] leading-snug px-3 py-2 max-w-[72%] shadow-sm ${
                   msg.from === "nimi"
-                    ? "bg-white text-gray-800 rounded-2xl rounded-bl-sm border border-gray-100"
+                    ? "bg-white/15 backdrop-blur text-white rounded-2xl rounded-bl-sm border border-white/20"
                     : "bg-purple-600 text-white rounded-2xl rounded-br-sm"
                 }`}>
                   {showTyping ? (
@@ -126,11 +126,11 @@ export default function TalkToNimi({ childName }: Props) {
         )}
 
         {/* Input */}
-        <div className="flex items-center gap-2 bg-white rounded-full border-2 border-purple-200 px-3 py-1 shadow-sm mb-3 mt-2 flex-shrink-0">
+        <div className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-full border-2 border-white/20 px-3 py-1 shadow-sm mb-3 mt-2 flex-shrink-0">
           {language !== "rw" && (
             <motion.button onClick={toggleSpeak} whileTap={{ scale: 0.88 }} disabled={isTyping}
               aria-label={isSpeaking ? t("stopReadingLabel") : t("readAloudLabel")}
-              className="w-7 h-7 bg-purple-50 hover:bg-purple-100 rounded-full flex items-center justify-center text-purple-600 flex-shrink-0 transition disabled:opacity-50">
+              className="w-7 h-7 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-purple-200 flex-shrink-0 transition disabled:opacity-50">
               {isSpeaking ? (
                 <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: Infinity }}>
                   <VolumeX className="w-3.5 h-3.5" />
@@ -146,7 +146,7 @@ export default function TalkToNimi({ childName }: Props) {
             onKeyDown={e => e.key === "Enter" && sendChat()}
             placeholder={listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
             disabled={isTyping || listening}
-            className="flex-1 min-w-0 text-[10.5px] bg-transparent focus:outline-none text-gray-600 placeholder-gray-400 disabled:opacity-60" />
+            className="flex-1 min-w-0 text-[10.5px] bg-transparent focus:outline-none text-white placeholder-white/40 disabled:opacity-60" />
           {showMic && (
             <motion.button onClick={() => (listening ? stopListening() : startListening())}
               whileTap={{ scale: 0.88 }}

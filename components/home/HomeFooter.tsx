@@ -1,6 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { Facebook, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
+
+const SOCIAL_LINKS = [
+  { Icon: Facebook,  href: "https://facebook.com/nimipiko",  label: "Facebook"  },
+  { Icon: Instagram, href: "https://instagram.com/nimipiko", label: "Instagram" },
+  { Icon: Youtube,   href: "https://youtube.com/@nimipiko",  label: "YouTube"   },
+  { Icon: Linkedin,  href: "https://linkedin.com/company/nimipiko-studio", label: "LinkedIn" },
+  { Icon: Twitter,   href: "https://x.com/nimipiko",         label: "X"         },
+];
 
 const TRUST_BADGES = [
   { emoji: "🛡️", label: "SAFE ENVIRONMENT",  bg: "bg-blue-600"   },
@@ -49,6 +58,22 @@ export default function HomeFooter() {
             </div>
           ))}
         </div>
+        {/* Social links */}
+        <div className="flex items-center gap-5">
+          {SOCIAL_LINKS.map(({ Icon, href, label }) => (
+            <Link
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              className="w-9 h-9 rounded-full bg-purple-700 hover:bg-purple-500 flex items-center justify-center transition-colors shadow-md"
+            >
+              <Icon size={16} className="text-white" strokeWidth={1.8} />
+            </Link>
+          ))}
+        </div>
+
       </div>
 
       {/* Copyright strip */}

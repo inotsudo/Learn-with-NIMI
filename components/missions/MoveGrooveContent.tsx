@@ -37,16 +37,16 @@ export default function MoveGrooveContent({ mission, onComplete, completed, savi
       )}
 
       {mission.subtitle && (
-        <p className="text-gray-600 font-bold text-sm text-center">{mission.subtitle}</p>
+        <p className="text-purple-200 font-bold text-sm text-center">{mission.subtitle}</p>
       )}
 
       <div className="grid grid-cols-2 gap-3">
         {prompts.map((p) => (
           <motion.div key={p.label}
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            className="bg-white rounded-2xl p-3 border-2 border-pink-100 shadow-sm text-center cursor-pointer">
+            className="bg-white/10 backdrop-blur rounded-2xl p-3 border-2 border-white/15 shadow-sm text-center cursor-pointer">
             <div className="text-3xl mb-1">{p.emoji}</div>
-            <p className="font-black text-pink-700 text-xs uppercase">{p.label}</p>
+            <p className="font-black text-pink-200 text-xs uppercase">{p.label}</p>
           </motion.div>
         ))}
       </div>

@@ -31,7 +31,7 @@ export default function HomeHeader() {
   const [showPicker, setShowPicker] = useState(false);
 
   return (
-    <header className="bg-white shadow-lg border-b-2 border-gray-100 relative overflow-hidden">
+    <header className="bg-white/10 backdrop-blur shadow-lg border-b-2 border-white/15 relative overflow-hidden">
 
       {/* Animated background stars */}
       <div className="absolute inset-0 pointer-events-none select-none">
@@ -78,7 +78,7 @@ export default function HomeHeader() {
               NIMIPIKO
             </motion.h1>
           </Link>
-          <p className="text-gray-500 font-semibold text-sm lg:text-base mt-1 tracking-widest">
+          <p className="text-purple-300 font-semibold text-sm lg:text-base mt-1 tracking-widest">
             Learn • Play • Create • Grow
           </p>
         </div>
@@ -87,13 +87,13 @@ export default function HomeHeader() {
         <div className="flex items-center gap-3 lg:gap-5 flex-shrink-0">
 
           {/* Speech bubble (lg+) */}
-          <div className="hidden lg:block relative bg-white border-2 border-purple-300 rounded-2xl px-4 py-3 shadow-xl max-w-[185px] xl:max-w-[210px]">
+          <div className="hidden lg:block relative bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl px-4 py-3 shadow-xl max-w-[185px] xl:max-w-[210px]">
             <span className="absolute top-2 right-2 text-yellow-400 text-sm leading-none">★</span>
             <span className="absolute bottom-2 left-2 text-purple-400 text-xs leading-none">✦</span>
-            <p className="text-sm font-bold text-gray-800 leading-snug pr-3">
+            <p className="text-sm font-bold text-white leading-snug pr-3">
               Welcome to your learning adventure!
             </p>
-            <p className="text-xs font-semibold text-purple-600 mt-1.5">
+            <p className="text-xs font-semibold text-purple-200 mt-1.5">
               Have fun and earn your certificate!
             </p>
             <span className="absolute -right-[12px] top-1/2 -translate-y-1/2 w-0 h-0"
@@ -105,7 +105,7 @@ export default function HomeHeader() {
           {/* Language picker */}
           <div className="relative">
             <button onClick={() => setShowPicker(!showPicker)}
-              className="w-10 h-10 bg-purple-100 hover:bg-purple-200 rounded-full flex items-center justify-center text-xl transition shadow"
+              className="w-10 h-10 bg-purple-400/20 hover:bg-purple-400/30 rounded-full flex items-center justify-center text-xl transition shadow"
               aria-label="Change language">
               {LANGS.find(l => l.code === language)?.flag ?? "🌐"}
             </button>
@@ -157,7 +157,7 @@ export default function HomeHeader() {
         <div className="flex items-center gap-2">
           <div className="relative">
             <button onClick={() => setShowPicker(!showPicker)}
-              className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center text-lg transition" aria-label="Change language">
+              className="w-9 h-9 bg-purple-400/20 rounded-full flex items-center justify-center text-lg transition" aria-label="Change language">
               {LANGS.find(l => l.code === language)?.flag ?? "🌐"}
             </button>
             {showPicker && (

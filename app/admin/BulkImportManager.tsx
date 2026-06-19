@@ -3,9 +3,22 @@ import React, { useEffect, useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import supabase from '@/lib/supabaseClient'
 import { Download, Upload, AlertCircle, AlertTriangle, CheckCircle2, FileSpreadsheet, X } from 'lucide-react'
-import { ACCENT, CATEGORY_ORDER, MISSION_TYPES, LANGUAGES, type MissionType, type Lang } from './missionMeta'
+import { ACCENT, CATEGORY_ORDER, LANGUAGES, CONTENT_STATUSES } from './missionMeta'
 
-const TEMPLATE_COLUMNS = ['category_slug', 'sequence', 'type', 'stars', 'duration_minutes', 'language', 'title', 'subtitle', 'tip_text', 'media_url', 'content_json']
+const TEMPLATE_COLUMNS = ['level', 'unit', 'category', 'language', 'title', 'content', 'status']
+
+// Type-specific content skeletons pre-filled in the download templates so
+// content editors can see the expected JSON shape for each mission type.
+const CONTENT_SKELETON: Record<string, Record<string, unknown>> = {
+  sing:  { lyrics: ['Verse 1 here', 'Verse 2 here', 'Verse 3 here'] },
+  move:  { prompts: [{ emoji: '🏃', label: 'Action here' }, { emoji: '🤸', label: 'Another action' }] },
+  color: { instructions: 'Drawing prompt here' },
+  watch: { instructions: 'What to watch or discover' },
+  read:  { text: 'Story or history text here' },
+  story: { pages: [{ text: 'Page 1 text here' }, { text: 'Page 2 text here' }] },
+}
+
+const IMPORT_STATUSES = CONTENT_STATUSES.filter(s => s !== 'archived')
 
 interface CurriculumLevelRow {
   level_number: number
@@ -15,22 +28,19 @@ interface CurriculumLevelRow {
 }
 
 interface ParsedRow {
+  level_number: number | null
+  unit_number: number | null
   category_slug: string
-  sequence: number | null
-  type: string
-  stars: number | null
-  duration_minutes: number | null
   language: string
   title: string
-  subtitle: string | null
-  tip_text: string | null
-  media_url: string | null
   content_json: Record<string, unknown> | null
+  status: string
   errors: string[]
 }
 
 interface ImportResult {
   missions_created: number
+  level_missions_linked: number
   versions_created: number
   versions_updated: number
 }
@@ -49,60 +59,68 @@ function toNumberOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-function validateRow(row: Record<string, unknown>, seen: Set<string>): ParsedRow {
+function validateRow(row: Record<string, unknown>, seen: Set<string>, levelNumbers: Set<number>): ParsedRow {
   const errors: string[] = []
 
-  const category_slug = String(row.category_slug ?? '').trim()
-  const sequence = toNumberOrNull(row.sequence)
-  const type = String(row.type ?? '').trim()
-  const stars = toNumberOrNull(row.stars)
-  const duration_minutes = toNumberOrNull(row.duration_minutes)
-  const language = String(row.language ?? '').trim()
-  const title = String(row.title ?? '').trim()
-  const subtitle = toStringOrNull(row.subtitle)
-  const tip_text = toStringOrNull(row.tip_text)
-  const media_url = toStringOrNull(row.media_url)
+  const level_number  = toNumberOrNull(row.level)
+  const unit_number   = toNumberOrNull(row.unit)
+  const category_slug = String(row.category ?? '').trim()
+  const language      = String(row.language ?? '').trim()
+  const title         = String(row.title ?? '').trim()
+  const status        = String(row.status ?? '').trim()
 
   let content_json: Record<string, unknown> | null = null
-  const contentRaw = row.content_json
-  if (contentRaw !== undefined && contentRaw !== null && String(contentRaw).trim() !== '') {
+  const contentRaw = toStringOrNull(row.content)
+  if (!contentRaw) {
+    errors.push('content is required')
+  } else {
     try {
       const parsed = typeof contentRaw === 'string' ? JSON.parse(contentRaw) : contentRaw
       if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null) {
-        errors.push('content_json must be a JSON object')
+        errors.push('content must be a JSON object (not an array or primitive)')
       } else {
         content_json = parsed as Record<string, unknown>
       }
     } catch {
-      errors.push('content_json is not valid JSON')
+      errors.push('content is not valid JSON — paste a JSON object e.g. {"lyrics":["Line 1"]}')
     }
   }
 
+  if (level_number === null || !Number.isInteger(level_number) || level_number <= 0) {
+    errors.push('level must be a positive integer')
+  } else if (!levelNumbers.has(level_number)) {
+    errors.push(`level ${level_number} does not exist in curriculum_levels`)
+  }
+
+  if (unit_number === null || !Number.isInteger(unit_number) || unit_number <= 0) {
+    errors.push('unit must be a positive integer')
+  }
+
   if (!category_slug || !(CATEGORY_ORDER as string[]).includes(category_slug)) {
-    errors.push(`unknown category_slug "${category_slug || '(missing)'}"`)
+    errors.push(`unknown category "${category_slug || '(missing)'}" — must be one of: ${CATEGORY_ORDER.join(', ')}`)
   }
-  if (sequence === null || !Number.isInteger(sequence) || sequence <= 0) {
-    errors.push('sequence must be a positive integer')
-  }
-  if (!(MISSION_TYPES as readonly string[]).includes(type)) {
-    errors.push(`invalid type "${type || '(missing)'}"`)
-  }
+
   if (!(LANGUAGES as readonly string[]).includes(language)) {
-    errors.push(`invalid language "${language || '(missing)'}"`)
+    errors.push(`invalid language "${language || '(missing)'}" — must be en, fr, or rw`)
   }
+
   if (!title) {
     errors.push('title is required')
   }
 
-  if (category_slug && sequence !== null && language) {
-    const key = `${category_slug}:${sequence}:${language}`
+  if (!(IMPORT_STATUSES as readonly string[]).includes(status)) {
+    errors.push(`status must be draft, review, or published (got "${status || '(missing)'}")`)
+  }
+
+  if (level_number && unit_number && category_slug && language && errors.length === 0) {
+    const key = `${level_number}:${unit_number}:${category_slug}:${language}`
     if (seen.has(key)) {
-      errors.push(`duplicate (category_slug, sequence, language) "${key}" within this file`)
+      errors.push(`duplicate (level, unit, category, language) "${key}" within this file`)
     }
     seen.add(key)
   }
 
-  return { category_slug, sequence, type, stars, duration_minutes, language, title, subtitle, tip_text, media_url, content_json, errors }
+  return { level_number, unit_number, category_slug, language, title, content_json, status, errors }
 }
 
 export default function BulkImportManager() {
@@ -131,14 +149,18 @@ export default function BulkImportManager() {
 
   const handleDownloadLevelTemplate = (level: CurriculumLevelRow) => {
     const focusParts = [level.framework_name, level.age_range_label, level.primary_focus].filter(Boolean)
-    const titleRow = `Level ${level.level_number}${focusParts.length ? ` — ${focusParts.join(' — ')}` : ''}`
+    const titleRow = `Level ${level.level_number}${focusParts.length ? ` — ${focusParts.join(' — ')}` : ''} (delete this row before importing)`
     const aoa: (string | number)[][] = [[titleRow], TEMPLATE_COLUMNS]
     for (const slug of CATEGORY_ORDER) {
+      const type = categoryTypes[slug] ?? 'read'
+      const skeleton = JSON.stringify(CONTENT_SKELETON[type] ?? {})
       for (const lang of LANGUAGES) {
-        aoa.push([slug, level.level_number, categoryTypes[slug] ?? '', '', '', lang, '', '', '', '', ''])
+        aoa.push([level.level_number, 1, slug, lang, '', skeleton, 'draft'])
       }
     }
     const ws = XLSX.utils.aoa_to_sheet(aoa)
+    // Auto-widen the content column (index 5)
+    ws['!cols'] = [{ wch: 8 }, { wch: 6 }, { wch: 12 }, { wch: 10 }, { wch: 30 }, { wch: 60 }, { wch: 10 }]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, `Level ${level.level_number}`.slice(0, 31))
     XLSX.writeFile(wb, `level_${level.level_number}_import_template.xlsx`)
@@ -146,10 +168,14 @@ export default function BulkImportManager() {
 
   const handleDownloadTemplate = () => {
     const header = TEMPLATE_COLUMNS.join(',')
-    const example = [
-      'morning', '4', 'sing', '10', '10', 'en', 'New Morning Song', 'A bright start to the day', 'Sing along with Nimi!', '', '{}',
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
-    const csv = `${header}\n${example}\n`
+    const exampleRows = [
+      [1, 1, 'morning', 'en', 'Morning Song', JSON.stringify(CONTENT_SKELETON.sing), 'draft'],
+      [1, 1, 'morning', 'fr', 'Chanson du Matin', JSON.stringify(CONTENT_SKELETON.sing), 'draft'],
+    ]
+    const csvRows = exampleRows.map(r =>
+      r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+    )
+    const csv = `${header}\n${csvRows.join('\n')}\n`
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -171,10 +197,12 @@ export default function BulkImportManager() {
       const firstSheetName = wb.SheetNames[0]
       if (!firstSheetName) throw new Error('No sheets found in this file.')
       const sheet = wb.Sheets[firstSheetName]
+      // skip row 1 if it looks like a level title row (doesn't have 'level' in cell A1)
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
-      if (raw.length === 0) throw new Error('No data rows found in this file.')
+      if (raw.length === 0) throw new Error('No data rows found. Did you forget to delete the title row?')
+      const levelNumbers = new Set(levels.map(l => l.level_number))
       const seen = new Set<string>()
-      const parsed = raw.map(row => validateRow(row, seen))
+      const parsed = raw.map(row => validateRow(row, seen, levelNumbers))
       setRows(parsed)
       setFileName(file.name)
     } catch (err) {
@@ -204,17 +232,13 @@ export default function BulkImportManager() {
     setImportResult(null)
     try {
       const payload = validRows.map(r => ({
+        level_number:  r.level_number,
+        unit_number:   r.unit_number,
         category_slug: r.category_slug,
-        sequence: r.sequence,
-        type: r.type,
-        stars: r.stars ?? 10,
-        duration_minutes: r.duration_minutes ?? 10,
-        language: r.language,
-        title: r.title,
-        subtitle: r.subtitle,
-        tip_text: r.tip_text,
-        media_url: r.media_url,
-        content_json: r.content_json ?? {},
+        language:      r.language,
+        title:         r.title,
+        content_json:  r.content_json ?? {},
+        status:        r.status,
       }))
       const { data, error } = await supabase.rpc('admin_bulk_import_missions', { p_rows: payload })
       if (error) throw error
@@ -233,11 +257,13 @@ export default function BulkImportManager() {
       <div>
         <h3 className="text-base font-bold text-gray-800">Bulk Import</h3>
         <p className="text-gray-500 text-sm">
-          Upload a CSV or XLSX file to create or update many missions at once. New missions start inactive and
-          new content starts as <span className="font-semibold">Draft</span> — review and publish them from
-          the Daily Adventures tab afterwards. The per-level templates below pre-fill all {CATEGORY_ORDER.length}{' '}
-          categories × {LANGUAGES.length} languages for that level — delete the framework title row (row 1)
-          before importing.
+          Upload a CSV or XLSX file to create or update lessons at scale. Every row must include
+          a <span className="font-semibold">level</span>, <span className="font-semibold">unit</span>, and{' '}
+          <span className="font-semibold">category</span> — this guarantees the lesson is
+          immediately visible in the curriculum with no orphaned content. Set{' '}
+          <span className="font-semibold">status</span> to <em>published</em> to make lessons
+          live on import, or leave it as <em>draft</em> to review first. Use the per-level
+          templates below — delete the first title row before importing.
         </p>
       </div>
 
@@ -251,7 +277,7 @@ export default function BulkImportManager() {
             onClick={() => handleDownloadLevelTemplate(level)}
             className="flex items-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 px-3.5 py-2 rounded-full text-sm font-bold transition"
           >
-            <Download size={14} /> Download Level {level.level_number} Template{level.framework_name ? ` (${level.framework_name})` : ''}
+            <Download size={14} /> Level {level.level_number} Template{level.framework_name ? ` (${level.framework_name})` : ''}
           </button>
         ))}
         <button onClick={() => fileInputRef.current?.click()} className={`flex items-center gap-1.5 text-white px-3.5 py-2 rounded-full text-sm font-bold shadow-sm transition ${accent.button}`}>
@@ -284,9 +310,15 @@ export default function BulkImportManager() {
         <div className="flex items-start gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-xl px-3.5 py-2.5">
           <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span className="flex-1">
-            Import complete — {importResult.missions_created} new mission{importResult.missions_created === 1 ? '' : 's'} created,{' '}
-            {importResult.versions_created} content version{importResult.versions_created === 1 ? '' : 's'} created,{' '}
-            {importResult.versions_updated} updated.
+            Import complete —{' '}
+            {importResult.missions_created > 0 && (
+              <>{importResult.missions_created} new mission{importResult.missions_created === 1 ? '' : 's'} created, </>
+            )}
+            {importResult.level_missions_linked} curriculum slot{importResult.level_missions_linked === 1 ? '' : 's'} linked,{' '}
+            {importResult.versions_created} content version{importResult.versions_created === 1 ? '' : 's'} created
+            {importResult.versions_updated > 0 && (
+              <>, {importResult.versions_updated} updated</>
+            )}.
           </span>
         </div>
       )}
@@ -318,23 +350,25 @@ export default function BulkImportManager() {
               <thead>
                 <tr className="text-left text-gray-400 text-xs font-bold uppercase tracking-wide border-b border-gray-100">
                   <th className="py-2.5 px-3">Row</th>
+                  <th className="py-2.5 px-3 text-center">Lvl</th>
+                  <th className="py-2.5 px-3 text-center">Unit</th>
                   <th className="py-2.5 px-3">Category</th>
-                  <th className="py-2.5 px-3 text-center">Seq</th>
-                  <th className="py-2.5 px-3">Type</th>
-                  <th className="py-2.5 px-3">Language</th>
+                  <th className="py-2.5 px-3">Lang</th>
                   <th className="py-2.5 px-3">Title</th>
                   <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Validation</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {rows.map((row, idx) => (
                   <tr key={idx} className={row.errors.length > 0 ? 'bg-red-50/40' : ''}>
                     <td className="py-2.5 px-3 text-gray-400">{idx + 1}</td>
+                    <td className="py-2.5 px-3 text-center text-gray-700">{row.level_number ?? '—'}</td>
+                    <td className="py-2.5 px-3 text-center text-gray-700">{row.unit_number ?? '—'}</td>
                     <td className="py-2.5 px-3 font-semibold text-gray-700">{row.category_slug || '—'}</td>
-                    <td className="py-2.5 px-3 text-center text-gray-700">{row.sequence ?? '—'}</td>
-                    <td className="py-2.5 px-3 text-gray-700">{row.type || '—'}</td>
                     <td className="py-2.5 px-3 text-gray-700">{row.language || '—'}</td>
-                    <td className="py-2.5 px-3 text-gray-700 max-w-[220px] truncate">{row.title || '—'}</td>
+                    <td className="py-2.5 px-3 text-gray-700 max-w-[200px] truncate">{row.title || '—'}</td>
+                    <td className="py-2.5 px-3 text-gray-700">{row.status || '—'}</td>
                     <td className="py-2.5 px-3">
                       {row.errors.length === 0 ? (
                         <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-xs font-bold">

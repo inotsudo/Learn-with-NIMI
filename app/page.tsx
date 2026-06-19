@@ -24,6 +24,7 @@ import MyBadges         from "@/components/home/MyBadges";
 import NimiCommunity    from "@/components/home/NimiCommunity";
 import TalkToNimi       from "@/components/home/TalkToNimi";
 import HomeFooter       from "@/components/home/HomeFooter";
+import AuthBackground   from "@/components/auth/AuthBackground";
 import ChildSelector    from "@/components/home/ChildSelector";
 import WhoIsPlaying     from "@/components/home/WhoIsPlaying";
 import CreateChildModal from "@/components/home/CreateChildModal";
@@ -189,9 +190,10 @@ export default function HomePage() {
   // ── Main homepage (child selected) ──
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+        <AuthBackground />
 
-        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+        <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
 
           {/* Child switcher — shown when parent has multiple children */}
           {children.length > 1 && activeChild && (

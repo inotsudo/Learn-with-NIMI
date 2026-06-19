@@ -9,9 +9,9 @@ interface Props {
 }
 
 const ALERT_STYLE: Record<DashboardAlert["type"], { emoji: string; border: string; bg: string; text: string }> = {
-  languageInactive: { emoji: "😴", border: "border-amber-300", bg: "bg-amber-50", text: "text-amber-700" },
-  levelIncomplete: { emoji: "⏳", border: "border-amber-300", bg: "bg-amber-50", text: "text-amber-700" },
-  streakAtRisk: { emoji: "🔥", border: "border-red-300", bg: "bg-red-50", text: "text-red-700" },
+  languageInactive: { emoji: "😴", border: "border-amber-300/40", bg: "bg-amber-400/20", text: "text-amber-200" },
+  levelIncomplete: { emoji: "⏳", border: "border-amber-300/40", bg: "bg-amber-400/20", text: "text-amber-200" },
+  streakAtRisk: { emoji: "🔥", border: "border-red-300/40", bg: "bg-red-400/20", text: "text-red-200" },
 };
 
 function alertMessage(alert: DashboardAlert, t: (key: string) => string): string {
@@ -38,13 +38,13 @@ export default function AttentionAlertsCard({ alerts }: Props) {
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white border-2 border-amber-200 rounded-2xl shadow-md p-4">
-      <p className="font-black text-gray-800 mb-2">{t("attentionAlertsTitle")}</p>
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
+      <p className="font-black text-white mb-2">{t("attentionAlertsTitle")}</p>
       <div className="flex flex-col gap-2">
         {alerts.map((alert, i) => {
           const style = ALERT_STYLE[alert.type];
           return (
-            <div key={i} className={`flex items-start gap-2 rounded-xl border-2 ${style.border} ${style.bg} px-3 py-2`}>
+            <div key={i} className={`flex items-start gap-2 rounded-xl border-2 backdrop-blur ${style.border} ${style.bg} px-3 py-2`}>
               <span className="text-lg shrink-0">{style.emoji}</span>
               <p className={`text-sm font-bold ${style.text}`}>{alertMessage(alert, t)}</p>
             </div>

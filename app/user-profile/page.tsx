@@ -20,6 +20,7 @@ import RecentBadgesCard from "@/components/profile/RecentBadgesCard";
 import ActivityProgressTab from "@/components/profile/ActivityProgressTab";
 import SkillsTab from "@/components/profile/SkillsTab";
 import StreaksTab from "@/components/profile/StreaksTab";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 const ACTIVITIES_TARGET = ACTIVITIES.length * 7;
@@ -115,9 +116,10 @@ export default function UserProfilePage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
-          <p className="text-gray-600 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
+          <AuthBackground />
+          <p className="relative z-10 text-purple-100 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
+          <Link href="/" className="relative z-10 bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
             Go Home
           </Link>
         </div>
@@ -127,8 +129,9 @@ export default function UserProfilePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
-        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+        <AuthBackground />
+        <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <ProgressHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
           {activeTab === "overview" && (

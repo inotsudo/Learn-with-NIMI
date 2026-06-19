@@ -43,7 +43,7 @@ export default function AchievementDashboard({ childName, childLanguage, achieve
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-black transition-colors ${
               activeLang === lang
                 ? "bg-purple-600 text-white shadow"
-                : "border-2 border-purple-200 text-purple-600 bg-white"
+                : "border-2 border-white/20 text-purple-200 bg-white/10 backdrop-blur"
             }`}
           >
             <span className="text-lg">{LANGUAGE_META[lang].flag}</span>
@@ -54,7 +54,7 @@ export default function AchievementDashboard({ childName, childLanguage, achieve
 
       {certItem && (
         <div className="mb-5">
-          <h2 className="font-black text-gray-700 text-sm uppercase tracking-wide mb-2">
+          <h2 className="font-black text-purple-200 text-sm uppercase tracking-wide mb-2">
             {t("languageExplorerCertSectionTitle")}
           </h2>
           <div className="max-w-sm">
@@ -64,7 +64,7 @@ export default function AchievementDashboard({ childName, childLanguage, achieve
       )}
 
       <div className="mb-5">
-        <h2 className="font-black text-gray-700 text-sm uppercase tracking-wide mb-2">
+        <h2 className="font-black text-purple-200 text-sm uppercase tracking-wide mb-2">
           {t("explorerBadgesSectionTitle")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -75,7 +75,7 @@ export default function AchievementDashboard({ childName, childLanguage, achieve
       </div>
 
       <div className="mb-5">
-        <h2 className="font-black text-gray-700 text-sm uppercase tracking-wide mb-2">
+        <h2 className="font-black text-purple-200 text-sm uppercase tracking-wide mb-2">
           {t("categoryMasterBadgesSectionTitle")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

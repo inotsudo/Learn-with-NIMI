@@ -22,7 +22,7 @@ export default function DailyAdventureBanner({ themeTitle, themeEmoji, level }: 
   const { t } = useLanguage();
 
   return (
-    <div className="relative bg-white border-2 border-purple-200 rounded-3xl shadow-md p-4 sm:p-6 overflow-hidden">
+    <div className="relative bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-md p-4 sm:p-6 overflow-hidden">
       {/* Decorative background stars */}
       <div className="absolute inset-0 pointer-events-none select-none">
         {BANNER_STARS.map((s, i) => (
@@ -78,13 +78,13 @@ export default function DailyAdventureBanner({ themeTitle, themeEmoji, level }: 
       </div>
 
       {/* Subtitle */}
-      <p className="relative z-10 text-center text-gray-600 text-xs sm:text-sm font-semibold mt-4 max-w-xl mx-auto">
+      <p className="relative z-10 text-center text-purple-200 text-xs sm:text-sm font-semibold mt-4 max-w-xl mx-auto">
         {t("levelAdventureSubtitle")}
       </p>
 
       {/* Today's Theme box */}
-      <div className="relative z-10 mt-3 mx-auto max-w-sm bg-yellow-50 border-2 border-yellow-300 rounded-2xl py-2 px-4 text-center">
-        <p className="text-purple-700 font-black text-sm sm:text-base">
+      <div className="relative z-10 mt-3 mx-auto max-w-sm bg-yellow-400/20 backdrop-blur border-2 border-yellow-300/40 rounded-2xl py-2 px-4 text-center">
+        <p className="text-yellow-100 font-black text-sm sm:text-base">
           ⭐ {t("todaysThemeLabel").replace("{title}", themeTitle).replace("{emoji}", themeEmoji)} ⭐
         </p>
       </div>

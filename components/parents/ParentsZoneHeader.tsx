@@ -13,8 +13,8 @@ export default function ParentsZoneHeader({ onUploadClick }: Props) {
   return (
     <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
       <div>
-        <h1 className="font-black text-2xl sm:text-3xl text-gray-800">{t("navParentsZone")}</h1>
-        <p className="text-gray-500 text-sm mt-1">{t("parentsZoneSubtitle")}</p>
+        <h1 className="font-black text-2xl sm:text-3xl text-white">{t("navParentsZone")}</h1>
+        <p className="text-purple-200 text-sm mt-1">{t("parentsZoneSubtitle")}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {onUploadClick && (
@@ -26,7 +26,7 @@ export default function ParentsZoneHeader({ onUploadClick }: Props) {
             {t("uploadArtworkBtn")}
           </button>
         )}
-        <div className="flex items-center gap-1.5 bg-white border-2 border-gray-100 rounded-full px-4 py-2 shadow-sm text-sm font-bold text-gray-600">
+        <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur border-2 border-white/15 rounded-full px-4 py-2 shadow-sm text-sm font-bold text-purple-100">
           <span>{t("thisWeek")}</span>
           <ChevronDown className="w-4 h-4" />
         </div>

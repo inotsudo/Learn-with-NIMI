@@ -29,7 +29,7 @@ export default function ShopFilterTabs({ filter, onFilterChange }: Props) {
           className={`px-4 py-2 rounded-full text-xs sm:text-sm font-black transition-colors ${
             filter === tab.id
               ? "bg-purple-600 text-white shadow"
-              : "border-2 border-purple-200 text-purple-600 bg-white"
+              : "border-2 border-white/20 text-purple-200 bg-white/10 backdrop-blur"
           }`}
         >
           {t(tab.labelKey)}

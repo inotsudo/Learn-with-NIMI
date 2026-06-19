@@ -49,7 +49,7 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.85, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+          className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-4 flex items-center justify-between">
@@ -70,7 +70,7 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
 
             {/* Avatar picker */}
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Pick an avatar</p>
+              <p className="text-xs font-bold text-purple-200 uppercase tracking-wide mb-2">Pick an avatar</p>
               <div className="flex gap-2 flex-wrap">
                 {AVATARS.map(a => (
                   <button
@@ -79,7 +79,7 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
                     className={`w-10 h-10 rounded-full text-xl flex items-center justify-center transition border-2 ${
                       avatar === a
                         ? "border-purple-500 bg-purple-50 scale-110 shadow"
-                        : "border-transparent bg-gray-100 hover:bg-purple-50"
+                        : "border-transparent bg-white/10 hover:bg-purple-50"
                     }`}
                   >
                     {a}
@@ -90,7 +90,7 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
 
             {/* Name */}
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">
+              <label className="text-xs font-bold text-purple-200 uppercase tracking-wide block mb-1">
                 Name
               </label>
               <input
@@ -100,28 +100,28 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
                 onKeyDown={e => e.key === "Enter" && handleSubmit()}
                 placeholder="Enter child's name..."
                 maxLength={30}
-                className="w-full border-2 border-purple-200 rounded-xl px-3 py-2 text-sm font-semibold text-gray-800 focus:outline-none focus:border-purple-500 transition placeholder:text-gray-300"
+                className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:border-purple-300 transition placeholder:text-white/40"
               />
             </div>
 
             {/* Age */}
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">
-                Age: <span className="text-purple-600">{age}</span>
+              <label className="text-xs font-bold text-purple-200 uppercase tracking-wide block mb-1">
+                Age: <span className="text-white">{age}</span>
               </label>
               <input
                 type="range" min={2} max={12} value={age}
                 onChange={e => setAge(Number(e.target.value))}
                 className="w-full accent-purple-600"
               />
-              <div className="flex justify-between text-[10px] text-gray-400 font-semibold mt-0.5">
+              <div className="flex justify-between text-[10px] text-purple-300 font-semibold mt-0.5">
                 <span>2</span><span>12</span>
               </div>
             </div>
 
             {/* Language */}
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Language</p>
+              <p className="text-xs font-bold text-purple-200 uppercase tracking-wide mb-2">Language</p>
               <div className="flex gap-2">
                 {LANGUAGES.map(l => (
                   <button
@@ -129,8 +129,8 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
                     onClick={() => setLanguage(l.code)}
                     className={`flex-1 py-2 rounded-xl text-[11px] font-bold flex flex-col items-center gap-0.5 border-2 transition ${
                       language === l.code
-                        ? "border-purple-500 bg-purple-50 text-purple-700"
-                        : "border-gray-100 bg-gray-50 text-gray-500 hover:border-purple-200"
+                        ? "border-purple-400 bg-purple-400/20 text-white"
+                        : "border-white/15 bg-white/10 text-purple-200 hover:border-purple-200"
                     }`}
                   >
                     <span className="text-lg">{l.flag}</span>

@@ -103,30 +103,30 @@ export default function AppShell({ children }: AppShellProps) {
         onLogoutClick={() => setShowLogout(true)}
       />
 
-      <div className="lg:pl-72 flex flex-col min-h-screen">
+      <div className="lg:pl-72 flex flex-col min-h-screen bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d]">
         {/* Top stats bar */}
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-purple-100">
+        <header className="sticky top-0 z-20 bg-white/10 backdrop-blur border-b border-white/15">
           <div className="flex items-center justify-between px-4 py-2.5">
             <button onClick={() => setDrawerOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-purple-700" aria-label="Open menu">
+              className="lg:hidden p-2 -ml-2 text-purple-200 hover:text-white" aria-label="Open menu">
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden lg:block" />
 
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-1 bg-yellow-100 text-yellow-700 font-black text-sm px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-1 bg-yellow-400/20 text-yellow-200 font-black text-sm px-3 py-1.5 rounded-full">
                 <span>⭐</span><span>{totalStars}</span>
               </div>
-              <div className="flex items-center gap-1 bg-blue-100 text-blue-700 font-black text-sm px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-1 bg-blue-400/20 text-blue-200 font-black text-sm px-3 py-1.5 rounded-full">
                 <span>💎</span><span>{gems}</span>
               </div>
-              <button className="w-9 h-9 bg-purple-100 hover:bg-purple-200 rounded-full flex items-center justify-center text-purple-700 transition"
+              <button className="w-9 h-9 bg-purple-400/20 hover:bg-purple-400/30 rounded-full flex items-center justify-center text-purple-200 transition"
                 aria-label="Notifications">
                 <Bell className="w-5 h-5" />
               </button>
               <div className="relative">
                 <button onClick={() => setShowLangPicker(p => !p)}
-                  className="w-9 h-9 bg-purple-100 hover:bg-purple-200 rounded-full flex items-center justify-center text-lg transition"
+                  className="w-9 h-9 bg-purple-400/20 hover:bg-purple-400/30 rounded-full flex items-center justify-center text-lg transition"
                   aria-label="Change language">
                   {LANGS.find(l => l.code === language)?.flag ?? "🌐"}
                 </button>

@@ -25,6 +25,8 @@ export interface ActivityConfig {
   gradient: string;
   borderColor: string;
   numBg: string;
+  numBgGlass: string;
+  numTextGlass: string;
   stars: number;
   href: string;
   startKey?: string;
@@ -41,6 +43,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-purple-400 to-pink-500",
     borderColor: "border-purple-200",
     numBg: "bg-purple-600",
+    numBgGlass: "bg-purple-400/20",
+    numTextGlass: "text-purple-200",
     stars: 10,
     href: "/missions/morning",
     startKey: "startSinging",
@@ -55,6 +59,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-pink-400 to-pink-600",
     borderColor: "border-pink-200",
     numBg: "bg-pink-600",
+    numBgGlass: "bg-pink-400/20",
+    numTextGlass: "text-pink-200",
     stars: 10,
     href: "/missions/movement",
     startKey: "startMoving",
@@ -69,6 +75,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-orange-400 to-orange-600",
     borderColor: "border-orange-200",
     numBg: "bg-orange-500",
+    numBgGlass: "bg-orange-400/20",
+    numTextGlass: "text-orange-200",
     stars: 15,
     href: "/missions/artistic",
     startKey: "startCreating",
@@ -83,6 +91,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-amber-600 to-yellow-700",
     borderColor: "border-amber-300",
     numBg: "bg-amber-700",
+    numBgGlass: "bg-amber-400/20",
+    numTextGlass: "text-amber-200",
     stars: 15,
     href: "/missions/histoire",
     startKey: "startExploring",
@@ -97,6 +107,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-green-400 to-green-600",
     borderColor: "border-green-200",
     numBg: "bg-green-600",
+    numBgGlass: "bg-green-400/20",
+    numTextGlass: "text-green-200",
     stars: 15,
     href: "/missions/zoom",
     startKey: "startZooming",
@@ -111,6 +123,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-teal-400 to-blue-500",
     borderColor: "border-teal-200",
     numBg: "bg-teal-600",
+    numBgGlass: "bg-teal-400/20",
+    numTextGlass: "text-teal-200",
     stars: 10,
     href: "/missions/discovery",
     startKey: "startDiscovering",
@@ -125,6 +139,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-indigo-400 to-indigo-600",
     borderColor: "border-indigo-200",
     numBg: "bg-indigo-600",
+    numBgGlass: "bg-indigo-400/20",
+    numTextGlass: "text-indigo-200",
     stars: 10,
     href: "/missions/flipflop",
     startKey: "startReading",
@@ -139,6 +155,8 @@ export const ACTIVITIES: ActivityConfig[] = [
     gradient: "from-yellow-400 to-yellow-500",
     borderColor: "border-yellow-200",
     numBg: "bg-yellow-500",
+    numBgGlass: "bg-yellow-400/20",
+    numTextGlass: "text-yellow-200",
     stars: 10,
     href: "/missions/coloring",
     startKey: "startColoring",

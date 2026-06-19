@@ -122,30 +122,30 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <motion.div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
+      <motion.div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-xl shadow-xl w-full max-w-md overflow-hidden"
         initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">{success ? 'Upload Complete!' : 'Share Your Creation'}</h2>
+            <h2 className="text-2xl font-bold text-white">{success ? 'Upload Complete!' : 'Share Your Creation'}</h2>
             <button onClick={() => { if (!isUploading) { resetForm(); onClose(); } }}
-              className="text-gray-500 hover:text-gray-700 transition-colors" disabled={isUploading}>
+              className="text-purple-200 hover:text-white transition-colors" disabled={isUploading}>
               <X className="w-6 h-6" />
             </button>
           </div>
 
           {success ? (
             <div className="text-center py-8">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                <CheckCircle className="h-10 w-10 text-green-600" />
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-400/20 mb-4">
+                <CheckCircle className="h-10 w-10 text-green-300" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Successfully Uploaded!</h3>
-              <p className="text-gray-600 mb-6">Your artwork has been shared with the community.</p>
+              <h3 className="text-lg font-medium text-white mb-2">Successfully Uploaded!</h3>
+              <p className="text-purple-200 mb-6">Your artwork has been shared with the community.</p>
               <Button onClick={() => { resetForm(); onClose(); }} className="w-full">Close</Button>
             </div>
           ) : (
             <>
-              <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors mb-4 ${isDragActive ? 'border-blue-500 bg-blue-50' : error ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'} ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
+              <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors mb-4 ${isDragActive ? 'border-blue-400 bg-blue-500/10' : error ? 'border-red-300 bg-red-500/10' : 'border-white/20 hover:border-white/40'} ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                 <input {...getInputProps()} />
                 {preview ? (
                   <div className="relative h-48 w-full rounded-md overflow-hidden mb-4">
@@ -153,22 +153,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
-                      {error ? <AlertCircle className="h-6 w-6 text-red-500" /> : isDragActive ? <UploadCloud className="h-6 w-6 text-blue-500" /> : <Camera className="h-6 w-6 text-gray-400" />}
+                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-white/10">
+                      {error ? <AlertCircle className="h-6 w-6 text-red-400" /> : isDragActive ? <UploadCloud className="h-6 w-6 text-blue-400" /> : <Camera className="h-6 w-6 text-purple-200" />}
                     </div>
-                    <p className="text-sm text-gray-600">{error ? 'Try another file' : isDragActive ? 'Drop your artwork here' : 'Drag & drop or click to select'}</p>
-                    <p className="text-xs text-gray-500">JPEG, PNG, GIF, WEBP (max 5MB)</p>
+                    <p className="text-sm text-purple-200">{error ? 'Try another file' : isDragActive ? 'Drop your artwork here' : 'Drag & drop or click to select'}</p>
+                    <p className="text-xs text-purple-300">JPEG, PNG, GIF, WEBP (max 5MB)</p>
                   </div>
                 )}
               </div>
 
-              {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm mb-4"><div className="font-medium flex items-center"><AlertCircle className="w-4 h-4 mr-2" />Upload Error</div><div className="mt-1">{error}</div></div>}
+              {error && <div className="p-3 bg-red-500/10 border border-red-400/30 rounded-lg text-red-300 text-sm mb-4"><div className="font-medium flex items-center"><AlertCircle className="w-4 h-4 mr-2" />Upload Error</div><div className="mt-1">{error}</div></div>}
 
               <div className="space-y-4">
-                <Input placeholder="What did you create? (optional)" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isUploading} />
+                <Input placeholder="What did you create? (optional)" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isUploading} className="bg-white/10 border-white/20 text-white placeholder:text-white/40" />
                 <div className="flex items-center space-x-2">
                   <Switch id="visibility" checked={isPublic} onCheckedChange={setIsPublic} disabled={isUploading} />
-                  <label htmlFor="visibility" className="text-sm font-medium text-gray-700">{isPublic ? 'Public (Visible to everyone)' : 'Private (Only visible to family)'}</label>
+                  <label htmlFor="visibility" className="text-sm font-medium text-purple-100">{isPublic ? 'Public (Visible to everyone)' : 'Private (Only visible to family)'}</label>
                 </div>
 
                 {isUploading && <Progress value={progress} className="h-2" />}

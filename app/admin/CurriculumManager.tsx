@@ -1,9 +1,13 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { GraduationCap, Menu, ChevronDown, Layers, Grid3x3, Upload, ExternalLink, Languages as LanguagesIcon } from 'lucide-react'
+import { GraduationCap, Menu, ChevronDown, Layers, Boxes, ListChecks, Rocket, Globe, Grid3x3, Upload, ExternalLink, Languages as LanguagesIcon } from 'lucide-react'
 import { ACCENT, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META } from './missionMeta'
 import LevelEditor from './LevelEditor'
+import UnitManager from './UnitManager'
+import LessonManager from './LessonManager'
+import PublishingCenter from './PublishingCenter'
+import CoverageDashboard from './CoverageDashboard'
 import CategoriesOverview from './CategoriesOverview'
 import BulkImportManager from './BulkImportManager'
 
@@ -16,6 +20,10 @@ const accent = ACCENT.indigo
 
 const TABS = [
   { key: 'levels', label: 'Levels', icon: Layers },
+  { key: 'units', label: 'Units', icon: Boxes },
+  { key: 'lessons', label: 'Lessons', icon: ListChecks },
+  { key: 'publishing', label: 'Publishing', icon: Rocket },
+  { key: 'coverage', label: 'Coverage', icon: Globe },
   { key: 'categories', label: 'Categories', icon: Grid3x3 },
   { key: 'import', label: 'Bulk Import', icon: Upload },
   { key: 'links', label: 'Quick Links', icon: ExternalLink },
@@ -96,6 +104,10 @@ export default function CurriculumManager({ onNavigate, onOpenSidebar }: Curricu
       {/* Body */}
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         {tab === 'levels' && <LevelEditor />}
+        {tab === 'units' && <UnitManager />}
+        {tab === 'lessons' && <LessonManager onNavigate={onNavigate} />}
+        {tab === 'publishing' && <PublishingCenter onNavigate={onNavigate} />}
+        {tab === 'coverage' && <CoverageDashboard onNavigate={onNavigate} />}
         {tab === 'categories' && <CategoriesOverview />}
         {tab === 'import' && <BulkImportManager />}
         {tab === 'links' && (

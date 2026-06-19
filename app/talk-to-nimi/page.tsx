@@ -18,6 +18,7 @@ import QuickReplyChips from "@/components/home/QuickReplyChips";
 import ChatQuestBanner from "@/components/home/ChatQuestBanner";
 import ChatSidebar from "@/components/home/ChatSidebar";
 import { NIMI_CHAT_HANDOFF_KEY } from "@/components/home/TalkToNimi";
+import AuthBackground from "@/components/auth/AuthBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -152,9 +153,10 @@ function NimiChatPageContent({
   const showMic = micSupported && language !== "rw";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col">
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
-        <Link href="/" className="inline-flex items-center gap-1 text-purple-600 font-bold text-sm mb-3 hover:text-purple-700 transition w-fit">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
+      <AuthBackground />
+      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+        <Link href="/" className="inline-flex items-center gap-1 text-purple-200 font-bold text-sm mb-3 hover:text-white transition w-fit">
           <ArrowLeft className="w-4 h-4" />
           {t("backToHome")}
         </Link>
@@ -164,16 +166,16 @@ function NimiChatPageContent({
         </div>
 
         <div className="mb-4 text-center">
-          <h1 className="font-black text-2xl sm:text-3xl text-gray-800">{t("nimiChatPageTitle")}</h1>
-          <p className="text-gray-500 text-sm mt-1">{t("nimiChatPageSubtitle")}</p>
+          <h1 className="font-black text-2xl sm:text-3xl text-white">{t("nimiChatPageTitle")}</h1>
+          <p className="text-purple-200 text-sm mt-1">{t("nimiChatPageSubtitle")}</p>
         </div>
 
         <div className="lg:grid lg:grid-cols-[180px_1fr_280px] lg:gap-4 lg:items-start">
 
           {/* Left mascot + speech bubble */}
           <div className="hidden lg:flex lg:flex-col lg:items-center lg:gap-3 lg:sticky lg:top-24">
-            <div className="bg-white border-2 border-purple-200 rounded-2xl rounded-br-sm shadow-md px-4 py-3 text-center">
-              <p className="text-sm font-bold text-gray-700 leading-snug">
+            <div className="bg-white/15 backdrop-blur border-2 border-white/20 rounded-2xl rounded-br-sm shadow-md px-4 py-3 text-center">
+              <p className="text-sm font-bold text-white leading-snug">
                 {t("readyToChatBubble").replace("{name}", childName)}
               </p>
             </div>
@@ -185,7 +187,7 @@ function NimiChatPageContent({
           </div>
 
           {/* Chat card */}
-          <div className="bg-white border-2 border-purple-200 rounded-2xl shadow-md overflow-hidden flex flex-col h-[70vh]">
+          <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md overflow-hidden flex flex-col h-[70vh]">
             {/* Header */}
             <div className="bg-purple-700 px-4 py-3 flex items-center gap-3 flex-shrink-0">
               <motion.img
@@ -203,7 +205,7 @@ function NimiChatPageContent({
             </div>
 
             {/* Messages */}
-            <div ref={messagesRef} className="flex-1 min-h-0 px-4 py-4 space-y-3 overflow-y-auto bg-gradient-to-b from-purple-50/40 to-white">
+            <div ref={messagesRef} className="flex-1 min-h-0 px-4 py-4 space-y-3 overflow-y-auto">
               {messages.map((msg, idx) => {
                 const isLast = idx === messages.length - 1;
                 const showTyping = isTyping && isLast && msg.from === "nimi" && msg.text === "";
@@ -216,7 +218,7 @@ function NimiChatPageContent({
                     )}
                     <div className={`text-sm leading-relaxed px-4 py-2.5 max-w-[75%] shadow-sm ${
                       msg.from === "nimi"
-                        ? "bg-white text-gray-800 rounded-2xl rounded-bl-sm border border-gray-100"
+                        ? "bg-white/15 backdrop-blur text-white rounded-2xl rounded-bl-sm border border-white/20"
                         : "bg-purple-600 text-white rounded-2xl rounded-br-sm"
                     }`}>
                       {showTyping ? (
@@ -239,9 +241,9 @@ function NimiChatPageContent({
 
             {/* Read aloud toggle - directly under Nimi's responses */}
             {language !== "rw" && (
-              <div className="flex justify-center py-1.5 border-t border-purple-50">
+              <div className="flex justify-center py-1.5 border-t border-white/15">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={toggleSpeak} disabled={isTyping}
-                  className="flex items-center gap-1.5 text-xs font-bold text-purple-600 hover:text-purple-700 transition disabled:opacity-50">
+                  className="flex items-center gap-1.5 text-xs font-bold text-purple-200 hover:text-white transition disabled:opacity-50">
                   {isSpeaking ? (
                     <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: Infinity }}>
                       <VolumeX className="w-3.5 h-3.5" />
@@ -255,7 +257,7 @@ function NimiChatPageContent({
             )}
 
             {/* Quick replies */}
-            <div className="px-3 pt-2 bg-white border-t border-purple-100">
+            <div className="px-3 pt-2 border-t border-white/15">
               <QuickReplyChips onSelect={text => sendChat(text)} disabled={isTyping} size="md" />
             </div>
 
@@ -267,14 +269,14 @@ function NimiChatPageContent({
             )}
 
             {/* Input */}
-            <div className="flex items-center gap-2 bg-white px-3 py-3 flex-shrink-0">
+            <div className="flex items-center gap-2 px-3 py-3 flex-shrink-0">
               <input
                 type="text" value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && sendChat()}
                 placeholder={listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
                 disabled={isTyping || listening}
-                className="flex-1 min-w-0 text-sm bg-gray-50 rounded-full border-2 border-purple-200 px-4 py-2.5 focus:outline-none focus:border-purple-400 text-gray-700 placeholder-gray-400 disabled:opacity-60" />
+                className="flex-1 min-w-0 text-sm bg-white/10 backdrop-blur rounded-full border-2 border-white/20 px-4 py-2.5 focus:outline-none focus:border-purple-300 text-white placeholder-white/40 disabled:opacity-60" />
               {showMic && (
                 <motion.button onClick={() => (listening ? stopListening() : startListening())}
                   whileTap={{ scale: 0.9 }}

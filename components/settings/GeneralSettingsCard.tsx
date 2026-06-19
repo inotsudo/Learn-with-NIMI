@@ -5,10 +5,10 @@ import { Volume2, Music, Mic, Vibrate } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const ROWS = [
-  { icon: Volume2, bg: "bg-purple-100", color: "text-purple-600", labelKey: "soundEffectsLabel", defaultOn: true },
-  { icon: Music, bg: "bg-blue-100", color: "text-blue-600", labelKey: "backgroundMusicLabel", defaultOn: true },
-  { icon: Mic, bg: "bg-green-100", color: "text-green-600", labelKey: "voiceNarrationLabel", defaultOn: true },
-  { icon: Vibrate, bg: "bg-orange-100", color: "text-orange-600", labelKey: "vibrationLabel", defaultOn: false },
+  { icon: Volume2, bg: "bg-purple-400/20", color: "text-purple-200", labelKey: "soundEffectsLabel", defaultOn: true },
+  { icon: Music, bg: "bg-blue-400/20", color: "text-blue-200", labelKey: "backgroundMusicLabel", defaultOn: true },
+  { icon: Mic, bg: "bg-green-400/20", color: "text-green-200", labelKey: "voiceNarrationLabel", defaultOn: true },
+  { icon: Vibrate, bg: "bg-orange-400/20", color: "text-orange-200", labelKey: "vibrationLabel", defaultOn: false },
 ];
 
 function ToggleSwitch({ on, onClick }: { on: boolean; onClick: () => void }) {
@@ -31,14 +31,14 @@ export default function GeneralSettingsCard() {
   const [states, setStates] = useState(ROWS.map(row => row.defaultOn));
 
   return (
-    <div className="bg-white border-2 border-gray-100 rounded-2xl shadow-sm p-4">
-      <h3 className="font-black text-gray-800 mb-2">{t("generalSettingsTitle")}</h3>
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
+      <h3 className="font-black text-white mb-2">{t("generalSettingsTitle")}</h3>
       {ROWS.map((row, i) => (
-        <div key={row.labelKey} className="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0">
+        <div key={row.labelKey} className="flex items-center gap-3 py-3 border-b border-white/15 last:border-0">
           <div className={`w-9 h-9 ${row.bg} rounded-full flex items-center justify-center shrink-0`}>
             <row.icon className={`w-4 h-4 ${row.color}`} />
           </div>
-          <span className="font-bold text-sm text-gray-700 flex-1">{t(row.labelKey)}</span>
+          <span className="font-bold text-sm text-purple-100 flex-1">{t(row.labelKey)}</span>
           <ToggleSwitch
             on={states[i]}
             onClick={() => setStates(prev => prev.map((v, idx) => (idx === i ? !v : v)))}

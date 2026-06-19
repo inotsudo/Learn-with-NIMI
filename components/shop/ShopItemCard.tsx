@@ -17,7 +17,7 @@ export default function ShopItemCard({ item, owned, balance, purchasing, onBuy }
   const affordable = balance >= item.price;
 
   return (
-    <div className="bg-white border-2 border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm overflow-hidden">
       <div className={`relative aspect-square flex items-center justify-center text-5xl ${item.bg}`}>
         {item.emoji}
         {owned && (
@@ -32,12 +32,12 @@ export default function ShopItemCard({ item, owned, balance, purchasing, onBuy }
         )}
       </div>
       <div className="p-3">
-        <p className="font-black text-gray-800 text-sm truncate">{t(item.nameKey)}</p>
+        <p className="font-black text-white text-sm truncate">{t(item.nameKey)}</p>
         {owned ? (
-          <p className="text-green-600 font-bold text-sm mt-1">✓ {t("shopOwnedLabel")}</p>
+          <p className="text-green-300 font-bold text-sm mt-1">✓ {t("shopOwnedLabel")}</p>
         ) : affordable ? (
           <>
-            <p className="text-yellow-600 font-bold text-sm mt-1">⭐ {item.price}</p>
+            <p className="text-yellow-300 font-bold text-sm mt-1">⭐ {item.price}</p>
             <button
               onClick={() => onBuy(item)}
               disabled={purchasing}
@@ -48,7 +48,7 @@ export default function ShopItemCard({ item, owned, balance, purchasing, onBuy }
             </button>
           </>
         ) : (
-          <p className="text-gray-400 font-bold text-xs mt-1">
+          <p className="text-purple-300 font-bold text-xs mt-1">
             {t("shopNeedMoreStars").replace("{n}", String(item.price - balance))}
           </p>
         )}

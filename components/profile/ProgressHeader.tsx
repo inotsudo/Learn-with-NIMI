@@ -24,24 +24,24 @@ export default function ProgressHeader({ activeTab, onTabChange }: Props) {
     <div>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="font-black text-2xl sm:text-3xl text-gray-800">{t("myProgressTitle")}</h1>
-          <p className="text-gray-500 text-sm mt-1">{t("myProgressSubtitle")}</p>
+          <h1 className="font-black text-2xl sm:text-3xl text-white">{t("myProgressTitle")}</h1>
+          <p className="text-purple-200 text-sm mt-1">{t("myProgressSubtitle")}</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-white border-2 border-gray-100 rounded-full px-4 py-2 shadow-sm text-sm font-bold text-gray-600 shrink-0">
+        <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur border-2 border-white/15 rounded-full px-4 py-2 shadow-sm text-sm font-bold text-purple-100 shrink-0">
           <span>{t("thisWeek")}</span>
           <ChevronDown className="w-4 h-4" />
         </div>
       </div>
 
-      <div className="mt-4 inline-flex flex-wrap bg-gray-100 rounded-full p-1 gap-1">
+      <div className="mt-4 inline-flex flex-wrap bg-white/10 backdrop-blur rounded-full p-1 gap-1">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`px-4 py-2 rounded-full text-xs sm:text-sm font-black transition-colors ${
               activeTab === tab.id
-                ? "bg-white text-gray-800 shadow"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white/20 text-white shadow"
+                : "text-purple-300 hover:text-white"
             }`}
           >
             {tab.label}
