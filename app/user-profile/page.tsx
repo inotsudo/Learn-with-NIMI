@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  getChildren, getActiveStories, getCompletedMissionIds,
-  getMissionsForDay, getMissionsForDayByCategory,
+  getChildren, getCompletedMissionIds, getCurriculumMissions, getCurrentLevel,
   getWeekStreak, getWeekActivityCounts, getChildAchievements, getTotalStars,
   getActivityDates,
 } from "@/lib/queries";
@@ -52,6 +51,7 @@ export default function UserProfilePage() {
   const [activityDates, setActivityDates] = useState<Set<string>>(new Set());
   const [badgeCount, setBadgeCount] = useState(0);
   const [totalStars, setTotalStars] = useState(0);
+  const [certificates, setCertificates] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -72,35 +72,23 @@ export default function UserProfilePage() {
     const completedIds = new Set(await getCompletedMissionIds(child.id, child.language));
     setActivitiesCompleted(completedIds.size);
 
-    const stories = await getActiveStories();
-    const steps: number[] = [];
-    const progress = emptyCategoryProgress();
-    if (stories.length) {
-      const storyId = stories[0].id;
-      for (let day = 1; day <= 6; day++) {
-        const missions = await getMissionsForDay(storyId, day);
-        for (const m of missions) {
-          const cat = m.category as ActivityCategory | undefined;
-          if (cat && cat in progress) {
-            progress[cat].total++;
-            if (completedIds.has(m.id)) progress[cat].completed++;
-          }
-        }
-        if (missions.length > 0 && missions.every(m => completedIds.has(m.id))) {
-          steps.push(day);
-        }
-      }
+    const curriculumMissions = await getCurriculumMissions(child.id);
+    const level = await getCurrentLevel(child.id, child.language);
+    setCertificates(Math.max(0, level - 1));
 
-      const todayDay = steps.length < 6 ? steps.length + 1 : 6;
-      const todaysMissions = await getMissionsForDayByCategory(storyId, todayDay);
-      const completed = new Set<ActivityCategory>();
-      for (const activity of ACTIVITIES) {
-        const m = todaysMissions.find(x => x.category === activity.category);
-        if (m && completedIds.has(m.id)) completed.add(activity.category);
-      }
-      setCompletedCategories(completed);
+    const completedInLevel = new Set(
+      curriculumMissions.filter(m => m.completed).map(m => m.category)
+    );
+    setCompletedCategories(completedInLevel);
+    setStepsCompleted(
+      ACTIVITIES.filter(a => completedInLevel.has(a.category)).map(a => a.number)
+    );
+
+    const progress = emptyCategoryProgress();
+    for (const m of curriculumMissions) {
+      progress[m.category].total = 1;
+      if (m.completed) progress[m.category].completed = 1;
     }
-    setStepsCompleted(steps);
     setCategoryProgress(progress);
 
     setWeekStreak(await getWeekStreak(child.id, child.language));
@@ -142,7 +130,7 @@ export default function UserProfilePage() {
                 activitiesTotal={ACTIVITIES_TARGET}
                 starsCollected={totalStars}
                 badgesEarned={badgeCount}
-                certificates={Math.floor(stepsCompleted.length / 6)}
+                certificates={certificates}
               />
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
                 <TodaysProgressCard completedCategories={completedCategories} />

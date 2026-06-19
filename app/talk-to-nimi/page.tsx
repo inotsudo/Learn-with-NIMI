@@ -7,11 +7,10 @@ import { ArrowLeft, Send, Mic, Volume2, VolumeX } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
-  getChildren, getActiveStories, getMissionsByCategories, getCompletedMissionIds,
+  getChildren, getCurriculumMissions,
   getTodayStars, getActivityDates, getChildAchievements,
 } from "@/lib/queries";
 import { computeStreaks } from "@/lib/parentInsights";
-import { ACTIVITIES } from "@/app/_activityData";
 import { useNimiChat, type ChatMessage } from "@/hooks/useNimiChat";
 import { useSpeechToText, speechErrorKey } from "@/hooks/useSpeechToText";
 import QuickReplyChips from "@/components/home/QuickReplyChips";
@@ -133,12 +132,8 @@ function NimiChatPageContent({
     const achievements = await getChildAchievements(id);
     setBadgeCount(achievements.filter(a => a.type === "badge" && a.language === lang).length);
 
-    const stories = await getActiveStories();
-    if (stories.length > 0) {
-      const missions = await getMissionsByCategories(stories[0].id, ACTIVITIES.map(a => a.category));
-      const completedIds = new Set(await getCompletedMissionIds(id, lang));
-      setActivitiesCompleted(missions.filter(m => completedIds.has(m.id)).length);
-    }
+    const curriculumMissions = await getCurriculumMissions(id);
+    setActivitiesCompleted(curriculumMissions.filter(m => m.completed).length);
   };
 
   const sendChat = (overrideText?: string) => {

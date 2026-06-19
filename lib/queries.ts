@@ -320,46 +320,6 @@ export async function getColoringPages(storyId: string): Promise<ColoringPage[]>
 
 // ── Missions queries ─────────────────────────────────────────
 
-export async function getMissionsForDay(
-  storyId: string,
-  dayNumber: number
-): Promise<Mission[]> {
-  const { data } = await supabase
-    .from("missions")
-    .select("*")
-    .eq("story_id", storyId)
-    .eq("day_number", dayNumber)
-    .order("type");
-  return (data ?? []) as Mission[];
-}
-
-// All missions for a given story+day, across categories. [] if table is empty.
-export async function getMissionsForDayByCategory(
-  storyId: string,
-  dayNumber: number
-): Promise<Mission[]> {
-  const { data } = await supabase
-    .from("missions")
-    .select("*")
-    .eq("story_id", storyId)
-    .eq("day_number", dayNumber);
-  return (data ?? []) as Mission[];
-}
-
-// All missions for a story matching any of the given categories — one row
-// per ActivityCategory. Used by /missions (progress) and /missions/[category].
-export async function getMissionsByCategories(
-  storyId: string,
-  categories: string[]
-): Promise<Mission[]> {
-  const { data } = await supabase
-    .from("missions")
-    .select("*")
-    .eq("story_id", storyId)
-    .in("category", categories);
-  return (data ?? []) as Mission[];
-}
-
 // One row per category — the child's mission for their current curriculum
 // level, fully resolved (language fallback to 'en', completion + level-
 // complete flags applied server-side). Source of truth for `/`,

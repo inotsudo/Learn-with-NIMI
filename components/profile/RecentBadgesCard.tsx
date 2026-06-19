@@ -1,19 +1,29 @@
 "use client";
 
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ACTIVITIES } from "@/app/_activityData";
 
 interface Props {
   stepsCompleted: number[];
 }
 
-const BADGE_MAP = [
-  { step: 1, titleKey: "badgeStoryExplorer", icon: "📖", bg: "bg-purple-600" },
-  { step: 2, titleKey: "badgeShinyReader", icon: "📄", bg: "bg-cyan-500" },
-  { step: 3, titleKey: "badgeCreativeArtist", icon: "🎨", bg: "bg-orange-500" },
-  { step: 4, titleKey: "badgeMovementMaster", icon: "🎵", bg: "bg-pink-500" },
-  { step: 5, titleKey: "badgeMusicFriend", icon: "🎤", bg: "bg-teal-500" },
-  { step: 6, titleKey: "badgeJourneyComplete", icon: "🏆", bg: "bg-yellow-500" },
-];
+const BADGE_TITLES: Record<number, string> = {
+  1: "Morning Star",
+  2: "Movement Master",
+  3: "Creative Artist",
+  4: "History Explorer",
+  5: "Zoom Detective",
+  6: "Discovery Champ",
+  7: "Story Reader",
+  8: "Coloring Star",
+};
+
+const BADGE_MAP = ACTIVITIES.map(a => ({
+  step: a.number,
+  title: BADGE_TITLES[a.number] ?? a.titleKey,
+  icon: a.emoji,
+  bg: a.numBgGlass,
+}));
 
 export default function RecentBadgesCard({ stepsCompleted }: Props) {
   const { t } = useLanguage();
@@ -37,7 +47,7 @@ export default function RecentBadgesCard({ stepsCompleted }: Props) {
                 {badge.icon}
               </div>
               <p className="text-[10px] text-center leading-tight font-semibold text-purple-200 max-w-[64px]">
-                {t(badge.titleKey)}
+                {badge.title}
               </p>
               <span className="text-xs leading-none text-yellow-500">⭐</span>
             </div>
