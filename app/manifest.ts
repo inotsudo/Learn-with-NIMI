@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Daily little victory",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
+    background_color: "#1c0f3d",
     theme_color: "#7c3aed",
     icons: [
       {
