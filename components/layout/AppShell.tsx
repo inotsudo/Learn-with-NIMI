@@ -10,6 +10,9 @@ import type { Child } from "@/lib/queries";
 import Sidebar from "./Sidebar";
 import LogoutModal from "./LogoutModal";
 import LanguageSwitchDialog from "@/components/LanguageSwitchDialog";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -25,7 +28,9 @@ interface AppShellProps {
 
 export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
+  const isOnline = useOnlineStatus();
+  useOfflineSync();
   const activeChildRef = useRef<Child | null>(null);
   const [activeChild, setActiveChild] = useState<Child | null>(null);
   const [level, setLevel]             = useState(1);
@@ -38,6 +43,14 @@ export default function AppShell({ children }: AppShellProps) {
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState<Language | null>(null);
   const [switchingLanguage, setSwitchingLanguage] = useState(false);
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      void navigator.serviceWorker.register("/sw.js").catch(() => {
+        // best-effort — offline caching just won't be available this session
+      });
+    }
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -106,6 +119,11 @@ export default function AppShell({ children }: AppShellProps) {
       <div className="lg:pl-72 flex flex-col min-h-screen bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d]">
         {/* Top stats bar */}
         <header className="sticky top-0 z-20 bg-white/10 backdrop-blur border-b border-white/15">
+          {!isOnline && (
+            <div className="bg-orange-400/20 text-orange-100 text-xs font-semibold text-center py-1.5 px-3">
+              📡 {t("offlineBanner")}
+            </div>
+          )}
           <div className="flex items-center justify-between px-4 py-2.5">
             <button onClick={() => setDrawerOpen(true)}
               className="lg:hidden p-2 -ml-2 text-purple-200 hover:text-white" aria-label="Open menu">
@@ -131,12 +149,12 @@ export default function AppShell({ children }: AppShellProps) {
                   {LANGS.find(l => l.code === language)?.flag ?? "🌐"}
                 </button>
                 {showLangPicker && (
-                  <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border-2 border-purple-200 overflow-hidden z-50 w-36">
+                  <div className="absolute right-0 mt-2 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-36">
                     {LANGS.map(lang => (
                       <button key={lang.code} onClick={() => { setShowLangPicker(false); setPendingLanguage(lang.code); }}
-                        className="flex items-center px-3 py-2.5 w-full hover:bg-purple-50 transition text-sm">
+                        className="flex items-center px-3 py-2.5 w-full hover:bg-white/10 transition text-sm">
                         <span className="text-lg mr-2">{lang.flag}</span>
-                        <span className="font-medium">{lang.label}</span>
+                        <span className="font-medium text-purple-100">{lang.label}</span>
                       </button>
                     ))}
                   </div>
@@ -150,6 +168,8 @@ export default function AppShell({ children }: AppShellProps) {
           {children}
         </div>
       </div>
+
+      <InstallPrompt />
 
       <LogoutModal isOpen={showLogout} onClose={() => setShowLogout(false)} />
 

@@ -73,15 +73,15 @@ export default function Header({ simple }: HeaderProps) {
               </button>
 
               {showPicker && (
-                <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border-2 border-purple-200 overflow-hidden z-50 w-36">
+                <div className="absolute right-0 mt-2 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-36">
                   {LANGS.map(lang => (
                     <button
                       key={lang.code}
                       onClick={() => { setLanguage(lang.code); setShowPicker(false); }}
-                      className="flex items-center px-3 py-2.5 w-full hover:bg-purple-50 transition text-sm"
+                      className="flex items-center px-3 py-2.5 w-full hover:bg-white/10 transition text-sm"
                     >
                       <span className="text-lg mr-2">{lang.flag}</span>
-                      <span className="font-medium">{lang.label}</span>
+                      <span className="font-medium text-purple-100">{lang.label}</span>
                     </button>
                   ))}
                 </div>

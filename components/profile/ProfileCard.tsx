@@ -3,16 +3,15 @@
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const XP_CURRENT = 850;
-const XP_TARGET = 1200;
-
 interface Props {
   avatar: string | null;
   childName: string;
   level: number;
+  categoriesCompleted: number;
+  categoriesTotal: number;
 }
 
-export default function ProfileCard({ avatar, childName, level }: Props) {
+export default function ProfileCard({ avatar, childName, level, categoriesCompleted, categoriesTotal }: Props) {
   const { t } = useLanguage();
 
   return (
@@ -41,11 +40,11 @@ export default function ProfileCard({ avatar, childName, level }: Props) {
           <motion.div
             className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full"
             initial={{ width: 0 }}
-            animate={{ width: `${(XP_CURRENT / XP_TARGET) * 100}%` }}
+            animate={{ width: `${categoriesTotal > 0 ? (categoriesCompleted / categoriesTotal) * 100 : 0}%` }}
             transition={{ duration: 1, ease: "easeOut" }} />
         </div>
         <p className="text-xs text-purple-300 font-semibold mt-1.5">
-          {t("xpProgressLabel").replace("{current}", String(XP_CURRENT)).replace("{target}", String(XP_TARGET))}
+          {t("levelProgressLabel").replace("{current}", String(categoriesCompleted)).replace("{total}", String(categoriesTotal))}
         </p>
       </div>
     </div>

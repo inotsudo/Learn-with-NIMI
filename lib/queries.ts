@@ -324,11 +324,33 @@ export async function getColoringPages(storyId: string): Promise<ColoringPage[]>
 // level, fully resolved (language fallback to 'en', completion + level-
 // complete flags applied server-side). Source of truth for `/`,
 // `/missions`, `/missions/[category]`.
+//
+// Cached to localStorage on every successful fetch so a child who already
+// viewed today's missions can keep learning with no signal (village
+// connectivity use case) — on failure we fall back to that cache instead
+// of an empty array.
+function curriculumCacheKey(childId: string): string {
+  return `nimi_cached_missions_${childId}`;
+}
+
 export async function getCurriculumMissions(childId: string): Promise<CurriculumMission[]> {
   const { data, error } = await supabase.rpc("get_curriculum_missions", { p_child_id: childId });
   if (error) {
     console.error("[getCurriculumMissions]", error.message);
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem(curriculumCacheKey(childId));
+      if (cached) {
+        try {
+          return JSON.parse(cached) as CurriculumMission[];
+        } catch {
+          // fall through to empty array below
+        }
+      }
+    }
     return [];
+  }
+  if (typeof window !== "undefined") {
+    localStorage.setItem(curriculumCacheKey(childId), JSON.stringify(data ?? []));
   }
   return (data ?? []) as CurriculumMission[];
 }
@@ -445,17 +467,19 @@ export async function completeChildMission(
 // Records a mission completion (in the child's current language), awards
 // stars, and returns any newly-earned badges / certificate plus the child's
 // curriculum level after this completion.
+// Returns null on failure (offline/network error) so callers can tell a
+// real completion apart from one that needs to be queued and retried.
 export async function completeCurriculumMission(
   childId: string,
   missionId: string
-): Promise<CompleteCurriculumMissionResult> {
+): Promise<CompleteCurriculumMissionResult | null> {
   const { data, error } = await supabase.rpc("complete_curriculum_mission", {
     p_child_id: childId,
     p_mission_id: missionId,
   });
   if (error) {
     console.error("[completeCurriculumMission]", error.message);
-    return { stars_earned: 0, new_badges: [], new_certificate: null, level: 1, level_complete: false };
+    return null;
   }
   return data as CompleteCurriculumMissionResult;
 }

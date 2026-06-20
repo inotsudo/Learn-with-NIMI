@@ -2,28 +2,34 @@
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ACTIVITIES } from "@/app/_activityData";
+import type { ProgressRow } from "@/lib/queries";
 
-const WEEKLY_PROGRESS = [
-  { completed: 5, stars: 70 },
-  { completed: 6, stars: 85 },
-  { completed: 4, stars: 60 },
-  { completed: 5, stars: 75 },
-  { completed: 6, stars: 80 },
-  { completed: 5, stars: 70 },
-  { completed: 4, stars: 60 },
-  { completed: 5, stars: 70 },
-];
+interface Props {
+  rows: ProgressRow[];
+  range: "week" | "all";
+}
 
-const WEEK_TOTAL = 7;
+function startOfWeek(): Date {
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
 
-export default function ActivityDetailsList() {
+export default function ActivityDetailsList({ rows, range }: Props) {
   const { t } = useLanguage();
+  const monday = range === "week" ? startOfWeek() : null;
+  const inRange = (iso: string) => !monday || new Date(iso).getTime() >= monday.getTime();
 
   return (
     <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
-      {ACTIVITIES.map((activity, i) => {
-        const { completed, stars } = WEEKLY_PROGRESS[i];
-        const pct = (completed / WEEK_TOTAL) * 100;
+      {ACTIVITIES.map(activity => {
+        const catRows = rows.filter(r => r.category === activity.category && inRange(r.completed_at));
+        const daysActive = new Set(catRows.map(r => r.completed_at.slice(0, 10))).size;
+        const stars = catRows.reduce((sum, r) => sum + (r.stars_earned ?? 0), 0);
+        const denom = range === "week" ? 7 : Math.max(daysActive, 1);
+        const pct = Math.min((daysActive / denom) * 100, 100);
 
         return (
           <div key={activity.number} className="flex items-center gap-3 py-3 border-b border-white/15 last:border-0">
@@ -41,7 +47,10 @@ export default function ActivityDetailsList() {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="font-black text-purple-100 text-sm">{completed}/{WEEK_TOTAL}</p>
+              <p className="font-black text-purple-100 text-sm">
+                {range === "week" ? `${daysActive}/7` : daysActive}
+              </p>
+              <p className="text-purple-300 text-[10px] font-semibold">{t("daysPracticedLabel")}</p>
               <p className="text-yellow-500 text-xs font-bold">⭐ {stars}</p>
             </div>
           </div>

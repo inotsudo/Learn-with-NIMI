@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   getCurriculumMissions, completeCurriculumMission, getColoringPages, getStoryPages, notifyPushOnCompletion,
 } from "@/lib/queries";
+import { queueOfflineCompletion } from "@/lib/offlineQueue";
 import type { CurriculumMission, ColoringPage, StoryPage } from "@/lib/queries";
 import { ACTIVITIES } from "@/app/_activityData";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -28,6 +29,7 @@ export default function MissionCategoryPage() {
   const [level, setLevel]                 = useState(1);
   const [completedCount, setCompletedCount] = useState(0);
   const [completed, setCompleted]         = useState(false);
+  const [pendingSync, setPendingSync]     = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
   const [saving, setSaving]               = useState(false);
   const [loading, setLoading]             = useState(true);
@@ -77,7 +79,27 @@ export default function MissionCategoryPage() {
   const handleComplete = async () => {
     if (saving || completed || !mission || !childId) return;
     setSaving(true);
+
+    const queueForLaterSync = () => {
+      queueOfflineCompletion({
+        childId, missionId: mission.id, category: activity!.category, queuedAt: Date.now(),
+      });
+      setCompleted(true);
+      setCompletedCount(c => Math.min(ACTIVITIES.length, c + 1));
+      setPendingSync(true);
+      setSaving(false);
+    };
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      queueForLaterSync();
+      return;
+    }
+
     const result = await completeCurriculumMission(childId, mission.id);
+    if (!result) {
+      queueForLaterSync();
+      return;
+    }
     setCompleted(true);
     setCompletedCount(c => Math.min(ACTIVITIES.length, c + 1));
     setLevelComplete(result.level_complete);
@@ -153,6 +175,11 @@ export default function MissionCategoryPage() {
       levelComplete={levelComplete}
     >
       {renderContent()}
+      {pendingSync && (
+        <p className="text-center text-xs font-semibold text-yellow-200 bg-yellow-400/10 rounded-full px-3 py-1.5 mt-2">
+          ⏳ {t("pendingSyncNote")}
+        </p>
+      )}
     </MissionShell>
   );
 }

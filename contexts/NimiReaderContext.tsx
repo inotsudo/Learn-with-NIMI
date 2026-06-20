@@ -14,12 +14,24 @@ interface NimiReaderContextType {
 
 const NimiReaderContext = createContext<NimiReaderContextType | undefined>(undefined);
 
+const READER_ACTIVE_KEY = "nimi_reader_active";
+
 export function NimiReaderProvider({ children }: { children: React.ReactNode }) {
   const [isReaderActive, setIsReaderActive] = useState(true);
   const [currentContent, setCurrentContent] = useState("");
   const [isReading, setIsReading] = useState(false);
 
-  const toggleReader = () => setIsReaderActive((prev) => !prev);
+  useEffect(() => {
+    const saved = localStorage.getItem(READER_ACTIVE_KEY);
+    if (saved !== null) setIsReaderActive(saved === "true");
+  }, []);
+
+  const toggleReader = () =>
+    setIsReaderActive((prev) => {
+      const next = !prev;
+      localStorage.setItem(READER_ACTIVE_KEY, String(next));
+      return next;
+    });
 
   const startReading = () => {
     if (!currentContent || !isReaderActive) return;

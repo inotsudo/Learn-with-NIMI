@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export type ProgressTab = "overview" | "activity" | "skills" | "streaks";
@@ -22,15 +21,9 @@ export default function ProgressHeader({ activeTab, onTabChange }: Props) {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="font-black text-2xl sm:text-3xl text-white">{t("myProgressTitle")}</h1>
-          <p className="text-purple-200 text-sm mt-1">{t("myProgressSubtitle")}</p>
-        </div>
-        <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur border-2 border-white/15 rounded-full px-4 py-2 shadow-sm text-sm font-bold text-purple-100 shrink-0">
-          <span>{t("thisWeek")}</span>
-          <ChevronDown className="w-4 h-4" />
-        </div>
+      <div>
+        <h1 className="font-black text-2xl sm:text-3xl text-white">{t("myProgressTitle")}</h1>
+        <p className="text-purple-200 text-sm mt-1">{t("myProgressSubtitle")}</p>
       </div>
 
       <div className="mt-4 inline-flex flex-wrap bg-white/10 backdrop-blur rounded-full p-1 gap-1">
