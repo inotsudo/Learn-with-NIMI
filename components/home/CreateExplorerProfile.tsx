@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Smile, Star, Award, GraduationCap, BookOpen, ShieldCheck, Gift } from "lucide-react";
+import { Sparkles, Smile, Star, Award, GraduationCap, BookOpen, ShieldCheck, Gift, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { createChild } from "@/lib/queries";
 import type { Child, FavoriteCategory } from "@/lib/queries";
@@ -50,6 +50,19 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showAgeDropdown, setShowAgeDropdown] = useState(false);
+  const [showFavDropdown, setShowFavDropdown] = useState(false);
+  const ageRef = useRef<HTMLDivElement>(null);
+  const favRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ageRef.current && !ageRef.current.contains(e.target as Node)) setShowAgeDropdown(false);
+      if (favRef.current && !favRef.current.contains(e.target as Node)) setShowFavDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError(t("pleaseEnterNameError")); return; }
@@ -144,15 +157,32 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                   <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
                   {t("chooseAgeGroup")}
                 </label>
-                <select
-                  value={age}
-                  onChange={e => setAge(Number(e.target.value))}
-                  className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition"
-                >
-                  {AGE_GROUPS.map(g => (
-                    <option key={g.key} value={g.value}>{t(g.key)}</option>
-                  ))}
-                </select>
+                <div ref={ageRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => { setShowAgeDropdown(v => !v); setShowFavDropdown(false); }}
+                    className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition flex items-center justify-between"
+                  >
+                    <span>{t(AGE_GROUPS.find(g => g.value === age)?.key ?? AGE_GROUPS[0].key)}</span>
+                    <ChevronDown className={`w-4 h-4 text-purple-300 transition-transform ${showAgeDropdown ? "rotate-180" : ""}`} />
+                  </button>
+                  {showAgeDropdown && (
+                    <div className="absolute left-0 right-0 mt-1 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50">
+                      {AGE_GROUPS.map(g => (
+                        <button
+                          key={g.key}
+                          type="button"
+                          onClick={() => { setAge(g.value); setShowAgeDropdown(false); }}
+                          className={`flex items-center px-4 py-2.5 w-full text-sm font-medium transition ${
+                            age === g.value ? "bg-purple-500/30 text-white" : "text-purple-100 hover:bg-white/10"
+                          }`}
+                        >
+                          {t(g.key)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Step 3: favorite adventure */}
@@ -161,15 +191,32 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                   <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
                   {t("pickFavoriteAdventure")}
                 </label>
-                <select
-                  value={favorite}
-                  onChange={e => setFavorite(e.target.value as FavoriteCategory)}
-                  className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition"
-                >
-                  {FAVORITE_CATEGORIES.map(c => (
-                    <option key={c.value} value={c.value}>{t(c.key)}</option>
-                  ))}
-                </select>
+                <div ref={favRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => { setShowFavDropdown(v => !v); setShowAgeDropdown(false); }}
+                    className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition flex items-center justify-between"
+                  >
+                    <span>{t(FAVORITE_CATEGORIES.find(c => c.value === favorite)?.key ?? FAVORITE_CATEGORIES[0].key)}</span>
+                    <ChevronDown className={`w-4 h-4 text-purple-300 transition-transform ${showFavDropdown ? "rotate-180" : ""}`} />
+                  </button>
+                  {showFavDropdown && (
+                    <div className="absolute left-0 right-0 mt-1 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50">
+                      {FAVORITE_CATEGORIES.map(c => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          onClick={() => { setFavorite(c.value); setShowFavDropdown(false); }}
+                          className={`flex items-center px-4 py-2.5 w-full text-sm font-medium transition ${
+                            favorite === c.value ? "bg-purple-500/30 text-white" : "text-purple-100 hover:bg-white/10"
+                          }`}
+                        >
+                          {t(c.key)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Step 4: avatar */}
@@ -185,8 +232,8 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                       onClick={() => setAvatar(a)}
                       className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition border-2 ${
                         avatar === a
-                          ? "border-purple-500 bg-purple-50 scale-110 shadow"
-                          : "border-transparent bg-white/10 hover:bg-purple-50"
+                          ? "border-purple-400 bg-purple-400/20 scale-110 shadow"
+                          : "border-transparent bg-white/10 hover:bg-white/20"
                       }`}
                     >
                       {a}
