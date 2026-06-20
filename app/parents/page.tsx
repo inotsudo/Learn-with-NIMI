@@ -133,9 +133,9 @@ export default function ParentsZonePage() {
       <AppShell>
         <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
           <AuthBackground />
-          <p className="relative z-10 text-purple-100 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
+          <p className="relative z-10 text-purple-100 font-semibold">{t("setUpLearnerProfileMsg")}</p>
           <Link href="/" className="relative z-10 bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
-            Go Home
+            {t("goHomeBtn")}
           </Link>
         </div>
       </AppShell>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { BookOpen, X } from "lucide-react";
 import HTMLFlipBook from "react-pageflip";
 import { getStorageUrl } from "@/lib/queries";
+import { isSoundEffectsEnabled } from "@/lib/soundEffects";
 import type { Page } from "./types";
 
 interface StoryFlipBookProps {
@@ -37,7 +38,7 @@ export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps)
   // Audio controls
   const playAudioForPage = (page: Page) => {
     stopAudio();
-    if (!page.audio_url) return;
+    if (!page.audio_url || !isSoundEffectsEnabled()) return;
 
     const audio = new Audio(page.audio_url);
     audio.preload = "auto";
