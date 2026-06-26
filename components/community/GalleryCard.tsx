@@ -40,6 +40,15 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
         ) : (
           <span className="text-5xl">🎨</span>
         )}
+        {creation.type === "challenge" && (
+          <span className="absolute top-2 right-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[9px] font-black rounded-full px-2 py-0.5 shadow">🏆 Challenge</span>
+        )}
+        {creation.type === "certificate" && (
+          <span className="absolute top-2 right-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-[9px] font-black rounded-full px-2 py-0.5 shadow">📜 Certificate</span>
+        )}
+        {creation.type === "sticker" && (
+          <span className="absolute top-2 right-2 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white text-[9px] font-black rounded-full px-2 py-0.5 shadow">⭐ Sticker</span>
+        )}
         {creation.status === "pending" && (
           <span className="absolute top-2 left-2 bg-amber-400 text-amber-900 text-[10px] font-black rounded-full px-2.5 py-1 shadow">
             {t("statusPendingLabel")}
@@ -54,10 +63,10 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
 
       <div className="p-3">
         <div className="flex items-center gap-1.5 mb-1">
-          <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${avatarColorFor(creation.childName)} flex items-center justify-center text-white text-[10px] font-black shrink-0`}>
-            {creation.childName?.[0]?.toUpperCase() || "?"}
+          <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${avatarColorFor(creation.childName)} flex items-center justify-center text-[14px] shrink-0 border border-white/20 shadow-sm`}>
+            {creation.childAvatar || creation.childName?.[0]?.toUpperCase() || "?"}
           </div>
-          <p className="text-xs font-bold text-purple-300 truncate">{creation.childName}</p>
+          <p className="text-xs font-bold theme-text-muted truncate">{creation.childName}</p>
         </div>
 
         <p className="text-sm font-black text-white truncate">{title}</p>
@@ -65,7 +74,7 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
         <button
           onClick={() => onLike(creation.id)}
           disabled={isLoadingLike}
-          className="flex items-center gap-1 mt-2 text-sm font-bold text-purple-300 hover:text-pink-500 transition-colors"
+          className="flex items-center gap-1 mt-2 text-sm font-bold theme-text-muted hover:text-pink-500 transition-colors"
         >
           {isLoadingLike ? (
             <Loader2 className="w-4 h-4 animate-spin" />

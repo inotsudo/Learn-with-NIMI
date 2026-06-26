@@ -51,9 +51,9 @@ export default function BottomNavigation() {
       name: t("community") || fallbackName("community", language),
       href: "/community",
       icon: Users,
-      activeColor: "bg-purple-200 text-purple-700",
-      hoverColor: "hover:bg-purple-100 hover:text-purple-600",
-      underlineColor: "bg-purple-500",
+      activeColor: "theme-accent-soft theme-text-muted",
+      hoverColor: "hover:theme-accent-soft hover:theme-text-muted",
+      underlineColor: "theme-accent",
     },
     {
       name: fallbackName("Guardian", language),

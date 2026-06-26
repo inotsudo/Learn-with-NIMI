@@ -78,7 +78,7 @@ export default function DailyAdventureBanner({ themeTitle, themeEmoji, level }: 
       </div>
 
       {/* Subtitle */}
-      <p className="relative z-10 text-center text-purple-200 text-xs sm:text-sm font-semibold mt-4 max-w-xl mx-auto">
+      <p className="relative z-10 text-center theme-text text-xs sm:text-sm font-semibold mt-4 max-w-xl mx-auto">
         {t("levelAdventureSubtitle")}
       </p>
 
@@ -91,7 +91,7 @@ export default function DailyAdventureBanner({ themeTitle, themeEmoji, level }: 
 
       {/* Divider */}
       <div className="relative z-10 mt-4 flex items-center justify-center">
-        <div className="bg-purple-600 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-full px-4 py-1.5 shadow">
+        <div className="theme-accent text-white font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-full px-4 py-1.5 shadow">
           {t("activitiesDivider")}
         </div>
       </div>

@@ -1,6 +1,6 @@
 export type ShareMethod = "public" | "whatsapp";
 
-export type CreationType = "art" | "coloring" | "story";
+export type CreationType = "art" | "coloring" | "story" | "challenge" | "certificate" | "sticker";
 
 export interface UploadFormState {
   childName: string;
@@ -29,6 +29,7 @@ export type ModerationStatus = "pending" | "approved" | "rejected";
 export interface Creation {
   id: string;
   childName: string;
+  childAvatar?: string;
   age: number;
   imageUrl: string;
   likes: number;

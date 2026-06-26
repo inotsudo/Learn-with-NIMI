@@ -96,7 +96,7 @@ export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps)
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-purple-950 via-gray-900 to-pink-950">
-        <div className="w-14 h-14 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-14 h-14 border-4 theme-border-strong border-t-transparent rounded-full animate-spin" />
         <p className="text-white/80 font-medium text-sm">{t("loadingStory")}</p>
       </div>
     );

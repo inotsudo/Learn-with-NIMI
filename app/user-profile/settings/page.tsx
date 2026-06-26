@@ -18,7 +18,8 @@ import AccountSettingsCard from "@/components/profile/AccountSettingsCard";
 import AppPreferencesCard from "@/components/profile/AppPreferencesCard";
 import EditChildModal from "@/components/profile/EditChildModal";
 import type { Language } from "@/contexts/LanguageContext";
-import AuthBackground from "@/components/auth/AuthBackground";
+import MagicBackground from "@/components/magic/MagicBackground";
+import ThemePicker from "@/components/settings/ThemePicker";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -68,11 +69,11 @@ export default function MyProfilePage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
-          <AuthBackground />
-          <p className="relative z-10 text-purple-100 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="relative z-10 bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
-            Go Home
+        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
+          <MagicBackground variant="meadow" />
+          <p className="relative z-10 theme-text font-semibold">{t("noChildrenYet")}</p>
+          <Link href="/" className="relative z-10 theme-accent text-white font-black rounded-full px-6 py-2.5 shadow hover:theme-accent transition">
+            {t("goHomeBtn")}
           </Link>
         </div>
       </AppShell>
@@ -81,17 +82,17 @@ export default function MyProfilePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
-        <AuthBackground />
+      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
+        <MagicBackground variant="meadow" />
         <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
             <div>
               <h1 className="font-black text-2xl sm:text-3xl text-white">{t("myProfileTitle")}</h1>
-              <p className="text-purple-200 text-sm mt-1">{t("myProfileSubtitle")}</p>
+              <p className="theme-text text-sm mt-1">{t("myProfileSubtitle")}</p>
             </div>
             <button
               onClick={() => setShowEditModal(true)}
-              className="border-2 border-white/20 text-purple-100 bg-white/10 backdrop-blur font-black rounded-full px-5 py-2.5 text-sm hover:bg-white/20 transition flex items-center gap-2"
+              className="border-2 border-white/20 theme-text theme-card font-black rounded-full px-5 py-2.5 text-sm hover:bg-white/20 transition flex items-center gap-2"
             >
               <Edit className="w-4 h-4" /> {t("editProfile")}
             </button>
@@ -115,6 +116,11 @@ export default function MyProfilePage() {
 
           <div className="mt-4">
             <ProfileBadgesRow completedInLevel={completedInLevel} />
+          </div>
+
+          {/* Theme Picker */}
+          <div className="mt-4 theme-card rounded-[24px] border theme-border p-5">
+            <ThemePicker />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">

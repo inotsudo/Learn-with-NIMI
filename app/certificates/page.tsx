@@ -8,7 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import CertificatesHeader from "@/components/certificates/CertificatesHeader";
 import AchievementDashboard from "@/components/certificates/AchievementDashboard";
 import type { Lang } from "@/app/_achievementData";
-import AuthBackground from "@/components/auth/AuthBackground";
+import MagicBackground from "@/components/magic/MagicBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -60,10 +60,10 @@ export default function CertificatesPage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
-          <AuthBackground />
-          <p className="relative z-10 text-purple-100 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="relative z-10 bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
+        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
+          <MagicBackground variant="castle" />
+          <p className="relative z-10 theme-text font-semibold">Set up a learner profile to start your Daily Adventure!</p>
+          <Link href="/" className="relative z-10 theme-accent text-white font-black rounded-full px-6 py-2.5 shadow hover:theme-accent transition">
             Go Home
           </Link>
         </div>
@@ -74,11 +74,11 @@ export default function CertificatesPage() {
   if (loadError) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
-          <AuthBackground />
+        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
+          <MagicBackground variant="castle" />
           <p className="relative z-10 text-5xl mb-1">😵</p>
-          <p className="relative z-10 font-bold text-purple-100">{t("missionLoadErrorTitle")}</p>
-          <p className="relative z-10 text-sm text-purple-300 -mt-2">{t("missionLoadErrorHint")}</p>
+          <p className="relative z-10 font-bold theme-text">{t("missionLoadErrorTitle")}</p>
+          <p className="relative z-10 text-sm theme-text-muted -mt-2">{t("missionLoadErrorHint")}</p>
           <button
             onClick={() => setReloadKey(k => k + 1)}
             className="relative z-10 px-6 py-2 rounded-full bg-blue-500 text-white font-black text-sm shadow-md hover:bg-blue-600 transition"
@@ -92,8 +92,8 @@ export default function CertificatesPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
-        <AuthBackground />
+      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
+        <MagicBackground variant="castle" />
         <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <CertificatesHeader />
           <AchievementDashboard

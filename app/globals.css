@@ -10,8 +10,34 @@
    <body>'s (which /admin's light theme still needs unset) — set this dark
    so bouncing past page bounds shows the app's theme, not a white flash. */
 html {
-  background-color: #1c0f3d;
+  background-color: var(--theme-bg, #150b35);
 }
+
+/* ── Theme backgrounds ── */
+.theme-bg { background-color: var(--theme-bg, #150b35); }
+.theme-card { background-color: var(--theme-card, #1c1055); }
+.theme-darker { background-color: var(--theme-darker, #0f0830); }
+.theme-card-hover { background-color: var(--theme-card-hover, #251466); }
+.theme-card-active { background-color: var(--theme-card-active, #1a0e3e); }
+.hover\:theme-card-hover:hover { background-color: var(--theme-card-hover, #251466); }
+
+/* ── Theme accent backgrounds ── */
+.theme-accent { background-color: var(--theme-accent, #7c3aed); }
+.theme-accent-soft { background-color: var(--theme-accent-soft, rgba(139, 92, 246, 0.15)); }
+.theme-accent-muted { background-color: var(--theme-accent-muted, rgba(139, 92, 246, 0.25)); }
+.hover\:theme-accent:hover { background-color: var(--theme-accent, #7c3aed); }
+
+/* ── Theme borders ── */
+.theme-border { border-color: var(--theme-border, rgba(139, 92, 246, 0.15)); }
+.theme-border-strong { border-color: var(--theme-border-strong, rgba(139, 92, 246, 0.3)); }
+
+/* ── Theme text ── */
+.theme-text { color: var(--theme-text, #e9d5ff); }
+.theme-text-muted { color: var(--theme-text-muted, #c4b5fd); }
+.theme-text-faint { color: var(--theme-text-faint, rgba(196, 181, 253, 0.4)); }
+.theme-text-accent { color: var(--theme-accent, #7c3aed); }
+.hover\:theme-text:hover { color: var(--theme-text, #e9d5ff); }
+.hover\:theme-text-muted:hover { color: var(--theme-text-muted, #c4b5fd); }
 
 body {
   font-family: 'Poppins', sans-serif;
@@ -19,47 +45,53 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 97%; /* softened white */
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 215 20% 65%;
+    --background: 260 70% 14%;
+    --foreground: 260 20% 90%;
+    --card: 263 60% 18%;
+    --card-foreground: 260 20% 90%;
+    --popover: 263 60% 18%;
+    --popover-foreground: 260 20% 90%;
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 263 50% 22%;
+    --secondary-foreground: 260 20% 90%;
+    --muted: 263 40% 20%;
+    --muted-foreground: 260 20% 65%;
+    --accent: 263 50% 25%;
+    --accent-foreground: 260 20% 90%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 263 40% 25%;
+    --input: 263 40% 25%;
+    --ring: 263 70% 50%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 260 70% 10%;
+    --sidebar-foreground: 260 20% 80%;
+    --sidebar-primary: 263 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 263 50% 20%;
+    --sidebar-accent-foreground: 260 20% 90%;
+    --sidebar-border: 263 40% 25%;
+    --sidebar-ring: 263 70% 50%;
   }
 
   * {
-    @apply border-border;
+    border-color: hsl(263 40% 25%);
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: var(--theme-bg, #150b35);
+    font-family: var(--font-nunito), 'Nunito', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-baloo), 'Baloo 2', cursive;
   }
 }
 
@@ -74,6 +106,14 @@ body {
 }
 
 
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(14deg); }
+  40% { transform: rotate(-10deg); }
+  60% { transform: rotate(8deg); }
+  80% { transform: rotate(-4deg); }
+}
 
 @keyframes floating {
   0% { transform: translateY(0px); }

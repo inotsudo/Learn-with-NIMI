@@ -5,7 +5,7 @@ import { Trophy } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const BADGE_TYPES = [
-  { emoji: "🎵", bg: "bg-purple-400", labelKey: "musicBadgeLabel" },
+  { emoji: "🎵", bg: "theme-accent-muted", labelKey: "musicBadgeLabel" },
   { emoji: "📖", bg: "bg-blue-400", labelKey: "storyBadgeLabel" },
   { emoji: "🎨", bg: "bg-orange-400", labelKey: "artBadgeLabel" },
 ];
@@ -27,7 +27,7 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount, ac
       <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 text-center">
         <p className="font-black text-white text-[12px] tracking-wide">{t("todaysStarsTitle")}</p>
         <p className="text-2xl font-black text-yellow-500 mt-1">⭐ {todayStars}</p>
-        <p className="text-[10px] text-purple-300 mt-1 leading-snug">{t("todaysStarsEncouragement")}</p>
+        <p className="text-[10px] theme-text-muted mt-1 leading-snug">{t("todaysStarsEncouragement")}</p>
       </div>
 
       {/* Chat Streak */}
@@ -36,14 +36,14 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount, ac
         <p className="text-2xl font-black text-red-500 mt-1">
           🔥 {t("chatStreakDaysLabel").replace("{count}", String(chatStreakDays))}
         </p>
-        <p className="text-[10px] text-purple-300 mt-1 leading-snug">{t("chatStreakEncouragement")}</p>
+        <p className="text-[10px] theme-text-muted mt-1 leading-snug">{t("chatStreakEncouragement")}</p>
       </div>
 
       {/* Badges Earned */}
       <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-black text-white text-[12px] tracking-wide">{t("badgesEarnedTitle")}</h3>
-          <Link href="/user-profile" className="text-[10px] font-bold text-purple-200 hover:underline">
+          <Link href="/user-profile" className="text-[10px] font-bold theme-text hover:underline">
             {t("viewAll")}
           </Link>
         </div>
@@ -57,7 +57,7 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount, ac
               >
                 {badge.emoji}
               </div>
-              <p className="text-[9px] font-bold text-purple-300 text-center leading-tight">{t(badge.labelKey)}</p>
+              <p className="text-[9px] font-bold theme-text-muted text-center leading-tight">{t(badge.labelKey)}</p>
             </div>
           ))}
         </div>
@@ -69,7 +69,7 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount, ac
           <Trophy className="w-4 h-4 text-yellow-300" />
           {t("dailyChampionCertTitle")}
         </p>
-        <p className="text-[10px] text-purple-100 leading-snug mt-1.5">{t("dailyChampionCertDesc")}</p>
+        <p className="text-[10px] theme-text leading-snug mt-1.5">{t("dailyChampionCertDesc")}</p>
         <div className="w-full bg-white/20 rounded-full h-2.5 overflow-hidden mt-3">
           <div className="bg-yellow-400 h-full rounded-full transition-all" style={{ width: `${progressPct}%` }} />
         </div>
@@ -80,7 +80,7 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount, ac
       <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-black text-white text-[12px] tracking-wide mb-1">{t("nimiTipTitle")}</p>
-          <p className="text-[10.5px] text-purple-300 leading-snug">{t("nimiTipBody")}</p>
+          <p className="text-[10.5px] theme-text-muted leading-snug">{t("nimiTipBody")}</p>
         </div>
         <img src="/nimi-logo-circle.png" alt="NIMI"
           className="w-9 h-9 rounded-full object-cover border-2 border-yellow-300 shadow flex-shrink-0" />

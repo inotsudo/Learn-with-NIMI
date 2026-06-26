@@ -10,7 +10,7 @@ import PrivacySettingsModal from "./PrivacySettingsModal";
 type RowAction = "avatar" | "name" | "notifications" | "privacy";
 
 const ROWS: { id: RowAction; icon: typeof ImagePlus; bg: string; color: string; labelKey: string }[] = [
-  { id: "avatar", icon: ImagePlus, bg: "bg-purple-400/20", color: "text-purple-200", labelKey: "changeAvatarLabel" },
+  { id: "avatar", icon: ImagePlus, bg: "theme-accent-muted", color: "theme-text", labelKey: "changeAvatarLabel" },
   { id: "name", icon: Pencil, bg: "bg-blue-400/20", color: "text-blue-200", labelKey: "editNameLabel" },
   { id: "notifications", icon: Bell, bg: "bg-orange-400/20", color: "text-orange-200", labelKey: "notificationSettingsLabel" },
   { id: "privacy", icon: Shield, bg: "bg-green-400/20", color: "text-green-200", labelKey: "privacySettingsLabel" },
@@ -39,7 +39,7 @@ export default function AccountSettingsCard({ childId, childName, avatarUrl, onC
           <div className={`w-9 h-9 ${row.bg} rounded-full flex items-center justify-center shrink-0`}>
             <row.icon className={`w-4 h-4 ${row.color}`} />
           </div>
-          <span className="font-bold text-sm text-purple-100 flex-1">{t(row.labelKey)}</span>
+          <span className="font-bold text-sm theme-text flex-1">{t(row.labelKey)}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </button>
       ))}

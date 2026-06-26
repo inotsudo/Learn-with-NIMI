@@ -12,7 +12,7 @@ interface Props {
 
 const TIER_STYLES: Record<AchievementTier, { border: string; iconBg: string; text: string }> = {
   languageExplorer: { border: "border-amber-300", iconBg: "bg-amber-500", text: "text-amber-300" },
-  explorer: { border: "border-purple-300", iconBg: "bg-purple-500", text: "text-purple-300" },
+  explorer: { border: "theme-border-strong", iconBg: "theme-accent", text: "theme-text-muted" },
   categoryMaster: { border: "border-blue-300", iconBg: "bg-blue-500", text: "text-blue-300" },
 };
 
@@ -36,20 +36,20 @@ export default function AchievementCard({ item, earnedAt, childName }: Props) {
         </div>
       ) : (
         <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur flex items-center justify-center mx-auto shadow-md">
-          <Lock className="w-7 h-7 text-purple-200" />
+          <Lock className="w-7 h-7 theme-text" />
         </div>
       )}
-      <p className={`font-black text-xs uppercase tracking-wide mt-3 ${earned ? style.text : "text-purple-300"}`}>
+      <p className={`font-black text-xs uppercase tracking-wide mt-3 ${earned ? style.text : "theme-text-muted"}`}>
         {fillTemplate(t(item.titleKey), item.titleParams)}
       </p>
       {earned ? (
-        <p className="text-purple-100 font-bold text-sm mt-1">
+        <p className="theme-text font-bold text-sm mt-1">
           {t("awardedTo").replace("{name}", childName.toUpperCase())}
         </p>
       ) : (
-        <p className="text-purple-300 font-bold text-sm mt-1">{t("certLockedMessage")}</p>
+        <p className="theme-text-muted font-bold text-sm mt-1">{t("certLockedMessage")}</p>
       )}
-      <p className="text-purple-300 text-xs mt-1 px-1">{fillTemplate(t(item.descKey), item.descParams)}</p>
+      <p className="theme-text-muted text-xs mt-1 px-1">{fillTemplate(t(item.descKey), item.descParams)}</p>
     </div>
   );
 }

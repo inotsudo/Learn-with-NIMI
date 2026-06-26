@@ -49,7 +49,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
           <p className="font-black text-3xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-yellow-200 to-cyan-300">
             NIMIPIKO
           </p>
-          <p className="text-purple-300 text-[11px] font-semibold tracking-widest uppercase">
+          <p className="theme-text-muted text-[11px] font-semibold tracking-widest uppercase">
             Where Stories Come to Life
           </p>
         </div>

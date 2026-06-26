@@ -43,7 +43,7 @@ export default function MissionShell({ activity, mission, completedCount, comple
           {/* Header row */}
           <div className="flex items-center gap-3">
             <Link href="/missions"
-              className="flex items-center gap-1 text-purple-200 font-bold text-sm hover:text-white transition shrink-0">
+              className="flex items-center gap-1 theme-text font-bold text-sm hover:text-white transition shrink-0">
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline">{t("backToAdventure")}</span>
             </Link>
@@ -53,12 +53,12 @@ export default function MissionShell({ activity, mission, completedCount, comple
                 {activity.emoji} {title}
               </h1>
               {subtitle && (
-                <p className="text-purple-200 text-xs sm:text-sm font-semibold truncate">{subtitle}</p>
+                <p className="theme-text text-xs sm:text-sm font-semibold truncate">{subtitle}</p>
               )}
             </div>
 
             <button onClick={() => setSoundOn(s => !s)}
-              className="w-9 h-9 rounded-full bg-white/10 backdrop-blur border-2 border-white/15 shadow-sm flex items-center justify-center text-purple-200 hover:bg-white/20 transition shrink-0"
+              className="w-9 h-9 rounded-full bg-white/10 backdrop-blur border-2 border-white/15 shadow-sm flex items-center justify-center theme-text hover:bg-white/20 transition shrink-0"
               aria-label={soundOn ? t("pauseLabel") : t("playSongLabel")}>
               {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -92,10 +92,10 @@ export default function MissionShell({ activity, mission, completedCount, comple
                 </p>
               </div>
 
-              <p className="text-purple-300 text-xs text-center">{t("missionProgressDesc")}</p>
+              <p className="theme-text-muted text-xs text-center">{t("missionProgressDesc")}</p>
 
               <div className={`rounded-xl p-2.5 text-center border backdrop-blur ${completed ? "bg-green-400/20 border-green-300/30" : "bg-yellow-400/20 border-yellow-300/30"}`}>
-                <p className="text-[10px] font-black uppercase tracking-wide text-purple-200">{t("rewardLabel")}</p>
+                <p className="text-[10px] font-black uppercase tracking-wide theme-text">{t("rewardLabel")}</p>
                 <p className="text-lg font-black text-yellow-200">⭐ {stars}</p>
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function MissionShell({ activity, mission, completedCount, comple
                 className="w-12 h-12 rounded-full object-cover border-4 border-white/30 shrink-0" />
               <div className="min-w-0">
                 <p className="font-black text-sm">{t("nimiSaysLabel")}</p>
-                <p className="text-purple-100 text-sm mt-0.5">{tip}</p>
+                <p className="theme-text text-sm mt-0.5">{tip}</p>
               </div>
             </div>
             <Link href={nextHref}

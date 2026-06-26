@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export type ProgressTab = "overview" | "activity" | "skills" | "streaks";
+export type ProgressTab = "overview" | "activity" | "skills" | "streaks" | "settings";
 
 interface Props {
   activeTab: ProgressTab;
@@ -17,13 +17,14 @@ export default function ProgressHeader({ activeTab, onTabChange }: Props) {
     { id: "activity", label: t("tabActivityProgress") },
     { id: "skills", label: t("tabSkills") },
     { id: "streaks", label: t("tabStreaks") },
+    { id: "settings", label: "⚙️ " + t("settingsTitle") },
   ];
 
   return (
     <div>
       <div>
         <h1 className="font-black text-2xl sm:text-3xl text-white">{t("myProgressTitle")}</h1>
-        <p className="text-purple-200 text-sm mt-1">{t("myProgressSubtitle")}</p>
+        <p className="theme-text text-sm mt-1">{t("myProgressSubtitle")}</p>
       </div>
 
       <div className="mt-4 inline-flex flex-wrap bg-white/10 backdrop-blur rounded-full p-1 gap-1">
@@ -34,7 +35,7 @@ export default function ProgressHeader({ activeTab, onTabChange }: Props) {
             className={`px-4 py-2 rounded-full text-xs sm:text-sm font-black transition-colors ${
               activeTab === tab.id
                 ? "bg-white/20 text-white shadow"
-                : "text-purple-300 hover:text-white"
+                : "theme-text-muted hover:text-white"
             }`}
           >
             {tab.label}

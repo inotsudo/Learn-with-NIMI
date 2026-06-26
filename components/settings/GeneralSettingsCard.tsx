@@ -41,10 +41,10 @@ export default function GeneralSettingsCard() {
       <h3 className="font-black text-white mb-2">{t("generalSettingsTitle")}</h3>
 
       <div className="flex items-center gap-3 py-3 border-b border-white/15">
-        <div className="w-9 h-9 bg-purple-400/20 rounded-full flex items-center justify-center shrink-0">
-          <Volume2 className="w-4 h-4 text-purple-200" />
+        <div className="w-9 h-9 theme-accent-muted rounded-full flex items-center justify-center shrink-0">
+          <Volume2 className="w-4 h-4 theme-text" />
         </div>
-        <span className="font-bold text-sm text-purple-100 flex-1">{t("soundEffectsLabel")}</span>
+        <span className="font-bold text-sm theme-text flex-1">{t("soundEffectsLabel")}</span>
         <ToggleSwitch on={soundOn} onClick={toggleSound} />
       </div>
 
@@ -52,7 +52,7 @@ export default function GeneralSettingsCard() {
         <div className="w-9 h-9 bg-green-400/20 rounded-full flex items-center justify-center shrink-0">
           <Mic className="w-4 h-4 text-green-200" />
         </div>
-        <span className="font-bold text-sm text-purple-100 flex-1">{t("voiceNarrationLabel")}</span>
+        <span className="font-bold text-sm theme-text flex-1">{t("voiceNarrationLabel")}</span>
         <ToggleSwitch on={isReaderActive} onClick={toggleReader} />
       </div>
     </div>

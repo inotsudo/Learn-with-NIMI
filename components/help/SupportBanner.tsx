@@ -16,7 +16,7 @@ export default function SupportBanner() {
         />
         <div>
           <h3 className="font-black text-lg">{t("stillNeedHelpTitle")}</h3>
-          <p className="text-purple-100 text-sm mt-0.5">{t("stillNeedHelpDesc")}</p>
+          <p className="theme-text text-sm mt-0.5">{t("stillNeedHelpDesc")}</p>
         </div>
       </div>
       <a

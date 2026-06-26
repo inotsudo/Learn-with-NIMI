@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">
+  <defs>
+    <linearGradient id="ffBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9C27B0"/>
+      <stop offset="100%" stop-color="#6A1B9A"/>
+    </linearGradient>
+    <linearGradient id="ffShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#CE93D8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+  <rect width="56" height="56" rx="14" fill="url(#ffBg)"/>
+  <rect width="56" height="28" rx="14" fill="url(#ffShine)"/>
+  <!-- Headphones band -->
+  <path d="M15 28 Q15 12 28 12 Q41 12 41 28" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M17 28 Q17 15 28 15 Q39 15 39 28" fill="none" stroke="#E1BEE7" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <!-- Left ear -->
+  <rect x="10" y="25" width="10" height="16" rx="5" fill="white"/>
+  <rect x="11.5" y="27" width="7" height="12" rx="3.5" fill="#CE93D8"/>
+  <rect x="12.5" y="28" width="3" height="8" rx="1.5" fill="#E1BEE7" opacity="0.5"/>
+  <!-- Right ear -->
+  <rect x="36" y="25" width="10" height="16" rx="5" fill="white"/>
+  <rect x="37.5" y="27" width="7" height="12" rx="3.5" fill="#CE93D8"/>
+  <rect x="38.5" y="28" width="3" height="8" rx="1.5" fill="#E1BEE7" opacity="0.5"/>
+  <!-- Music notes -->
+  <g opacity="0.8">
+    <circle cx="24" cy="42" r="2.5" fill="white"/>
+    <line x1="26.5" y1="42" x2="26.5" y2="34" stroke="white" stroke-width="1.5"/>
+    <path d="M26.5 34 Q30 33 29 36" fill="white"/>
+  </g>
+  <g opacity="0.5">
+    <circle cx="34" cy="39" r="2" fill="white"/>
+    <line x1="36" y1="39" x2="36" y2="32" stroke="white" stroke-width="1.2"/>
+    <path d="M36 32 Q39 31 38 34" fill="white"/>
+  </g>
+</svg>

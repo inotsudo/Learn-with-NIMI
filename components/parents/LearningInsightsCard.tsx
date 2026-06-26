@@ -27,34 +27,34 @@ export default function LearningInsightsCard({ insights }: Props) {
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-purple-300 text-sm font-bold">{t("strongestCategoryLabel")}</span>
+          <span className="theme-text-muted text-sm font-bold">{t("strongestCategoryLabel")}</span>
           {strongest && insights.strongestCategory ? (
             <span className="font-black text-white text-sm text-right">
               {strongest.emoji} {t(strongest.titleKey)} · {insights.strongestCategory.completionPct}%
             </span>
           ) : (
-            <span className="text-purple-300 text-sm font-bold">{t("noDataYetLabel")}</span>
+            <span className="theme-text-muted text-sm font-bold">{t("noDataYetLabel")}</span>
           )}
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-purple-300 text-sm font-bold">{t("mostActiveLanguageLabel")}</span>
+          <span className="theme-text-muted text-sm font-bold">{t("mostActiveLanguageLabel")}</span>
           {insights.mostActiveLanguage ? (
             <span className="font-black text-white text-sm">
               {LANGUAGE_META[insights.mostActiveLanguage].flag} {LANGUAGE_META[insights.mostActiveLanguage].label}
             </span>
           ) : (
-            <span className="text-purple-300 text-sm font-bold">{t("noDataYetLabel")}</span>
+            <span className="theme-text-muted text-sm font-bold">{t("noDataYetLabel")}</span>
           )}
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-purple-300 text-sm font-bold">{t("longestStreakLabel")}</span>
+          <span className="theme-text-muted text-sm font-bold">{t("longestStreakLabel")}</span>
           <span className="font-black text-white text-sm">🔥 {insights.longestStreak} {t("dayStreakLabel")}</span>
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-purple-300 text-sm font-bold">{t("recentTrendLabel")}</span>
+          <span className="theme-text-muted text-sm font-bold">{t("recentTrendLabel")}</span>
           <span className="font-black text-white text-sm">{t(TREND_KEY[insights.recentTrend])}</span>
         </div>
       </div>

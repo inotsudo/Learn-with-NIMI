@@ -11,9 +11,9 @@ import type { Child } from "@/lib/queries";
 import LanguageSwitchDialog from "@/components/LanguageSwitchDialog";
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English",     flag: "🇬🇧" },
-  { code: "fr", label: "Français",    flag: "🇫🇷" },
-  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
+  { code: "en", label: "English",     flag: "en" },
+  { code: "fr", label: "Français",    flag: "fr" },
+  { code: "rw", label: "Kinyarwanda", flag: "rw" },
 ];
 
 function ToggleSwitch({ on, onClick }: { on: boolean; onClick: () => void }) {
@@ -73,22 +73,22 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
       <h3 className="font-black text-white mb-2">{t("appPreferencesTitle")}</h3>
 
       <div className="flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm text-purple-100">{t("soundLabel")}</span>
+        <span className="font-bold text-sm theme-text">{t("soundLabel")}</span>
         <ToggleSwitch on={isReaderActive} onClick={toggleReader} />
       </div>
 
       <div className="flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm text-purple-100">{t("languageLabel")}</span>
+        <span className="font-bold text-sm theme-text">{t("languageLabel")}</span>
         <div className="relative">
           <button
             onClick={() => setShowLangDropdown(v => !v)}
-            className="flex items-center gap-1.5 bg-white/5 border-2 border-white/15 rounded-full px-3 py-1.5 text-sm font-bold text-purple-200 hover:bg-white/10 transition"
+            className="flex items-center gap-1.5 bg-white/5 border-2 border-white/15 rounded-full px-3 py-1.5 text-sm font-bold theme-text hover:bg-white/10 transition"
           >
             <span>{currentLang.flag} {currentLang.label}</span>
             <ChevronDown className="w-3.5 h-3.5" />
           </button>
           {showLangDropdown && (
-            <div className="absolute right-0 mt-2 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-40">
+            <div className="absolute right-0 mt-2 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-40">
               {LANGS.map(lang => (
                 <button
                   key={lang.code}
@@ -99,7 +99,7 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
                   className="flex items-center gap-2 px-3 py-2.5 w-full hover:bg-white/10 transition text-sm"
                 >
                   <span>{lang.flag}</span>
-                  <span className="font-medium text-purple-100">{lang.label}</span>
+                  <span className="font-medium theme-text">{lang.label}</span>
                 </button>
               ))}
             </div>
@@ -110,7 +110,7 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
       <div className="flex items-center justify-between py-3 last:border-0 gap-2">
         <div className="flex items-center gap-2">
           <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnline ? "bg-green-400" : "bg-orange-400"}`} />
-          <span className="font-bold text-sm text-purple-100">
+          <span className="font-bold text-sm theme-text">
             {isOnline ? t("onlineLabel") : t("offlineLabel")}
           </span>
         </div>
@@ -118,7 +118,7 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
           <button
             onClick={syncNow}
             disabled={syncing || !isOnline}
-            className="flex items-center gap-1.5 bg-purple-400/20 text-purple-200 font-bold text-xs px-3 py-1.5 rounded-full hover:bg-purple-400/30 transition disabled:opacity-60"
+            className="flex items-center gap-1.5 theme-accent-muted theme-text font-bold text-xs px-3 py-1.5 rounded-full hover:theme-accent-muted transition disabled:opacity-60"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
             {syncing

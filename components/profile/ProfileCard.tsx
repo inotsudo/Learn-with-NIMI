@@ -23,13 +23,13 @@ export default function ProfileCard({ avatar, childName, level, categoriesComple
         transition={{ type: "spring", stiffness: 260, damping: 18 }}
       >
         {avatar && !avatar.startsWith("http") ? (
-          <div className="w-24 h-24 rounded-full border-4 border-purple-300 shadow-lg bg-gradient-to-br from-purple-500/30 to-indigo-500/30 flex items-center justify-center text-5xl select-none">
+          <div className="w-24 h-24 rounded-full border-4 theme-border-strong shadow-lg bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-5xl select-none">
             {avatar}
           </div>
         ) : (
           <img
             src={avatar ?? "/default-avatar.png"} alt={childName}
-            className="w-24 h-24 rounded-full object-cover border-4 border-purple-300 shadow-lg"
+            className="w-24 h-24 rounded-full object-cover border-4 theme-border-strong shadow-lg"
             onError={e => { (e.target as HTMLImageElement).src = "/avatar.png"; }} />
         )}
       </motion.div>
@@ -49,13 +49,13 @@ export default function ProfileCard({ avatar, childName, level, categoriesComple
       <div className="w-full mt-4">
         <div className="w-full bg-white/10 rounded-full h-3.5 overflow-hidden">
           <motion.div
-            className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 h-full rounded-full"
+            className="bg-gradient-to-r from-yellow-400 via-green-400 to-sky-400 h-full rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}
             transition={{ duration: 1.2, ease: "easeOut" }}
           />
         </div>
-        <p className="text-xs text-purple-300 font-semibold mt-1.5">
+        <p className="text-xs theme-text-muted font-semibold mt-1.5">
           {t("levelProgressLabel").replace("{current}", String(categoriesCompleted)).replace("{total}", String(categoriesTotal))}
         </p>
       </div>

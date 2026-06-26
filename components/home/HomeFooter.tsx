@@ -20,7 +20,7 @@ const TRUST_BADGES = [
 
 export default function HomeFooter() {
   return (
-    <footer className="bg-purple-800 text-white">
+    <footer className="theme-card-active text-white">
 
       {/* Main body */}
       <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col items-center gap-5">
@@ -33,7 +33,7 @@ export default function HomeFooter() {
             <p className="font-black text-2xl tracking-widest leading-none bg-gradient-to-r from-pink-300 via-purple-200 to-cyan-300 bg-clip-text text-transparent drop-shadow">
               NIMIPIKO
             </p>
-            <p className="text-purple-300 text-[11px] font-semibold tracking-widest mt-1 uppercase">
+            <p className="theme-text-muted text-[11px] font-semibold tracking-widest mt-1 uppercase">
               Where Stories Come to Life
             </p>
           </div>
@@ -43,9 +43,9 @@ export default function HomeFooter() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 w-full max-w-sm">
-          <div className="flex-1 h-px bg-purple-600" />
+          <div className="flex-1 h-px theme-accent" />
           <span className="text-yellow-400 text-sm">✦</span>
-          <div className="flex-1 h-px bg-purple-600" />
+          <div className="flex-1 h-px theme-accent" />
         </div>
 
         {/* Trust badges */}
@@ -67,7 +67,7 @@ export default function HomeFooter() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={label}
-              className="w-9 h-9 rounded-full bg-purple-700 hover:bg-purple-500 flex items-center justify-center transition-colors shadow-md"
+              className="w-9 h-9 rounded-full theme-accent hover:theme-accent flex items-center justify-center transition-colors shadow-md"
             >
               <Icon size={16} className="text-white" strokeWidth={1.8} />
             </Link>
@@ -77,8 +77,8 @@ export default function HomeFooter() {
       </div>
 
       {/* Copyright strip */}
-      <div className="border-t border-purple-700 bg-purple-900 py-3 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-purple-400 font-semibold">
+      <div className="border-t theme-border-strong theme-darker py-3 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] theme-text-muted font-semibold">
           <span>© {new Date().getFullYear()} NIMIPIKO · All rights reserved.</span>
           <div className="flex gap-5">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>

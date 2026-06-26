@@ -25,7 +25,7 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className="text-[10px] font-black text-purple-200"
+                  className="text-[10px] font-black theme-text"
                 >
                   {count}
                 </motion.span>
@@ -33,7 +33,7 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
               <motion.div
                 className={`w-full rounded-t-lg ${
                   count > 0
-                    ? "bg-gradient-to-t from-purple-600 to-pink-400"
+                    ? "bg-gradient-to-t from-sky-500 to-emerald-400"
                     : "bg-white/10"
                 }`}
                 initial={{ height: 0 }}
@@ -41,7 +41,7 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
                 transition={{ duration: 0.6, delay: i * 0.06, ease: "easeOut" }}
                 style={{ minHeight: count > 0 ? 8 : 4 }}
               />
-              <span className="text-[10px] font-bold text-purple-300">{t(dayKeys[i])}</span>
+              <span className="text-[10px] font-bold theme-text-muted">{t(dayKeys[i])}</span>
             </div>
           );
         })}

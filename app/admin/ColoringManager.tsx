@@ -7,6 +7,7 @@ import {
   MoreVertical, Pencil, Copy, ArrowUpDown, Trash2, ChevronLeft, ChevronRight,
   PenTool, FileStack, Menu, AlertCircle, RefreshCw, X,
 } from 'lucide-react'
+import { useToast } from './Toast'
 import { ACCENT, type ColoringBookRow } from './missionMeta'
 import ColoringEditor from './ColoringEditor'
 import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
@@ -27,6 +28,7 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const { success: toastOk, error: toastErr } = useToast()
   const [mutatingId, setMutatingId] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const appliedInitialIdRef = useRef<string | undefined>(undefined)
@@ -133,7 +135,9 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
       if (error) throw error
       await fetchBooks()
       setSelectedId(newBook.id)
+      toastOk('Coloring book created')
     } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'Could not create')
       setActionError(err instanceof Error ? err.message : 'Could not create the coloring book.')
     } finally {
       setCreating(false)
@@ -165,7 +169,9 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
 
       await fetchBooks()
       setSelectedId(dup.id)
+      toastOk('Coloring book duplicated')
     } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'Could not duplicate')
       setActionError(err instanceof Error ? err.message : 'Could not duplicate the coloring book.')
       await fetchBooks()
     } finally {

@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
+import { smartUpload } from '@/lib/uploadWithProgress'
 import {
   PenTool, Settings2, Image as ImageIcon, Upload, FileStack, Plus, Trash2,
   Info, CheckCircle2, AlertCircle, Eye,
@@ -265,9 +266,9 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
     try {
       const ext = file.name.split('.').pop()
       const path = `pages/${book.id}-${page.page_number}-${Date.now()}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('Coloriage').upload(path, file, { upsert: true })
+      const { error: uploadErr, storagePath } = await smartUpload('Coloriage', path, file)
       if (uploadErr) throw uploadErr
-      setImageUrl(`Coloriage/${path}`)
+      setImageUrl(storagePath)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed.')
     } finally {

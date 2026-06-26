@@ -20,10 +20,10 @@ export default function GreetingCard({ childName }: Props) {
         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
       />
       <div>
-        <p className="font-black text-purple-200 text-lg">
+        <p className="font-black theme-text text-lg">
           {t("progressGreatJob").replace("{name}", childName)}
         </p>
-        <p className="text-purple-300 text-sm mt-0.5">{t("progressEncouragement")}</p>
+        <p className="theme-text-muted text-sm mt-0.5">{t("progressEncouragement")}</p>
       </div>
     </div>
   );

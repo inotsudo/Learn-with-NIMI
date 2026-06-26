@@ -37,9 +37,9 @@ export default function StatsRow({
     },
     {
       icon: Award,
-      iconBg: "bg-purple-400/20",
-      iconColor: "text-purple-200",
-      borderColor: "border-purple-100",
+      iconBg: "theme-accent-muted",
+      iconColor: "theme-text",
+      borderColor: "theme-border",
       value: badgesEarned,
       suffix: "",
       label: t("statBadgesLabel"),
@@ -64,9 +64,9 @@ export default function StatsRow({
           </div>
           <p className="font-black text-2xl text-white">
             {stat.value}
-            {stat.suffix && <span className="text-sm text-purple-300 font-bold">{stat.suffix}</span>}
+            {stat.suffix && <span className="text-sm theme-text-muted font-bold">{stat.suffix}</span>}
           </p>
-          <p className="text-purple-200 text-xs font-semibold mt-0.5">{stat.label}</p>
+          <p className="theme-text text-xs font-semibold mt-0.5">{stat.label}</p>
         </div>
       ))}
     </div>

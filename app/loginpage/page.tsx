@@ -7,17 +7,17 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, Sparkles } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import AuthBackground from "@/components/auth/AuthBackground";
-// import GoogleIcon from "@/components/auth/GoogleIcon";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -44,31 +44,18 @@ export default function LoginPage() {
         return;
       }
 
-      setMessage("Login successful! Redirecting...");
+      setMessage(t("loginSuccess"));
       router.replace("/");
     } catch (err) {
       console.error("Unexpected login error:", err);
-      setError("An unexpected error occurred.");
+      setError(t("loginError"));
     } finally {
       setLoading(false);
     }
   };
 
-  const loginWithGoogle = async () => {
-    setGoogleLoading(true);
-    setError("");
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (oauthError) {
-      setError(oauthError.message);
-      setGoogleLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center px-4 py-10 sm:py-14">
+    <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center px-4 py-10 sm:py-14">
 
       <AuthBackground />
 
@@ -77,7 +64,7 @@ export default function LoginPage() {
         <h1 className="font-black text-3xl sm:text-4xl lg:text-5xl text-white">
           Welcome Back, <span className="bg-gradient-to-r from-fuchsia-400 to-purple-300 bg-clip-text text-transparent">Explorer!</span> 🚀
         </h1>
-        <p className="text-purple-200 mt-2 text-sm sm:text-base">
+        <p className="theme-text mt-2 text-sm sm:text-base">
           Log in to continue your creative journey with Nimipiko Studio.
         </p>
       </div>
@@ -97,7 +84,7 @@ export default function LoginPage() {
       </div>
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+      <div className="relative z-10 w-full max-w-md theme-card border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
 
         {(error || message) && (
           <div className={`rounded-xl p-2.5 text-center text-sm font-semibold ${error ? "bg-red-500/10 text-red-300" : "bg-green-500/10 text-green-300"}`}>
@@ -106,22 +93,22 @@ export default function LoginPage() {
         )}
 
         <div>
-          <label className="flex items-center gap-1.5 font-bold text-purple-100 text-sm mb-1.5">
-            <Mail className="w-4 h-4 text-purple-300" /> Email Address
+          <label className="flex items-center gap-1.5 font-bold theme-text text-sm mb-1.5">
+            <Mail className="w-4 h-4 theme-text-muted" /> Email Address
           </label>
           <input
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             onKeyDown={e => e.key === "Enter" && login()}
-            placeholder="Enter your email"
+            placeholder={t("loginPlaceholderEmail")}
             disabled={loading}
-            className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-300 transition placeholder:text-white/40" />
+            className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition placeholder:text-white/40" />
         </div>
 
         <div>
-          <label className="flex items-center gap-1.5 font-bold text-purple-100 text-sm mb-1.5">
-            <Lock className="w-4 h-4 text-purple-300" /> Password
+          <label className="flex items-center gap-1.5 font-bold theme-text text-sm mb-1.5">
+            <Lock className="w-4 h-4 theme-text-muted" /> Password
           </label>
           <div className="relative">
             <input
@@ -129,13 +116,13 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === "Enter" && login()}
-              placeholder="Enter your password"
+              placeholder={t("loginPlaceholderPassword")}
               disabled={loading}
-              className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-white focus:outline-none focus:border-purple-300 transition placeholder:text-white/40" />
+              className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition placeholder:text-white/40" />
             <button
               type="button"
               onClick={() => setShowPassword(p => !p)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-200 hover:text-white transition"
+              className="absolute right-3 top-1/2 -translate-y-1/2 theme-text hover:text-white transition"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -143,7 +130,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 font-semibold text-purple-200 cursor-pointer">
+          <label className="flex items-center gap-2 font-semibold theme-text cursor-pointer">
             <input
               type="checkbox"
               checked={rememberMe}
@@ -151,7 +138,7 @@ export default function LoginPage() {
               className="w-4 h-4 accent-purple-600 rounded" />
             Remember me
           </label>
-          <Link href="/forgot-password" className="text-purple-200 font-bold hover:text-white hover:underline">
+          <Link href="/forgot-password" className="theme-text font-bold hover:text-white hover:underline">
             Forgot Password?
           </Link>
         </div>
@@ -163,29 +150,14 @@ export default function LoginPage() {
           className="relative w-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-rose-500 hover:opacity-90 text-white font-black rounded-2xl py-3.5 shadow-lg transition disabled:opacity-60 flex items-center justify-center gap-2"
         >
           <Sparkles className="absolute left-4 w-3.5 h-3.5 text-white/70" />
-          {loading ? "Logging in..." : <>🚀 Start My Adventure</>}
+          {loading ? t("loginLoggingIn") : <>🚀 {t("loginStartAdventure")}</>}
           <Sparkles className="absolute right-4 w-3.5 h-3.5 text-white/70" />
         </motion.button>
 
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-white/20" />
-          <span className="text-xs font-bold text-purple-300">OR</span>
-          <div className="flex-1 h-px bg-white/20" />
-        </div>
-
-        <motion.button
-          onClick={loginWithGoogle}
-          disabled={googleLoading}
-          whileTap={{ scale: 0.97 }}
-          className="w-full border-2 border-white/20 hover:border-purple-300 rounded-2xl py-3 flex items-center justify-center gap-2 font-bold text-white transition disabled:opacity-60"
-        >
-          {/* <GoogleIcon /> */}
-          {/* {googleLoading ? "Connecting..." : "Continue with Google"} */}
-        </motion.button>
       </div>
 
       {/* Sign up link */}
-      <p className="relative z-10 text-center text-sm text-purple-100 mt-6">
+      <p className="relative z-10 text-center text-sm theme-text mt-6">
         Don&apos;t have an account?{" "}
         <Link href="/signuppage" className="text-pink-400 font-bold hover:underline">
           Sign up
@@ -200,7 +172,7 @@ export default function LoginPage() {
           className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 shadow-md flex-shrink-0" />
         <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3">
           <p className="text-sm font-bold text-white leading-snug">
-            Ready for another adventure? Let&apos;s bring your <span className="text-purple-200">ideas</span> to life! ✨
+            Ready for another adventure? Let&apos;s bring your <span className="theme-text">ideas</span> to life! ✨
           </p>
         </div>
       </div>

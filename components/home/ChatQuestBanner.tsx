@@ -16,17 +16,17 @@ export default function ChatQuestBanner() {
         transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }} />
 
       <div className="flex-1 min-w-0">
-        <p className="font-black text-purple-200 text-sm sm:text-lg flex items-center gap-1.5">
+        <p className="font-black theme-text text-sm sm:text-lg flex items-center gap-1.5">
           <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
           {t("nimiChatQuestTitle")}
           <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
         </p>
         <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 min-w-0">
-            <MessageCircle className="w-4 h-4 text-purple-400 flex-shrink-0" />
+            <MessageCircle className="w-4 h-4 theme-text-muted flex-shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-wide text-purple-300">{t("chatQuestGoalLabel")}</p>
-              <p className="text-sm font-bold text-purple-100 truncate">{t("chatQuestGoalDesc")}</p>
+              <p className="text-[10px] font-black uppercase tracking-wide theme-text-muted">{t("chatQuestGoalLabel")}</p>
+              <p className="text-sm font-bold theme-text truncate">{t("chatQuestGoalDesc")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 bg-yellow-400/20 backdrop-blur border border-white/20 rounded-xl px-3 py-1.5 flex-shrink-0">

@@ -7,10 +7,11 @@ import { motion } from "framer-motion";
 import { User, Mail, Lock, Eye, EyeOff, UserPlus, Star, Sparkles } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import AuthBackground from "@/components/auth/AuthBackground";
-// import GoogleIcon from "@/components/auth/GoogleIcon";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,20 +21,19 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const signup = async () => {
     if (!name.trim() || !email.trim() || !password) {
-      setError("Please fill in all fields.");
+      setError(t("signupErrFillAll"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("signupErrNoMatch"));
       return;
     }
     if (!agreed) {
-      setError("Please agree to the Terms of Service and Privacy Policy.");
+      setError(t("signupErrTerms"));
       return;
     }
 
@@ -59,27 +59,14 @@ export default function SignupPage() {
       );
       router.replace("/");
     } else {
-      setError("Signup failed: no user returned");
+      setError(t("signupErrNoUser"));
     }
 
     setLoading(false);
   };
 
-  const signupWithGoogle = async () => {
-    setGoogleLoading(true);
-    setError("");
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (oauthError) {
-      setError(oauthError.message);
-      setGoogleLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center px-4 py-10 sm:py-14">
+    <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center px-4 py-10 sm:py-14">
 
       <AuthBackground />
 
@@ -87,7 +74,7 @@ export default function SignupPage() {
 
         {/* Left: hero copy + mascot */}
         <div className="text-center lg:text-left mb-10 lg:mb-0">
-          <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur rounded-full px-4 py-1.5 text-sm font-bold text-purple-100">
+          <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur rounded-full px-4 py-1.5 text-sm font-bold theme-text">
             <Star className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" /> Create your account
           </span>
 
@@ -100,7 +87,7 @@ export default function SignupPage() {
             </span>
           </h1>
 
-          <p className="text-purple-200 mt-4 text-sm sm:text-base max-w-sm mx-auto lg:mx-0">
+          <p className="theme-text mt-4 text-sm sm:text-base max-w-sm mx-auto lg:mx-0">
             Join Nimipiko Studio and unlock a world of creativity.
           </p>
 
@@ -119,14 +106,14 @@ export default function SignupPage() {
         </div>
 
         {/* Right: sign-up card */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
+        <div className="w-full max-w-md mx-auto lg:mx-0 theme-card border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
 
           <div className="flex flex-col items-center text-center mb-1">
-            <div className="w-16 h-16 rounded-full bg-purple-400/20 flex items-center justify-center mb-3">
-              <UserPlus className="w-7 h-7 text-purple-200" />
+            <div className="w-16 h-16 rounded-full theme-accent-muted flex items-center justify-center mb-3">
+              <UserPlus className="w-7 h-7 theme-text" />
             </div>
             <h2 className="font-black text-2xl text-white">Sign Up</h2>
-            <p className="text-purple-200 text-sm mt-1">Create your account to begin your creative journey.</p>
+            <p className="theme-text text-sm mt-1">Create your account to begin your creative journey.</p>
           </div>
 
           {error && (
@@ -136,80 +123,80 @@ export default function SignupPage() {
           )}
 
           {/* Full Name */}
-          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-purple-200" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:theme-border-strong transition">
+            <div className="w-9 h-9 rounded-xl theme-accent-muted flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 theme-text" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-purple-100">Full Name</label>
+              <label className="block text-xs font-bold theme-text">Full Name</label>
               <input
                 type="text" value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Enter your full name"
+                placeholder={t("signupPlaceholderName")}
                 disabled={loading}
                 className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
           </div>
 
           {/* Email */}
-          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-              <Mail className="w-4 h-4 text-purple-200" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:theme-border-strong transition">
+            <div className="w-9 h-9 rounded-xl theme-accent-muted flex items-center justify-center flex-shrink-0">
+              <Mail className="w-4 h-4 theme-text" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-purple-100">Email Address</label>
+              <label className="block text-xs font-bold theme-text">Email Address</label>
               <input
                 type="email" value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="Enter your email address"
+                placeholder={t("signupPlaceholderEmail")}
                 disabled={loading}
                 className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
           </div>
 
           {/* Password */}
-          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-              <Lock className="w-4 h-4 text-purple-200" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:theme-border-strong transition">
+            <div className="w-9 h-9 rounded-xl theme-accent-muted flex items-center justify-center flex-shrink-0">
+              <Lock className="w-4 h-4 theme-text" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-purple-100">Password</label>
+              <label className="block text-xs font-bold theme-text">Password</label>
               <input
                 type={showPassword ? "text" : "password"} value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Create a password"
+                placeholder={t("signupPlaceholderPassword")}
                 disabled={loading}
                 className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
             <button type="button" onClick={() => setShowPassword(p => !p)}
-              className="flex-shrink-0 text-purple-200 hover:text-white transition">
+              className="flex-shrink-0 theme-text hover:text-white transition">
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
 
           {/* Confirm Password */}
-          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:border-purple-300 transition">
-            <div className="w-9 h-9 rounded-xl bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-              <Lock className="w-4 h-4 text-purple-200" />
+          <div className="flex items-center gap-3 border-2 border-white/20 bg-white/5 rounded-2xl px-3 py-2 focus-within:theme-border-strong transition">
+            <div className="w-9 h-9 rounded-xl theme-accent-muted flex items-center justify-center flex-shrink-0">
+              <Lock className="w-4 h-4 theme-text" />
             </div>
             <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold text-purple-100">Confirm Password</label>
+              <label className="block text-xs font-bold theme-text">Confirm Password</label>
               <input
                 type={showConfirmPassword ? "text" : "password"} value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && signup()}
-                placeholder="Confirm your password"
+                placeholder={t("signupPlaceholderConfirm")}
                 disabled={loading}
                 className="w-full text-sm font-semibold text-white placeholder:text-white/40 focus:outline-none bg-transparent" />
             </div>
             <button type="button" onClick={() => setShowConfirmPassword(p => !p)}
-              className="flex-shrink-0 text-purple-200 hover:text-white transition">
+              className="flex-shrink-0 theme-text hover:text-white transition">
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
 
           {/* Terms */}
-          <label className="flex items-start gap-2 text-sm text-purple-200 cursor-pointer">
+          <label className="flex items-start gap-2 text-sm theme-text cursor-pointer">
             <input
               type="checkbox"
               checked={agreed}
@@ -228,27 +215,11 @@ export default function SignupPage() {
             className="relative w-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-rose-500 hover:opacity-90 text-white font-black rounded-2xl py-3.5 shadow-lg transition disabled:opacity-60 flex items-center justify-center gap-2"
           >
             <Sparkles className="absolute left-4 w-3.5 h-3.5 text-white/70" />
-            {loading ? "Creating account..." : <>🚀 Create My Account</>}
+            {loading ? t("signupCreating") : <>🚀 {t("signupCreateBtn")}</>}
             <Sparkles className="absolute right-4 w-3.5 h-3.5 text-white/70" />
           </motion.button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-xs font-bold text-purple-300">OR</span>
-            <div className="flex-1 h-px bg-white/20" />
-          </div>
-
-          <motion.button
-            onClick={signupWithGoogle}
-            disabled={googleLoading}
-            whileTap={{ scale: 0.97 }}
-            className="w-full border-2 border-white/20 hover:border-purple-300 rounded-2xl py-3 flex items-center justify-center gap-2 font-bold text-white transition disabled:opacity-60"
-          >
-            {/* <GoogleIcon /> */}
-            {/* {googleLoading ? "Connecting..." : "Sign up with Google"} */}
-          </motion.button>
-
-          <p className="text-center text-sm text-purple-200">
+          <p className="text-center text-sm theme-text">
             Already have an account?{" "}
             <Link href="/loginpage" className="text-white font-bold hover:underline">
               Log in

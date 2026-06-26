@@ -29,7 +29,7 @@ export default function TodaysProgressCard({ completedCategories }: Props) {
             <circle cx="36" cy="36" r={RING_RADIUS} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="7" />
             <motion.circle
               cx="36" cy="36" r={RING_RADIUS} fill="none"
-              stroke={allDone ? "#22c55e" : "#9333ea"}
+              stroke={allDone ? "#22c55e" : "var(--theme-accent, #9333ea)"}
               strokeWidth="7" strokeLinecap="round"
               strokeDasharray={RING_CIRCUMFERENCE}
               initial={{ strokeDashoffset: RING_CIRCUMFERENCE }}
@@ -69,7 +69,7 @@ export default function TodaysProgressCard({ completedCategories }: Props) {
               }`}
             >
               <span className={`text-sm font-semibold flex items-center gap-2 ${
-                isDone ? "text-green-200" : "text-purple-100"
+                isDone ? "text-green-200" : "theme-text"
               }`}>
                 <span className="text-base">{activity.emoji}</span>
                 {t(activity.titleKey)}

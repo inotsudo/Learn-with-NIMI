@@ -24,13 +24,13 @@ export default function PopularQuestionsCard() {
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
             className="flex items-center gap-3 py-3 w-full text-left"
           >
-            <span className="font-bold text-sm text-purple-100 flex-1">{t(item.questionKey)}</span>
+            <span className="font-bold text-sm theme-text flex-1">{t(item.questionKey)}</span>
             <ChevronDown
-              className={`w-4 h-4 text-purple-300 shrink-0 transition-transform duration-200 ${openIndex === i ? "rotate-180" : ""}`}
+              className={`w-4 h-4 theme-text-muted shrink-0 transition-transform duration-200 ${openIndex === i ? "rotate-180" : ""}`}
             />
           </button>
           {openIndex === i && (
-            <p className="text-purple-200 text-sm pb-3 pl-1 leading-relaxed">
+            <p className="theme-text text-sm pb-3 pl-1 leading-relaxed">
               {t(item.answerKey)}
             </p>
           )}

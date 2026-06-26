@@ -85,30 +85,30 @@ export default function InstallPrompt() {
       <button
         onClick={dismiss}
         aria-label="Dismiss"
-        className="absolute top-2 right-2 text-purple-300 hover:text-white transition"
+        className="absolute top-2 right-2 theme-text-muted hover:text-white transition"
       >
         <X className="w-4 h-4" />
       </button>
       <div className="flex items-center gap-2">
-        <Download className="w-5 h-5 text-purple-200" />
+        <Download className="w-5 h-5 theme-text" />
         <p className="font-black text-white text-sm">{t("installPromptTitle")}</p>
       </div>
-      <p className="text-purple-200 text-xs leading-relaxed">{t("installPromptBody")}</p>
+      <p className="theme-text text-xs leading-relaxed">{t("installPromptBody")}</p>
       {ios ? (
-        <p className="text-purple-100 text-xs font-semibold bg-white/10 rounded-lg px-3 py-2 mt-1">
+        <p className="theme-text text-xs font-semibold bg-white/10 rounded-lg px-3 py-2 mt-1">
           {t("iosInstallInstructions")}
         </p>
       ) : (
         <div className="flex items-center gap-2 mt-1">
           <button
             onClick={install}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-full py-2 shadow transition"
+            className="flex-1 theme-accent hover:theme-accent text-white font-black text-xs rounded-full py-2 shadow transition"
           >
             {t("installBtn")}
           </button>
           <button
             onClick={dismiss}
-            className="text-purple-300 hover:text-white text-xs font-semibold px-2"
+            className="theme-text-muted hover:text-white text-xs font-semibold px-2"
           >
             {t("installLaterBtn")}
           </button>

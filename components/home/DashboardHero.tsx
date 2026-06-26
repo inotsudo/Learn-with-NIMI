@@ -34,7 +34,7 @@ export default function DashboardHero({ childName, themeTitle, themeEmoji, level
       {/* Current level pill */}
       {level !== undefined && (
         <div className="relative z-10 flex justify-end mb-2">
-          <span className="bg-purple-600 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-full px-3 py-1 shadow">
+          <span className="theme-accent text-white font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-full px-3 py-1 shadow">
             {t("levelAdventureTitle").replace("{level}", String(level))}
           </span>
         </div>
@@ -73,7 +73,7 @@ export default function DashboardHero({ childName, themeTitle, themeEmoji, level
           <h1 className="font-black text-white text-lg sm:text-2xl leading-tight">
             {t(greetingKey()).replace("{name}", childName)}
           </h1>
-          <p className="text-purple-300 text-xs sm:text-sm font-semibold mt-0.5">
+          <p className="theme-text-muted text-xs sm:text-sm font-semibold mt-0.5">
             {t("dashboardSubtitle")}
           </p>
         </div>

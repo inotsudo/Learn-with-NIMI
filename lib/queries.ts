@@ -55,6 +55,8 @@ export interface ColoringPage {
 export interface MissionContent {
   lyrics?: string[];
   prompts?: { emoji: string; label: string }[];
+  cover_image_url?: string;
+  [key: string]: unknown;
 }
 
 export interface Mission {

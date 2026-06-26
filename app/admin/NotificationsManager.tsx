@@ -5,6 +5,7 @@ import {
   Bell, Menu, ChevronDown, AlertCircle, RefreshCw, Send, Users, Smartphone, Clock,
 } from 'lucide-react'
 import { ACCENT } from './missionMeta'
+import { useToast } from './Toast'
 import { Skeleton, SkeletonStatCards, SkeletonForm, SkeletonList } from './Skeleton'
 
 interface NotificationsManagerProps {
@@ -63,6 +64,7 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
   const [url, setUrl] = useState('')
   const [targetParentId, setTargetParentId] = useState('')
   const [sending, setSending] = useState(false)
+  const { success: toastOk, error: toastErr } = useToast()
   const [sendError, setSendError] = useState<string | null>(null)
   const [sendResult, setSendResult] = useState<string | null>(null)
 
@@ -117,13 +119,36 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
       if (!res.ok) throw new Error(data.error || 'Failed to send notification.')
 
       setBroadcasts(prev => [data as BroadcastRow, ...prev].slice(0, 10))
-      setSendResult(`Sent to ${data.recipient_parents} parent${data.recipient_parents === 1 ? '' : 's'}, ${data.recipient_devices} device${data.recipient_devices === 1 ? '' : 's'}.`)
+
+      // Also create in-app notifications
+      if (targetParentId) {
+        await supabase.from('notifications').insert({
+          parent_id: targetParentId, title: title.trim(), body: message.trim(),
+          type: 'info', url: url.trim() || null,
+        })
+      } else {
+        const { data: allParents } = await supabase.from('parents').select('id')
+        if (allParents?.length) {
+          await supabase.from('notifications').insert(
+            allParents.map(p => ({
+              parent_id: p.id, title: title.trim(), body: message.trim(),
+              type: 'info', url: url.trim() || null,
+            }))
+          )
+        }
+      }
+
+      const msg = `Sent to ${data.recipient_parents} parent${data.recipient_parents === 1 ? '' : 's'}, ${data.recipient_devices} device${data.recipient_devices === 1 ? '' : 's'}.`
+      setSendResult(msg)
+      toastOk(msg)
       setTitle('')
       setMessage('')
       setUrl('')
       setTargetParentId('')
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : 'Failed to send notification.')
+      const errMsg = err instanceof Error ? err.message : 'Failed to send notification.'
+      setSendError(errMsg)
+      toastErr(errMsg)
     } finally {
       setSending(false)
     }

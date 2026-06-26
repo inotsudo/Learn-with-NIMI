@@ -21,9 +21,9 @@ const HEADER_STARS = [
 ];
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English",     flag: "🇬🇧" },
-  { code: "fr", label: "Français",    flag: "🇫🇷" },
-  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
+  { code: "en", label: "English",     flag: "en" },
+  { code: "fr", label: "Français",    flag: "fr" },
+  { code: "rw", label: "Kinyarwanda", flag: "rw" },
 ];
 
 export default function HomeHeader() {
@@ -78,7 +78,7 @@ export default function HomeHeader() {
               NIMIPIKO
             </motion.h1>
           </Link>
-          <p className="text-purple-300 font-semibold text-sm lg:text-base mt-1 tracking-widest">
+          <p className="theme-text-muted font-semibold text-sm lg:text-base mt-1 tracking-widest">
             Learn • Play • Create • Grow
           </p>
         </div>
@@ -89,11 +89,11 @@ export default function HomeHeader() {
           {/* Speech bubble (lg+) */}
           <div className="hidden lg:block relative bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl px-4 py-3 shadow-xl max-w-[185px] xl:max-w-[210px]">
             <span className="absolute top-2 right-2 text-yellow-400 text-sm leading-none">★</span>
-            <span className="absolute bottom-2 left-2 text-purple-400 text-xs leading-none">✦</span>
+            <span className="absolute bottom-2 left-2 theme-text-muted text-xs leading-none">✦</span>
             <p className="text-sm font-bold text-white leading-snug pr-3">
               Welcome to your learning adventure!
             </p>
-            <p className="text-xs font-semibold text-purple-200 mt-1.5">
+            <p className="text-xs font-semibold theme-text mt-1.5">
               Have fun and earn your certificate!
             </p>
             <span className="absolute -right-[12px] top-1/2 -translate-y-1/2 w-0 h-0"
@@ -105,17 +105,17 @@ export default function HomeHeader() {
           {/* Language picker */}
           <div className="relative">
             <button onClick={() => setShowPicker(!showPicker)}
-              className="w-10 h-10 bg-purple-400/20 hover:bg-purple-400/30 rounded-full flex items-center justify-center text-xl transition shadow"
+              className="w-10 h-10 theme-accent-muted hover:theme-accent-muted rounded-full flex items-center justify-center text-xl transition shadow"
               aria-label="Change language">
               {LANGS.find(l => l.code === language)?.flag ?? "🌐"}
             </button>
             {showPicker && (
-              <div className="absolute right-0 mt-2 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-2xl overflow-hidden z-50 w-40">
+              <div className="absolute right-0 mt-2 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-2xl overflow-hidden z-50 w-40">
                 {LANGS.map(lang => (
                   <button key={lang.code} onClick={() => { setLanguage(lang.code); setShowPicker(false); }}
                     className="flex items-center px-4 py-3 w-full hover:bg-white/10 transition text-sm">
                     <span className="text-xl mr-2">{lang.flag}</span>
-                    <span className="font-semibold text-purple-100">{lang.label}</span>
+                    <span className="font-semibold theme-text">{lang.label}</span>
                   </button>
                 ))}
               </div>
@@ -157,16 +157,16 @@ export default function HomeHeader() {
         <div className="flex items-center gap-2">
           <div className="relative">
             <button onClick={() => setShowPicker(!showPicker)}
-              className="w-9 h-9 bg-purple-400/20 rounded-full flex items-center justify-center text-lg transition" aria-label="Change language">
+              className="w-9 h-9 theme-accent-muted rounded-full flex items-center justify-center text-lg transition" aria-label="Change language">
               {LANGS.find(l => l.code === language)?.flag ?? "🌐"}
             </button>
             {showPicker && (
-              <div className="absolute right-0 mt-2 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-36">
+              <div className="absolute right-0 mt-2 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-36">
                 {LANGS.map(lang => (
                   <button key={lang.code} onClick={() => { setLanguage(lang.code); setShowPicker(false); }}
                     className="flex items-center px-3 py-2.5 w-full hover:bg-white/10 text-sm">
                     <span className="text-lg mr-2">{lang.flag}</span>
-                    <span className="font-medium text-purple-100">{lang.label}</span>
+                    <span className="font-medium theme-text">{lang.label}</span>
                   </button>
                 ))}
               </div>

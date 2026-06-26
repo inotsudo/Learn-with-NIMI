@@ -6,18 +6,18 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Lock, Shield, Sparkles } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import AuthBackground from "@/components/auth/AuthBackground";
-// import GoogleIcon from "@/components/auth/GoogleIcon";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ForgotPasswordPage() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      setError("Please enter your email address.");
+      setError(t("resetErrEmail"));
       return;
     }
 
@@ -32,27 +32,14 @@ export default function ForgotPasswordPage() {
     if (resetError) {
       setError(resetError.message);
     } else {
-      setMessage("Password reset email sent! Please check your inbox.");
+      setMessage(t("resetSuccess"));
     }
 
     setLoading(false);
   };
 
-  const loginWithGoogle = async () => {
-    setGoogleLoading(true);
-    setError("");
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (oauthError) {
-      setError(oauthError.message);
-      setGoogleLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center px-4 py-10 sm:py-14">
+    <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center px-4 py-10 sm:py-14">
 
       <AuthBackground />
 
@@ -62,7 +49,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center lg:text-left mb-10 lg:mb-0">
           <Link
             href="/loginpage"
-            className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur rounded-full px-4 py-1.5 text-sm font-bold text-purple-100 hover:bg-white/20 transition"
+            className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur rounded-full px-4 py-1.5 text-sm font-bold theme-text hover:bg-white/20 transition"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Login
           </Link>
@@ -75,7 +62,7 @@ export default function ForgotPasswordPage() {
             </span>
           </h1>
 
-          <p className="text-purple-200 mt-4 text-sm sm:text-base max-w-sm mx-auto lg:mx-0">
+          <p className="theme-text mt-4 text-sm sm:text-base max-w-sm mx-auto lg:mx-0">
             It happens! Reset your password and get back to your adventure.
           </p>
 
@@ -94,14 +81,14 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Right: forgot password card */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
+        <div className="w-full max-w-md mx-auto lg:mx-0 theme-card border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
 
           <div className="flex flex-col items-center text-center mb-1">
-            <div className="w-16 h-16 rounded-full bg-purple-400/20 flex items-center justify-center mb-3">
-              <Lock className="w-7 h-7 text-purple-200" />
+            <div className="w-16 h-16 rounded-full theme-accent-muted flex items-center justify-center mb-3">
+              <Lock className="w-7 h-7 theme-text" />
             </div>
             <h2 className="font-black text-2xl text-white">Forgot Password?</h2>
-            <p className="text-purple-200 text-sm mt-1">
+            <p className="theme-text text-sm mt-1">
               No worries! Enter your email and we&apos;ll send you a link to reset your password.
             </p>
           </div>
@@ -114,17 +101,17 @@ export default function ForgotPasswordPage() {
 
           {/* Email */}
           <div>
-            <label className="flex items-center gap-1.5 font-bold text-purple-100 text-sm mb-1.5">
-              <Mail className="w-4 h-4 text-purple-300" /> Email Address
+            <label className="flex items-center gap-1.5 font-bold theme-text text-sm mb-1.5">
+              <Mail className="w-4 h-4 theme-text-muted" /> Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleResetPassword()}
-              placeholder="Enter your email address"
+              placeholder={t("resetPlaceholderEmail")}
               disabled={loading}
-              className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-300 transition placeholder:text-white/40" />
+              className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition placeholder:text-white/40" />
           </div>
 
           <motion.button
@@ -134,26 +121,10 @@ export default function ForgotPasswordPage() {
             className="relative w-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-rose-500 hover:opacity-90 text-white font-black rounded-2xl py-3.5 shadow-lg transition disabled:opacity-60 flex items-center justify-center gap-2"
           >
             <Mail className="w-4 h-4" />
-            {loading ? "Sending..." : "Send Reset Link"}
+            {loading ? t("resetSending") : t("resetSendBtn")}
           </motion.button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-xs font-bold text-purple-300">OR</span>
-            <div className="flex-1 h-px bg-white/20" />
-          </div>
-
-          <motion.button
-            onClick={loginWithGoogle}
-            disabled={googleLoading}
-            whileTap={{ scale: 0.97 }}
-            className="w-full border-2 border-white/20 hover:border-purple-300 rounded-2xl py-3 flex items-center justify-center gap-2 font-bold text-white transition disabled:opacity-60"
-          >
-            {/* <GoogleIcon /> */}
-            {/* {googleLoading ? "Connecting..." : "Continue with Google"} */}
-          </motion.button>
-
-          <p className="text-center text-sm text-purple-200">
+          <p className="text-center text-sm theme-text">
             Remember your password?{" "}
             <Link href="/loginpage" className="text-white font-bold hover:underline">
               Back to Login
@@ -176,10 +147,10 @@ export default function ForgotPasswordPage() {
 
       {/* Security note */}
       <div className="relative z-10 w-full max-w-md mt-4 flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
-        <div className="w-9 h-9 rounded-full bg-purple-500/30 flex items-center justify-center flex-shrink-0">
-          <Shield className="w-4 h-4 text-purple-200" />
+        <div className="w-9 h-9 rounded-full theme-accent/30 flex items-center justify-center flex-shrink-0">
+          <Shield className="w-4 h-4 theme-text" />
         </div>
-        <p className="text-sm text-purple-100">
+        <p className="text-sm theme-text">
           <span className="font-bold text-white">Your security is our priority.</span> We&apos;ll never share your information with anyone.
         </p>
       </div>

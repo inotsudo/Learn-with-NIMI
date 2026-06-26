@@ -53,7 +53,7 @@ export default function TrilingualChampionBanner({ status, childName }: Props) {
         <p className="relative z-10 text-white font-bold text-sm mt-1">
           {t("awardedTo").replace("{name}", childName.toUpperCase())}
         </p>
-        <p className="relative z-10 text-purple-200 text-xs mt-1 px-4">{t("trilingualChampionDesc")}</p>
+        <p className="relative z-10 theme-text text-xs mt-1 px-4">{t("trilingualChampionDesc")}</p>
         <div className="relative z-10 flex justify-center gap-2 mt-3">
           {LANGUAGES.map(lang => (
             <span key={lang} className="text-2xl">{LANGUAGE_META[lang].flag}</span>
@@ -67,21 +67,21 @@ export default function TrilingualChampionBanner({ status, childName }: Props) {
     <div className="bg-white/10 backdrop-blur border-4 border-dashed border-white/20 rounded-3xl shadow-sm p-5 text-center mb-5">
       <span className="text-4xl">🌍</span>
       <p className="font-black text-white text-sm uppercase tracking-wide mt-2">{t("trilingualChampionTitle")}</p>
-      <p className="text-purple-300 text-xs mt-1 px-2">{t("trilingualChampionDesc")}</p>
+      <p className="theme-text-muted text-xs mt-1 px-2">{t("trilingualChampionDesc")}</p>
       <div className="flex justify-center gap-4 mt-3">
         {LANGUAGES.map(lang => (
           <div key={lang} className={`flex flex-col items-center gap-1 ${status.languages[lang] ? "" : "opacity-40 grayscale"}`}>
             <span className="text-2xl">{LANGUAGE_META[lang].flag}</span>
-            <span className={`text-xs ${status.languages[lang] ? "text-green-400" : "text-purple-300"}`}>
+            <span className={`text-xs ${status.languages[lang] ? "text-green-400" : "theme-text-muted"}`}>
               {status.languages[lang] ? "✓" : "—"}
             </span>
           </div>
         ))}
       </div>
-      <p className="text-purple-200 font-bold text-xs mt-2">
+      <p className="theme-text font-bold text-xs mt-2">
         {t("trilingualChampionProgress").replace("{progress}", String(status.progress))}
       </p>
-      <p className="text-purple-300 font-bold text-sm mt-0.5">{childName}</p>
+      <p className="theme-text-muted font-bold text-sm mt-0.5">{childName}</p>
     </div>
   );
 }

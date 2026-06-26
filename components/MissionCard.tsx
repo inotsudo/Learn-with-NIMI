@@ -38,7 +38,7 @@ export default function MissionCard({ mission, completed, onComplete }: MissionC
                 <Badge className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-3 py-1">
                   ⏰ {mission.time}
                 </Badge>
-                <Badge variant="outline" className="border-purple-300 text-purple-700 px-3 py-1">
+                <Badge variant="outline" className="theme-border-strong theme-text-muted px-3 py-1">
                   🎯 {mission.type}
                 </Badge>
               </div>
@@ -63,7 +63,7 @@ export default function MissionCard({ mission, completed, onComplete }: MissionC
           <p className="text-gray-800 mb-2">🏆 <strong>Piko Victory:</strong> {mission.pikoVictory}</p>
           <p className="text-gray-800 mb-2">🧰 <strong>Materials:</strong> {mission.materials.join(", ")}</p>
           {mission.funFact && (
-            <p className="text-purple-700 italic mt-2">💡 Fun Fact: {mission.funFact}</p>
+            <p className="theme-text-muted italic mt-2">💡 Fun Fact: {mission.funFact}</p>
           )}
         </div>
 

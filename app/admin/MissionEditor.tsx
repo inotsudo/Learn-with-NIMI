@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
+import { smartUpload } from '@/lib/uploadWithProgress'
 import {
   Music, X, Play, Pause, Image as ImageIcon, Plus, Trash2, Copy as CopyIcon,
   Info, Upload, Settings2, FileText, Eye, CheckCircle2, AlertCircle, Lightbulb,
@@ -205,12 +206,10 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
     try {
       const ext = file.name.split('.').pop() ?? 'jpg'
       const path = `stories/${mission.story_id}/img-${pageId.slice(0, 8)}-${Date.now()}.${ext}`
-      const { error: upErr } = await withTimeout(
-        supabase.storage.from('storyBook').upload(path, file, { upsert: true })
-      )
+      const { error: upErr, storagePath } = await smartUpload('storyBook', path, file)
       if (upErr) throw upErr
       const { error: dbErr } = await withTimeout(
-        supabase.from('story_pages').update({ image_url: `storyBook/${path}` }).eq('id', pageId)
+        supabase.from('story_pages').update({ image_url: storagePath }).eq('id', pageId)
       )
       if (dbErr) throw dbErr
       await fetchStory()
@@ -229,13 +228,11 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
     try {
       const ext = file.name.split('.').pop() ?? 'mp3'
       const path = `stories/${mission.story_id}/${lang}-${pageId.slice(0, 8)}-${Date.now()}.${ext}`
-      const { error: upErr } = await withTimeout(
-        supabase.storage.from('storyBook').upload(path, file, { upsert: true })
-      )
+      const { error: upErr, storagePath } = await smartUpload('storyBook', path, file)
       if (upErr) throw upErr
       const { error: dbErr } = await withTimeout(
         supabase.from('story_page_versions')
-          .upsert({ story_page_id: pageId, language: lang, audio_url: `storyBook/${path}`, published: true }, { onConflict: 'story_page_id,language' })
+          .upsert({ story_page_id: pageId, language: lang, audio_url: storagePath, published: true }, { onConflict: 'story_page_id,language' })
       )
       if (dbErr) throw dbErr
       await fetchStory()
@@ -287,12 +284,10 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
         }
         const ext = file.name.split('.').pop() ?? 'jpg'
         const path = `stories/${mission.story_id}/img-${pageId.slice(0, 8)}-${Date.now()}.${ext}`
-        const { error: upErr } = await withTimeout(
-          supabase.storage.from('storyBook').upload(path, file, { upsert: true })
-        )
+        const { error: upErr, storagePath } = await smartUpload('storyBook', path, file)
         if (upErr) throw upErr
         const { error: dbErr } = await withTimeout(
-          supabase.from('story_pages').update({ image_url: `storyBook/${path}` }).eq('id', pageId)
+          supabase.from('story_pages').update({ image_url: storagePath }).eq('id', pageId)
         )
         if (dbErr) throw dbErr
       } catch (err) {
@@ -365,9 +360,9 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
     try {
       const ext = file.name.split('.').pop()
       const path = `missions/${mission.id}-${activeLang}-${Date.now()}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('storyBook').upload(path, file, { upsert: true })
+      const { error: uploadErr, storagePath } = await smartUpload('storyBook', path, file)
       if (uploadErr) throw uploadErr
-      updateVersionField('media_url', `storyBook/${path}`)
+      updateVersionField('media_url', storagePath)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed.')
     } finally {
@@ -381,9 +376,9 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
     try {
       const ext = file.name.split('.').pop()
       const path = `covers/${mission.id}-${activeLang}-${Date.now()}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('storyBook').upload(path, file, { upsert: true })
+      const { error: uploadErr, storagePath } = await smartUpload('storyBook', path, file)
       if (uploadErr) throw uploadErr
-      updateContentJson('cover_image_url', `storyBook/${path}`)
+      updateContentJson('cover_image_url', storagePath)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed.')
     } finally {
@@ -560,8 +555,9 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
 
   const lyrics = (vf.content_json.lyrics as string[]) ?? []
   const lyricsText = lyrics.join('\n')
-  const prompts = (vf.content_json.prompts as { emoji: string; label: string }[]) ?? []
-  const updatePrompts = (next: { emoji: string; label: string }[]) => updateContentJson('prompts', next)
+  interface VisualPrompt { order?: number; emoji?: string; label?: string; image_url?: string; video_url?: string; audio_url?: string; difficulty?: string; estimated_minutes?: number }
+  const prompts = (vf.content_json.prompts as VisualPrompt[]) ?? []
+  const updatePrompts = (next: VisualPrompt[]) => updateContentJson('prompts', next)
   const coverUrl = vf.content_json.cover_image_url as string | undefined
 
   return (
@@ -792,34 +788,75 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
 
           {general.type === 'move' && (
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Action Prompts</label>
-              <div className="space-y-2">
-                {prompts.map((p, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl p-2 border border-gray-100">
-                    <input
-                      type="text"
-                      value={p.emoji}
-                      onChange={e => updatePrompts(prompts.map((x, idx) => idx === i ? { ...x, emoji: e.target.value } : x))}
-                      placeholder="🎉"
-                      disabled={locked}
-                      className={`w-12 h-10 text-center text-lg bg-white border border-gray-200 rounded-lg transition disabled:bg-gray-50 disabled:text-gray-400 ${accent.ring}`}
-                    />
-                    <input
-                      type="text"
-                      value={p.label}
-                      onChange={e => updatePrompts(prompts.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x))}
-                      placeholder="Action label"
-                      disabled={locked}
-                      className={`flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm transition disabled:bg-gray-50 disabled:text-gray-400 ${accent.ring}`}
-                    />
-                    <button onClick={() => updatePrompts(prompts.filter((_, idx) => idx !== i))} disabled={locked} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 flex-shrink-0 transition disabled:opacity-40 disabled:cursor-not-allowed">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))}
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Visual Activity Cards</label>
+              <p className="text-[11px] text-gray-400 mb-3">Each card = one action for kids. Upload images/videos/audio so pre-readers can See → Hear → Copy.</p>
+              <div className="space-y-3">
+                {[...prompts].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((p, i) => {
+                  const promptIdx = prompts.indexOf(p)
+                  const update = (field: string, val: string | number | undefined) =>
+                    updatePrompts(prompts.map((x, idx) => idx === promptIdx ? { ...x, [field]: val } : x))
+
+                  const handlePromptMedia = async (field: 'image_url' | 'video_url' | 'audio_url', file: File) => {
+                    const ext = file.name.split('.').pop()
+                    const path = `moves/${mission.id}-${field}-${i}-${Date.now()}.${ext}`
+                    const { error: err, storagePath } = await smartUpload('storyBook', path, file)
+                    if (!err) update(field, storagePath)
+                  }
+
+                  return (
+                    <div key={i} className="bg-gray-50 rounded-xl border border-gray-100 p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-gray-400 w-5">#{p.order ?? i + 1}</span>
+                        <input type="text" value={p.emoji ?? ''} onChange={e => update('emoji', e.target.value)} placeholder="👏" disabled={locked}
+                          className="w-11 h-9 text-center text-lg bg-white border border-gray-200 rounded-lg" />
+                        <input type="text" value={p.label ?? ''} onChange={e => update('label', e.target.value)} placeholder="Action label" disabled={locked}
+                          className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-[13px]" />
+                        <select value={p.difficulty ?? ''} onChange={e => update('difficulty', e.target.value || undefined)} disabled={locked}
+                          className="bg-white border border-gray-200 rounded-lg px-2 py-2 text-[11px] font-bold text-gray-600">
+                          <option value="">Difficulty</option>
+                          <option value="easy">⭐ Easy</option>
+                          <option value="medium">⭐⭐ Medium</option>
+                          <option value="hard">⭐⭐⭐ Hard</option>
+                        </select>
+                        <input type="number" value={p.order ?? i + 1} onChange={e => update('order', Number(e.target.value))} disabled={locked}
+                          className="w-12 bg-white border border-gray-200 rounded-lg px-2 py-2 text-[11px] text-center" title="Order" />
+                        <button onClick={() => updatePrompts(prompts.filter((_, idx) => idx !== promptIdx))} disabled={locked}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 shrink-0">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      {/* Media uploads row */}
+                      <div className="flex gap-2 ml-7">
+                        {(['image_url', 'video_url', 'audio_url'] as const).map(field => {
+                          const val = p[field]
+                          const labels: Record<string, string> = { image_url: '📷 Image', video_url: '🎥 Video', audio_url: '🔊 Audio' }
+                          const accepts: Record<string, string> = { image_url: 'image/*', video_url: 'video/*', audio_url: 'audio/*' }
+                          return (
+                            <div key={field} className="flex-1">
+                              {val ? (
+                                <div className="flex items-center gap-1 bg-emerald-50 rounded-lg px-2 py-1.5 text-[10px]">
+                                  <span className="text-emerald-600 font-bold truncate flex-1">{labels[field]} ✓</span>
+                                  <button onClick={() => update(field, undefined)} className="text-red-400 hover:text-red-600 font-bold">✕</button>
+                                </div>
+                              ) : (
+                                <label className="flex items-center justify-center gap-1 border border-dashed border-gray-200 rounded-lg py-1.5 text-[10px] text-gray-400 hover:text-indigo-500 hover:border-indigo-300 cursor-pointer transition">
+                                  {labels[field]}
+                                  <input type="file" accept={accepts[field]} className="hidden" disabled={locked}
+                                    onChange={e => { const f = e.target.files?.[0]; if (f) handlePromptMedia(field, f) }} />
+                                </label>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-              <button onClick={() => updatePrompts([...prompts, { emoji: '', label: '' }])} disabled={locked} className={`mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed ${accent.soft} ${accent.text}`}>
-                <Plus size={14} /> Add Prompt
+              <button onClick={() => updatePrompts([...prompts, { order: prompts.length + 1, emoji: '', label: '' }])} disabled={locked}
+                className={`mt-3 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition hover:opacity-80 disabled:opacity-40 ${accent.soft} ${accent.text}`}>
+                <Plus size={14} /> Add Activity Card
               </button>
             </div>
           )}

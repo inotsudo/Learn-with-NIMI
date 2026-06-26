@@ -83,13 +83,13 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
 
           <div className="px-5 pt-5 pb-4 text-center">
             <p className="font-bold text-white text-base leading-tight">{t("keepGoingLabel")}</p>
-            <p className="text-purple-300 text-sm mt-0.5 mb-4">
+            <p className="theme-text-muted text-sm mt-0.5 mb-4">
               {t("completeLevelStepsLabel").replace("{steps}", String(TOTAL_STEPS)).replace("{level}", String(level))}
             </p>
 
             {/* Progress bar */}
             <div className="mb-3">
-              <div className="flex justify-between text-[10px] font-bold text-purple-300 mb-1">
+              <div className="flex justify-between text-[10px] font-bold theme-text-muted mb-1">
                 <span>Progress</span>
                 <span>{done}/{TOTAL_STEPS} steps</span>
               </div>
@@ -129,14 +129,14 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
             <div className="flex items-end justify-around mt-1">
               <div className="text-center">
                 <img src="/nimi-logo-circle.png" alt="NIMI"
-                  className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-purple-200 shadow-xl" />
-                <p className="text-[10px] mt-1.5 text-purple-300 leading-tight">
-                  Cheer: <span className="font-black italic text-purple-200">Nimi</span>
+                  className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 theme-border shadow-xl" />
+                <p className="text-[10px] mt-1.5 theme-text-muted leading-tight">
+                  Cheer: <span className="font-black italic theme-text">Nimi</span>
                 </p>
               </div>
 
               <div className="flex flex-col items-center mb-2">
-                <div className="w-[60px] h-[60px] rounded-full flex items-center justify-center shadow-xl border-4 border-purple-100"
+                <div className="w-[60px] h-[60px] rounded-full flex items-center justify-center shadow-xl border-4 theme-border"
                   style={{ background: "linear-gradient(145deg, #e9d5ff, #c084fc)" }}>
                   <span className="text-2xl font-black text-white drop-shadow">{pct}%</span>
                 </div>
@@ -145,8 +145,8 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
               <div className="text-center">
                 <img src="/piko-logo-circle.png.png" alt="PIKO"
                   className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-blue-200 shadow-xl" />
-                <p className="text-[10px] mt-1.5 text-purple-300 leading-tight">
-                  Cheer: <span className="font-black italic text-purple-200">Piko</span>
+                <p className="text-[10px] mt-1.5 theme-text-muted leading-tight">
+                  Cheer: <span className="font-black italic theme-text">Piko</span>
                 </p>
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
             {/* CTA */}
             {nextStep && (
               <Link href={nextStep.href} className="block mt-4">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
+                <Button className="w-full theme-accent hover:theme-accent text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
                   ▶ CONTINUE STORY
                 </Button>
               </Link>
@@ -193,12 +193,12 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
 
         <div className="px-5 pt-5 pb-4 text-center">
           <p className="font-bold text-white text-base leading-tight">{t("congratulationsLabel")}</p>
-          <p className="text-purple-300 text-sm mt-0.5">{t("youEarnedYourLabel")}</p>
+          <p className="theme-text-muted text-sm mt-0.5">{t("youEarnedYourLabel")}</p>
 
           <div className="my-3 relative">
             <span className="absolute -top-1 left-3 text-yellow-400 text-lg">★</span>
             <span className="absolute -top-1 right-3 text-yellow-400 text-lg">★</span>
-            <h3 className="font-black text-purple-200 tracking-wide leading-tight"
+            <h3 className="font-black theme-text tracking-wide leading-tight"
               style={{ fontSize: "clamp(1.6rem, 4vw, 2rem)" }}>
               {t("levelCertificateLabel").replace("{level}", String(level))}
             </h3>
@@ -227,7 +227,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
             <div className="text-center">
               <img src="/nimi-logo-circle.png" alt="NIMI"
                 className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-yellow-300 shadow-xl" />
-              <p className="text-[11px] mt-2 text-purple-300 leading-tight">
+              <p className="text-[11px] mt-2 theme-text-muted leading-tight">
                 {t("signedByLabel").replace("{name}", "Nimi")}
               </p>
             </div>
@@ -246,7 +246,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
             <div className="text-center">
               <img src="/piko-logo-circle.png.png" alt="PIKO"
                 className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-blue-300 shadow-xl" />
-              <p className="text-[11px] mt-2 text-purple-300 leading-tight">
+              <p className="text-[11px] mt-2 theme-text-muted leading-tight">
                 {t("signedByLabel").replace("{name}", "Piko")}
               </p>
             </div>
@@ -256,15 +256,15 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
 
       {/* Download / Share card */}
       <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-md p-4">
-        <h3 className="font-black text-purple-200 text-[11px] uppercase mb-3 text-center tracking-widest">
+        <h3 className="font-black theme-text text-[11px] uppercase mb-3 text-center tracking-widest">
           {t("downloadShareCertTitle")}
         </h3>
         <div className="flex flex-col sm:flex-row gap-3 mb-3 sm:items-center">
-          <div className="flex-shrink-0 w-full sm:w-[110px] bg-gradient-to-br from-yellow-50 to-purple-50 border-4 border-double border-purple-300 rounded-xl p-2 text-center shadow-sm">
-            <p className="text-[9px] sm:text-[7px] font-black text-purple-700 uppercase leading-tight">
+          <div className="flex-shrink-0 w-full sm:w-[110px] bg-gradient-to-br from-yellow-50 to-purple-50 border-4 border-double theme-border-strong rounded-xl p-2 text-center shadow-sm">
+            <p className="text-[9px] sm:text-[7px] font-black theme-text-muted uppercase leading-tight">
               🌟 {t("levelCertificateLabel").replace("{level}", String(level))}
             </p>
-            <p className="text-[9px] sm:text-[7px] text-purple-600 mt-0.5 leading-tight">
+            <p className="text-[9px] sm:text-[7px] theme-text-muted mt-0.5 leading-tight">
               {t("levelCompleteLabel").replace("{level}", String(level))}
             </p>
             <div className="flex justify-center gap-1 mt-2 items-center">
@@ -273,7 +273,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
               <img src="/piko-logo-circle.png.png" alt="PIKO" className="w-7 h-7 rounded-full object-cover border border-blue-300" />
             </div>
           </div>
-          <p className="text-[11px] text-purple-300 leading-relaxed flex-1 min-w-0">
+          <p className="text-[11px] theme-text-muted leading-relaxed flex-1 min-w-0">
             {t("shareAchievementText")}
           </p>
         </div>
@@ -283,7 +283,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
             <Download className="w-4 h-4" /> {t("downloadPdfLabel")}
           </Button>
           <Button onClick={handleShare}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
+            className="w-full theme-accent hover:theme-accent text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
             <Share2 className="w-4 h-4" /> {shareCopied ? t("linkCopiedLabel") : t("shareLabel")}
           </Button>
         </div>

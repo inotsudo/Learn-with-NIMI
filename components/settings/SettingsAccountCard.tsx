@@ -28,7 +28,7 @@ export default function SettingsAccountCard() {
         <div className="w-9 h-9 bg-blue-400/20 rounded-full flex items-center justify-center shrink-0">
           <KeyRound className="w-4 h-4 text-blue-200" />
         </div>
-        <span className="font-bold text-sm flex-1 text-purple-100">{t("changePasswordLabel")}</span>
+        <span className="font-bold text-sm flex-1 theme-text">{t("changePasswordLabel")}</span>
         <ChevronRight className="w-4 h-4 text-gray-300" />
       </button>
 

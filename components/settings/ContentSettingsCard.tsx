@@ -9,9 +9,9 @@ import LanguageSwitchDialog from "@/components/LanguageSwitchDialog";
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
+  { code: "en", label: "English", flag: "en" },
+  { code: "fr", label: "Français", flag: "fr" },
+  { code: "rw", label: "Kinyarwanda", flag: "rw" },
 ];
 
 export default function ContentSettingsCard() {
@@ -44,16 +44,16 @@ export default function ContentSettingsCard() {
       <h3 className="font-black text-white mb-2">{t("contentSettingsTitle")}</h3>
 
       <div className="relative flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm text-purple-100">{t("languageLabel")}</span>
+        <span className="font-bold text-sm theme-text">{t("languageLabel")}</span>
         <button
           onClick={() => setShowLangDropdown(v => !v)}
-          className="flex items-center gap-1.5 text-sm font-bold text-purple-300 hover:text-purple-100 transition"
+          className="flex items-center gap-1.5 text-sm font-bold theme-text-muted hover:theme-text transition"
         >
           <span>{currentLabel}</span>
           <ChevronDown className="w-4 h-4" />
         </button>
         {showLangDropdown && (
-          <div className="absolute right-0 top-full mt-1 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-40">
+          <div className="absolute right-0 top-full mt-1 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-40">
             {LANGS.map(lang => (
               <button
                 key={lang.code}
@@ -64,7 +64,7 @@ export default function ContentSettingsCard() {
                 className="flex items-center gap-2 px-3 py-2.5 w-full hover:bg-white/10 transition text-sm"
               >
                 <span>{lang.flag}</span>
-                <span className="font-medium text-purple-100">{lang.label}</span>
+                <span className="font-medium theme-text">{lang.label}</span>
               </button>
             ))}
           </div>
@@ -72,16 +72,16 @@ export default function ContentSettingsCard() {
       </div>
 
       <div className="flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm text-purple-100">{t("readingLevelLabel")}</span>
-        <div className="flex items-center gap-1.5 text-sm font-bold text-purple-300">
+        <span className="font-bold text-sm theme-text">{t("readingLevelLabel")}</span>
+        <div className="flex items-center gap-1.5 text-sm font-bold theme-text-muted">
           <span>{t("readingLevelValue")}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>
       </div>
 
       <div className="flex items-center justify-between py-3 last:border-0">
-        <span className="font-bold text-sm text-purple-100">{t("contentFilterLabel")}</span>
-        <div className="flex items-center gap-1.5 text-sm font-bold text-purple-300">
+        <span className="font-bold text-sm theme-text">{t("contentFilterLabel")}</span>
+        <div className="flex items-center gap-1.5 text-sm font-bold theme-text-muted">
           <span>{t("contentFilterValue")}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>

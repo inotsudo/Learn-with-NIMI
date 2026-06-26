@@ -56,7 +56,7 @@ export default function DeleteAccountModal({ email, onClose }: Props) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.85, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="bg-purple-900/95 backdrop-blur-xl border-2 border-white/15 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+          className="theme-darker backdrop-blur-xl border-2 border-white/15 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
         >
           <div className="bg-gradient-to-r from-red-600 to-red-700 px-5 py-4 flex items-center justify-between">
             <p className="text-white font-black text-lg tracking-wide">{t("deleteAccountModalTitle")}</p>
@@ -73,7 +73,7 @@ export default function DeleteAccountModal({ email, onClose }: Props) {
             </div>
 
             <div>
-              <p className="text-xs font-bold text-purple-200 mb-1.5">
+              <p className="text-xs font-bold theme-text mb-1.5">
                 {t("deleteAccountConfirmInstructions").replace("{email}", email)}
               </p>
               <input
@@ -99,7 +99,7 @@ export default function DeleteAccountModal({ email, onClose }: Props) {
               <button
                 onClick={onClose}
                 disabled={deleting}
-                className="flex-1 border-2 border-white/20 text-purple-100 font-black rounded-full py-2.5 text-sm hover:bg-white/10 transition disabled:opacity-60"
+                className="flex-1 border-2 border-white/20 theme-text font-black rounded-full py-2.5 text-sm hover:bg-white/10 transition disabled:opacity-60"
               >
                 {t("cancel")}
               </button>

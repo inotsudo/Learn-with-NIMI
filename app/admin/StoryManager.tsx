@@ -3,14 +3,15 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
 import {
-  Search, SlidersHorizontal, LayoutGrid, Eye, Bell, ChevronDown, Plus,
-  MoreVertical, Pencil, Copy, ArrowUpDown, Trash2, ChevronLeft, ChevronRight,
-  BookOpen, FileStack, Menu, AlertCircle, RefreshCw, X,
+  Search, Filter, Plus, MoreVertical, Pencil, Copy, Trash2, CheckCircle2,
+  ChevronLeft, ChevronRight, BookOpen, Menu, AlertCircle, RefreshCw,
 } from 'lucide-react'
 import { ACCENT, type StoryRow } from './missionMeta'
+import { computeReadiness } from '@/lib/storyReadiness'
 import StoryEditor from './StoryEditor'
 import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
+import { useToast } from './Toast'
 
 interface StoryManagerProps {
   initialStoryId?: string
@@ -18,8 +19,10 @@ interface StoryManagerProps {
   onOpenSidebar?: () => void
 }
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 5
 const accent = ACCENT.blue
+
+type TabKey = 'all' | 'ready' | 'progress' | 'missing' | 'published' | 'archived'
 
 export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar }: StoryManagerProps) {
   const [stories, setStories] = useState<StoryRow[]>([])
@@ -30,12 +33,50 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
   const [mutatingId, setMutatingId] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const appliedInitialIdRef = useRef<string | undefined>(undefined)
-  const { confirm, alert, dialog } = useConfirmDialog()
+  const { confirm, dialog } = useConfirmDialog()
+  const { success: toastSuccess, error: toastError } = useToast()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
-  const [notifCount, setNotifCount] = useState(0)
+  const [tab, setTab] = useState<TabKey>('all')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [bulkActing, setBulkActing] = useState(false)
+
+  const toggleSelect = (id: string) => {
+    setCheckedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  const selectAll = () => {
+    if (checkedIds.size === pageRows.length) setCheckedIds(new Set())
+    else setCheckedIds(new Set(pageRows.map(s => s.id)))
+  }
+
+  const handleBulkPublish = async () => {
+    if (checkedIds.size === 0) return
+    const ok = await confirm({ title: `Publish ${checkedIds.size} stories?`, message: 'These stories will be visible to children.' })
+    if (!ok) return
+    setBulkActing(true)
+    await Promise.all([...checkedIds].map(id => supabase.from('stories').update({ status: 'published' }).eq('id', id)))
+    await fetchStories()
+    toastSuccess(`${checkedIds.size} stories published`)
+    setCheckedIds(new Set())
+    setBulkActing(false)
+  }
+
+  const handleBulkDelete = async () => {
+    if (checkedIds.size === 0) return
+    const ok = await confirm({ title: `Delete ${checkedIds.size} stories?`, message: 'This cannot be undone.' })
+    if (!ok) return
+    setBulkActing(true)
+    await Promise.all([...checkedIds].map(id => supabase.from('stories').delete().eq('id', id)))
+    await fetchStories()
+    toastSuccess(`${checkedIds.size} stories deleted`)
+    setCheckedIds(new Set())
+    setBulkActing(false)
+  }
 
   const fetchStories = useCallback(async () => {
     setLoading(true)
@@ -43,12 +84,10 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
     try {
       const { data, error } = await supabase
         .from('stories')
-        .select('id, slug, title, cover_url, sort_order, is_active, theme_title, theme_emoji, story_pages(id, page_number, image_url, story_page_versions(id, language, text, audio_url, published))')
+        .select('id, slug, title, cover_url, sort_order, is_active, status, age_min, age_max, published_at, theme_title, theme_emoji, story_pages(id, page_number, image_url, story_page_versions(id, language, text, audio_url, published)), story_versions(id, story_id, language, title, cover_url, intro_video_url, theme_song_url, meet_characters_url, story_intro_url, status, published), story_slots(story_id, slot_key, mission_id, sort_order)')
         .order('sort_order')
       if (error) throw error
-      const rows = (data ?? []) as unknown as StoryRow[]
-      setStories(rows)
-      setSelectedId(prev => (prev && rows.some(s => s.id === prev)) ? prev : (rows[0]?.id ?? null))
+      setStories((data ?? []) as unknown as StoryRow[])
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
@@ -56,69 +95,57 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
     }
   }, [])
 
-  useEffect(() => {
-    setSearch('')
-    setPage(1)
-    fetchStories()
-  }, [fetchStories])
+  useEffect(() => { fetchStories() }, [fetchStories])
 
-  // Deep-link from search: jump straight to a specific story once it's loaded
   useEffect(() => {
-    if (
-      initialStoryId &&
-      initialStoryId !== appliedInitialIdRef.current &&
-      stories.some(s => s.id === initialStoryId)
-    ) {
+    if (initialStoryId && initialStoryId !== appliedInitialIdRef.current && stories.some(s => s.id === initialStoryId)) {
       setSelectedId(initialStoryId)
       appliedInitialIdRef.current = initialStoryId
     }
   }, [initialStoryId, stories])
 
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
-  }, [])
-
-  useEffect(() => {
-    const fetchNotifs = async () => {
-      const { data: flipflopMissions } = await supabase.from('missions').select('id').eq('category_slug', 'flipflop')
-      const missionIds = (flipflopMissions ?? []).map(m => m.id)
-      if (missionIds.length === 0) { setNotifCount(0); return }
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { count } = await supabase
-        .from('child_progress')
-        .select('*', { count: 'exact', head: true })
-        .in('mission_id', missionIds)
-        .gte('completed_at', since)
-      setNotifCount(count ?? 0)
-    }
-    fetchNotifs()
-  }, [])
-
-  const totalPages = useMemo(() => stories.reduce((sum, s) => sum + s.story_pages.length, 0), [stories])
+  const getSlotsFilled = (s: StoryRow) => (s.story_slots ?? []).length
+  const getReadiness = (s: StoryRow) => computeReadiness(s)
+  const getTab = (s: StoryRow): TabKey => {
+    if ((s.status as string) === 'archived' || s.status === 'retired') return 'archived'
+    if (s.status === 'published') return 'published'
+    const r = getReadiness(s)
+    if (r.score === 100) return 'ready'
+    if (r.score > 0) return 'progress'
+    return 'missing'
+  }
+  const getContentStatus = (s: StoryRow): 'complete' | 'progress' | 'missing' => {
+    const r = getReadiness(s)
+    if (r.score === 100) return 'complete'
+    if (r.score > 0) return 'progress'
+    return 'missing'
+  }
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return stories
-    const q = search.toLowerCase()
-    return stories.filter(s => s.title.toLowerCase().includes(q))
-  }, [stories, search])
+    let list = stories
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(s => s.title.toLowerCase().includes(q) || s.slug.toLowerCase().includes(q))
+    }
+    if (tab === 'ready') {
+      list = list.filter(s => computeReadiness(s).score === 100 && s.status !== 'published')
+    } else if (tab === 'progress') {
+      list = list.filter(s => { const r = computeReadiness(s).score; return r > 0 && r < 100 })
+    } else if (tab === 'missing') {
+      list = list.filter(s => computeReadiness(s).score < 100)
+    } else if (tab === 'published') {
+      list = list.filter(s => s.status === 'published')
+    } else if (tab === 'archived') {
+      list = list.filter(s => s.status === 'retired' || (s.status as string) === 'archived')
+    }
+    return list
+  }, [stories, search, tab])
 
-  const totalPagesForPagination = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const pageClamped = Math.min(page, totalPagesForPagination)
-  const pageStart = (pageClamped - 1) * PAGE_SIZE
-  const pageRows = filtered.slice(pageStart, pageStart + PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageClamped = Math.min(page, totalPages)
+  const pageRows = filtered.slice((pageClamped - 1) * PAGE_SIZE, pageClamped * PAGE_SIZE)
 
-  const selected = stories.find(s => s.id === selectedId) ?? null
-
-  const handlePreview = () => {
-    window.open('/missions/flipflop', '_blank')
-  }
+  const selected = selectedId ? stories.find(s => s.id === selectedId) ?? null : null
 
   const handleCreate = async () => {
     setActionError(null)
@@ -127,335 +154,332 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
       const maxSort = stories.reduce((max, s) => Math.max(max, s.sort_order), 0)
       const { data: newStory, error } = await supabase
         .from('stories')
-        .insert({ slug: `new-story-${Date.now()}`, title: 'New Story', sort_order: maxSort + 1, is_active: false, theme_title: '', theme_emoji: '📚' })
-        .select()
-        .single()
+        .insert({ slug: `new-story-${Date.now()}`, title: 'New Story', sort_order: maxSort + 1, status: 'draft', theme_title: '', theme_emoji: '📚' })
+        .select().single()
       if (error) throw error
+
+      // Auto-create EN story version so intro uploaders work immediately
+      await supabase.from('story_versions').insert({
+        story_id: newStory.id, language: 'en', title: 'New Story', published: false,
+      })
+
+      // Auto-create 6 mission slots so activities tab is ready
+      const missionTypes = [
+        { slot_key: 'flipflop_audio', type: 'story', sequence: 1, category_slug: 'flipflop' },
+        { slot_key: 'story_pdf', type: 'read', sequence: 2, category_slug: 'discovery' },
+        { slot_key: 'coloring', type: 'color', sequence: 3, category_slug: 'coloring' },
+        { slot_key: 'move_explore', type: 'move', sequence: 4, category_slug: 'movement' },
+        { slot_key: 'sing_along', type: 'sing', sequence: 5, category_slug: 'morning' },
+        { slot_key: 'bonus_video', type: 'watch', sequence: 6, category_slug: 'zoom' },
+      ]
+      for (const mt of missionTypes) {
+        const { data: mission } = await supabase
+          .from('missions')
+          .insert({ story_id: newStory.id, type: mt.type, sequence: mt.sequence, stars: 10, duration_minutes: 10, category_slug: mt.category_slug })
+          .select('id').single()
+        if (mission) {
+          await supabase.from('story_slots').insert({
+            story_id: newStory.id, slot_key: mt.slot_key, mission_id: mission.id, sort_order: mt.sequence,
+          })
+          await supabase.from('mission_versions').insert({
+            mission_id: mission.id, language: 'en', title: mt.slot_key.replace(/_/g, ' '),
+            revision_number: 1, status: 'draft', published: false, is_current: true,
+          })
+        }
+      }
+
       await fetchStories()
       setSelectedId(newStory.id)
+      toastSuccess('Story created')
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not create the story.')
+      toastError(err instanceof Error ? err.message : 'Could not create story.')
     } finally {
       setCreating(false)
     }
   }
 
+  const handleDelete = async (s: StoryRow) => {
+    const ok = await confirm({ title: `Delete "${s.title}"?`, message: 'This deletes all pages, slots, and progress. Cannot be undone.' })
+    if (!ok) return
+    setMutatingId(s.id)
+    try {
+      await supabase.from('stories').delete().eq('id', s.id)
+      await fetchStories()
+      if (selectedId === s.id) setSelectedId(null)
+      toastSuccess(`"${s.title}" deleted`)
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : 'Could not delete.')
+    } finally {
+      setMutatingId(null)
+    }
+  }
+
   const handleDuplicate = async (s: StoryRow) => {
-    setActionError(null)
     setMutatingId(s.id)
     try {
       const maxSort = stories.reduce((max, x) => Math.max(max, x.sort_order), 0)
       const { data: dup, error } = await supabase
         .from('stories')
-        .insert({
-          slug: `${s.slug}-copy-${Date.now()}`, title: s.title + ' (Copy)', cover_url: s.cover_url,
-          sort_order: maxSort + 1, is_active: false, theme_title: s.theme_title, theme_emoji: s.theme_emoji,
-        })
-        .select()
-        .single()
+        .insert({ slug: `${s.slug}-copy-${Date.now()}`, title: s.title + ' (Copy)', cover_url: s.cover_url, sort_order: maxSort + 1, status: 'draft', theme_title: s.theme_title, theme_emoji: s.theme_emoji })
+        .select().single()
       if (error) throw error
-
-      for (const p of s.story_pages) {
-        const { data: newPage, error: pageErr } = await supabase
-          .from('story_pages')
-          .insert({ story_id: dup.id, page_number: p.page_number, image_url: p.image_url })
-          .select()
-          .single()
-        if (pageErr) throw pageErr
-        const versions = p.story_page_versions.map(v => ({
-          story_page_id: newPage.id, language: v.language, text: v.text, audio_url: v.audio_url, published: false,
-        }))
-        if (versions.length) {
-          const { error: versionsErr } = await supabase.from('story_page_versions').insert(versions)
-          if (versionsErr) throw versionsErr
-        }
-      }
-
       await fetchStories()
       setSelectedId(dup.id)
+      toastSuccess(`"${s.title}" duplicated`)
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not duplicate the story.')
-      await fetchStories()
+      toastError(err instanceof Error ? err.message : 'Could not duplicate.')
     } finally {
       setMutatingId(null)
     }
   }
 
-  const handleDelete = async (s: StoryRow) => {
-    const pageCount = s.story_pages.length
-    const ok = await confirm({
-      title: `Delete "${s.title}"?`,
-      message: `This also deletes its ${pageCount} page${pageCount === 1 ? '' : 's'}, any matching coloring pages, and any missions (and learners' completion records) that use this story. This cannot be undone.`,
-    })
-    if (!ok) return
-    setActionError(null)
-    setMutatingId(s.id)
-    try {
-      const { error } = await supabase.from('stories').delete().eq('id', s.id)
-      if (error) throw error
-      await fetchStories()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not delete the story.')
-    } finally {
-      setMutatingId(null)
-    }
+  const statusBadge = (s: StoryRow) => {
+    const cs = getContentStatus(s)
+    if (s.status === 'published' && cs === 'complete') return { label: 'Published', cls: 'bg-emerald-50 text-emerald-600' }
+    if (s.status === 'published' && cs !== 'complete') return { label: 'Published · Incomplete', cls: 'bg-amber-50 text-amber-600' }
+    if (s.status === 'retired') return { label: 'Archived', cls: 'bg-gray-100 text-gray-500' }
+    if (s.status === 'review') return { label: 'Review', cls: 'bg-blue-50 text-blue-600' }
+    if (cs === 'complete') return { label: 'Ready', cls: 'bg-emerald-50 text-emerald-600' }
+    if (cs === 'progress') return { label: 'In Progress', cls: 'bg-amber-50 text-amber-600' }
+    return { label: 'Draft', cls: 'bg-gray-100 text-gray-500' }
   }
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <SkeletonHeaderBanner />
-        <SkeletonSplitPane rows={8} />
-      </div>
-    )
-  }
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: 'all', label: 'All Stories' },
+    { key: 'ready', label: 'Ready to Publish' },
+    { key: 'progress', label: 'In Progress' },
+    { key: 'missing', label: 'Missing Assets' },
+    { key: 'published', label: 'Published' },
+    { key: 'archived', label: 'Archived' },
+  ]
+
+  if (loading) return <div className="flex-1 flex flex-col overflow-hidden"><SkeletonHeaderBanner /><SkeletonSplitPane rows={8} /></div>
 
   if (loadError) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 flex flex-col items-center text-center max-w-sm">
-          <div className="w-12 h-12 rounded-full bg-red-50 text-red-400 flex items-center justify-center mb-3">
-            <AlertCircle className="w-6 h-6" />
-          </div>
-          <p className="text-sm font-bold text-gray-700">Couldn&apos;t load stories</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center max-w-sm">
+          <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+          <p className="font-bold text-gray-700">Couldn&apos;t load stories</p>
           <p className="text-xs text-gray-400 mt-1">{loadError}</p>
-          <button onClick={fetchStories} className={`mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition ${accent.button}`}>
-            <RefreshCw className="w-3.5 h-3.5" /> Try again
+          <button onClick={fetchStories} className="mt-4 bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-full">
+            <RefreshCw className="w-3.5 h-3.5 inline mr-1" /> Try again
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  // If a story is selected, show the editor
+  if (selected) {
+    return (
+      <div className="flex-1 flex flex-col overflow-auto bg-gray-50">
+        {dialog}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSelectedId(null)} className="text-gray-400 hover:text-gray-600 transition">
+              <ChevronLeft size={20} />
+            </button>
+            <div>
+              <p className="text-[11px] text-gray-400 font-medium">Stories &gt; {selected.title}</p>
+              <h2 className="text-[16px] font-extrabold text-gray-800">Edit Story</h2>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto p-6">
+          <StoryEditor story={selected} onSaved={fetchStories} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
+
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 flex-shrink-0 z-30 ${accent.soft}`}>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-3.5 min-w-0">
-            <button
-              onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
-            >
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
               <Menu size={17} />
             </button>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
-                Stories &amp; FlipFlop Books <span className="text-lg">📚</span>
-              </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
-                Manage storybooks, pages, and translations
-              </p>
-              <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
-                <span className="mx-1.5 text-gray-300">/</span>
-                <span className="font-bold text-gray-500">Stories &amp; FlipFlop Books</span>
-              </p>
+            <div>
+              <h1 className="text-[22px] font-extrabold text-gray-900">Stories</h1>
+              <p className="text-[13px] text-gray-500">Manage and organize all your stories.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handlePreview} className="flex items-center gap-1.5 bg-white border border-rose-200 text-rose-500 hover:bg-rose-50 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm transition">
-              <Eye className="w-4 h-4" /> Preview as Child
-            </button>
-            <span className={`inline-flex items-center gap-1.5 bg-white border border-gray-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm ${accent.text}`}>
-              <BookOpen className="w-3.5 h-3.5" /> {stories.length}
-            </span>
-            <span className={`inline-flex items-center gap-1.5 bg-white border border-gray-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm ${accent.text}`}>
-              <FileStack className="w-3.5 h-3.5" /> {totalPages}
-            </span>
-            <button className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 transition text-gray-500 shadow-sm">
-              <Bell size={17} />
-              {notifCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                  {notifCount}
-                </span>
-              )}
-            </button>
-            <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white" />
-              <div className="hidden sm:block leading-tight">
-                <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
-                <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
-              </div>
-              <ChevronDown size={14} className="text-gray-400" />
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="text" placeholder="Search stories..." value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
+                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300 w-48" />
             </div>
+            <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition">
+              <Filter size={14} /> Filter
+            </button>
+            <button onClick={handleCreate} disabled={creating}
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] rounded-xl px-4 py-2 shadow-sm transition disabled:opacity-50">
+              <Plus size={16} /> New Story
+            </button>
           </div>
         </div>
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleCreate}
-            disabled={creating}
-            className={`flex items-center gap-1.5 text-white px-4 py-2.5 rounded-full text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:-translate-y-0 ${accent.button}`}
-          >
-            <Plus className="w-4 h-4" /> {creating ? 'Creating...' : 'Create New Story'}
-          </button>
-        </div>
-      </header>
 
-      {actionError && (
-        <div className="mx-4 sm:mx-6 mt-3 flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5 flex-shrink-0">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span className="flex-1">{actionError}</span>
-          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 flex-shrink-0">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* Body */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
-        {/* List panel */}
-        <div className="w-full lg:w-[400px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-100 bg-white flex flex-col lg:overflow-hidden lg:min-h-0">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 flex-shrink-0">
-            <div className="flex-1 min-w-0 flex items-center bg-gray-50 border border-gray-100 rounded-full px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-gray-200 transition">
-              <Search size={15} className="text-gray-400 mr-2 flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="Search stories..."
-                value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1) }}
-                className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
-              />
-            </div>
-            <button className="flex items-center gap-1 px-3 py-2.5 rounded-full border border-gray-100 text-gray-500 text-sm font-semibold hover:bg-gray-50 flex-shrink-0 transition">
-              <SlidersHorizontal size={14} /> <span className="hidden sm:inline">Filter</span>
+        {/* Tabs */}
+        <div className="flex gap-1 mt-4 border-b border-gray-100 -mb-px">
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => { setTab(t.key); setPage(1) }}
+              className={`px-4 py-2.5 text-[12px] font-semibold border-b-2 transition ${
+                tab === t.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}>
+              {t.label}
             </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-100 text-gray-500 hover:bg-gray-50 flex-shrink-0 transition">
-              <LayoutGrid size={15} />
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="flex-1 overflow-auto px-6 py-4">
+        {actionError && (
+          <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-[12px] font-medium text-red-600 flex items-center gap-2">
+            <AlertCircle size={14} /> {actionError}
+          </div>
+        )}
+
+        {/* Bulk action bar */}
+        {checkedIds.size > 0 && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5 mb-3 flex items-center gap-3 text-[12px]">
+            <span className="font-bold text-indigo-700">{checkedIds.size} selected</span>
+            <button onClick={handleBulkPublish} disabled={bulkActing}
+              className="font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg px-3 py-1.5 transition disabled:opacity-50">
+              Publish
+            </button>
+            <button onClick={handleBulkDelete} disabled={bulkActing}
+              className="font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg px-3 py-1.5 transition disabled:opacity-50">
+              Delete
+            </button>
+            <button onClick={() => setCheckedIds(new Set())} className="font-medium text-gray-500 hover:text-gray-700 ml-auto">
+              Clear
             </button>
           </div>
+        )}
 
-          <div className="px-3 py-3 space-y-2 lg:flex-1 lg:overflow-y-auto lg:min-h-0" onClick={() => setOpenMenuId(null)}>
-            {pageRows.map(s => {
-              const isSelected = s.id === selectedId
+        <div className="bg-white rounded-xl border border-gray-100">
+          <div className="divide-y divide-gray-50">
+            {pageRows.length === 0 ? (
+              <div className="px-5 py-12 text-center text-gray-400 text-[13px]">No stories found.</div>
+            ) : pageRows.map(s => {
+              const badge = statusBadge(s)
+              const readiness = getReadiness(s)
+              const missing = readiness.items.filter(i => !i.done)
               return (
-                <div
-                  key={s.id}
-                  onClick={() => setSelectedId(s.id)}
-                  className={`relative rounded-2xl border p-3 cursor-pointer transition ${
-                    isSelected ? `${accent.soft} ${accent.border} shadow-sm` : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {s.cover_url ? (
-                      <img src={getStorageUrl(s.cover_url)} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
-                    ) : (
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition ${
-                        isSelected ? `${accent.button} text-white` : 'bg-gray-100 text-gray-400'
-                      }`}>
-                        <BookOpen size={16} />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-800 truncate text-sm">{s.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {s.theme_emoji && (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-gray-500 truncate">
-                            {s.theme_emoji} {s.theme_title}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-gray-400 flex-shrink-0">
-                          {s.story_pages.length} page{s.story_pages.length === 1 ? '' : 's'}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${s.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                          {s.is_active ? 'Active' : 'Draft'}
-                        </span>
-                      </div>
+                <div key={s.id} className={`hover:bg-gray-50/50 transition ${mutatingId === s.id ? 'opacity-50' : ''}`}>
+                <div className="flex items-center gap-0 px-1 sm:px-2">
+                  <button onClick={e => { e.stopPropagation(); toggleSelect(s.id) }}
+                    className="w-8 h-8 flex items-center justify-center shrink-0">
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition ${
+                      checkedIds.has(s.id) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
+                    }`}>
+                      {checkedIds.has(s.id) && <CheckCircle2 size={10} className="text-white" />}
                     </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === s.id ? null : s.id) }}
-                      className="p-1.5 rounded-lg hover:bg-white/70 text-gray-400 flex-shrink-0 transition"
-                    >
-                      <MoreVertical size={16} />
-                    </button>
-                  </div>
-                  {openMenuId === s.id && (
-                    <div
-                      className="absolute right-3 top-12 w-44 bg-white border border-gray-100 rounded-2xl shadow-lg z-20 overflow-hidden py-1.5 text-left"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <button onClick={() => { setSelectedId(s.id); setOpenMenuId(null) }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition">
-                        <Pencil size={14} className="text-gray-400" /> Edit
-                      </button>
-                      <button
-                        onClick={() => { handleDuplicate(s); setOpenMenuId(null) }}
-                        disabled={mutatingId === s.id}
-                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Copy size={14} className="text-gray-400" /> {mutatingId === s.id ? 'Duplicating...' : 'Duplicate'}
-                      </button>
-                      <button onClick={() => { handlePreview(); setOpenMenuId(null) }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition">
-                        <Eye size={14} className="text-gray-400" /> Preview
-                      </button>
-                      <button onClick={() => { void alert({ title: 'Drag-and-drop reordering', message: 'Coming soon! For now, edit a story and change its order number to reorder it in the list.' }); setOpenMenuId(null) }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition">
-                        <ArrowUpDown size={14} className="text-gray-400" /> Change Order
-                      </button>
-                      <div className="border-t border-gray-100 my-1" />
-                      <button
-                        onClick={() => { handleDelete(s); setOpenMenuId(null) }}
-                        disabled={mutatingId === s.id}
-                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Trash2 size={14} /> {mutatingId === s.id ? 'Deleting...' : 'Delete'}
-                      </button>
+                  </button>
+                <button
+                  className="flex-1 flex items-center gap-3 pr-3 sm:pr-4 py-3.5 text-left min-w-0"
+                  onClick={() => setSelectedId(s.id)}>
+                  {s.cover_url ? (
+                    <img src={getStorageUrl(s.cover_url)} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100 flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-[13px] flex-shrink-0">
+                      {s.sort_order}
                     </div>
                   )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-gray-800 truncate">{s.title}</p>
+                    <p className="text-[11px] text-gray-400">Age {s.age_min ?? '—'}–{s.age_max ?? '—'}</p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                    <span className="text-[12px] font-bold text-gray-500">{readiness.score}%</span>
+                    <div className="w-14 bg-gray-100 rounded-full h-1.5">
+                      <div className={`h-full rounded-full ${readiness.score === 100 ? 'bg-emerald-500' : 'bg-amber-400'}`} style={{ width: `${readiness.score}%` }} />
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
+                  <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}
+                      className="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition">
+                      <MoreVertical size={16} />
+                    </button>
+                    {openMenuId === s.id && (
+                      <>
+                        <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                        <div className="fixed sm:absolute right-4 sm:right-0 bottom-4 sm:bottom-auto sm:top-full sm:mt-1 w-[calc(100vw-32px)] sm:w-48 bg-white border border-gray-200 rounded-2xl sm:rounded-xl shadow-2xl z-40 py-2 sm:py-1.5">
+                          <p className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wide sm:hidden">{s.title}</p>
+                          <button onClick={() => { setOpenMenuId(null); setSelectedId(s.id) }}
+                            className="w-full text-left px-4 py-3 sm:py-2.5 text-[14px] sm:text-[13px] font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition">
+                            <Pencil size={16} className="text-gray-400" /> Edit Story
+                          </button>
+                          <button onClick={() => { setOpenMenuId(null); handleDuplicate(s) }}
+                            className="w-full text-left px-4 py-3 sm:py-2.5 text-[14px] sm:text-[13px] font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition">
+                            <Copy size={16} className="text-gray-400" /> Duplicate
+                          </button>
+                          <div className="border-t border-gray-100 my-1" />
+                          <button onClick={() => { setOpenMenuId(null); handleDelete(s) }}
+                            className="w-full text-left px-4 py-3 sm:py-2.5 text-[14px] sm:text-[13px] font-medium text-red-600 hover:bg-red-50 flex items-center gap-3 transition">
+                            <Trash2 size={16} className="text-red-400" /> Delete
+                          </button>
+                          <button onClick={() => setOpenMenuId(null)}
+                            className="w-full text-center py-3 text-[13px] font-bold text-gray-400 hover:text-gray-600 sm:hidden transition">
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </button>
+                </div>
+                {tab === 'missing' && missing.length > 0 && (
+                  <div className="px-4 sm:px-5 pb-3 -mt-1">
+                    <div className="ml-[52px] flex flex-wrap gap-1">
+                      {missing.map(m => (
+                        <span key={m.key} className="text-[10px] font-medium text-red-500 bg-red-50 border border-red-100 rounded-md px-2 py-0.5">
+                          {m.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 </div>
               )
             })}
-            {pageRows.length === 0 && (
-              <p className="text-center text-gray-400 text-sm py-8">No stories found.</p>
-            )}
           </div>
+        </div>
 
-          {/* Pagination */}
-          <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between text-xs text-gray-500 flex-shrink-0 flex-wrap gap-2">
-            <span>
-              Showing {filtered.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, filtered.length)} of {filtered.length} stories
-            </span>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={pageClamped <= 1} className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-100 disabled:opacity-40 hover:bg-gray-50 transition">
-                <ChevronLeft size={14} />
-              </button>
-              {Array.from({ length: totalPagesForPagination }, (_, i) => i + 1).slice(0, 5).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold transition ${
-                    p === pageClamped ? `${accent.button} text-white shadow-sm` : 'hover:bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {p}
+        {/* Pagination */}
+        {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-3 text-[12px] text-gray-400">
+          <span>{filtered.length} stories</span>
+          <div className="flex items-center gap-0.5">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={pageClamped <= 1}
+              className="w-7 h-7 rounded-md hover:bg-gray-100 flex items-center justify-center disabled:opacity-20 transition text-gray-500">
+              <ChevronLeft size={14} />
+            </button>
+            {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+              const n = i + 1
+              return (
+                <button key={n} onClick={() => setPage(n)}
+                  className={`w-7 h-7 rounded-md text-[11px] font-bold transition ${n === pageClamped ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  {n}
                 </button>
-              ))}
-              <button onClick={() => setPage(p => Math.min(totalPagesForPagination, p + 1))} disabled={pageClamped >= totalPagesForPagination} className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-100 disabled:opacity-40 hover:bg-gray-50 transition">
-                <ChevronRight size={14} />
-              </button>
-            </div>
+              )
+            })}
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={pageClamped >= totalPages}
+              className="w-7 h-7 rounded-md hover:bg-gray-100 flex items-center justify-center disabled:opacity-20 transition text-gray-500">
+              <ChevronRight size={14} />
+            </button>
           </div>
         </div>
-
-        {/* Editor panel */}
-        <div className="flex-1 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-gray-50 to-white">
-          {selected ? (
-            <StoryEditor key={selected.id} story={selected} onSaved={fetchStories} />
-          ) : (
-            <div className="flex items-center justify-center h-full p-8">
-              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-10 text-center max-w-sm">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${accent.tile}`}>
-                  <BookOpen className="w-7 h-7" />
-                </div>
-                <p className="font-bold text-gray-700 mb-1">No stories yet</p>
-                <p className="text-sm text-gray-400">Click &quot;+ Create New Story&quot; to add your first storybook.</p>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
-      {dialog}
     </div>
   )
 }

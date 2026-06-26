@@ -31,7 +31,7 @@ export default function ProgressTimelineCard({ events }: Props) {
       <p className="font-black text-white mb-3">{t("progressTimelineTitle")}</p>
 
       {events.length === 0 ? (
-        <p className="text-purple-300 text-sm font-bold text-center py-4">{t("timelineEmptyState")}</p>
+        <p className="theme-text-muted text-sm font-bold text-center py-4">{t("timelineEmptyState")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {events.map((event, i) => {
@@ -47,8 +47,8 @@ export default function ProgressTimelineCard({ events }: Props) {
               <div key={i} className="flex items-start gap-3">
                 <span className="text-xl shrink-0">{EVENT_EMOJI[event.type]}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-purple-100 text-sm">{message}</p>
-                  <p className="text-purple-300 text-xs">
+                  <p className="font-bold theme-text text-sm">{message}</p>
+                  <p className="theme-text-muted text-xs">
                     {new Date(event.earnedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>

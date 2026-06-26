@@ -35,7 +35,7 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
         <div className="flex items-center justify-between">
           {DAY_LABELS.map((label, i) => (
             <div key={i} className="flex flex-col items-center gap-1">
-              <span className="text-[9px] font-bold text-purple-300">{label}</span>
+              <span className="text-[9px] font-bold theme-text-muted">{label}</span>
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${
                   weekStreak[i]
@@ -48,7 +48,7 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-purple-300 text-center mt-3 leading-snug">
+        <p className="text-[10px] theme-text-muted text-center mt-3 leading-snug">
           {t("streakEncouragement")}
         </p>
       </div>
@@ -57,7 +57,7 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
       <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-black text-white text-[12px] tracking-wide">{t("myBadges")}</h3>
-          <Link href="/user-profile" className="text-[10px] font-bold text-purple-200 hover:underline">
+          <Link href="/user-profile" className="text-[10px] font-bold theme-text hover:underline">
             {t("viewAll")}
           </Link>
         </div>
@@ -73,7 +73,7 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-purple-300 text-center mt-2 leading-snug">
+        <p className="text-[10px] theme-text-muted text-center mt-2 leading-snug">
           {badgeCount > 0 ? t("badgesEarned").replace("{count}", String(badgeCount)) : t("noBadgesYet")}
         </p>
       </div>
@@ -85,17 +85,17 @@ export default function StatsSidebar({ weekStreak, streakCount, badgeCount, toda
             <Trophy className="w-5 h-5 text-yellow-300" />
             <h3 className="font-black text-[12px] tracking-wide">{t("certificateTeaserTitle")}</h3>
           </div>
-          <p className="text-[10px] text-purple-100 leading-snug mb-2">{t("certificateTeaserBody")}</p>
+          <p className="text-[10px] theme-text leading-snug mb-2">{t("certificateTeaserBody")}</p>
           <p className="text-[10px] font-bold text-yellow-300">{activitiesCompleted}/8</p>
         </div>
       </Link>
 
       {/* Today's stars */}
       <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 text-center">
-        <p className="text-[11px] font-bold text-purple-100">{t("todayStarsLabel")}</p>
+        <p className="text-[11px] font-bold theme-text">{t("todayStarsLabel")}</p>
         <p className="text-2xl font-black text-yellow-500 mt-1">⭐ {todayStars}</p>
         {todayStars === 0 && (
-          <p className="text-[9px] text-purple-300 mt-1 leading-snug">{t("keepLearningStars")}</p>
+          <p className="text-[9px] theme-text-muted mt-1 leading-snug">{t("keepLearningStars")}</p>
         )}
       </div>
     </div>

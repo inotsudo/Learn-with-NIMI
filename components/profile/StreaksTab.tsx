@@ -53,7 +53,7 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
     <div className="space-y-4 mt-4">
       <div>
         <p className="font-black text-white text-lg">{t("streaksPageTitle")}</p>
-        <p className="text-purple-300 text-sm">{t("streaksPageSubtitle")}</p>
+        <p className="theme-text-muted text-sm">{t("streaksPageSubtitle")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -66,7 +66,7 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
             <span className={`${current > 0 ? "drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]" : ""}`}>🔥</span>
             <span className="text-orange-400 ml-1">{current}</span>
           </p>
-          <p className="text-purple-300 text-xs font-bold mt-1">{t("currentStreakLabel")}</p>
+          <p className="theme-text-muted text-xs font-bold mt-1">{t("currentStreakLabel")}</p>
         </motion.div>
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -76,9 +76,9 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
         >
           <p className="font-black text-4xl">
             <span>🏆</span>
-            <span className="text-purple-200 ml-1">{longest}</span>
+            <span className="theme-text ml-1">{longest}</span>
           </p>
-          <p className="text-purple-300 text-xs font-bold mt-1">{t("longestStreakLabel")}</p>
+          <p className="theme-text-muted text-xs font-bold mt-1">{t("longestStreakLabel")}</p>
         </motion.div>
       </div>
 
@@ -95,7 +95,7 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 transition ${
                 earned
                   ? "bg-yellow-400/20 border-yellow-300/40 text-yellow-200"
-                  : "bg-white/5 border-white/10 text-purple-400"
+                  : "bg-white/5 border-white/10 theme-text-muted"
               }`}
             >
               <span className={earned ? "" : "grayscale opacity-50"}>{m.emoji}</span>
@@ -112,7 +112,7 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
         <p className="font-black text-white mb-3">{t("activityCalendarTitle")}</p>
         <div className="grid grid-cols-7 gap-1.5 mb-1.5">
           {dayKeys.map((key, i) => (
-            <span key={i} className="text-[10px] font-bold text-purple-300 text-center">{t(key)}</span>
+            <span key={i} className="text-[10px] font-bold theme-text-muted text-center">{t(key)}</span>
           ))}
         </div>
         <div className="space-y-1.5">
@@ -127,7 +127,7 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
                       : day.active
                         ? "bg-gradient-to-br from-green-400 to-green-600 shadow-[0_0_6px_rgba(34,197,94,0.3)]"
                         : "bg-white/10"
-                  } ${day.today ? "ring-2 ring-purple-400 ring-offset-1 ring-offset-transparent" : ""}`}
+                  } ${day.today ? "ring-2 ring-yellow-400 ring-offset-1 ring-offset-transparent" : ""}`}
                 />
               ))}
             </div>
@@ -136,15 +136,15 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
         <div className="flex items-center gap-4 mt-3 justify-center">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-gradient-to-br from-green-400 to-green-600" />
-            <span className="text-[10px] text-purple-300 font-semibold">{t("streakKeepItUp")}</span>
+            <span className="text-[10px] theme-text-muted font-semibold">{t("streakKeepItUp")}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-white/10" />
-            <span className="text-[10px] text-purple-300 font-semibold">—</span>
+            <span className="text-[10px] theme-text-muted font-semibold">—</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm ring-2 ring-purple-400" />
-            <span className="text-[10px] text-purple-300 font-semibold">{t("todayLabel")}</span>
+            <div className="w-3 h-3 rounded-sm ring-2 ring-yellow-400" />
+            <span className="text-[10px] theme-text-muted font-semibold">{t("todayLabel")}</span>
           </div>
         </div>
       </div>

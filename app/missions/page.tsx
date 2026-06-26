@@ -10,7 +10,7 @@ import AppShell from "@/components/layout/AppShell";
 import DailyAdventureBanner from "@/components/missions/DailyAdventureBanner";
 import DailyAdventureGrid, { DailyChampionCTA } from "@/components/missions/DailyAdventureGrid";
 import DailyAdventureSidebar from "@/components/missions/DailyAdventureSidebar";
-import AuthBackground from "@/components/auth/AuthBackground";
+import MagicBackground from "@/components/magic/MagicBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -56,10 +56,10 @@ export default function MissionsPage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center gap-4 text-center px-4">
-          <AuthBackground />
-          <p className="relative z-10 text-purple-100 font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="relative z-10 bg-purple-600 text-white font-black rounded-full px-6 py-2.5 shadow hover:bg-purple-700 transition">
+        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
+          <MagicBackground variant="forest" />
+          <p className="relative z-10 theme-text font-semibold">Set up a learner profile to start your Daily Adventure!</p>
+          <Link href="/" className="relative z-10 theme-accent text-white font-black rounded-full px-6 py-2.5 shadow hover:theme-accent transition">
             Go Home
           </Link>
         </div>
@@ -69,8 +69,8 @@ export default function MissionsPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
-        <AuthBackground />
+      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
+        <MagicBackground variant="forest" />
         <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
             <div className="space-y-4">

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <defs>
+    <linearGradient id="ribbonMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DC2626"/>
+      <stop offset="50%" stop-color="#B91C1C"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+    <linearGradient id="ribbonShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FCA5A5" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="transparent"/>
+    </linearGradient>
+    <linearGradient id="foldShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7F1D1D"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+  </defs>
+  <!-- Left fold (behind) -->
+  <path d="M8 8 L0 0 L0 16 Z" fill="url(#foldShadow)"/>
+  <!-- Right fold (behind) -->
+  <path d="M192 8 L200 0 L200 16 Z" fill="url(#foldShadow)"/>
+  <!-- Main ribbon body -->
+  <path d="M4 4 L14 4 L14 0 L186 0 L186 4 L196 4 L196 44 L186 44 L186 48 L14 48 L14 44 L4 44 Z" fill="url(#ribbonMain)"/>
+  <!-- Top shine -->
+  <path d="M14 0 L186 0 L186 20 L14 20 Z" fill="url(#ribbonShine)"/>
+  <!-- Left notch -->
+  <path d="M4 4 L14 4 L14 44 L4 44 L10 24 Z" fill="#7F1D1D"/>
+  <!-- Right notch -->
+  <path d="M196 4 L186 4 L186 44 L196 44 L190 24 Z" fill="#7F1D1D"/>
+  <!-- Inner edge highlights -->
+  <line x1="14" y1="1" x2="186" y2="1" stroke="#FCA5A5" stroke-width="0.8" opacity="0.3"/>
+  <!-- Text -->
+  <text x="100" y="30" text-anchor="middle" font-size="16" font-weight="900" fill="white" font-family="system-ui, -apple-system, sans-serif" letter-spacing="2">CURRENT STORY</text>
+</svg>

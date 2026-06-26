@@ -114,7 +114,7 @@ export default function CreationCard({
         <p className="text-sm text-muted-foreground">
           {creation.childName}, {creation.age} yrs
         </p>
-        <p className="text-xs text-purple-600">from {creation.mission}</p>
+        <p className="text-xs theme-text-muted">from {creation.mission}</p>
 
         <div className="flex gap-2 pt-2">
           <motion.button

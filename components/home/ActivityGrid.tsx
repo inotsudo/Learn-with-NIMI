@@ -50,7 +50,7 @@ export default function ActivityGrid({ completedCategories, starsByCategory }: A
               <p className="font-black text-white text-[11px] uppercase text-center leading-tight">
                 {t(activity.titleKey)}
               </p>
-              <p className="text-purple-200 text-[9px] text-center leading-snug mt-0.5 min-h-[24px]">
+              <p className="theme-text text-[9px] text-center leading-snug mt-0.5 min-h-[24px]">
                 {t(activity.subtitleKey)}
               </p>
 

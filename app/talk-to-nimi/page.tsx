@@ -17,7 +17,7 @@ import QuickReplyChips from "@/components/home/QuickReplyChips";
 import ChatQuestBanner from "@/components/home/ChatQuestBanner";
 import ChatSidebar from "@/components/home/ChatSidebar";
 import { NIMI_CHAT_HANDOFF_KEY } from "@/components/home/TalkToNimi";
-import AuthBackground from "@/components/auth/AuthBackground";
+import MagicBackground from "@/components/magic/MagicBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -148,10 +148,10 @@ function NimiChatPageContent({
   const showMic = micSupported && language !== "rw";
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
-      <AuthBackground />
+    <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
+      <MagicBackground variant="treehouse" />
       <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
-        <Link href="/" className="inline-flex items-center gap-1 text-purple-200 font-bold text-sm mb-3 hover:text-white transition w-fit">
+        <Link href="/" className="inline-flex items-center gap-1 theme-text font-bold text-sm mb-3 hover:text-white transition w-fit">
           <ArrowLeft className="w-4 h-4" />
           {t("backToHome")}
         </Link>
@@ -162,7 +162,7 @@ function NimiChatPageContent({
 
         <div className="mb-4 text-center">
           <h1 className="font-black text-2xl sm:text-3xl text-white">{t("nimiChatPageTitle")}</h1>
-          <p className="text-purple-200 text-sm mt-1">{t("nimiChatPageSubtitle")}</p>
+          <p className="theme-text text-sm mt-1">{t("nimiChatPageSubtitle")}</p>
         </div>
 
         <div className="lg:grid lg:grid-cols-[180px_1fr_280px] lg:gap-4 lg:items-start">
@@ -182,9 +182,9 @@ function NimiChatPageContent({
           </div>
 
           {/* Chat card */}
-          <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md overflow-hidden flex flex-col h-[70vh]">
+          <div className="theme-card border-2 border-white/15 rounded-2xl shadow-md overflow-hidden flex flex-col h-[70vh]">
             {/* Header */}
-            <div className="bg-purple-700 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+            <div className="theme-accent px-4 py-3 flex items-center gap-3 flex-shrink-0">
               <motion.img
                 src="/nimi-logo-circle.png" alt="NIMI"
                 className="w-10 h-10 rounded-full object-cover border-2 border-yellow-300 shadow flex-shrink-0"
@@ -192,7 +192,7 @@ function NimiChatPageContent({
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
               <div className="flex-1">
                 <p className="font-black text-white text-sm tracking-wide">NIMI</p>
-                <p className="text-purple-200 text-[11px] flex items-center gap-1.5">
+                <p className="theme-text text-[11px] flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block" />
                   {t("nimiOnlineLabel")}
                 </p>
@@ -214,13 +214,13 @@ function NimiChatPageContent({
                     <div className={`text-sm leading-relaxed px-4 py-2.5 max-w-[75%] shadow-sm ${
                       msg.from === "nimi"
                         ? "bg-white/15 backdrop-blur text-white rounded-2xl rounded-bl-sm border border-white/20"
-                        : "bg-purple-600 text-white rounded-2xl rounded-br-sm"
+                        : "theme-accent text-white rounded-2xl rounded-br-sm"
                     }`}>
                       {showTyping ? (
                         <span className="flex items-center gap-1.5 py-1" aria-label={t("nimiThinking")}>
                           {[0, 0.15, 0.3].map(delay => (
                             <motion.span key={delay}
-                              className="w-2 h-2 bg-purple-300 rounded-full"
+                              className="w-2 h-2 theme-accent-muted rounded-full"
                               animate={{ y: [0, -4, 0] }}
                               transition={{ duration: 0.6, repeat: Infinity, delay }} />
                           ))}
@@ -238,7 +238,7 @@ function NimiChatPageContent({
             {language !== "rw" && (
               <div className="flex justify-center py-1.5 border-t border-white/15">
                 <motion.button whileTap={{ scale: 0.95 }} onClick={toggleSpeak} disabled={isTyping}
-                  className="flex items-center gap-1.5 text-xs font-bold text-purple-200 hover:text-white transition disabled:opacity-50">
+                  className="flex items-center gap-1.5 text-xs font-bold theme-text hover:text-white transition disabled:opacity-50">
                   {isSpeaking ? (
                     <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: Infinity }}>
                       <VolumeX className="w-3.5 h-3.5" />
@@ -271,7 +271,7 @@ function NimiChatPageContent({
                 onKeyDown={e => e.key === "Enter" && sendChat()}
                 placeholder={listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
                 disabled={isTyping || listening}
-                className="flex-1 min-w-0 text-sm bg-white/10 backdrop-blur rounded-full border-2 border-white/20 px-4 py-2.5 focus:outline-none focus:border-purple-300 text-white placeholder-white/40 disabled:opacity-60" />
+                className="flex-1 min-w-0 text-sm theme-card rounded-full border-2 border-white/20 px-4 py-2.5 focus:outline-none focus:theme-border-strong text-white placeholder-white/40 disabled:opacity-60" />
               {showMic && (
                 <motion.button onClick={() => (listening ? stopListening() : startListening())}
                   whileTap={{ scale: 0.9 }}
@@ -280,14 +280,14 @@ function NimiChatPageContent({
                   transition={listening ? { duration: 0.8, repeat: Infinity } : {}}
                   disabled={isTyping}
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 transition shadow disabled:opacity-50 ${
-                    listening ? "bg-red-500 hover:bg-red-600" : "bg-purple-300 hover:bg-purple-400"
+                    listening ? "bg-red-500 hover:bg-red-600" : "theme-accent-muted hover:theme-accent-muted"
                   }`}>
                   <Mic className="w-4 h-4" />
                 </motion.button>
               )}
               <motion.button onClick={() => sendChat()} whileTap={{ scale: 0.9 }}
                 disabled={isTyping || !chatInput.trim()}
-                className="w-10 h-10 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 rounded-full flex items-center justify-center text-white flex-shrink-0 transition shadow">
+                className="w-10 h-10 theme-accent hover:theme-accent disabled:theme-accent-muted rounded-full flex items-center justify-center text-white flex-shrink-0 transition shadow">
                 <Send className="w-4 h-4" />
               </motion.button>
             </div>

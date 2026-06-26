@@ -41,14 +41,14 @@ export default function ShopItemCard({ item, owned, balance, purchasing, onBuy }
             <button
               onClick={() => onBuy(item)}
               disabled={purchasing}
-              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 bg-purple-600 text-white font-black text-xs px-3 py-1.5 rounded-full hover:bg-purple-700 transition disabled:opacity-50"
+              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 theme-accent text-white font-black text-xs px-3 py-1.5 rounded-full hover:theme-accent transition disabled:opacity-50"
             >
               {purchasing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               {purchasing ? t("shopUnlockingBtn") : t("shopUnlockBtn")}
             </button>
           </>
         ) : (
-          <p className="text-purple-300 font-bold text-xs mt-1">
+          <p className="theme-text-muted font-bold text-xs mt-1">
             {t("shopNeedMoreStars").replace("{n}", String(item.price - balance))}
           </p>
         )}

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 110">
+  <defs>
+    <linearGradient id="khPink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F48FB1"/>
+      <stop offset="40%" stop-color="#EC407A"/>
+      <stop offset="100%" stop-color="#AD1457"/>
+    </linearGradient>
+    <linearGradient id="khShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE4EC" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+    <linearGradient id="khRim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8BBD0"/>
+      <stop offset="100%" stop-color="#880E4F"/>
+    </linearGradient>
+    <filter id="khGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <!-- Ribbon tails -->
+  <path d="M30 88 L20 105 L32 96 L38 108 L38 88Z" fill="#AD1457"/>
+  <path d="M70 88 L80 105 L68 96 L62 108 L62 88Z" fill="#AD1457"/>
+  <path d="M30 88 L22 102 L32 94 L36 104 L36 88Z" fill="#EC407A"/>
+  <path d="M70 88 L78 102 L68 94 L64 104 L64 88Z" fill="#EC407A"/>
+  <!-- Shield outer -->
+  <path d="M50 4 L90 20 L90 52 Q90 82 50 96 Q10 82 10 52 L10 20Z" fill="url(#khRim)" stroke="#880E4F" stroke-width="1.5"/>
+  <!-- Shield inner -->
+  <path d="M50 10 L84 24 L84 50 Q84 76 50 88 Q16 76 16 50 L16 24Z" fill="url(#khPink)" stroke="#C2185B" stroke-width="1"/>
+  <!-- Shine -->
+  <path d="M50 10 L84 24 L84 50 Q84 76 50 88 Q38 82 28 72 L28 24Z" fill="url(#khShine)"/>
+  <!-- Inner ring -->
+  <ellipse cx="50" cy="50" rx="22" ry="22" fill="none" stroke="#FCE4EC" stroke-width="1.5" opacity="0.3"/>
+  <!-- Heart -->
+  <path d="M50 68 L30 48 Q24 40 32 32 Q40 26 50 38 Q60 26 68 32 Q76 40 70 48Z" fill="#FFF0F3" stroke="#F8BBD0" stroke-width="1.5"/>
+  <path d="M50 62 L34 46 Q30 40 36 35 Q40 32 46 38Z" fill="white" opacity="0.25"/>
+  <!-- Heart face -->
+  <circle cx="42" cy="44" r="1.5" fill="#C2185B"/>
+  <circle cx="56" cy="44" r="1.5" fill="#C2185B"/>
+  <path d="M44 50 Q50 54 56 50" fill="none" stroke="#C2185B" stroke-width="1" stroke-linecap="round"/>
+  <!-- Heart cheeks -->
+  <ellipse cx="37" cy="48" rx="3" ry="2" fill="#FF6B6B" opacity="0.3"/>
+  <ellipse cx="61" cy="48" rx="3" ry="2" fill="#FF6B6B" opacity="0.3"/>
+  <!-- Bottom circle -->
+  <circle cx="50" cy="86" r="6" fill="#EC407A" stroke="#880E4F" stroke-width="1.5"/>
+  <path d="M50 83 Q48 85 48.5 87 Q49 89 50 89.5 Q51 89 51.5 87 Q52 85 50 83Z" fill="#FFF0F3"/>
+  <!-- Sparkles -->
+  <circle cx="14" cy="10" r="2" fill="#F48FB1" opacity="0.6" filter="url(#khGlow)"/>
+  <circle cx="88" cy="8" r="1.5" fill="#F48FB1" opacity="0.5" filter="url(#khGlow)"/>
+</svg>

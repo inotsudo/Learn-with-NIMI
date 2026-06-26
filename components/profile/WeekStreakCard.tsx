@@ -34,14 +34,14 @@ export default function WeekStreakCard({ weekStreak, activityDates }: Props) {
       <p className="font-black text-white text-sm mt-1">
         {t("dayStreak").replace("{count}", String(current))}
       </p>
-      <p className="text-purple-300 text-xs mt-0.5">{motivationMsg}</p>
+      <p className="theme-text-muted text-xs mt-0.5">{motivationMsg}</p>
 
       <div className="flex items-center justify-between mt-4 gap-1">
         {dayKeys.map((key, i) => {
           const done = weekStreak[i];
           return (
             <div key={i} className="flex flex-col items-center gap-1 flex-1">
-              <span className="text-[10px] font-bold text-purple-300">{t(key)}</span>
+              <span className="text-[10px] font-bold theme-text-muted">{t(key)}</span>
               <motion.div
                 initial={done ? { scale: 0 } : {}}
                 animate={done ? { scale: 1 } : {}}

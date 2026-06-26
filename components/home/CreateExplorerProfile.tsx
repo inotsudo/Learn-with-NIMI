@@ -33,7 +33,7 @@ const REWARD_ITEMS: {
   iconColor: string;
 }[] = [
   { icon: Star, titleKey: "earnStarsTitle", descKey: "earnStarsDesc", bg: "bg-yellow-400/20", iconBg: "bg-yellow-400/20", iconColor: "text-yellow-200" },
-  { icon: Award, titleKey: "collectBadgesTitle", descKey: "collectBadgesDesc", bg: "bg-purple-400/20", iconBg: "bg-purple-400/20", iconColor: "text-purple-200" },
+  { icon: Award, titleKey: "collectBadgesTitle", descKey: "collectBadgesDesc", bg: "theme-accent-muted", iconBg: "theme-accent-muted", iconColor: "theme-text" },
   { icon: GraduationCap, titleKey: "getCertificatesTitle", descKey: "getCertificatesDesc", bg: "bg-blue-400/20", iconBg: "bg-blue-400/20", iconColor: "text-blue-200" },
   { icon: BookOpen, titleKey: "readStoriesTitle", descKey: "readStoriesDesc", bg: "bg-pink-400/20", iconBg: "bg-pink-400/20", iconColor: "text-pink-200" },
 ];
@@ -109,7 +109,7 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
           <h1 className="font-black text-2xl sm:text-4xl text-white">
             ✨ {t("welcomeFutureExplorer")} ✨
           </h1>
-          <p className="text-purple-200 mt-2 max-w-xl mx-auto">{t("createProfileSubtitle")}</p>
+          <p className="theme-text mt-2 max-w-xl mx-auto">{t("createProfileSubtitle")}</p>
         </div>
 
         <div className="lg:grid lg:grid-cols-[180px_1fr_280px] lg:gap-6 lg:items-start">
@@ -128,8 +128,8 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
           {/* Center form card */}
           <div className="bg-white/10 backdrop-blur rounded-3xl shadow-xl border-2 border-white/15 p-5 sm:p-8">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-9 h-9 bg-purple-400/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <Smile className="w-5 h-5 text-purple-200" />
+              <div className="w-9 h-9 theme-accent-muted rounded-full flex items-center justify-center flex-shrink-0">
+                <Smile className="w-5 h-5 theme-text" />
               </div>
               <h2 className="font-black text-lg text-white flex-1">{t("createProfileCardTitle")}</h2>
               <Sparkles className="w-5 h-5 text-yellow-400" />
@@ -138,8 +138,8 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
             <div className="space-y-5">
               {/* Step 1: name */}
               <div>
-                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
-                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">1</span>
+                <label className="flex items-center gap-2 font-bold theme-text text-sm mb-2">
+                  <span className="w-6 h-6 rounded-full theme-accent text-white text-xs flex items-center justify-center flex-shrink-0">1</span>
                   {t("whatShouldWeCallYou")}
                 </label>
                 <input
@@ -148,33 +148,33 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                   onKeyDown={e => e.key === "Enter" && handleSubmit()}
                   placeholder={t("explorerNamePlaceholder")}
                   maxLength={30}
-                  className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition placeholder:text-white/40" />
+                  className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition placeholder:text-white/40" />
               </div>
 
               {/* Step 2: age group */}
               <div className="pt-5 border-t border-white/15">
-                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
-                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
+                <label className="flex items-center gap-2 font-bold theme-text text-sm mb-2">
+                  <span className="w-6 h-6 rounded-full theme-accent text-white text-xs flex items-center justify-center flex-shrink-0">2</span>
                   {t("chooseAgeGroup")}
                 </label>
                 <div ref={ageRef} className="relative">
                   <button
                     type="button"
                     onClick={() => { setShowAgeDropdown(v => !v); setShowFavDropdown(false); }}
-                    className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition flex items-center justify-between"
+                    className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition flex items-center justify-between"
                   >
                     <span>{t(AGE_GROUPS.find(g => g.value === age)?.key ?? AGE_GROUPS[0].key)}</span>
-                    <ChevronDown className={`w-4 h-4 text-purple-300 transition-transform ${showAgeDropdown ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`w-4 h-4 theme-text-muted transition-transform ${showAgeDropdown ? "rotate-180" : ""}`} />
                   </button>
                   {showAgeDropdown && (
-                    <div className="absolute left-0 right-0 mt-1 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="absolute left-0 right-0 mt-1 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50">
                       {AGE_GROUPS.map(g => (
                         <button
                           key={g.key}
                           type="button"
                           onClick={() => { setAge(g.value); setShowAgeDropdown(false); }}
                           className={`flex items-center px-4 py-2.5 w-full text-sm font-medium transition ${
-                            age === g.value ? "bg-purple-500/30 text-white" : "text-purple-100 hover:bg-white/10"
+                            age === g.value ? "theme-accent/30 text-white" : "theme-text hover:bg-white/10"
                           }`}
                         >
                           {t(g.key)}
@@ -187,28 +187,28 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
 
               {/* Step 3: favorite adventure */}
               <div className="pt-5 border-t border-white/15">
-                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
-                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
+                <label className="flex items-center gap-2 font-bold theme-text text-sm mb-2">
+                  <span className="w-6 h-6 rounded-full theme-accent text-white text-xs flex items-center justify-center flex-shrink-0">3</span>
                   {t("pickFavoriteAdventure")}
                 </label>
                 <div ref={favRef} className="relative">
                   <button
                     type="button"
                     onClick={() => { setShowFavDropdown(v => !v); setShowAgeDropdown(false); }}
-                    className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-purple-400 transition flex items-center justify-between"
+                    className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition flex items-center justify-between"
                   >
                     <span>{t(FAVORITE_CATEGORIES.find(c => c.value === favorite)?.key ?? FAVORITE_CATEGORIES[0].key)}</span>
-                    <ChevronDown className={`w-4 h-4 text-purple-300 transition-transform ${showFavDropdown ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`w-4 h-4 theme-text-muted transition-transform ${showFavDropdown ? "rotate-180" : ""}`} />
                   </button>
                   {showFavDropdown && (
-                    <div className="absolute left-0 right-0 mt-1 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="absolute left-0 right-0 mt-1 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50">
                       {FAVORITE_CATEGORIES.map(c => (
                         <button
                           key={c.value}
                           type="button"
                           onClick={() => { setFavorite(c.value); setShowFavDropdown(false); }}
                           className={`flex items-center px-4 py-2.5 w-full text-sm font-medium transition ${
-                            favorite === c.value ? "bg-purple-500/30 text-white" : "text-purple-100 hover:bg-white/10"
+                            favorite === c.value ? "theme-accent/30 text-white" : "theme-text hover:bg-white/10"
                           }`}
                         >
                           {t(c.key)}
@@ -221,8 +221,8 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
 
               {/* Step 4: avatar */}
               <div className="pt-5 border-t border-white/15">
-                <label className="flex items-center gap-2 font-bold text-purple-100 text-sm mb-2">
-                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">4</span>
+                <label className="flex items-center gap-2 font-bold theme-text text-sm mb-2">
+                  <span className="w-6 h-6 rounded-full theme-accent text-white text-xs flex items-center justify-center flex-shrink-0">4</span>
                   {t("chooseYourAvatar")}
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -232,7 +232,7 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                       onClick={() => setAvatar(a)}
                       className={`w-11 h-11 rounded-full text-2xl flex items-center justify-center transition border-2 ${
                         avatar === a
-                          ? "border-purple-400 bg-purple-400/20 scale-110 shadow"
+                          ? "theme-border-strong theme-accent-muted scale-110 shadow"
                           : "border-transparent bg-white/10 hover:bg-white/20"
                       }`}
                     >
@@ -275,7 +275,7 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
                     </div>
                     <div>
                       <p className="font-bold text-sm text-white">{t(item.titleKey)}</p>
-                      <p className="text-xs text-purple-300">{t(item.descKey)}</p>
+                      <p className="text-xs theme-text-muted">{t(item.descKey)}</p>
                     </div>
                   </div>
                 ))}
@@ -286,12 +286,12 @@ export default function CreateExplorerProfile({ onCreated }: Props) {
               <p className="font-black text-white mb-1 flex items-center gap-1.5">
                 <Gift className="w-4 h-4 text-pink-300" /> {t("welcomeGiftTitle")}
               </p>
-              <p className="text-sm text-purple-300">{t("welcomeGiftDesc")}</p>
+              <p className="text-sm theme-text-muted">{t("welcomeGiftDesc")}</p>
             </div>
           </div>
         </div>
 
-        <p className="text-center text-xs text-purple-300 mt-8 flex items-center justify-center gap-1.5">
+        <p className="text-center text-xs theme-text-muted mt-8 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5" /> {t("infoSafetyNote")}
         </p>
       </main>

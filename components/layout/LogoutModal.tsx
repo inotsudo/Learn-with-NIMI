@@ -84,7 +84,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
               <h2 className="text-xl sm:text-2xl font-black text-white mt-4">
                 {t("logoutConfirmTitle")}
               </h2>
-              <p className="text-purple-200 text-sm mt-2">
+              <p className="theme-text text-sm mt-2">
                 {t("logoutConfirmSubtitle")}
               </p>
 
@@ -99,7 +99,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
                 <button
                   onClick={onClose}
                   disabled={signingOut}
-                  className="flex-1 border-2 border-white/20 text-purple-100 font-black rounded-full py-3 text-sm hover:bg-white/10 transition disabled:opacity-60"
+                  className="flex-1 border-2 border-white/20 theme-text font-black rounded-full py-3 text-sm hover:bg-white/10 transition disabled:opacity-60"
                 >
                   {t("logoutConfirmCancel")}
                 </button>
@@ -110,7 +110,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
             <div className="flex items-end gap-4 mt-8">
               <div className="relative bg-white/10 backdrop-blur border-2 border-white/20 rounded-2xl px-4 py-3 shadow-xl max-w-[220px]">
                 <span className="absolute top-2 right-2 text-yellow-400 text-sm leading-none">★</span>
-                <span className="absolute bottom-2 left-2 text-purple-400 text-xs leading-none">✦</span>
+                <span className="absolute bottom-2 left-2 theme-text-muted text-xs leading-none">✦</span>
                 <p className="text-sm font-bold text-white leading-snug">
                   {t("logoutFarewell")}
                 </p>

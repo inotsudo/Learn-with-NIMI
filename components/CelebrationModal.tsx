@@ -1,5 +1,7 @@
-// components/CelebrationModal.tsx
+"use client";
+
 import React from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type CelebrationModalProps = {
   isOpen: boolean;
@@ -8,6 +10,7 @@ type CelebrationModalProps = {
 };
 
 export default function CelebrationModal({ isOpen, onClose, message }: CelebrationModalProps) {
+  const { t } = useLanguage();
   if (!isOpen) return null;
 
   return (
@@ -27,9 +30,9 @@ export default function CelebrationModal({ isOpen, onClose, message }: Celebrati
         textAlign: "center",
         maxWidth: "90vw",
       }}>
-        <h2>🎉 Congratulations! 🎉</h2>
-        <p>{message || "You completed the mission!"}</p>
-        <button onClick={onClose} style={{ marginTop: "1rem" }}>Close</button>
+        <h2>🎉 {t("celebrationTitle") || "Congratulations!"} 🎉</h2>
+        <p>{message || t("celebrationComplete")}</p>
+        <button onClick={onClose} style={{ marginTop: "1rem" }}>{t("celebrationClose")}</button>
       </div>
     </div>
   );

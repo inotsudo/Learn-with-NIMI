@@ -1,8 +1,8 @@
 // NIMIPIKO — service worker: web push + offline media/static caching
 
 const MEDIA_CACHE = "nimi-media-v1";
-const STATIC_CACHE = "nimi-static-v1";
-const PAGE_CACHE = "nimi-pages-v1";
+const STATIC_CACHE = "nimi-static-v5";
+const PAGE_CACHE = "nimi-pages-v5";
 const CURRENT_CACHES = [MEDIA_CACHE, STATIC_CACHE, PAGE_CACHE];
 
 self.addEventListener("activate", (event) => {
@@ -45,8 +45,9 @@ self.addEventListener("fetch", (event) => {
 
   const url = event.request.url;
   const isSupabaseMedia = url.includes("/storage/v1/object/public/");
-  const isNextStatic = url.includes("/_next/static/");
-  if (!isSupabaseMedia && !isNextStatic) return;
+  // Only cache media assets — never cache _next/static JS/CSS chunks
+  // because Turbopack HMR and code changes cause stale module errors
+  if (!isSupabaseMedia) return;
 
   const cacheName = isSupabaseMedia ? MEDIA_CACHE : STATIC_CACHE;
   event.respondWith(

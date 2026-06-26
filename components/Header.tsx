@@ -9,9 +9,9 @@ interface HeaderProps {
 }
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
+  { code: "en", label: "English", flag: "en" },
+  { code: "fr", label: "Français", flag: "fr" },
+  { code: "rw", label: "Kinyarwanda", flag: "rw" },
 ];
 
 export default function Header({ simple }: HeaderProps) {
@@ -24,7 +24,7 @@ export default function Header({ simple }: HeaderProps) {
   return (
     <header
       className={`${
-        simple ? "bg-transparent border-none" : "bg-white/95 border-b-2 border-purple-200"
+        simple ? "bg-transparent border-none" : "bg-white/95 border-b-2 theme-border"
       } sticky top-0 z-40 shadow-sm`}
     >
       <div className="max-w-7xl mx-auto px-4">
@@ -66,14 +66,14 @@ export default function Header({ simple }: HeaderProps) {
             <div className="relative">
               <button
                 onClick={() => setShowPicker(!showPicker)}
-                className="w-10 h-10 bg-purple-100 hover:bg-purple-200 rounded-full flex items-center justify-center text-xl transition"
+                className="w-10 h-10 theme-accent-soft hover:theme-accent-soft rounded-full flex items-center justify-center text-xl transition"
                 aria-label="Change language"
               >
                 {LANGS.find(l => l.code === language)?.flag ?? "🌐"}
               </button>
 
               {showPicker && (
-                <div className="absolute right-0 mt-2 bg-purple-900/90 backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-36">
+                <div className="absolute right-0 mt-2 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-36">
                   {LANGS.map(lang => (
                     <button
                       key={lang.code}
@@ -81,7 +81,7 @@ export default function Header({ simple }: HeaderProps) {
                       className="flex items-center px-3 py-2.5 w-full hover:bg-white/10 transition text-sm"
                     >
                       <span className="text-lg mr-2">{lang.flag}</span>
-                      <span className="font-medium text-purple-100">{lang.label}</span>
+                      <span className="font-medium theme-text">{lang.label}</span>
                     </button>
                   ))}
                 </div>

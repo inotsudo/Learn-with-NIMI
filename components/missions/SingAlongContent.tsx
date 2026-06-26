@@ -89,7 +89,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
         </div>
 
         <p className="font-black text-white text-lg">{mission.title}</p>
-        {mission.subtitle && <p className="text-purple-200 text-sm">{mission.subtitle}</p>}
+        {mission.subtitle && <p className="theme-text text-sm">{mission.subtitle}</p>}
 
         {songUrl ? (
           <>
@@ -100,14 +100,14 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
 
             <div className="flex items-center justify-center gap-4">
               <button onClick={repeat}
-                className="w-12 h-12 rounded-full bg-purple-400/20 hover:bg-purple-400/30 flex items-center justify-center text-purple-200 transition"
+                className="w-12 h-12 rounded-full theme-accent-muted hover:theme-accent-muted flex items-center justify-center theme-text transition"
                 aria-label={t("repeatLabel")}>
                 <RotateCcw className="w-5 h-5" />
               </button>
 
               <button onClick={togglePlay}
                 className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all ${
-                  playing ? "bg-purple-600 hover:bg-purple-700 scale-105" : "bg-gradient-to-br from-purple-500 to-pink-500 hover:scale-105"
+                  playing ? "theme-accent hover:theme-accent scale-105" : "bg-gradient-to-br from-purple-500 to-pink-500 hover:scale-105"
                 }`}
                 aria-label={playing ? t("pauseLabel") : t("playSongLabel")}>
                 {playing
@@ -140,7 +140,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
             <p className="font-black text-white text-xs uppercase">🎵 {t("songLyricsTitle")}</p>
             <button onClick={() => setKaraoke(k => !k)}
               className={`text-xs font-black rounded-full px-3 py-1 transition ${
-                karaoke ? "bg-purple-600 text-white" : "bg-white/10 text-white border border-white/20"
+                karaoke ? "theme-accent text-white" : "bg-white/10 text-white border border-white/20"
               }`}>
               🎤 {t("karaokeModeLabel")}
             </button>
@@ -149,7 +149,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
             {lyrics.map((line, i) => (
               <p key={i}
                 className={`text-sm font-semibold rounded-lg px-2 py-1 transition-colors ${
-                  karaoke && i === activeLine ? "bg-purple-400/30 text-white" : "text-purple-100"
+                  karaoke && i === activeLine ? "theme-accent-muted text-white" : "theme-text"
                 }`}>
                 {line}
               </p>
@@ -160,7 +160,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
 
       {!completed ? (
         <Button onClick={onComplete} disabled={saving}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-lg rounded-full py-4 shadow-lg flex items-center justify-center gap-2 disabled:opacity-70">
+          className="w-full theme-accent hover:theme-accent text-white font-black text-lg rounded-full py-4 shadow-lg flex items-center justify-center gap-2 disabled:opacity-70">
           {saving ? t("savingLabel") : <><Check className="w-5 h-5" /> {t("markCompleteBtn")}</>}
         </Button>
       ) : (

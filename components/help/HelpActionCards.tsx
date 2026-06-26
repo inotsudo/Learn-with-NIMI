@@ -11,7 +11,7 @@ export default function HelpActionCards() {
   };
 
   const CARDS = [
-    { icon: BookOpen, color: "bg-purple-400/20 text-purple-200", titleKey: "howToUseTitle", descKey: "howToUseDesc", action: scrollToFaq },
+    { icon: BookOpen, color: "theme-accent-muted theme-text", titleKey: "howToUseTitle", descKey: "howToUseDesc", action: scrollToFaq },
     { icon: HelpCircle, color: "bg-blue-400/20 text-blue-200", titleKey: "faqsTitle", descKey: "faqsDesc", action: scrollToFaq },
     { icon: AlertTriangle, color: "bg-red-400/20 text-red-300", titleKey: "reportIssueTitle", descKey: "reportIssueDesc", action: () => window.open("mailto:support@nimipiko.com?subject=Bug Report", "_self") },
     { icon: Mail, color: "bg-green-400/20 text-green-200", titleKey: "contactUsTitle", descKey: "contactUsDesc", action: () => window.open("mailto:support@nimipiko.com", "_self") },
@@ -29,7 +29,7 @@ export default function HelpActionCards() {
             <card.icon className="w-6 h-6" />
           </div>
           <p className="font-black text-white text-sm">{t(card.titleKey)}</p>
-          <p className="text-purple-300 text-xs">{t(card.descKey)}</p>
+          <p className="theme-text-muted text-xs">{t(card.descKey)}</p>
         </button>
       ))}
     </div>

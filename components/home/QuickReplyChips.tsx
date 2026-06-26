@@ -44,7 +44,7 @@ export default function QuickReplyChips({ onSelect, disabled, size = "sm" }: Pro
           <motion.button key={key} whileTap={{ scale: 0.92 }}
             onClick={() => onSelect(t(key))}
             disabled={disabled}
-            className={`flex-shrink-0 bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 text-purple-100 font-bold rounded-full transition disabled:opacity-50 whitespace-nowrap ${sizeCls}`}>
+            className={`flex-shrink-0 bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 theme-text font-bold rounded-full transition disabled:opacity-50 whitespace-nowrap ${sizeCls}`}>
             {t(key)}
           </motion.button>
         ))}
@@ -56,7 +56,7 @@ export default function QuickReplyChips({ onSelect, disabled, size = "sm" }: Pro
     <div>
       <div className="flex items-center gap-2">
         <button onClick={() => scrollByAmount(-1)} aria-label={t("scrollLeftLabel")}
-          className="flex-shrink-0 w-7 h-7 rounded-full bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 text-purple-200 flex items-center justify-center transition">
+          className="flex-shrink-0 w-7 h-7 rounded-full bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 theme-text flex items-center justify-center transition">
           <ChevronLeft className="w-4 h-4" />
         </button>
 
@@ -66,20 +66,20 @@ export default function QuickReplyChips({ onSelect, disabled, size = "sm" }: Pro
             <motion.button key={key} whileTap={{ scale: 0.92 }}
               onClick={() => onSelect(t(key))}
               disabled={disabled}
-              className={`flex-shrink-0 bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 text-purple-100 font-bold rounded-full transition disabled:opacity-50 whitespace-nowrap ${sizeCls}`}>
+              className={`flex-shrink-0 bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 theme-text font-bold rounded-full transition disabled:opacity-50 whitespace-nowrap ${sizeCls}`}>
               {t(key)}
             </motion.button>
           ))}
         </div>
 
         <button onClick={() => scrollByAmount(1)} aria-label={t("scrollRightLabel")}
-          className="flex-shrink-0 w-7 h-7 rounded-full bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 text-purple-200 flex items-center justify-center transition">
+          className="flex-shrink-0 w-7 h-7 rounded-full bg-white/10 backdrop-blur hover:bg-white/20 border border-white/20 theme-text flex items-center justify-center transition">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
       <div className="h-1 bg-white/10 rounded-full mt-1.5 mx-9 overflow-hidden">
-        <div className="h-full w-1/3 bg-purple-400 rounded-full transition-transform"
+        <div className="h-full w-1/3 theme-accent-muted rounded-full transition-transform"
           style={{ transform: `translateX(${scrollPct * 200}%)` }} />
       </div>
     </div>

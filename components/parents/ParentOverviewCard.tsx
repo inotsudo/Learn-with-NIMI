@@ -28,10 +28,10 @@ export default function ParentOverviewCard({ overview, childName, avatarUrl }: P
 
   return (
     <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
-      <p className="text-purple-300 text-xs font-bold uppercase tracking-wide mb-2">{t("overviewSectionTitle")}</p>
+      <p className="theme-text-muted text-xs font-bold uppercase tracking-wide mb-2">{t("overviewSectionTitle")}</p>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="w-14 h-14 rounded-full bg-purple-400/20 flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="w-14 h-14 rounded-full theme-accent-muted flex items-center justify-center shrink-0 overflow-hidden">
           {avatarUrl && avatarUrl.startsWith("http") ? (
             <img src={avatarUrl} alt={childName} className="w-full h-full object-cover" />
           ) : (
@@ -40,7 +40,7 @@ export default function ParentOverviewCard({ overview, childName, avatarUrl }: P
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-black text-white text-lg truncate">{childName}</p>
-          <div className="flex items-center gap-1.5 text-sm text-purple-300 font-bold">
+          <div className="flex items-center gap-1.5 text-sm theme-text-muted font-bold">
             <span>{t("overviewActiveLanguageLabel")}:</span>
             <span className="text-lg">{activeMeta.flag}</span>
             <span>{activeMeta.label}</span>
@@ -51,18 +51,18 @@ export default function ParentOverviewCard({ overview, childName, avatarUrl }: P
         </span>
       </div>
 
-      <p className="font-bold text-purple-200 text-sm mt-3">
+      <p className="font-bold theme-text text-sm mt-3">
         {fillTemplate(t("levelOfMaxLabel"), { level: String(overview.currentLevel), max: String(overview.maxLevel) })}
       </p>
 
       <div className="grid grid-cols-2 gap-3 mt-3">
         <div className="bg-white/5 rounded-xl p-3 text-center">
           <p className="font-black text-white text-2xl">{overview.totalCertificates}</p>
-          <p className="text-purple-300 text-xs mt-0.5">{t("overviewCertificatesLabel")}</p>
+          <p className="theme-text-muted text-xs mt-0.5">{t("overviewCertificatesLabel")}</p>
         </div>
         <div className="bg-white/5 rounded-xl p-3 text-center">
           <p className="font-black text-white text-2xl">{overview.totalBadges}</p>
-          <p className="text-purple-300 text-xs mt-0.5">{t("overviewBadgesLabel")}</p>
+          <p className="theme-text-muted text-xs mt-0.5">{t("overviewBadgesLabel")}</p>
         </div>
       </div>
     </div>

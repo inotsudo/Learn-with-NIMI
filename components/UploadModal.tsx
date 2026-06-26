@@ -129,7 +129,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-white">{success ? 'Upload Complete!' : 'Share Your Creation'}</h2>
             <button onClick={() => { if (!isUploading) { resetForm(); onClose(); } }}
-              className="text-purple-200 hover:text-white transition-colors" disabled={isUploading}>
+              className="theme-text hover:text-white transition-colors" disabled={isUploading}>
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -140,7 +140,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
                 <CheckCircle className="h-10 w-10 text-green-300" />
               </div>
               <h3 className="text-lg font-medium text-white mb-2">Successfully Uploaded!</h3>
-              <p className="text-purple-200 mb-6">Your artwork has been shared with the community.</p>
+              <p className="theme-text mb-6">Your artwork has been shared with the community.</p>
               <Button onClick={() => { resetForm(); onClose(); }} className="w-full">Close</Button>
             </div>
           ) : (
@@ -154,10 +154,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
                 ) : (
                   <div className="space-y-3">
                     <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-white/10">
-                      {error ? <AlertCircle className="h-6 w-6 text-red-400" /> : isDragActive ? <UploadCloud className="h-6 w-6 text-blue-400" /> : <Camera className="h-6 w-6 text-purple-200" />}
+                      {error ? <AlertCircle className="h-6 w-6 text-red-400" /> : isDragActive ? <UploadCloud className="h-6 w-6 text-blue-400" /> : <Camera className="h-6 w-6 theme-text" />}
                     </div>
-                    <p className="text-sm text-purple-200">{error ? 'Try another file' : isDragActive ? 'Drop your artwork here' : 'Drag & drop or click to select'}</p>
-                    <p className="text-xs text-purple-300">JPEG, PNG, GIF, WEBP (max 5MB)</p>
+                    <p className="text-sm theme-text">{error ? 'Try another file' : isDragActive ? 'Drop your artwork here' : 'Drag & drop or click to select'}</p>
+                    <p className="text-xs theme-text-muted">JPEG, PNG, GIF, WEBP (max 5MB)</p>
                   </div>
                 )}
               </div>
@@ -168,7 +168,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
                 <Input placeholder="What did you create? (optional)" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isUploading} className="bg-white/10 border-white/20 text-white placeholder:text-white/40" />
                 <div className="flex items-center space-x-2">
                   <Switch id="visibility" checked={isPublic} onCheckedChange={setIsPublic} disabled={isUploading} />
-                  <label htmlFor="visibility" className="text-sm font-medium text-purple-100">{isPublic ? 'Public (Visible to everyone)' : 'Private (Only visible to family)'}</label>
+                  <label htmlFor="visibility" className="text-sm font-medium theme-text">{isPublic ? 'Public (Visible to everyone)' : 'Private (Only visible to family)'}</label>
                 </div>
 
                 {isUploading && <Progress value={progress} className="h-2" />}

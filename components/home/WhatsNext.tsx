@@ -59,16 +59,16 @@ export default function WhatsNext({ completedSteps }: Props) {
 
             {/* Then */}
             <div className="flex-1 bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl p-2 sm:p-3 text-center shadow-sm opacity-60">
-              <p className="text-[8px] font-bold text-purple-300 uppercase tracking-widest mb-1">THEN</p>
+              <p className="text-[8px] font-bold theme-text-muted uppercase tracking-widest mb-1">THEN</p>
               {after ? (
                 <>
                   <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 mx-auto rounded-xl ${after.numBgGlass} backdrop-blur border border-white/20 flex items-center justify-center text-2xl sm:text-3xl mb-2 shadow-sm`}>
                     {after.emoji}
                   </div>
-                  <p className="text-[9px] font-black text-purple-200 uppercase leading-tight mb-1.5">
+                  <p className="text-[9px] font-black theme-text uppercase leading-tight mb-1.5">
                     {t(after.titleKey)}
                   </p>
-                  <div className="bg-white/10 backdrop-blur text-purple-200 text-[9px] font-black rounded-full py-1.5 flex items-center justify-center gap-1 shadow">
+                  <div className="bg-white/10 backdrop-blur theme-text text-[9px] font-black rounded-full py-1.5 flex items-center justify-center gap-1 shadow">
                     UP NEXT
                   </div>
                 </>
@@ -77,10 +77,10 @@ export default function WhatsNext({ completedSteps }: Props) {
                   <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 mx-auto rounded-xl bg-yellow-400/20 flex items-center justify-center text-2xl sm:text-3xl mb-2 shadow-sm">
                     🏁
                   </div>
-                  <p className="text-[9px] font-black text-purple-200 uppercase leading-tight mb-1.5">
+                  <p className="text-[9px] font-black theme-text uppercase leading-tight mb-1.5">
                     Last One!
                   </p>
-                  <div className="bg-white/10 backdrop-blur text-purple-200 text-[9px] font-black rounded-full py-1.5 flex items-center justify-center gap-1 shadow">
+                  <div className="bg-white/10 backdrop-blur theme-text text-[9px] font-black rounded-full py-1.5 flex items-center justify-center gap-1 shadow">
                     FINAL MISSION
                   </div>
                 </>
@@ -89,7 +89,7 @@ export default function WhatsNext({ completedSteps }: Props) {
 
           </div>
 
-          <p className="text-[9.5px] text-purple-300 text-center leading-snug">
+          <p className="text-[9.5px] theme-text-muted text-center leading-snug">
             {done}/{total} missions mastered — {remaining.length} to go!
           </p>
         </>

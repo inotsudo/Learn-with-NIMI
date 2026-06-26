@@ -18,7 +18,7 @@ export default function NimiCommunity() {
         <h3 className="font-black text-pink-200 text-[13px] uppercase flex items-center gap-1.5 tracking-wide mb-0.5">
           <Users className="w-4 h-4" /> NIMI COMMUNITY
         </h3>
-        <p className="text-[9.5px] text-purple-300 leading-tight">Share your drawings, songs and achievements!</p>
+        <p className="text-[9.5px] theme-text-muted leading-tight">Share your drawings, songs and achievements!</p>
       </div>
 
       <div className="px-3 pb-1 flex gap-2 flex-1">
@@ -30,7 +30,7 @@ export default function NimiCommunity() {
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] font-black text-white leading-tight">{post.name}</p>
-                <p className="text-[8px] text-purple-300 leading-tight truncate">{post.text}</p>
+                <p className="text-[8px] theme-text-muted leading-tight truncate">{post.text}</p>
               </div>
             </div>
             <div className="w-full rounded-xl overflow-hidden border-2 border-white/15 shadow-sm bg-white">

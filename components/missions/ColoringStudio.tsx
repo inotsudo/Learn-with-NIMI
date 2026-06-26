@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+// @ts-ignore
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { Palette, X, Brush, Eraser, Undo, Redo, Trash2, Save } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
+import supabase from "@/lib/supabaseClient";
 import type { Page } from "./types";
 
 // ── Flood fill (paint bucket) ────────────────────────────────
@@ -69,11 +72,12 @@ const PALETTE_COLORS = [
 
 interface ColoringStudioProps {
   pages: Page[];
+  childId?: string | null;
   onClose: () => void;
   t: (key: string) => string;
 }
 
-export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProps) {
+export default function ColoringStudio({ pages, childId, onClose, t }: ColoringStudioProps) {
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing    = useRef(false);
@@ -91,9 +95,13 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
   const [color,      setColor]      = useState("#FF0000");
   const [brushSize,  setBrushSize]  = useState(10);
   const [opacity,    setOpacity]    = useState(90);
-  const [tool,       setTool]       = useState<'brush'|'fill'|'eraser'>('brush');
+  const [tool,       setTool]       = useState<'brush'|'fill'|'eraser'|'sticker'>('brush');
   const [brushType,  setBrushType]  = useState<'pencil'|'marker'|'spray'>('pencil');
+  const [activeSticker, setActiveSticker] = useState("⭐");
+  const [showSaved, setShowSaved] = useState(false);
   const [, setHistVer] = useState(0);
+
+  const STICKERS = ["⭐", "🌈", "🦋", "🌸", "❤️", "🌟", "🎀", "🐸", "🦁", "🎵", "✨", "🌺"];
 
   const processed = useMemo(() =>
     pages.map(p => ({ ...p, image_url: getStorageUrl(p.image_url) })),
@@ -167,8 +175,7 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
 
     if (!url) { finishWithoutImage(t('coloringLoadError')); return; }
 
-    const draw = (img: HTMLImageElement) => {
-      // Cap at 1400px on longest side — keeps drawing fast and flood fill snappy
+    const draw = async (img: HTMLImageElement) => {
       const MAX = 1400;
       const nw = img.naturalWidth  || DEFAULT_W;
       const nh = img.naturalHeight || DEFAULT_H;
@@ -182,13 +189,25 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
       ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
 
-      // restore saved coloring if exists
+      // Restore from local state first
       const saved = pageStates.current[idx];
       if (restore && saved && saved.width === w && saved.height === h) {
         ctx.putImageData(saved, 0, 0);
+      } else {
+        // Try loading from database
+        const dbSave = await loadFromDb(idx);
+        if (dbSave) {
+          const savedImg = new Image();
+          savedImg.onload = () => {
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(savedImg, 0, 0, w, h);
+            pageStates.current[idx] = ctx.getImageData(0, 0, w, h);
+            setHistVer(v => v + 1);
+          };
+          savedImg.src = dbSave;
+        }
       }
 
-      // initialise stacks — don't call getImageData here, first draw will seed undo
       if (!undoStacks.current[idx]) undoStacks.current[idx] = [];
       if (!redoStacks.current[idx]) redoStacks.current[idx] = [];
 
@@ -215,6 +234,86 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
 
   useEffect(() => { if (processed.length > 0) loadPage(0, true); }, []);
 
+  // ── DB persistence ──────────────────────────────────────────
+  // Get the coloring page UUID from the original pages prop (before processing)
+  const getPageId = useCallback((idx: number): string | null => {
+    return pages[idx]?.id ?? null;
+  }, [pages]);
+
+  const saveToDb = useCallback(async (idx: number) => {
+    const canvas = canvasRef.current;
+    const pageId = getPageId(idx);
+    if (!canvas || !childId || !pageId) return;
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      await supabase.from("coloring_saves").upsert({
+        child_id: childId,
+        coloring_page_id: pageId,
+        canvas_data: { dataUrl },
+        saved_at: new Date().toISOString(),
+      }, { onConflict: "child_id,coloring_page_id" });
+    } catch (e) {
+      console.error("[ColoringSave]", e);
+    }
+  }, [childId, getPageId]);
+
+  const loadFromDb = useCallback(async (idx: number) => {
+    const pageId = getPageId(idx);
+    if (!childId || !pageId) return null;
+    try {
+      const { data } = await supabase.from("coloring_saves")
+        .select("canvas_data")
+        .eq("child_id", childId)
+        .eq("coloring_page_id", pageId)
+        .maybeSingle();
+      return (data?.canvas_data as Record<string, unknown>)?.dataUrl as string | null ?? null;
+    } catch { return null; }
+  }, [childId, getPageId]);
+
+  const savePage = useCallback(() => {
+    saveToDb(pageIdx);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      const a = document.createElement("a");
+      a.download = `coloring-page-${pageIdx + 1}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    } catch {}
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 2000);
+  }, [pageIdx, saveToDb]);
+
+  const shareToNimi = useCallback(async () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !childId) return;
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `coloring-${Date.now()}.png`, { type: "image/png" });
+      const path = `community/coloring-${childId}-${Date.now()}.png`;
+      const { error } = await supabase.storage.from("creations").upload(path, file, { upsert: true });
+      if (error) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const children = await supabase.from("children").select("name").eq("id", childId).maybeSingle();
+      await supabase.from("creations").insert({
+        parent_id: user.id,
+        child_id: childId,
+        child_name: children.data?.name ?? "Artist",
+        description: `${children.data?.name ?? "A kid"} colored a beautiful picture! 🎨`,
+        type: "coloring",
+        status: "approved",
+        is_public: true,
+        image_url: `creations/${path}`,
+      });
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 2000);
+    } catch {}
+  }, [childId]);
+
   // ── Navigation ──────────────────────────────────────────────
   const goTo = useCallback((next: number) => {
     // save current page state before switching
@@ -227,10 +326,11 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
         // tainted canvas (image loaded without CORS) — can't read pixels back
       }
     }
+    // Auto-save current page to DB before switching
+    saveToDb(pageIdx);
     setPageIdx(next);
-    // defer load one frame so React can update state first
     requestAnimationFrame(() => loadPage(next, true));
-  }, [pageIdx, loadPage]);
+  }, [pageIdx, loadPage, saveToDb]);
 
   // ── Pointer helpers ─────────────────────────────────────────
   const getPos = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -293,21 +393,7 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
     undoStacks.current[pageIdx] = [];
     redoStacks.current[pageIdx] = [];
     loadPage(pageIdx, false);
-  }, [pageIdx, loadPage]);
-
-  const savePage = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    try {
-      const a = document.createElement('a');
-      a.download = `coloring-page-${pageIdx + 1}.png`;
-      a.href = canvas.toDataURL('image/png');
-      a.click();
-    } catch {
-      // tainted canvas (image loaded without CORS) — can't export
-      window.alert(t('coloringLoadError'));
-    }
-  }, [pageIdx, t]);
+  }, [pageIdx, loadPage, saveToDb]);
 
   // ── Drawing ─────────────────────────────────────────────────
   const spray = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number) => {
@@ -347,6 +433,21 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
         // tainted canvas (image loaded without CORS) — fill bucket unavailable
         window.alert(t('coloringLoadError'));
       }
+      return;
+    }
+
+    if (tool === 'sticker') {
+      try {
+        const before = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        undoStacks.current[pageIdx] = [...(undoStacks.current[pageIdx] || []).slice(-25), before];
+        redoStacks.current[pageIdx] = [];
+        const size = brushSize * 4;
+        ctx.font = `${size}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(activeSticker, pos.x, pos.y);
+        saveSnap();
+      } catch {}
       return;
     }
 
@@ -403,6 +504,7 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
 
   // Cursor
   const cursor = useMemo(() => {
+    if (tool === 'sticker') return 'crosshair';
     if (tool === 'fill') return 'crosshair';
     const s = tool === 'eraser' ? brushSize * 2 : (brushType === 'marker' ? brushSize * 2 : brushSize);
     const c = tool === 'eraser' ? 'white' : color;
@@ -412,153 +514,124 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
   }, [tool, brushSize, brushType, color]);
 
   // ── Render ───────────────────────────────────────────────────
-  return (
+  if (typeof window === "undefined") return null;
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-50 flex"
-      style={{ background: '#f5f5f5' }}
+      className="fixed inset-0 flex flex-col sm:flex-row"
+      style={{ background: '#150b35', zIndex: 9999 }}
     >
 
       {/* ── Desktop sidebar ───────────────────────────────────── */}
       {!isMobile && (
-        <div className="w-[280px] flex-shrink-0 bg-white border-r border-gray-200 shadow-xl flex flex-col overflow-hidden">
+        <div className="w-[240px] flex-shrink-0 theme-card border-r theme-border flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-500 flex-shrink-0">
-            <Palette className="h-5 w-5 text-white" />
-            <span className="text-white font-bold text-sm flex-1">🎨 Coloring Studio</span>
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.94 }}
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
-            >
+            <span className="text-[18px]">🎨</span>
+            <span className="text-white font-baloo font-bold text-[14px] flex-1">Coloring Studio</span>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => { saveToDb(pageIdx); onClose(); }}
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition">
               <X className="h-4 w-4" />
             </motion.button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Active color + picker */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-              <div className="w-14 h-14 rounded-2xl shadow-inner border-2 border-gray-300 flex-shrink-0 transition-all"
-                style={{ backgroundColor: tool === 'eraser' ? '#fff' : color }} />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5">{t("coloringActiveColor")}</p>
-                <input type="color" value={color}
-                  onChange={e => { setColor(e.target.value); setTool('brush'); }}
-                  className="w-full h-9 rounded-xl border border-gray-200 cursor-pointer block" />
-              </div>
-            </div>
-
-            {/* Palette */}
-            <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">{t("coloringPalette")}</p>
-              <div className="grid grid-cols-5 gap-1.5">
-                {PALETTE_COLORS.map(c => (
-                  <button key={c} onClick={() => { setColor(c); setTool('brush'); }}
-                    className={`aspect-square rounded-xl transition-all duration-100 hover:scale-110 border-2 ${
-                      color === c && tool !== 'eraser' && tool !== 'fill'
-                        ? 'border-gray-800 scale-110 shadow-md' : 'border-transparent hover:border-gray-300'
-                    }`}
-                    style={{ backgroundColor: c, boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 1px #e5e7eb' : undefined }}
-                  />
-                ))}
-              </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {/* Palette — big grid */}
+            <div className="grid grid-cols-5 gap-1.5">
+              {PALETTE_COLORS.map(c => (
+                <button key={c} onClick={() => { setColor(c); setTool('brush'); }}
+                  className={`aspect-square rounded-xl transition-all hover:scale-110 border-2 ${
+                    color === c && tool !== 'eraser' ? 'border-white scale-110 shadow-lg' : 'border-transparent'
+                  }`}
+                  style={{ backgroundColor: c, boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 1px rgba(255,255,255,0.3)' : undefined }}
+                />
+              ))}
             </div>
 
             {/* Tools */}
-            <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">{t("coloringTools")}</p>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  { id: 'brush',  icon: <Brush className="h-5 w-5" />, label: t("coloringToolDraw") },
-                  { id: 'fill',   icon: <span className="text-xl leading-none">🪣</span>, label: t("coloringToolFill") },
-                  { id: 'eraser', icon: <Eraser className="h-5 w-5" />, label: t("coloringToolErase") },
-                ] as const).map(({ id, icon, label }) => (
-                  <button key={id} onClick={() => setTool(id)}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border-2 text-xs font-semibold transition-all ${
-                      tool === id
-                        ? 'border-purple-400 bg-purple-50 text-purple-700 shadow-sm'
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
-                    }`}>
-                    {icon}<span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Brush style */}
-            {tool === 'brush' && (
-              <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">{t("coloringBrushStyle")}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { id: 'pencil', emoji: '✏️', label: t("coloringBrushPencil") },
-                    { id: 'marker', emoji: '🖊️', label: t("coloringBrushMarker") },
-                    { id: 'spray',  emoji: '💨', label: t("coloringBrushSpray") },
-                  ] as const).map(({ id, emoji, label }) => (
-                    <button key={id} onClick={() => setBrushType(id)}
-                      className={`flex flex-col items-center gap-1.5 py-2.5 rounded-2xl border-2 text-xs font-semibold transition-all ${
-                        brushType === id
-                          ? 'border-blue-400 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                      }`}>
-                      <span className="text-xl leading-none">{emoji}</span><span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Size */}
-            <div>
-              <div className="flex justify-between mb-1.5">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{t("coloringSize")}</p>
-                <span className="text-xs font-bold text-purple-600">{brushSize}px</span>
-              </div>
-              <input type="range" min={2} max={50} value={brushSize}
-                onChange={e => setBrushSize(Number(e.target.value))}
-                className="w-full accent-purple-500" />
-              <div className="flex justify-between mt-2">
-                {[4, 12, 24, 40].map(s => (
-                  <button key={s} onClick={() => setBrushSize(s)}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${
-                      brushSize === s ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                    }`}>
-                    <div className="rounded-full bg-gray-600" style={{ width: s/4+1, height: s/4+1 }} />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Opacity */}
-            {tool !== 'eraser' && (
-              <div>
-                <div className="flex justify-between mb-1.5">
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{t("coloringOpacity")}</p>
-                  <span className="text-xs font-bold text-purple-600">{opacity}%</span>
-                </div>
-                <input type="range" min={10} max={100} value={opacity}
-                  onChange={e => setOpacity(Number(e.target.value))}
-                  className="w-full accent-purple-500" />
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
+            <div className="grid grid-cols-4 gap-1.5">
               {([
-                { icon: <Undo className="h-4 w-4" />, label: t("coloringUndo"), fn: undo, off: !canUndo, cls: 'text-gray-600' },
-                { icon: <Redo className="h-4 w-4" />, label: t("coloringRedo"), fn: redo, off: !canRedo, cls: 'text-gray-600' },
-                { icon: <Trash2 className="h-4 w-4" />, label: t("coloringClear"), fn: clearPage, off: false, cls: 'text-red-500' },
-                { icon: <Save className="h-4 w-4" />, label: t("coloringSave"), fn: savePage, off: false, cls: 'text-green-600' },
-              ] as const).map(({ icon, label, fn, off, cls }) => (
-                <button key={label} onClick={fn} disabled={off}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold transition-all ${cls} ${off ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
-                  {icon}<span>{label}</span>
+                { id: 'brush' as const,   icon: <Brush className="h-4 w-4" /> },
+                { id: 'fill' as const,    icon: <span className="text-lg">🪣</span> },
+                { id: 'eraser' as const,  icon: <Eraser className="h-4 w-4" /> },
+                { id: 'sticker' as const, icon: <span className="text-lg">⭐</span> },
+              ]).map(({ id, icon }) => (
+                <button key={id} onClick={() => setTool(id)}
+                  className={`flex items-center justify-center py-2.5 rounded-xl border-2 transition-all ${
+                    tool === id
+                      ? 'border-yellow-400 bg-yellow-400/10 text-white'
+                      : 'theme-border theme-text-faint hover:theme-border-strong/30'
+                  }`}>
+                  {icon}
                 </button>
               ))}
             </div>
+
+            {/* Sticker picker */}
+            {tool === 'sticker' && (
+              <div className="grid grid-cols-6 gap-1.5">
+                {STICKERS.map(s => (
+                  <button key={s} onClick={() => setActiveSticker(s)}
+                    className={`text-xl py-1.5 rounded-xl border-2 transition-all hover:scale-110 ${
+                      activeSticker === s ? 'border-yellow-400 bg-yellow-400/10 scale-110' : 'theme-border'
+                    }`}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Brush size */}
+            <div>
+              <input type="range" min={2} max={50} value={brushSize}
+                onChange={e => setBrushSize(Number(e.target.value))}
+                className="w-full accent-purple-400" />
+              <div className="flex justify-between mt-1.5">
+                {[4, 12, 24, 40].map(s => (
+                  <button key={s} onClick={() => setBrushSize(s)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
+                      brushSize === s ? 'border-yellow-400 bg-yellow-400/10' : 'theme-border hover:theme-border-strong/30'
+                    }`}>
+                    <div className="rounded-full bg-white" style={{ width: s / 4 + 1, height: s / 4 + 1 }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="grid grid-cols-2 gap-1.5 pt-2 border-t theme-border">
+              <button onClick={undo} disabled={!canUndo}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/5 text-white/60 text-[12px] font-bold disabled:opacity-20 hover:bg-white/10 transition">
+                <Undo className="h-4 w-4" /> Undo
+              </button>
+              <button onClick={redo} disabled={!canRedo}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/5 text-white/60 text-[12px] font-bold disabled:opacity-20 hover:bg-white/10 transition">
+                <Redo className="h-4 w-4" /> Redo
+              </button>
+              <button onClick={clearPage}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-500/10 text-red-400 text-[12px] font-bold hover:bg-red-500/20 transition">
+                <Trash2 className="h-4 w-4" /> Clear
+              </button>
+              <button onClick={savePage}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-green-500/10 text-green-400 text-[12px] font-bold hover:bg-green-500/20 transition">
+                <Save className="h-4 w-4" /> Save
+              </button>
+            </div>
+
+            {/* Share to Nimi */}
+            <button onClick={shareToNimi}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-pink-500/15 to-purple-500/15 border border-pink-400/15 text-pink-300 text-[12px] font-bold hover:from-pink-500/25 hover:to-purple-500/25 transition">
+              🎨 Share to Nimi Community
+            </button>
+
+            {/* Saved feedback */}
+            {showSaved && (
+              <div className="text-center py-2 rounded-xl bg-green-500/15 border border-green-400/20 text-green-300 text-[12px] font-bold">
+                ✅ Saved!
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -567,41 +640,35 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Top bar */}
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
+        <div className="flex items-center gap-3 px-4 py-2.5 theme-card border-b theme-border flex-shrink-0">
           {isMobile && (
-            <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
-              onClick={onClose} className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors flex-shrink-0">
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => { saveToDb(pageIdx); onClose(); }}
+              className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/15 transition flex-shrink-0">
               <X className="h-4 w-4" />
             </motion.button>
           )}
-          <span className="hidden md:block text-sm font-bold text-gray-700 flex-shrink-0">{t("coloringBookTitle")}</span>
+          <span className="hidden md:block text-[13px] font-baloo font-bold text-white flex-shrink-0">🎨 {t("coloringBookTitle")}</span>
           <div className="flex items-center gap-2 mx-auto">
-            <motion.button whileHover={pageIdx === 0 ? {} : { scale: 1.06 }} whileTap={pageIdx === 0 ? {} : { scale: 0.94 }}
+            <motion.button whileTap={{ scale: 0.9 }}
               onClick={() => pageIdx > 0 && goTo(pageIdx - 1)} disabled={pageIdx === 0}
-              className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors flex-shrink-0">◀</motion.button>
-            <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-              {t("pageOfLabel").replace("{current}", String(pageIdx + 1)).replace("{total}", String(processed.length))}
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center text-white disabled:opacity-20 transition flex-shrink-0">◀</motion.button>
+            <span className="text-[13px] font-baloo font-bold text-white whitespace-nowrap">
+              {pageIdx + 1} / {processed.length}
             </span>
-            <motion.button whileHover={pageIdx >= processed.length - 1 ? {} : { scale: 1.06 }} whileTap={pageIdx >= processed.length - 1 ? {} : { scale: 0.94 }}
+            <motion.button whileTap={{ scale: 0.9 }}
               onClick={() => pageIdx < processed.length - 1 && goTo(pageIdx + 1)} disabled={pageIdx >= processed.length - 1}
-              className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors flex-shrink-0">▶</motion.button>
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center text-white disabled:opacity-20 transition flex-shrink-0">▶</motion.button>
           </div>
-          {!isMobile && (
-            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              onClick={onClose} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium transition-colors flex-shrink-0">
-              <X className="h-4 w-4" />Close
-            </motion.button>
-          )}
           {isMobile && (
-            <button onClick={savePage} className="w-9 h-9 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 flex items-center justify-center flex-shrink-0">
+            <button onClick={savePage} className="w-9 h-9 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 flex items-center justify-center flex-shrink-0">
               <Save className="h-4 w-4" />
             </button>
           )}
         </div>
 
         {/* Canvas area */}
-        <div ref={containerRef} className="relative flex-1 flex flex-col items-center justify-center overflow-hidden p-4 gap-3"
-          style={{ background: 'repeating-conic-gradient(#e5e7eb 0% 25%, #f3f4f6 0% 50%) 0 0 / 20px 20px' }}>
+        <div ref={containerRef} className="relative flex-1 flex flex-col items-center justify-center overflow-hidden p-3 sm:p-4 gap-3"
+          style={{ background: '#0f0830' }}>
           {/* Canvas is always mounted so canvasRef is available before the first image loads */}
           {loadError && !loading && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium max-w-md text-center">
@@ -616,43 +683,43 @@ export default function ColoringStudio({ pages, onClose, t }: ColoringStudioProp
           />
           {loading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
-              <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-gray-600 font-medium text-sm">Loading page…</p>
+              <motion.span className="text-4xl" animate={{ rotate: [0, 360] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>🎨</motion.span>
+              <p className="theme-text-muted font-nunito font-bold text-sm">Preparing your canvas...</p>
             </div>
           )}
         </div>
 
         {/* Mobile toolbar */}
         {isMobile && (
-          <div className="bg-white border-t border-gray-200 flex-shrink-0">
+          <div className="theme-card border-t theme-border flex-shrink-0">
             {/* Color swatches row */}
             <div className="flex gap-1.5 overflow-x-auto px-3 pt-2.5 pb-1" style={{ scrollbarWidth: 'none' }}>
               {PALETTE_COLORS.map(c => (
                 <button key={c} onClick={() => { setColor(c); setTool('brush'); }}
                   className={`flex-shrink-0 w-9 h-9 rounded-full transition-all border-2 ${
-                    color === c && tool === 'brush' ? 'border-gray-900 scale-110 shadow' : 'border-transparent'
+                    color === c && tool === 'brush' ? 'border-white scale-110 shadow-lg' : 'border-transparent'
                   }`}
-                  style={{ backgroundColor: c, boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 1.5px #ccc' : undefined }}
+                  style={{ backgroundColor: c }}
                 />
               ))}
             </div>
             {/* Tools row */}
-            <div className="flex items-center gap-2 px-3 pb-3 pt-1.5">
-              <input type="color" value={color} onChange={e => { setColor(e.target.value); setTool('brush'); }}
-                className="w-9 h-9 rounded-xl border border-gray-200 cursor-pointer flex-shrink-0" />
-              <button onClick={() => setTool('brush')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all flex-shrink-0 ${tool === 'brush' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-transparent bg-gray-100 text-gray-500'}`}><Brush className="h-4 w-4" /></button>
-              <button onClick={() => setTool('fill')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 text-lg transition-all flex-shrink-0 ${tool === 'fill' ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-gray-100'}`}>🪣</button>
-              <button onClick={() => setTool('eraser')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all flex-shrink-0 ${tool === 'eraser' ? 'border-red-400 bg-red-50 text-red-600' : 'border-transparent bg-gray-100 text-gray-500'}`}><Eraser className="h-4 w-4" /></button>
+            <div className="flex items-center gap-1.5 px-3 pb-3 pt-1.5">
+              <button onClick={() => setTool('brush')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all flex-shrink-0 ${tool === 'brush' ? 'border-yellow-400 bg-yellow-400/10 text-white' : 'theme-border theme-text-faint'}`}><Brush className="h-4 w-4" /></button>
+              <button onClick={() => setTool('fill')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 text-lg transition-all flex-shrink-0 ${tool === 'fill' ? 'border-yellow-400 bg-yellow-400/10' : 'theme-border'}`}>🪣</button>
+              <button onClick={() => setTool('sticker')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 text-lg transition-all flex-shrink-0 ${tool === 'sticker' ? 'border-yellow-400 bg-yellow-400/10' : 'theme-border'}`}>⭐</button>
+              <button onClick={() => setTool('eraser')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all flex-shrink-0 ${tool === 'eraser' ? 'border-red-400 bg-red-500/10 text-red-400' : 'theme-border theme-text-faint'}`}><Eraser className="h-4 w-4" /></button>
               <div className="flex-1 mx-1">
-                <input type="range" min={2} max={50} value={brushSize} onChange={e => setBrushSize(Number(e.target.value))} className="w-full accent-purple-500" />
+                <input type="range" min={2} max={50} value={brushSize} onChange={e => setBrushSize(Number(e.target.value))} className="w-full accent-purple-400" />
               </div>
-              <button onClick={undo} disabled={!canUndo} className="w-10 h-10 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-30 flex-shrink-0"><Undo className="h-4 w-4" /></button>
-              <button onClick={redo} disabled={!canRedo} className="w-10 h-10 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-30 flex-shrink-0"><Redo className="h-4 w-4" /></button>
-              <button onClick={clearPage} className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0"><Trash2 className="h-4 w-4" /></button>
+              <button onClick={undo} disabled={!canUndo} className="w-10 h-10 rounded-xl bg-white/5 text-white/50 flex items-center justify-center disabled:opacity-20 flex-shrink-0"><Undo className="h-4 w-4" /></button>
+              <button onClick={clearPage} className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center flex-shrink-0"><Trash2 className="h-4 w-4" /></button>
             </div>
           </div>
         )}
       </div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }

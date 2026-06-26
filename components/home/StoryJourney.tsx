@@ -36,8 +36,8 @@ const STORY_STEPS = [
   {
     number: 5, title: "SING ALONG", subtitle: "WITH NIMI",
     description: "Sing along and practice the story words through music.",
-    emoji: "🎤", numBg: "bg-purple-600", border: "border-purple-200",
-    titleColor: "text-purple-700", btnColor: "bg-purple-600 hover:bg-purple-700",
+    emoji: "🎤", numBg: "theme-accent", border: "theme-border",
+    titleColor: "theme-text-muted", btnColor: "theme-accent hover:theme-accent",
     href: "/missions/sing-along", isPiko: false,
   },
   {
@@ -56,7 +56,7 @@ interface Props {
 export default function StoryJourney({ completedSteps }: Props) {
   return (
     <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 sm:p-5">
-      <h2 className="text-center font-black text-purple-700 text-[13px] sm:text-sm lg:text-[15px] uppercase tracking-wide mb-4">
+      <h2 className="text-center font-black theme-text-muted text-[13px] sm:text-sm lg:text-[15px] uppercase tracking-wide mb-4">
         COMPLETE ALL 6 STEPS TO EARN YOUR STORY CERTIFICATE!
       </h2>
 
@@ -87,7 +87,7 @@ export default function StoryJourney({ completedSteps }: Props) {
                     </div>
                   </div>
                 </div>
-                <p className="text-purple-300 text-[9px] text-center px-2 mb-2 leading-snug min-h-[26px]">
+                <p className="theme-text-muted text-[9px] text-center px-2 mb-2 leading-snug min-h-[26px]">
                   {step.description}
                 </p>
                 <div className="px-2.5 pb-3">
@@ -103,7 +103,7 @@ export default function StoryJourney({ completedSteps }: Props) {
           if (idx < STORY_STEPS.length - 1) {
             return [card, (
               <div key={`a${idx}`} className="flex items-center justify-center w-5 flex-shrink-0 self-center">
-                <ChevronRight className="w-4 h-4 text-purple-300" />
+                <ChevronRight className="w-4 h-4 theme-text-muted" />
               </div>
             )];
           }
@@ -138,7 +138,7 @@ export default function StoryJourney({ completedSteps }: Props) {
                     </div>
                   </div>
                 </div>
-                <p className="text-purple-300 text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
+                <p className="theme-text-muted text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
                   {step.description}
                 </p>
                 <div className="px-2.5 pb-3">
@@ -182,7 +182,7 @@ export default function StoryJourney({ completedSteps }: Props) {
                       </div>
                     </div>
                   </div>
-                  <p className="text-purple-300 text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
+                  <p className="theme-text-muted text-[9px] text-center px-2 mb-2 leading-snug min-h-[24px]">
                     {step.description}
                   </p>
                   <div className="px-2.5 pb-3">
@@ -196,7 +196,7 @@ export default function StoryJourney({ completedSteps }: Props) {
               </Link>
             );
             if (idx < STORY_STEPS.length - 1) {
-              return [card, <ChevronRight key={`ma${idx}`} className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />];
+              return [card, <ChevronRight key={`ma${idx}`} className="w-3.5 h-3.5 theme-text-muted flex-shrink-0" />];
             }
             return [card];
           })}

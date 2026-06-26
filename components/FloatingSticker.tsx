@@ -28,7 +28,7 @@ export default function FloatingStickers() {
         🎈
       </div>
       <div
-        className="absolute top-60 left-1/4 text-purple-300 animate-bounce text-xl"
+        className="absolute top-60 left-1/4 theme-text-muted animate-bounce text-xl"
         style={{ animationDelay: "1.5s" }}
       >
         💫

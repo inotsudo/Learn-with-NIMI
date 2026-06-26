@@ -55,7 +55,7 @@ export default function MyBadges({ completedSteps }: Props) {
                   </div>
                 </div>
               )}
-              <p className={`text-[8px] text-center leading-tight font-semibold ${earned ? "text-purple-200" : "text-gray-300"}`}>
+              <p className={`text-[8px] text-center leading-tight font-semibold ${earned ? "theme-text" : "text-gray-300"}`}>
                 {badge.title}
               </p>
               <span className={`text-xs leading-none ${earned ? "text-yellow-500" : "text-gray-200"}`}>⭐</span>
@@ -64,13 +64,13 @@ export default function MyBadges({ completedSteps }: Props) {
         })}
       </div>
       {completedSteps.length === 0 && (
-        <p className="text-[9px] text-purple-300 text-center mt-2 leading-snug">
+        <p className="text-[9px] theme-text-muted text-center mt-2 leading-snug">
           Complete steps to earn badges!
         </p>
       )}
       <Link
         href="/certificates"
-        className="block text-center text-[10px] font-black text-purple-200 mt-2 pt-2 border-t border-white/15 hover:underline"
+        className="block text-center text-[10px] font-black theme-text mt-2 pt-2 border-t border-white/15 hover:underline"
       >
         {t("viewAllAchievements")} →
       </Link>

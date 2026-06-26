@@ -14,7 +14,7 @@ export default function ShopHeader({ balance, gems }: Props) {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h1 className="font-black text-2xl sm:text-3xl text-white">{t("rewardShopTitle")}</h1>
-        <p className="text-purple-200 text-sm mt-1">{t("rewardShopSubtitle")}</p>
+        <p className="theme-text text-sm mt-1">{t("rewardShopSubtitle")}</p>
       </div>
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 bg-yellow-400/20 text-yellow-200 font-black text-sm px-3 py-1.5 rounded-full">

@@ -35,7 +35,7 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
 
   return (
     <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
-      <h3 className="font-black text-purple-200 text-[12px] uppercase mb-3 flex items-center gap-1.5 tracking-wide">
+      <h3 className="font-black theme-text text-[12px] uppercase mb-3 flex items-center gap-1.5 tracking-wide">
         {t("languageBadgesTitle")}
       </h3>
 
@@ -55,8 +55,8 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
                   <img src={badge.flag} alt={badge.line1} className="w-full h-full object-cover" />
                 </div>
                 <div className="pb-1 pt-0.5 text-center leading-none">
-                  <p className={`text-[7px] font-black uppercase ${earned ? "text-purple-700" : "text-gray-400"}`}>{badge.line1}</p>
-                  <p className={`text-[7px] font-black uppercase ${earned ? "text-purple-700" : "text-gray-400"}`}>{badge.line2}</p>
+                  <p className={`text-[7px] font-black uppercase ${earned ? "theme-text-muted" : "text-gray-400"}`}>{badge.line1}</p>
+                  <p className={`text-[7px] font-black uppercase ${earned ? "theme-text-muted" : "text-gray-400"}`}>{badge.line2}</p>
                   <span className="text-[11px] leading-none">⭐</span>
                 </div>
               </button>
@@ -66,13 +66,13 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
 
         {/* Description */}
         <div className="bg-white/10 backdrop-blur rounded-xl p-2.5 xl:flex-1 xl:min-w-0">
-          <p className="text-[9.5px] font-bold text-purple-100 leading-relaxed">
+          <p className="text-[9.5px] font-bold theme-text leading-relaxed">
             {t("languageBadgesDesc")}
           </p>
-          <p className="text-[9px] text-purple-300 leading-relaxed mt-1">
+          <p className="text-[9px] theme-text-muted leading-relaxed mt-1">
             {t("languageBadgesHint")}
           </p>
-          <p className="mt-1.5 text-[9px] font-black text-purple-200">
+          <p className="mt-1.5 text-[9px] font-black theme-text">
             {t("languageBadgesTapHint")}
           </p>
         </div>

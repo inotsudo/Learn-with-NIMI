@@ -44,7 +44,7 @@ export default function DailyAdventureGrid({ completedInLevel }: DailyAdventureG
             <p className={`font-black text-white text-xs sm:text-sm uppercase text-center leading-tight`}>
               {t(activity.titleKey)}
             </p>
-            <p className="text-purple-200 text-[10px] sm:text-[11px] text-center leading-snug mt-0.5 min-h-[28px]">
+            <p className="theme-text text-[10px] sm:text-[11px] text-center leading-snug mt-0.5 min-h-[28px]">
               {t(activity.subtitleKey)}
             </p>
 

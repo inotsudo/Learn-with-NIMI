@@ -203,7 +203,7 @@ export default function NimiReaderButton({ hide }: NimiReaderButtonProps) {
         onMouseDown={handleMouseDown}
         onTouchStart={handleMouseDown}
         style={{ position: "fixed", left: position.x, top: position.y, zIndex: 9999, touchAction: "none" }}
-        className="bg-purple-600 hover:bg-purple-700 text-white text-sm md:text-base font-bold px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all duration-300 cursor-grab active:cursor-grabbing"
+        className="theme-accent hover:theme-accent text-white text-sm md:text-base font-bold px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all duration-300 cursor-grab active:cursor-grabbing"
       >
         <Volume2 className="w-5 h-5" />
         {speaking ? "🔊 Stop Reading" : "🗣️ Hear from Nimi"}

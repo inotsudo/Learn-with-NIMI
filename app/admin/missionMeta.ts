@@ -164,9 +164,48 @@ export interface StoryRow {
   cover_url: string | null
   sort_order: number
   is_active: boolean
+  status: 'draft' | 'review' | 'published' | 'retired'
+  age_min: number | null
+  age_max: number | null
+  published_at: string | null
   theme_title: string | null
   theme_emoji: string | null
   story_pages: StoryPageRow[]
+  story_versions?: StoryVersionRow[]
+  story_slots?: StorySlotRow[]
+}
+
+export interface StoryVersionRow {
+  id: string
+  story_id: string
+  language: Lang
+  title: string
+  cover_url: string | null
+  intro_video_url: string | null
+  theme_song_url: string | null
+  meet_characters_url: string | null
+  story_intro_url: string | null
+  status: ContentStatus
+  published: boolean
+}
+
+export interface StorySlotRow {
+  story_id: string
+  slot_key: string
+  mission_id: string
+  sort_order: number
+}
+
+export const SLOT_KEYS = ['flipflop_audio', 'story_pdf', 'coloring', 'move_explore', 'sing_along', 'bonus_video'] as const
+export type SlotKey = typeof SLOT_KEYS[number]
+
+export const SLOT_META: Record<SlotKey, { emoji: string; label: string; type: MissionType }> = {
+  flipflop_audio: { emoji: '🎧', label: 'FlipFlop Audio',    type: 'story' },
+  story_pdf:      { emoji: '📖', label: 'Story PDF',         type: 'read' },
+  coloring:       { emoji: '🎨', label: 'Coloring Activity', type: 'color' },
+  move_explore:   { emoji: '🤸', label: 'Move & Explore',    type: 'move' },
+  sing_along:     { emoji: '🎤', label: 'Sing Along',        type: 'sing' },
+  bonus_video:    { emoji: '🎬', label: 'Bonus Video',       type: 'watch' },
 }
 
 export interface ColoringPageRow {

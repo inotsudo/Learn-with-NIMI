@@ -16,7 +16,7 @@ const SKILL_GROUPS: { icon: string; titleKey: string; categories: ActivityCatego
 ];
 
 const LEVEL_STYLES = {
-  notStarted: { key: "levelNotStarted", bg: "bg-white/10", text: "text-purple-300" },
+  notStarted: { key: "levelNotStarted", bg: "bg-white/10", text: "theme-text-muted" },
   beginner: { key: "levelBeginner", bg: "bg-blue-400/20", text: "text-blue-200" },
   growing: { key: "levelGrowing", bg: "bg-amber-400/20", text: "text-amber-200" },
   mastered: { key: "levelMastered", bg: "bg-green-400/20", text: "text-green-200" },
@@ -36,7 +36,7 @@ export default function SkillsTab({ categoryProgress }: Props) {
     <div className="space-y-4 mt-4">
       <div>
         <p className="font-black text-white text-lg">{t("skillsPageTitle")}</p>
-        <p className="text-purple-300 text-sm">{t("skillsPageSubtitle")}</p>
+        <p className="theme-text-muted text-sm">{t("skillsPageSubtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -64,7 +64,7 @@ export default function SkillsTab({ categoryProgress }: Props) {
               <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full bg-gradient-to-r ${group.color}`} style={{ width: `${pct}%` }} />
               </div>
-              <p className="text-purple-300 text-xs mt-1.5">{pct}%</p>
+              <p className="theme-text-muted text-xs mt-1.5">{pct}%</p>
             </div>
           );
         })}

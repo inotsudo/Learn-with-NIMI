@@ -36,7 +36,7 @@ export default function LanguageSwitchDialog({
           >
             <p className="text-3xl mb-2">🌍</p>
             <h3 className="font-black text-white text-lg">{t("switchLanguageTitle")}</h3>
-            <p className="text-purple-200 text-sm mt-2">
+            <p className="theme-text text-sm mt-2">
               {t("switchLanguageBody")
                 .replace("{language}", LANG_LABELS[pendingLanguage])
                 .replace("{name}", childName ?? "")
@@ -46,14 +46,14 @@ export default function LanguageSwitchDialog({
               <button
                 onClick={onConfirm}
                 disabled={switching}
-                className="flex-1 bg-purple-600 text-white font-black rounded-full py-2.5 text-sm hover:bg-purple-700 transition disabled:opacity-60"
+                className="flex-1 theme-accent text-white font-black rounded-full py-2.5 text-sm hover:theme-accent transition disabled:opacity-60"
               >
                 {t("switchLanguageConfirm")}
               </button>
               <button
                 onClick={onCancel}
                 disabled={switching}
-                className="flex-1 border-2 border-white/20 text-purple-100 font-black rounded-full py-2.5 text-sm hover:bg-white/10 transition disabled:opacity-60"
+                className="flex-1 border-2 border-white/20 theme-text font-black rounded-full py-2.5 text-sm hover:bg-white/10 transition disabled:opacity-60"
               >
                 {t("cancel")}
               </button>

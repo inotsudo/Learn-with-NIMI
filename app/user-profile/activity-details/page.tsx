@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getChildren, getAllChildProgress } from "@/lib/queries";
 import type { ProgressRow } from "@/lib/queries";
 import ActivityDetailsList from "@/components/profile/ActivityDetailsList";
-import AuthBackground from "@/components/auth/AuthBackground";
+import MagicBackground from "@/components/magic/MagicBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -28,21 +28,21 @@ export default function ActivityDetailsPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
-        <AuthBackground />
+      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
+        <MagicBackground variant="meadow" />
         <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
             <div>
               <h1 className="font-black text-2xl sm:text-3xl text-white">{t("activityDetailsTitle")}</h1>
-              <p className="text-purple-200 text-sm mt-1">{t("activityDetailsSubtitle")}</p>
+              <p className="theme-text text-sm mt-1">{t("activityDetailsSubtitle")}</p>
             </div>
-            <div className="inline-flex bg-white/10 backdrop-blur rounded-full p-1 gap-1 shrink-0">
+            <div className="inline-flex theme-card rounded-full p-1 gap-1 shrink-0">
               {(["week", "all"] as const).map(r => (
                 <button
                   key={r}
                   onClick={() => setRange(r)}
                   className={`px-4 py-1.5 rounded-full text-xs font-black transition-colors ${
-                    range === r ? "bg-white/20 text-white shadow" : "text-purple-300 hover:text-white"
+                    range === r ? "bg-white/20 text-white shadow" : "theme-text-muted hover:text-white"
                   }`}
                 >
                   {r === "week" ? t("weeklyRangeThisWeek") : t("weeklyRangeAllTime")}

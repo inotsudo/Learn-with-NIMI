@@ -35,14 +35,14 @@ export default function AchievementCenterCard({ achievements, maxLevel, childNam
           <div key={tile.labelKey} className="bg-white/5 rounded-xl p-3 text-center">
             <p className="text-2xl">{tile.emoji}</p>
             <p className="font-black text-white text-sm mt-1">{earnedCount(tile.items)}/{tile.items.length}</p>
-            <p className="text-purple-300 text-xs mt-0.5 leading-tight">{t(tile.labelKey)}</p>
+            <p className="theme-text-muted text-xs mt-0.5 leading-tight">{t(tile.labelKey)}</p>
           </div>
         ))}
       </div>
 
       <TrilingualChampionBanner status={trilingual} childName={childName} />
 
-      <Link href="/certificates" className="block text-center text-purple-200 font-black text-sm hover:underline">
+      <Link href="/certificates" className="block text-center theme-text font-black text-sm hover:underline">
         {t("viewFullAchievementDashboard")}
       </Link>
     </div>

@@ -1,10 +1,13 @@
 'use client'
+import './admin.css'
 import React, { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import supabase from '@/lib/supabaseClient'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
+import { ToastProvider } from './Toast'
+import ErrorBoundary from './ErrorBoundary'
 import { HelpCircle, Mail } from 'lucide-react'
 import { SkeletonHeaderBanner, SkeletonStatCards, SkeletonCardGrid } from './Skeleton'
 
@@ -40,6 +43,14 @@ const AdministratorsManager = dynamicView(() => import('./AdministratorsManager'
 const NotificationsManager = dynamicView(() => import('./NotificationsManager'))
 const CurriculumManager = dynamicView(() => import('./CurriculumManager'))
 const CommunityManager = dynamicView(() => import('./CommunityManager'))
+const StorySlotsManager = dynamicView(() => import('./StorySlotsManager'))
+const StoryOrderingManager = dynamicView(() => import('./StoryOrderingManager'))
+const StoryPublishingManager = dynamicView(() => import('./StoryPublishingManager'))
+const FlipFlopBooksManager = dynamicView(() => import('./FlipFlopBooksManager'))
+const ContentMediaManager = dynamicView(() => import('./ContentMediaManager'))
+const WeeklyChallengesManager = dynamicView(() => import('./WeeklyChallengesManager'))
+const FamiliesManager = dynamicView(() => import('./FamiliesManager'))
+const ContentLibraryManager = dynamicView(() => import('./ContentLibraryManager'))
 
 const tables = [
   'categories', 'mission_versions',
@@ -149,6 +160,16 @@ export default function AdminPanel() {
 
   const isStoryView = currentTable === 'stories' || currentTable.startsWith('stories:')
   const initialStoryId = isStoryView ? currentTable.split(':')[1] : undefined
+  const isStorySlotsView = currentTable === 'story_slots'
+  const isStoryOrderingView = currentTable === 'story_ordering'
+  const isStoryPublishingView = currentTable === 'story_publishing'
+  const isFlipFlopView = currentTable === 'flipflop_books'
+  const isStoryPdfsView = currentTable === 'story_pdfs'
+  const isVideosView = currentTable === 'videos'
+  const isAudioView = currentTable === 'audio'
+  const isWeeklyChallengesView = currentTable === 'weekly_challenges'
+  const isFamiliesView = currentTable === 'families'
+  const isContentLibraryView = currentTable === 'content_library'
 
   const isColoringView = currentTable === 'coloring_pages' || currentTable.startsWith('coloring_pages:')
   const initialColoringBookId = isColoringView ? currentTable.split(':')[1] : undefined
@@ -182,6 +203,7 @@ export default function AdminPanel() {
   const isCommunityView = currentTable === 'creations'
 
   return (
+    <ToastProvider>
     <div className="flex h-screen overflow-hidden">
       <Sidebar
         tables={tables}
@@ -193,18 +215,27 @@ export default function AdminPanel() {
         onCloseMobile={() => setSidebarOpen(false)}
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {!isMissionView && !isStoryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isRewardsView && !isAnalyticsView && !isSettingsView && !isBucketsView && !isAdministratorsView && !isNotificationsView && !isCurriculumView && !isCommunityView && (
-          <Navbar
-            tables={tables}
-            currentTable={currentTable}
-            setCurrentTable={setCurrentTable}
-            onOpenSidebar={() => setSidebarOpen(true)}
-          />
-        )}
-        <main className={isMissionView || isStoryView || isColoringView || isChildrenView || isParentsView || isRewardsView || isSettingsView ? 'flex-1 overflow-hidden bg-gray-50 flex flex-col' : 'flex-1 overflow-auto bg-gray-50'}>
+        <Navbar
+          tables={tables}
+          currentTable={currentTable}
+          setCurrentTable={setCurrentTable}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+        <main className={isMissionView || isStoryView || isStorySlotsView || isStoryOrderingView || isStoryPublishingView || isColoringView || isChildrenView || isParentsView || isRewardsView || isSettingsView ? 'flex-1 overflow-hidden bg-gray-50 flex flex-col' : 'flex-1 overflow-auto bg-gray-50'}>
+          <ErrorBoundary name={currentTable}>
           {isMissionView && missionCategorySlug && (
             <MissionManager categorySlug={missionCategorySlug} initialMissionId={missionInitialId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
+          {isStorySlotsView && <StorySlotsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isStoryOrderingView && <StoryOrderingManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isStoryPublishingView && <StoryPublishingManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isFlipFlopView && <FlipFlopBooksManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isStoryPdfsView && <ContentMediaManager title="Story PDFs" description="Manage PDF documents for story reading missions." missionType="read" mediaField="media_url" onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isVideosView && <ContentMediaManager title="Videos" description="Manage video content for bonus video missions." missionType="watch" mediaField="media_url" onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isAudioView && <ContentMediaManager title="Audio" description="Manage audio content for sing along missions." missionType="sing" mediaField="media_url" onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isWeeklyChallengesView && <WeeklyChallengesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isFamiliesView && <FamiliesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isContentLibraryView && <ContentLibraryManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isStoryView && (
             <StoryManager initialStoryId={initialStoryId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
@@ -215,7 +246,7 @@ export default function AdminPanel() {
             <LanguagesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
           {isChildrenView && (
-            <ChildrenManager initialChildId={initialChildId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
+            <ChildrenManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
           {isParentsView && (
             <ParentsManager initialParentId={initialParentId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
@@ -230,7 +261,7 @@ export default function AdminPanel() {
             <AnalyticsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
           {isSettingsView && (
-            <SettingsManager initialChildId={initialSettingsChildId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
+            <SettingsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
           {isBucketsView && <BucketsView onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {currentTable === 'Profile' && <AdminProfile />}
@@ -259,11 +290,13 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          {!isMissionView && !isStoryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isRewardsView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
+          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isRewardsView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
             <TableView table={currentTable} />
           )}
+          </ErrorBoundary>
         </main>
       </div>
     </div>
+    </ToastProvider>
   )
 }

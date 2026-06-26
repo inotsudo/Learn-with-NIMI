@@ -16,9 +16,9 @@ export default function ActivityProgressTab({ categoryProgress }: Props) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-black text-white text-lg">{t("activityProgressTitle")}</p>
-          <p className="text-purple-200 text-sm">{t("activityProgressSubtitle")}</p>
+          <p className="theme-text text-sm">{t("activityProgressSubtitle")}</p>
         </div>
-        <Link href="/user-profile/activity-details" className="text-sm font-bold text-purple-200 hover:text-white hover:underline shrink-0 mt-1">
+        <Link href="/user-profile/activity-details" className="text-sm font-bold theme-text hover:text-white hover:underline shrink-0 mt-1">
           {t("viewAll")}
         </Link>
       </div>
@@ -36,11 +36,11 @@ export default function ActivityProgressTab({ categoryProgress }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-white text-sm truncate">{t(activity.titleKey)}</p>
-                  <p className="text-purple-300 text-xs">
+                  <p className="theme-text-muted text-xs">
                     {total > 0 ? `${completed}/${total} ${t("progressDaysCompleted")}` : t("notStartedYet")}
                   </p>
                 </div>
-                <span className="font-black text-purple-100 text-sm shrink-0">{pct}%</span>
+                <span className="font-black theme-text text-sm shrink-0">{pct}%</span>
               </div>
               <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
                 <div

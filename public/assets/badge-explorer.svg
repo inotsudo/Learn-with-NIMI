@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 110">
+  <defs>
+    <linearGradient id="seGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE44D"/>
+      <stop offset="40%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#E6A200"/>
+    </linearGradient>
+    <linearGradient id="seShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDE7" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+    <linearGradient id="seRim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF8E1"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+    <filter id="seGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <!-- Ribbon tails -->
+  <path d="M30 88 L20 105 L32 96 L38 108 L38 88Z" fill="#E6A200"/>
+  <path d="M70 88 L80 105 L68 96 L62 108 L62 88Z" fill="#E6A200"/>
+  <path d="M30 88 L22 102 L32 94 L36 104 L36 88Z" fill="#FFD700"/>
+  <path d="M70 88 L78 102 L68 94 L64 104 L64 88Z" fill="#FFD700"/>
+  <!-- Shield outer -->
+  <path d="M50 4 L90 20 L90 52 Q90 82 50 96 Q10 82 10 52 L10 20Z" fill="url(#seRim)" stroke="#8B6914" stroke-width="1.5"/>
+  <!-- Shield inner -->
+  <path d="M50 10 L84 24 L84 50 Q84 76 50 88 Q16 76 16 50 L16 24Z" fill="url(#seGold)" stroke="#DAA520" stroke-width="1"/>
+  <!-- Shine -->
+  <path d="M50 10 L84 24 L84 50 Q84 76 50 88 Q38 82 28 72 L28 24Z" fill="url(#seShine)"/>
+  <!-- Inner ring -->
+  <ellipse cx="50" cy="50" rx="22" ry="22" fill="none" stroke="#FFF8E1" stroke-width="1.5" opacity="0.4"/>
+  <!-- Star -->
+  <path d="M50 26 L56.2 40 L71 40 L59 50 L63 64 L50 56 L37 64 L41 50 L29 40 L43.8 40Z" fill="#FFFDE7" stroke="#FFD700" stroke-width="1"/>
+  <path d="M50 30 L54 40 L64 40 L56 47 L50 30Z" fill="white" opacity="0.3"/>
+  <!-- Star center face -->
+  <circle cx="45" cy="46" r="1.8" fill="#B8860B"/>
+  <circle cx="55" cy="46" r="1.8" fill="#B8860B"/>
+  <path d="M45 51 Q50 55 55 51" fill="none" stroke="#B8860B" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Bottom circle -->
+  <circle cx="50" cy="86" r="6" fill="#FFD700" stroke="#B8860B" stroke-width="1.5"/>
+  <path d="M50 82.5 L52 85 L55 85 L52.5 87 L53.5 90 L50 88 L46.5 90 L47.5 87 L45 85 L48 85Z" fill="#FFFDE7"/>
+  <!-- Sparkles -->
+  <circle cx="16" cy="10" r="2" fill="#FFE44D" opacity="0.6" filter="url(#seGlow)"/>
+  <circle cx="86" cy="8" r="1.5" fill="#FFE44D" opacity="0.5" filter="url(#seGlow)"/>
+</svg>

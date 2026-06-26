@@ -28,8 +28,8 @@ export default function ShopFilterTabs({ filter, onFilterChange }: Props) {
           onClick={() => onFilterChange(tab.id)}
           className={`px-4 py-2 rounded-full text-xs sm:text-sm font-black transition-colors ${
             filter === tab.id
-              ? "bg-purple-600 text-white shadow"
-              : "border-2 border-white/20 text-purple-200 bg-white/10 backdrop-blur"
+              ? "theme-accent text-white shadow"
+              : "border-2 border-white/20 theme-text bg-white/10 backdrop-blur"
           }`}
         >
           {t(tab.labelKey)}

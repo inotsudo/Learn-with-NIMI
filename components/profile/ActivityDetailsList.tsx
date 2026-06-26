@@ -38,7 +38,7 @@ export default function ActivityDetailsList({ rows, range }: Props) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-black text-white text-sm truncate">{t(activity.titleKey)}</p>
-              <p className="text-purple-300 text-xs truncate">{t(activity.subtitleKey)}</p>
+              <p className="theme-text-muted text-xs truncate">{t(activity.subtitleKey)}</p>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-1.5 max-w-xs">
                 <div
                   className={`h-full rounded-full bg-gradient-to-r ${activity.gradient}`}
@@ -47,10 +47,10 @@ export default function ActivityDetailsList({ rows, range }: Props) {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="font-black text-purple-100 text-sm">
+              <p className="font-black theme-text text-sm">
                 {range === "week" ? `${daysActive}/7` : daysActive}
               </p>
-              <p className="text-purple-300 text-[10px] font-semibold">{t("daysPracticedLabel")}</p>
+              <p className="theme-text-muted text-[10px] font-semibold">{t("daysPracticedLabel")}</p>
               <p className="text-yellow-500 text-xs font-bold">⭐ {stars}</p>
             </div>
           </div>

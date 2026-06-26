@@ -1,530 +1,230 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import supabase from "@/lib/supabaseClient";
+import supabase from "@/lib/supabaseClient"
 import {
-  Baby, Activity, CheckCircle2, AlertTriangle, XCircle, Award, BookOpen,
-  TrendingUp, TrendingDown, Minus, Trophy, UserPlus, Plus, PenTool,
-  type LucideIcon,
+  BookOpen, CheckCircle2, AlertTriangle, Users, Award, Trophy,
+  Plus, Upload, Rocket, Bell, ArrowRight,
 } from 'lucide-react'
-import { ACCENT, LANGUAGES, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META, type AccentKey, type Lang } from './missionMeta'
-import { Skeleton, SkeletonStatCards, SkeletonCardGrid, SkeletonTable, SkeletonList } from './Skeleton'
+import { computeReadiness, type ReadinessResult } from '@/lib/storyReadiness'
+import ReadinessRing from '@/components/admin/story-readiness/ReadinessRing'
+import ReadinessBadge from '@/components/admin/story-readiness/ReadinessBadge'
 
-type LangState = 'complete' | 'partial' | 'missing'
+interface DashboardProps { onNavigate?: (table: string) => void }
 
-interface AdventureCard {
-  categorySlug: string
-  title: string
-  stars: number
-  missionsCount: number
-  languages: Record<Lang, LangState>
-}
-
-interface CoverageRow {
-  categorySlug: string
-  label: string
-  total: number
-  published: Record<Lang, number>
-}
-
-interface Trend {
-  icon?: LucideIcon
-  text: string
-  color: string
-}
-
-interface StatCardData {
-  label: string
-  value: number
-  icon: LucideIcon
-  accent: AccentKey
-  trend: Trend
-}
-
-interface ActivityItem {
-  id: string
-  icon: LucideIcon
-  accent: AccentKey
-  parts: { text: string; bold?: boolean }[]
-  meta: string
-  timestamp: string
-}
-
-function timeAgo(dateStr: string) {
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diffMs / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  return `${days}d ago`
-}
-
-function trendFromDelta(delta: number): Trend {
-  if (delta > 0) return { icon: TrendingUp, text: `+${delta} vs yesterday`, color: 'text-emerald-600' }
-  if (delta < 0) return { icon: TrendingDown, text: `${delta} vs yesterday`, color: 'text-red-500' }
-  return { icon: Minus, text: 'No change vs yesterday', color: 'text-gray-400' }
-}
-
-function weeklyTrend(count: number): Trend {
-  if (count > 0) return { icon: TrendingUp, text: `+${count} this week`, color: 'text-emerald-600' }
-  return { icon: Minus, text: 'No new this week', color: 'text-gray-400' }
-}
-
-function coverageColor(published: number, total: number) {
-  if (total === 0) return 'text-gray-400'
-  if (published === 0) return 'text-red-500'
-  if (published === total) return 'text-emerald-600'
-  return 'text-amber-600'
-}
-
-interface DashboardProps {
-  onNavigate?: (table: string) => void
+interface StoryRow {
+  id: string; title: string; slug: string; status: string; sort_order: number;
+  age_min?: number; age_max?: number; published_at?: string;
+  slots_filled: number;
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
   const [loading, setLoading] = useState(true)
-  const [statCards, setStatCards] = useState<StatCardData[]>([])
-  const [adventures, setAdventures] = useState<AdventureCard[]>([])
-  const [coverage, setCoverage] = useState<CoverageRow[]>([])
-  const [activity, setActivity] = useState<ActivityItem[]>([])
+  const [stats, setStats] = useState({ published: 0, ready: 0, missing: 0, children: 0, certs: 0, challenges: 0 })
+  const [stories, setStories] = useState<StoryRow[]>([])
+  const [storyReadiness, setStoryReadiness] = useState<{ title: string; slug: string; result: ReadinessResult }[]>([])
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      setLoading(true)
+    void (async () => {
       try {
-        const now = new Date()
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        const startOfYesterday = new Date(startOfToday)
-        startOfYesterday.setDate(startOfYesterday.getDate() - 1)
-        const sevenDaysAgo = new Date(now)
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
         const [
-          { data: missions },
-          { data: children },
-          { data: progress },
-          { data: achievements },
-          { data: stories },
+          { data: storiesData }, { data: childrenData }, { data: achievementsData },
+          { data: slotsData }, { data: missionVersions },
         ] = await Promise.all([
-          supabase.from('missions').select('id, category_slug, stars, mission_versions(language, title, published)').order('category_slug'),
-          supabase.from('children').select('id, name, created_at'),
-          supabase.from('child_progress')
-            .select('id, child_id, completed_at, language, stars_earned, children(name), missions(category_slug, mission_versions(title, language))')
-            .order('completed_at', { ascending: false })
-            .limit(50),
-          supabase.from('child_achievements')
-            .select('id, slug, language, earned_at, children(name)')
-            .order('earned_at', { ascending: false }),
-          supabase.from('stories').select('id, title, is_active, created_at').order('created_at', { ascending: false }),
+          supabase.from('stories').select('id, title, slug, status, sort_order, age_min, age_max, published_at, cover_url').order('sort_order'),
+          supabase.from('children').select('id'),
+          supabase.from('child_achievements').select('id, type'),
+          supabase.from('story_slots').select('story_id, slot_key, mission_id'),
+          supabase.from('mission_versions').select('id, mission_id, published, language'),
         ])
 
-        // --- Group missions/mission_versions by category ---
-        const grouped: Record<string, { title?: string; stars: number; total: number; published: Record<Lang, number> }> = {}
-        for (const m of missions ?? []) {
-          const slug = m.category_slug as string
-          if (!grouped[slug]) grouped[slug] = { stars: 0, total: 0, published: { en: 0, fr: 0, rw: 0 } }
-          const g = grouped[slug]
-          g.total += 1
-          g.stars += m.stars ?? 0
-          const versions = (m.mission_versions ?? []) as any[]
-          if (!g.title) g.title = versions.find(v => v.language === 'en')?.title
-          for (const lang of LANGUAGES) {
-            if (versions.some(v => v.language === lang && v.published)) g.published[lang] += 1
-          }
-        }
+        const allStories = storiesData ?? []
+        const allSlots = slotsData ?? []
+        const allVersions = missionVersions ?? []
+        const allAchievements = achievementsData ?? []
 
-        const adventureCards: AdventureCard[] = CATEGORY_ORDER
-          .filter(slug => grouped[slug])
-          .map(slug => {
-            const g = grouped[slug]
-            const languages: Record<Lang, LangState> = { en: 'missing', fr: 'missing', rw: 'missing' }
-            for (const lang of LANGUAGES) {
-              const pub = g.published[lang]
-              languages[lang] = pub === 0 ? 'missing' : pub === g.total ? 'complete' : 'partial'
-            }
-            return {
-              categorySlug: slug,
-              title: g.title ?? slug,
-              stars: g.stars,
-              missionsCount: g.total,
-              languages,
-            }
-          })
-        setAdventures(adventureCards)
+        const storyRows: StoryRow[] = allStories.map(s => {
+          const storySlots = allSlots.filter(sl => sl.story_id === s.id)
+          const filled = storySlots.filter(sl => allVersions.some(v => v.mission_id === sl.mission_id && v.published)).length
+          return { ...s, slots_filled: filled }
+        })
 
-        const coverageRows: CoverageRow[] = CATEGORY_ORDER
-          .filter(slug => grouped[slug])
-          .map(slug => ({
-            categorySlug: slug,
-            label: CATEGORY_META[slug]?.label ?? slug,
-            total: grouped[slug].total,
-            published: grouped[slug].published,
-          }))
-        setCoverage(coverageRows)
+        const published = storyRows.filter(s => s.status === 'published').length
+        const ready = storyRows.filter(s => s.slots_filled === 6).length
+        const missing = storyRows.filter(s => s.slots_filled < 6).length
+        const certs = allAchievements.filter(a => a.type === 'certificate').length
 
-        // --- Stat cards ---
-        const childrenRows = children ?? []
-        const progressRows = progress ?? []
-        const achievementRows = achievements ?? []
-        const storyRows = stories ?? []
+        setStats({ published, ready, missing, children: (childrenData ?? []).length, certs, challenges: 0 })
+        setStories(storyRows)
 
-        const todayRows = progressRows.filter(p => p.completed_at && new Date(p.completed_at) >= startOfToday)
-        const yesterdayRows = progressRows.filter(p => p.completed_at && new Date(p.completed_at) >= startOfYesterday && new Date(p.completed_at) < startOfToday)
-
-        const activeToday = new Set(todayRows.map(p => p.child_id)).size
-        const activeYesterday = new Set(yesterdayRows.map(p => p.child_id)).size
-        const missionsToday = todayRows.length
-        const missionsYesterday = yesterdayRows.length
-
-        const newChildrenThisWeek = childrenRows.filter(c => c.created_at && new Date(c.created_at) >= sevenDaysAgo).length
-        const certsThisWeek = achievementRows.filter(a => a.earned_at && new Date(a.earned_at) >= sevenDaysAgo).length
-        const publishedStories = storyRows.filter(s => s.is_active).length
-        const draftStories = storyRows.filter(s => !s.is_active).length
-
-        setStatCards([
-          {
-            label: 'Total Children',
-            value: childrenRows.length,
-            icon: Baby,
-            accent: 'violet',
-            trend: weeklyTrend(newChildrenThisWeek),
-          },
-          {
-            label: 'Active Today',
-            value: activeToday,
-            icon: Activity,
-            accent: 'blue',
-            trend: trendFromDelta(activeToday - activeYesterday),
-          },
-          {
-            label: 'Missions Completed Today',
-            value: missionsToday,
-            icon: CheckCircle2,
-            accent: 'emerald',
-            trend: trendFromDelta(missionsToday - missionsYesterday),
-          },
-          {
-            label: 'Certificates Issued',
-            value: achievementRows.length,
-            icon: Award,
-            accent: 'amber',
-            trend: weeklyTrend(certsThisWeek),
-          },
-          {
-            label: 'Stories Published',
-            value: publishedStories,
-            icon: BookOpen,
-            accent: 'pink',
-            trend: { text: `${draftStories} in draft`, color: 'text-gray-400' },
-          },
-        ])
-
-        // --- Recent activity (merge 4 sources) ---
-        const items: ActivityItem[] = []
-
-        for (const s of storyRows.filter(s => s.is_active)) {
-          items.push({
-            id: `story-${s.id}`,
-            icon: BookOpen,
-            accent: 'indigo',
-            parts: [{ text: 'New story ' }, { text: `"${s.title}"`, bold: true }, { text: ' published' }],
-            meta: timeAgo(s.created_at),
-            timestamp: s.created_at,
-          })
-        }
-
-        for (const a of achievementRows) {
-          const childName = (a.children as any)?.name ?? 'A learner'
-          items.push({
-            id: `cert-${a.id}`,
-            icon: Award,
-            accent: 'emerald',
-            parts: [{ text: childName, bold: true }, { text: ' earned ' }, { text: `"${a.slug}"`, bold: true }, { text: ' certificate' }],
-            meta: `${(a.language ?? '').toUpperCase()} · ${timeAgo(a.earned_at)}`,
-            timestamp: a.earned_at,
-          })
-        }
-
-        for (const p of progressRows) {
-          const versions = (p.missions as any)?.mission_versions ?? []
-          const title = versions.find((v: any) => v.language === p.language)?.title
-            ?? versions.find((v: any) => v.language === 'en')?.title
-            ?? (p.missions as any)?.category_slug
-            ?? 'a mission'
-          const childName = (p.children as any)?.name ?? 'A learner'
-          items.push({
-            id: `progress-${p.id}`,
-            icon: Trophy,
-            accent: 'amber',
-            parts: [{ text: childName, bold: true }, { text: ' completed ' }, { text: `"${title}"`, bold: true }],
-            meta: `${(p.language ?? '').toUpperCase()} · ${p.stars_earned}★ · ${timeAgo(p.completed_at)}`,
-            timestamp: p.completed_at,
-          })
-        }
-
-        for (const c of childrenRows) {
-          items.push({
-            id: `child-${c.id}`,
-            icon: UserPlus,
-            accent: 'sky',
-            parts: [{ text: 'New explorer profile created: ' }, { text: c.name, bold: true }],
-            meta: timeAgo(c.created_at),
-            timestamp: c.created_at,
-          })
-        }
-
-        items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        setActivity(items.slice(0, 6))
+        const { data: storyVersions } = await supabase.from('story_versions').select('story_id, intro_video_url, theme_song_url, meet_characters_url, story_intro_url')
+        const readinessData = allStories.map(s => {
+          const sv = (storyVersions ?? []).filter(v => v.story_id === s.id)
+          const ss = allSlots.filter(sl => sl.story_id === s.id)
+          const r = computeReadiness({ cover_url: s.cover_url, story_versions: sv, story_slots: ss })
+          return { title: s.title, slug: s.slug, result: r }
+        })
+        setStoryReadiness(readinessData)
       } catch (err) {
-        console.error('Error fetching dashboard data:', err)
+        console.error('[Dashboard]', err)
       } finally {
         setLoading(false)
       }
-    }
-
-    fetchDashboard()
+    })()
   }, [])
-
-  const quickActions: { label: string; table: string; icon: LucideIcon; accent: AccentKey }[] = [
-    { label: 'Create Mission', table: `mission:${CATEGORY_ORDER[0]}`, icon: Plus, accent: 'violet' },
-    { label: 'Create Story', table: 'stories', icon: BookOpen, accent: 'pink' },
-    { label: 'Create Coloring Page', table: 'coloring_pages', icon: PenTool, accent: 'orange' },
-    { label: 'View Certificates', table: 'child_achievements', icon: Award, accent: 'emerald' },
-    { label: 'Add Child', table: 'children', icon: Baby, accent: 'blue' },
-  ]
 
   if (loading) {
     return (
-      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
-        <SkeletonStatCards count={5} cols="sm:grid-cols-2 lg:grid-cols-5" />
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <Skeleton className="h-6 w-56" />
-            <Skeleton className="h-4 w-24" />
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="animate-pulse space-y-5">
+          <div className="h-8 bg-gray-100 rounded-lg w-48" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-[88px] bg-gray-50 rounded-xl" />)}
           </div>
-          <SkeletonCardGrid count={4} cols="sm:grid-cols-2 lg:grid-cols-4" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <Skeleton className="h-5 w-40 mb-4" />
-            <SkeletonTable rows={5} cols={4} />
-          </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <Skeleton className="h-5 w-32 mb-4" />
-            <SkeletonList rows={4} />
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <Skeleton className="h-5 w-44 mb-4" />
-          <SkeletonTable rows={6} cols={6} />
+          <div className="h-72 bg-gray-50 rounded-xl" />
         </div>
       </div>
     )
   }
 
+  const avgReadiness = storyReadiness.length > 0 ? Math.round(storyReadiness.reduce((sum, s) => sum + s.result.score, 0) / storyReadiness.length) : 0
+
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-5">
+
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-[20px] sm:text-[22px] font-extrabold text-gray-900">Dashboard</h1>
+        <button onClick={() => onNavigate?.('stories')}
+          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[12px] sm:text-[13px] rounded-lg px-4 py-2.5 shadow-sm transition">
+          <Plus size={15} /> New Story
+        </button>
+      </div>
+
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {statCards.map(card => (
-          <div key={card.label} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className={`w-11 h-11 rounded-full flex items-center justify-center mb-3 ${ACCENT[card.accent].tile}`}>
-              <card.icon className="w-5 h-5" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        {[
+          { icon: BookOpen,      label: 'Published',    value: stats.published, color: 'text-indigo-600 bg-indigo-50' },
+          { icon: CheckCircle2,  label: 'Ready',        value: stats.ready,     color: 'text-emerald-600 bg-emerald-50' },
+          { icon: AlertTriangle, label: 'Incomplete',    value: stats.missing,   color: 'text-amber-600 bg-amber-50' },
+          { icon: Users,         label: 'Children',     value: stats.children,  color: 'text-blue-600 bg-blue-50' },
+          { icon: Award,         label: 'Certificates', value: stats.certs,     color: 'text-rose-600 bg-rose-50' },
+          { icon: Trophy,        label: 'Challenges',   value: stats.challenges, color: 'text-purple-600 bg-purple-50' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.color}`}>
+              <s.icon size={16} />
             </div>
-            <p className="text-2xl font-extrabold text-gray-800">{card.value}</p>
-            <p className="text-gray-500 text-sm font-semibold mb-1.5">{card.label}</p>
-            <p className={`text-xs font-bold flex items-center gap-1 ${card.trend.color}`}>
-              {card.trend.icon && <card.trend.icon className="w-3 h-3" />}
-              {card.trend.text}
-            </p>
+            <div className="min-w-0">
+              <p className="text-[20px] font-extrabold text-gray-900 leading-none">{s.value}</p>
+              <p className="text-[11px] font-medium text-gray-400 mt-0.5">{s.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Daily Adventures Overview */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-800">Daily Adventures Overview</h3>
-          <span className="text-sm font-semibold text-gray-400">{adventures.length} categories</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {adventures.map((card, idx) => {
-            const meta = CATEGORY_META[card.categorySlug] ?? FALLBACK_META
-            const accent = ACCENT[meta.accent]
-            return (
-              <div key={card.categorySlug} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="relative">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${accent.tile}`}>
-                      <meta.icon className="w-6 h-6" />
-                    </div>
-                    <span className={`absolute -top-2 -left-2 w-6 h-6 rounded-full text-white text-[11px] font-bold flex items-center justify-center ${accent.badge}`}>
-                      {idx + 1}
-                    </span>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500">⭐ {card.stars}</span>
-                </div>
-                <p className="text-xs font-extrabold text-gray-400 uppercase tracking-wide mb-0.5">{meta.label}</p>
-                <p className="text-sm font-bold text-gray-800 mb-1 truncate" title={card.title}>{card.title}</p>
-                <p className="text-xs text-gray-400 mb-3">{card.missionsCount} Mission{card.missionsCount === 1 ? '' : 's'}</p>
-                <div className="flex items-center gap-1.5 mb-4">
-                  {LANGUAGES.map(lang => {
-                    const state = card.languages[lang]
-                    const cls = state === 'complete' ? 'bg-emerald-50 text-emerald-600' : state === 'partial' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'
-                    const Icon = state === 'complete' ? CheckCircle2 : state === 'partial' ? AlertTriangle : XCircle
-                    return (
-                      <span key={lang} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${cls}`}>
-                        <Icon className="w-3 h-3" />
-                        {lang}
-                      </span>
-                    )
-                  })}
-                </div>
-                <button
-                  onClick={() => onNavigate?.(`mission:${card.categorySlug}`)}
-                  className={`mt-auto w-full text-center text-white text-sm font-bold py-2 rounded-xl transition ${accent.button}`}
-                >
-                  Manage
-                </button>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* Stories + Readiness */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
 
-      {/* Translation Coverage + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-base font-bold text-gray-800 mb-1">Translation Coverage</h3>
-          <p className="text-gray-500 text-sm mb-4">Published mission content per language, by category</p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-400 text-xs font-bold uppercase tracking-wide border-b border-gray-100">
-                  <th className="py-2 pr-2">Category</th>
-                  <th className="py-2 px-2 text-center">EN</th>
-                  <th className="py-2 px-2 text-center">FR</th>
-                  <th className="py-2 px-2 text-center">RW</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {coverage.map(row => (
-                  <tr key={row.categorySlug}>
-                    <td className="py-2.5 pr-2 font-semibold text-gray-700">{row.label}</td>
-                    {LANGUAGES.map(lang => (
-                      <td key={lang} className={`py-2.5 px-2 text-center font-bold ${coverageColor(row.published[lang], row.total)}`}>
-                        {row.published[lang]}/{row.total}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Stories Table */}
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-gray-50">
+            <h2 className="text-[14px] sm:text-[15px] font-extrabold text-gray-800">Stories</h2>
+            <button onClick={() => onNavigate?.('stories')} className="text-[12px] font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition">
+              View all <ArrowRight size={12} />
+            </button>
           </div>
-          <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Complete</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> In Progress</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Missing</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-base font-bold text-gray-800 mb-1">Recent Activity</h3>
-          <p className="text-gray-500 text-sm mb-4">Latest updates across the platform</p>
-          {activity.length === 0 ? (
-            <p className="text-gray-400 text-sm py-6 text-center">No activity yet — updates will show up here.</p>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {activity.map(item => (
-                <div key={item.id} className="flex items-center gap-3 py-2.5">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${ACCENT[item.accent].tile}`}>
-                    <item.icon className="w-4 h-4" />
+          <div className="divide-y divide-gray-50">
+            {stories.slice(0, 5).map(s => {
+              const pct = Math.round((s.slots_filled / 6) * 100)
+              const isPublished = s.status === 'published'
+              return (
+                <button key={s.id} onClick={() => onNavigate?.(`stories:${s.id}`)}
+                  className="w-full flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50/50 transition text-left">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-[12px] flex-shrink-0">
+                    {s.sort_order}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-700 truncate">
-                      {item.parts.map((part, i) => part.bold
-                        ? <span key={i} className="font-semibold">{part.text}</span>
-                        : <span key={i}>{part.text}</span>
-                      )}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{item.meta}</p>
+                    <p className="text-[13px] font-bold text-gray-800 truncate">{s.title}</p>
+                    <p className="text-[11px] text-gray-400">Age {s.age_min ?? '—'}–{s.age_max ?? '—'}</p>
                   </div>
-                </div>
-              ))}
+                  <div className="flex items-center gap-2.5 flex-shrink-0">
+                    <div className="hidden sm:flex items-center gap-1.5">
+                      <div className="w-14 bg-gray-100 rounded-full h-1.5">
+                        <div className={`h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-indigo-400'}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-[11px] font-bold text-gray-500 w-8">{s.slots_filled}/6</span>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
+                      isPublished ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {isPublished ? 'Live' : 'Draft'}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Readiness */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[14px] sm:text-[15px] font-extrabold text-gray-800">Readiness</h2>
+            <span className="text-[11px] font-bold text-gray-400">{storyReadiness.length} stories</span>
+          </div>
+          <div className="flex justify-center mb-4">
+            <ReadinessRing score={avgReadiness} size={110} strokeWidth={8} />
+          </div>
+          <div className="space-y-1.5 mb-4">
+            {[
+              { color: 'bg-emerald-500', label: 'Ready', count: storyReadiness.filter(s => s.result.status === 'ready').length },
+              { color: 'bg-indigo-500', label: 'In Progress', count: storyReadiness.filter(s => s.result.status === 'in_progress' || s.result.status === 'nearly_ready').length },
+              { color: 'bg-amber-400', label: 'Needs Work', count: storyReadiness.filter(s => s.result.status === 'draft').length },
+            ].map(r => (
+              <div key={r.label} className="flex items-center gap-2.5">
+                <div className={`w-2 h-2 rounded-full ${r.color}`} />
+                <span className="text-[12px] text-gray-500 flex-1">{r.label}</span>
+                <span className="text-[13px] font-bold text-gray-700">{r.count}</span>
+              </div>
+            ))}
+          </div>
+
+          {storyReadiness.filter(s => s.result.score < 100).length > 0 && (
+            <div className="border-t border-gray-100 pt-3 space-y-1.5">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Needs Attention</p>
+              {storyReadiness
+                .filter(s => s.result.score < 100)
+                .sort((a, b) => a.result.score - b.result.score)
+                .slice(0, 4)
+                .map(s => (
+                  <button key={s.slug} onClick={() => onNavigate?.(`stories:${s.slug}`)}
+                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-gray-50 transition text-left">
+                    <ReadinessRing score={s.result.score} size={28} strokeWidth={3} />
+                    <span className="text-[12px] font-medium text-gray-700 flex-1 truncate">{s.title}</span>
+                    <ReadinessBadge status={s.result.status} statusLabel={s.result.statusLabel} statusColor={s.result.statusColor} />
+                  </button>
+                ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Content Pipeline */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-base font-bold text-gray-800 mb-1">Content Pipeline</h3>
-        <p className="text-gray-500 text-sm mb-4">Translation progress and next steps per Daily Adventure</p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-400 text-xs font-bold uppercase tracking-wide border-b border-gray-100">
-                <th className="py-2 pr-2">Category</th>
-                <th className="py-2 px-2 text-center">Total Missions</th>
-                <th className="py-2 px-2 text-center">EN</th>
-                <th className="py-2 px-2 text-center">FR</th>
-                <th className="py-2 px-2 text-center">RW</th>
-                <th className="py-2 px-2">Progress</th>
-                <th className="py-2 pl-2" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {coverage.map(row => {
-                const pct = row.total ? Math.round(((row.published.en + row.published.fr + row.published.rw) / (row.total * 3)) * 100) : 0
-                return (
-                  <tr key={row.categorySlug}>
-                    <td className="py-2.5 pr-2 font-semibold text-gray-700">{row.label}</td>
-                    <td className="py-2.5 px-2 text-center text-gray-500">{row.total}</td>
-                    <td className="py-2.5 px-2 text-center text-gray-500">{row.published.en}</td>
-                    <td className="py-2.5 px-2 text-center text-gray-500">{row.published.fr}</td>
-                    <td className="py-2.5 px-2 text-center text-gray-500">{row.published.rw}</td>
-                    <td className="py-2.5 px-2 min-w-[120px]">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                          <div className="h-full rounded-full bg-indigo-500" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="text-xs font-bold text-gray-500 w-9 text-right">{pct}%</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 pl-2 text-right">
-                      <button
-                        onClick={() => onNavigate?.(`mission:${row.categorySlug}`)}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 transition whitespace-nowrap"
-                      >
-                        Continue
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* Quick Actions */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-base font-bold text-gray-800 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {quickActions.map(action => (
-            <button
-              key={action.label}
-              onClick={() => onNavigate?.(action.table)}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition group"
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${ACCENT[action.accent].tile}`}>
-                <action.icon className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-semibold text-gray-600 text-center">{action.label}</span>
-            </button>
-          ))}
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        {[
+          { icon: Plus,         label: 'Create Story',     table: 'stories',            color: 'text-indigo-600 bg-indigo-50' },
+          { icon: Upload,       label: 'Upload Media',     table: 'Buckets',            color: 'text-blue-600 bg-blue-50' },
+          { icon: Rocket,       label: 'Publish',          table: 'stories',            color: 'text-emerald-600 bg-emerald-50' },
+          { icon: Trophy,       label: 'New Challenge',    table: 'weekly_challenges',  color: 'text-purple-600 bg-purple-50' },
+        ].map(a => (
+          <button key={a.label} onClick={() => onNavigate?.(a.table)}
+            className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3 hover:border-gray-200 hover:shadow-sm transition text-left">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${a.color}`}>
+              <a.icon size={16} />
+            </div>
+            <span className="text-[12px] sm:text-[13px] font-bold text-gray-700">{a.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   )

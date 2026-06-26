@@ -43,7 +43,7 @@ export default function DailyAdventureSidebar({ activitiesCompleted }: Props) {
         <p className="font-black text-white text-sm mt-3">
           {t("activitiesCompletedLabel").replace("{count}", String(activitiesCompleted))}
         </p>
-        <p className="text-purple-300 text-xs mt-1">🏅 {t("completeAllEarnStars")}</p>
+        <p className="theme-text-muted text-xs mt-1">🏅 {t("completeAllEarnStars")}</p>
       </div>
 
       {/* Activity Stars */}
@@ -56,7 +56,7 @@ export default function DailyAdventureSidebar({ activitiesCompleted }: Props) {
             </span>
           ))}
         </div>
-        <p className="text-purple-300 text-xs mt-2">
+        <p className="theme-text-muted text-xs mt-2">
           🎁 {t("activityStarsCount").replace("{count}", String(activitiesCompleted))}
         </p>
       </div>
@@ -83,7 +83,7 @@ export default function DailyAdventureSidebar({ activitiesCompleted }: Props) {
           className="w-12 h-12 rounded-full object-cover border-2 border-blue-300 shadow shrink-0"
         />
         <div className="bg-white/10 backdrop-blur rounded-xl rounded-tl-none px-3 py-2">
-          <p className="text-purple-100 text-xs font-semibold">{t("pikoEncouragement")}</p>
+          <p className="theme-text text-xs font-semibold">{t("pikoEncouragement")}</p>
         </div>
       </div>
     </div>
