@@ -29,15 +29,13 @@ export async function POST(request: NextRequest) {
     const merchantId = process.env.CYBERSOURCE_MERCHANT_ID!;
     const keyId = process.env.CYBERSOURCE_KEY_ID!;
     const secretKey = process.env.CYBERSOURCE_SECRET_KEY!;
-    const host = process.env.CYBERSOURCE_HOST!;
+    const host = process.env.CYBERSOURCE_HOST ?? "api.cybersource.com";
 
+    const rawOrigin = request.headers.get("origin") || "";
     const resourcePath = "/up/v1/capture-contexts";
-    const targetOrigins = [
-      "https://nimipiko.com",
-      "https://www.nimipiko.com",
-      "https://learn-with-nimi.vercel.app",
-      "https://localhost:3000",
-    ].filter(Boolean);
+    const targetOrigins = rawOrigin.startsWith("https://")
+      ? [rawOrigin]
+      : ["https://nimipiko.com", "https://www.nimipiko.com", "https://learn-with-nimi.vercel.app"];
 
     const bodyObj = {
       targetOrigins,

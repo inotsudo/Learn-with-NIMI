@@ -364,10 +364,12 @@ function PaymentModal({ product, currency, onClose }: {
         // Store for crash recovery
         sessionStorage.setItem("nimipiko_pending_payment", JSON.stringify({ orderId: order.id }));
 
-        setStep("processing");
-
-        // Complete payment
+        // Complete payment — keep "card" step visible so CyberSource's
+        // 3D Secure / Purchase Authentication popup isn't covered
         const completionJwt = await up.complete(transientToken);
+
+        // Only show our processing overlay AFTER CyberSource finishes
+        setStep("processing");
 
         // Confirm server-side
         const confirmRes = await fetch("/api/confirm-payment", {
@@ -445,8 +447,8 @@ function PaymentModal({ product, currency, onClose }: {
   return (
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm" style={{ zIndex: 9998 }} onClick={onClose} />
-      <div className="fixed inset-0 flex items-end sm:items-center justify-center" style={{ zIndex: 9998 }}>
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm" style={{ zIndex: 50 }} onClick={onClose} />
+      <div className="fixed inset-0 flex items-end sm:items-center justify-center" style={{ zIndex: 51 }}>
         <motion.div
           initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
           transition={{ type: "spring", stiffness: 250, damping: 25 }}
@@ -457,10 +459,20 @@ function PaymentModal({ product, currency, onClose }: {
           {/* CyberSource loading */}
           {step === "loading" && (
             <div className="text-center py-8">
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 mx-auto mb-3 text-3xl">💳</motion.div>
-              <p className="font-baloo font-black text-white text-[16px]">Loading secure checkout...</p>
-              <p className="theme-text-faint text-[12px] mt-1">Powered by CyberSource</p>
+              <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-3xl shadow-xl">
+                💳
+              </motion.div>
+              <p className="font-baloo font-black text-white text-[16px]">Secure Card Checkout</p>
+              <p className="theme-text-faint text-[12px] mt-1">Loading CyberSource payment form...</p>
+              <div className="flex justify-center gap-1.5 mt-4">
+                {[0, 1, 2].map(i => (
+                  <motion.div key={i} className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: "var(--theme-accent)" }}
+                    animate={{ scale: [1, 1.4, 1], opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+                ))}
+              </div>
             </div>
           )}
 
