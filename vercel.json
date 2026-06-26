@@ -3,7 +3,14 @@
     {
       "path": "/api/cron/daily-reminder",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/cron/renew-subscriptions",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/check-momo-renewals",
+      "schedule": "30 6,12,18 * * *"
     }
   ]
 }
-    

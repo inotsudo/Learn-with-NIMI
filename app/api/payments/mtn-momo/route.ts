@@ -135,12 +135,48 @@ export async function GET(req: NextRequest) {
             : product.tier === "champion_pack" ? "challenge_pack"
             : product.tier === "family_bundle" ? "bundle"
             : "story";
-          await supabase.from("content_access").insert({
-            parent_id: order.parent_id,
-            access_type: accessType,
-            story_id: product.story_id,
-            order_id: orderId,
-          });
+
+          if (product.product_type === "subscription" || product.tier === "club") {
+            // Save MoMo phone for auto-renewal
+            const phone = order.personalization_data?.phone ?? null;
+            const { data: pm } = await supabase.from("payment_methods").insert({
+              parent_id: order.parent_id,
+              provider: "mtn_momo",
+              phone_number: phone,
+              is_default: true,
+            }).select().single();
+
+            const periodEnd = new Date();
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+            const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
+              parent_id: order.parent_id,
+              product_id: order.product_id,
+              status: "active",
+              currency: order.currency,
+              amount: order.amount,
+              billing_interval: "month",
+              current_period_start: new Date().toISOString(),
+              current_period_end: periodEnd.toISOString(),
+              payment_provider: "mtn_momo",
+              payment_method_id: pm?.id ?? null,
+            }).select().single();
+
+            await supabase.from("content_access").insert({
+              parent_id: order.parent_id,
+              access_type: accessType,
+              story_id: product.story_id,
+              order_id: orderId,
+              subscription_id: sub?.id ?? null,
+            });
+          } else {
+            await supabase.from("content_access").insert({
+              parent_id: order.parent_id,
+              access_type: accessType,
+              story_id: product.story_id,
+              order_id: orderId,
+            });
+          }
         }
       }
       return NextResponse.json({ status: "completed" });

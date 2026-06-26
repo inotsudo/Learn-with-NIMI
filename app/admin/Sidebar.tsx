@@ -4,7 +4,7 @@ import supabase from '@/lib/supabaseClient'
 import {
   LayoutDashboard, BookOpen, Palette, Trophy, Star,
   Users, Globe, Award, Bell, FolderOpen, Settings,
-  ChevronLeft, ChevronRight, X,
+  ChevronLeft, ChevronRight, X, CreditCard,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -28,6 +28,7 @@ const NAV = [
   { icon: Award,           label: 'Certificates',       table: 'child_achievements' },
   { icon: Bell,            label: 'Notifications',      table: 'notifications' },
   { icon: FolderOpen,      label: 'Media Library',      table: 'Buckets' },
+  { icon: CreditCard,      label: 'Products & Pricing',  table: 'products' },
   { icon: Settings,        label: 'Settings',           table: 'parental_settings' },
 ]
 

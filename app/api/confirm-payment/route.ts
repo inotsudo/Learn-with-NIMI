@@ -64,14 +64,12 @@ export async function POST(req: Request) {
     }
 
     if (isAuthorized) {
-      // Payment successful — update order
       await supabase.from("orders").update({
         payment_status: "completed",
         provider_transaction_id: transactionId,
         completed_at: new Date().toISOString(),
       }).eq("id", orderId);
 
-      // Grant content access
       const product = order.products as any;
       if (product) {
         const accessType = product.tier === "club" ? "club"
@@ -80,12 +78,47 @@ export async function POST(req: Request) {
           : product.tier === "family_bundle" ? "bundle"
           : "story";
 
-        await supabase.from("content_access").insert({
-          parent_id: order.parent_id,
-          access_type: accessType,
-          story_id: product.story_id,
-          order_id: orderId,
-        });
+        // For subscriptions — create subscription record + save payment method
+        if (product.product_type === "subscription" || product.tier === "club") {
+          // Save CyberSource payment instrument for auto-renewal
+          const { data: pm } = await supabase.from("payment_methods").insert({
+            parent_id: order.parent_id,
+            provider: "cybersource",
+            token: transactionId,
+            is_default: true,
+          }).select().single();
+
+          const periodEnd = new Date();
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+          const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
+            parent_id: order.parent_id,
+            product_id: order.product_id,
+            status: "active",
+            currency: order.currency,
+            amount: order.amount,
+            billing_interval: "month",
+            current_period_start: new Date().toISOString(),
+            current_period_end: periodEnd.toISOString(),
+            payment_provider: "cybersource",
+            payment_method_id: pm?.id ?? null,
+          }).select().single();
+
+          await supabase.from("content_access").insert({
+            parent_id: order.parent_id,
+            access_type: accessType,
+            story_id: product.story_id,
+            order_id: orderId,
+            subscription_id: sub?.id ?? null,
+          });
+        } else {
+          await supabase.from("content_access").insert({
+            parent_id: order.parent_id,
+            access_type: accessType,
+            story_id: product.story_id,
+            order_id: orderId,
+          });
+        }
       }
 
       return NextResponse.json({ success: true, status: "SUCCESS", transactionId });

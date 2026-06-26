@@ -43,6 +43,7 @@ const AdministratorsManager = dynamicView(() => import('./AdministratorsManager'
 const NotificationsManager = dynamicView(() => import('./NotificationsManager'))
 const CurriculumManager = dynamicView(() => import('./CurriculumManager'))
 const CommunityManager = dynamicView(() => import('./CommunityManager'))
+const ProductsManager = dynamicView(() => import('./ProductsManager'))
 const StorySlotsManager = dynamicView(() => import('./StorySlotsManager'))
 const StoryOrderingManager = dynamicView(() => import('./StoryOrderingManager'))
 const StoryPublishingManager = dynamicView(() => import('./StoryPublishingManager'))
@@ -201,6 +202,7 @@ export default function AdminPanel() {
   const isCurriculumView = currentTable === 'curriculum'
 
   const isCommunityView = currentTable === 'creations'
+  const isProductsView = currentTable === 'products'
 
   return (
     <ToastProvider>
@@ -269,6 +271,7 @@ export default function AdminPanel() {
           {isNotificationsView && <NotificationsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isCurriculumView && <CurriculumManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isCommunityView && <CommunityManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isProductsView && <ProductsManager />}
           {currentTable === 'Dashboard' && <DashboardHome onNavigate={setCurrentTable} />}
           {currentTable === 'Help' && (
             <div className="flex items-center justify-center h-full p-8">
