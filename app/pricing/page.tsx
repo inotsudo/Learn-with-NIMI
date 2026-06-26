@@ -322,7 +322,7 @@ function PaymentModal({ product, currency, onClose }: {
         // Decode JWT to get SDK URL
         const jwtParts = captureContext.split(".");
         const ctx = JSON.parse(atob(jwtParts[1].replace(/-/g, "+").replace(/_/g, "/")));
-        const sdkUrl = ctx.ctx?.[0]?.data?.clientLibrary;
+        const sdkUrl = ctx.ctx?.[0]?.data?.clientLibrary || ctx.ctx?.[0]?.clientLibrary;
         if (!sdkUrl || cancelled) {
           if (!cancelled) { setStep("error"); setErrorMsg("Invalid payment session"); }
           return;

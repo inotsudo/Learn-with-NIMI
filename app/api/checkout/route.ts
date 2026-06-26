@@ -1,34 +1,46 @@
+export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { signRequest, HOST, MERCHANT_ID } from "@/lib/cybersource/signer";
+import * as crypto from "crypto";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const { orderId } = await req.json();
-    if (!orderId) return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
+    const body = await request.json();
+    const { orderId } = body;
+
+    if (!orderId) {
+      return NextResponse.json({ success: false, message: "Missing orderId" }, { status: 400 });
+    }
 
     // Resolve authoritative amount from DB — never trust client
-    const { data: order } = await supabase
-      .from("orders")
-      .select("*, products(price_usd, price_eur, price_rwf)")
-      .eq("id", orderId)
-      .single();
+    const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
+    if (!order) {
+      return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });
+    }
 
-    if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-
-    const amount = String(order.amount);
+    const formattedAmount = parseFloat(String(order.amount)).toFixed(2);
     const currency = order.currency;
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const merchantId = process.env.CYBERSOURCE_MERCHANT_ID!;
+    const keyId = process.env.CYBERSOURCE_KEY_ID!;
+    const secretKey = process.env.CYBERSOURCE_SECRET_KEY!;
+    const host = process.env.CYBERSOURCE_HOST!;
 
-    const resource = "/up/v1/capture-contexts";
-    const body = JSON.stringify({
-      targetOrigins: [origin],
+    const resourcePath = "/up/v1/capture-contexts";
+    const targetOrigins = [
+      "https://nimipiko.com",
+      "https://www.nimipiko.com",
+      "https://learn-with-nimi.vercel.app",
+      "https://localhost:3000",
+    ].filter(Boolean);
+
+    const bodyObj = {
+      targetOrigins,
       clientVersion: "0.34",
       allowedPaymentTypes: ["PANENTRY", "GOOGLEPAY"],
       allowedCardNetworks: ["VISA", "MASTERCARD", "AMEX"],
@@ -47,29 +59,62 @@ export async function POST(req: NextRequest) {
       },
       data: {
         orderInformation: {
-          amountDetails: { totalAmount: amount, currency },
+          amountDetails: { totalAmount: formattedAmount, currency },
         },
       },
-    });
+    };
 
-    const headers = signRequest("post", resource, body);
+    const bodyString = JSON.stringify(bodyObj);
+    const date = new Date().toUTCString();
+    const digest = `SHA-256=${crypto.createHash("sha256").update(bodyString).digest("base64")}`;
 
-    const res = await fetch(`https://${HOST}${resource}`, {
+    const signatureString = [
+      `host: ${host}`,
+      `date: ${date}`,
+      `(request-target): post ${resourcePath}`,
+      `digest: ${digest}`,
+      `v-c-merchant-id: ${merchantId}`,
+    ].join("\n");
+
+    const signatureHash = crypto
+      .createHmac("sha256", Buffer.from(secretKey, "base64"))
+      .update(signatureString)
+      .digest("base64");
+
+    const signatureHeader =
+      `keyid="${keyId}", algorithm="HmacSHA256", ` +
+      `headers="host date (request-target) digest v-c-merchant-id", ` +
+      `signature="${signatureHash}"`;
+
+    const response = await fetch(`https://${host}${resourcePath}`, {
       method: "POST",
-      headers,
-      body,
+      headers: {
+        "Content-Type": "application/json",
+        "v-c-merchant-id": merchantId,
+        Date: date,
+        Host: host,
+        Digest: digest,
+        Signature: signatureHeader,
+      },
+      body: bodyString,
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("[Checkout] Capture context error:", res.status, errText);
-      return NextResponse.json({ error: "Failed to create payment session" }, { status: 500 });
+    const result = await response.text();
+
+    if (response.ok) {
+      return NextResponse.json({ success: true, captureContext: result });
     }
 
-    const captureContext = await res.text();
-    return NextResponse.json({ captureContext });
-  } catch (err: any) {
-    console.error("[Checkout]", err);
-    return NextResponse.json({ error: "Checkout initialization failed" }, { status: 500 });
+    console.error("[Checkout]", response.status, result);
+    return NextResponse.json(
+      { success: false, message: "Payment service unavailable." },
+      { status: response.status }
+    );
+  } catch (error: any) {
+    console.error("[Checkout]", error);
+    return NextResponse.json(
+      { success: false, message: "An unexpected error occurred." },
+      { status: 500 }
+    );
   }
 }

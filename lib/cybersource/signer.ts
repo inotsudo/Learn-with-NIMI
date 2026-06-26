@@ -1,43 +1,44 @@
-import crypto from "crypto";
+import * as crypto from "crypto";
 
-const MERCHANT_ID = process.env.CYBERSOURCE_MERCHANT_ID!;
-const KEY_ID = process.env.CYBERSOURCE_KEY_ID!;
-const SECRET_KEY = process.env.CYBERSOURCE_SECRET_KEY!;
-const HOST = process.env.CYBERSOURCE_HOST || "apitest.cybersource.com";
+export function generateDigest(payload: string): string {
+  return `SHA-256=${crypto.createHash("sha256").update(payload).digest("base64")}`;
+}
 
-export { HOST, MERCHANT_ID };
+interface SignatureParams {
+  method: string;
+  resource: string;
+  host: string;
+  date: string;
+  merchantId: string;
+  keyId: string;
+  secretKey: string;
+  digest?: string;
+}
 
-export function signRequest(method: "get" | "post", resource: string, body?: string) {
-  const date = new Date().toUTCString();
-  const isPost = method === "post";
+export function generateSignature(params: SignatureParams): Record<string, string> {
+  const { method, resource, host, date, merchantId, keyId, secretKey, digest } = params;
+  const isPost = method.toLowerCase() === "post";
 
-  let digest = "";
-  if (isPost && body) {
-    digest = `SHA-256=${crypto.createHash("sha256").update(body).digest("base64")}`;
-  }
+  const parts = [
+    `host: ${host}`,
+    `date: ${date}`,
+    `(request-target): ${method.toLowerCase()} ${resource}`,
+    ...(isPost && digest ? [`digest: ${digest}`] : []),
+    `v-c-merchant-id: ${merchantId}`,
+  ];
+
+  const signatureString = parts.join("\n");
+
+  const signature = crypto
+    .createHmac("sha256", Buffer.from(secretKey, "base64"))
+    .update(signatureString)
+    .digest("base64");
 
   const headersList = isPost
     ? "host date (request-target) digest v-c-merchant-id"
     : "host date (request-target) v-c-merchant-id";
 
-  let signString = `host: ${HOST}\ndate: ${date}\n(request-target): ${method} ${resource}`;
-  if (isPost) signString += `\ndigest: ${digest}`;
-  signString += `\nv-c-merchant-id: ${MERCHANT_ID}`;
-
-  const signature = crypto
-    .createHmac("sha256", Buffer.from(SECRET_KEY, "base64"))
-    .update(signString)
-    .digest("base64");
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Host: HOST,
-    Date: date,
-    "v-c-merchant-id": MERCHANT_ID,
-    Signature: `keyid="${KEY_ID}", algorithm="HmacSHA256", headers="${headersList}", signature="${signature}"`,
+  return {
+    Signature: `keyid="${keyId}", algorithm="HmacSHA256", headers="${headersList}", signature="${signature}"`,
   };
-
-  if (isPost && digest) headers.Digest = digest;
-
-  return headers;
 }
