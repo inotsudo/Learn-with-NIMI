@@ -53,7 +53,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         const missing = storyRows.filter(s => s.slots_filled < 6).length
         const certs = allAchievements.filter(a => a.type === 'certificate').length
 
-        setStats({ published, ready, missing, children: (childrenData ?? []).length, certs, challenges: 0 })
+        const { count: challengeCount } = await supabase.from('weekly_challenges').select('*', { count: 'exact', head: true })
+        setStats({ published, ready, missing, children: (childrenData ?? []).length, certs, challenges: challengeCount ?? 0 })
         setStories(storyRows)
 
         const { data: storyVersions } = await supabase.from('story_versions').select('story_id, intro_video_url, theme_song_url, meet_characters_url, story_intro_url')
