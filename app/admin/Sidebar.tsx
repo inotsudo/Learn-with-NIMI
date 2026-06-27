@@ -59,7 +59,7 @@ export default function Sidebar({ currentTable, onSelectTable, collapsed, onTogg
   const sidebar = (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <div className={`px-4 py-5 flex items-center gap-3 border-b border-white/10 ${collapsed ? 'lg:justify-center lg:px-2' : ''}`}>
+      <div className={`px-4 py-3 flex items-center gap-3 border-b border-white/10 ${collapsed ? 'lg:justify-center lg:px-2' : ''}`}>
         <img src="/nimi-logo.png" alt="NimiPiko" className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/20 flex-shrink-0" />
         <div className={`overflow-hidden flex-1 ${collapsed ? 'lg:hidden' : ''}`}>
           <p className="font-extrabold text-white text-[15px] leading-tight">NimiPiko</p>
@@ -71,14 +71,14 @@ export default function Sidebar({ currentTable, onSelectTable, collapsed, onTogg
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
         {NAV.map(item => {
           const active = isActive(item.table)
           return (
             <button key={item.table}
               onClick={() => onSelectTable(item.table)}
               title={collapsed ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition ${
                 collapsed ? 'lg:justify-center lg:px-0' : ''
               } ${active ? 'bg-white/15 text-white' : 'text-indigo-200/70 hover:bg-white/5 hover:text-white'}`}>
               <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
