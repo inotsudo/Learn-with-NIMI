@@ -20,6 +20,12 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Certificates & private keys
+app/certs/
+*.pem
+*.p12
+*.pfx
+
 # System files
 .DS_Store
 Thumbs.db
