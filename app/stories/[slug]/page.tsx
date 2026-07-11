@@ -651,7 +651,7 @@ export default function StoryDetailPage() {
 
                 {/* Top bar */}
                 <div className="flex items-center justify-between px-5 py-4 relative z-10">
-                  <button onClick={() => setPhase("welcome")} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700">
+                  <button onClick={() => setPhase("welcome")} className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center text-gray-700">
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                   {/* Tweak 4: Star count with bounce */}

@@ -665,16 +665,16 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
           <div className="flex items-center gap-2 mx-auto">
             <motion.button whileTap={themeM.buttonPress}
               onClick={() => pageIdx > 0 && goTo(pageIdx - 1)} disabled={pageIdx === 0}
-              className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-20 transition flex-shrink-0">◀</motion.button>
+              className="w-11 h-11 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-20 transition flex-shrink-0">◀</motion.button>
             <span className="text-[13px] font-baloo font-bold text-ds-text whitespace-nowrap">
               {pageIdx + 1} / {processed.length}
             </span>
             <motion.button whileTap={themeM.buttonPress}
               onClick={() => pageIdx < processed.length - 1 && goTo(pageIdx + 1)} disabled={pageIdx >= processed.length - 1}
-              className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-20 transition flex-shrink-0">▶</motion.button>
+              className="w-11 h-11 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-20 transition flex-shrink-0">▶</motion.button>
           </div>
           {isMobile && (
-            <button onClick={() => { savePage(); playSuccess(); }} className="w-9 h-9 rounded-xl bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] hover:opacity-80 flex items-center justify-center flex-shrink-0">
+            <button onClick={() => { savePage(); playSuccess(); }} className="w-11 h-11 rounded-xl bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] hover:opacity-80 flex items-center justify-center flex-shrink-0">
               <Save className="h-4 w-4" />
             </button>
           )}

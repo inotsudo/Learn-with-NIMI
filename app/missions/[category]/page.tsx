@@ -125,7 +125,7 @@ export default function MissionCategoryPage() {
           <p className="text-sm text-gray-500 mt-1 mb-4">{t("missionLoadErrorHint")}</p>
           <button
             onClick={() => setReloadKey(k => k + 1)}
-            className="px-6 py-2 text-white font-black text-sm shadow-md transition" style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}
+            className="px-6 py-3 min-h-[44px] text-white font-black text-sm shadow-md transition" style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}
           >
             {t("tryAgainBtn")}
           </button>
