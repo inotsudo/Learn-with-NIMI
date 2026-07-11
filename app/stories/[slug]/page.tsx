@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Lock, Play, Star, Volume2 } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
@@ -29,78 +30,10 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
 import { PageSurface } from "@/components/layout/primitives";
+import MeetCharactersCard from "@/components/stories/MeetCharactersCard";
+import BadgeCircle from "@/components/stories/BadgeCircle";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
-
-function MeetCharactersCard({ assets }: { assets: { nimiCircle: string; pikoCircle: string } }) {
-  const CHARS = [
-    { img: assets.nimiCircle, name: "Nimi",  desc: "Joyful explorer who loves stories",    border: "border-green-400",  bg: "from-green-400 to-emerald-500" },
-    { img: assets.pikoCircle, name: "Piko",  desc: "Curious robot who loves creativity",   border: "border-blue-400",   bg: "from-blue-400 to-indigo-500"   },
-    { img: null,              name: "Zilo",  desc: "Nature guardian with grass hair 🌿",   border: "border-lime-400",   bg: "from-lime-400 to-green-500"    },
-  ];
-  return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={SPRING.card}
-      className="bg-white border border-ds-border rounded-2xl p-5 shadow-sm">
-      <p className="font-baloo font-black text-gray-800 text-center text-[17px] mb-4">Meet Your Story Friends! 👋</p>
-      <div className="flex gap-3 justify-center">
-        {CHARS.map(c => (
-          <motion.div key={c.name}
-            initial={{ scale: 0, rotate: -15 }} animate={{ scale: 1, rotate: 0 }}
-            transition={{ ...SPRING.bounce, delay: CHARS.indexOf(c) * 0.12 }}
-            className="flex flex-col items-center gap-2 flex-1">
-            <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: DURATION.loopBase, repeat: Infinity, delay: CHARS.indexOf(c) * 0.4 }}
-              className={`w-16 h-16 rounded-full bg-gradient-to-br ${c.bg} border-4 ${c.border} shadow-lg flex items-center justify-center overflow-hidden`}>
-              {c.img
-                ? <img src={c.img} alt={c.name} className="w-full h-full object-cover rounded-full"  loading="lazy" />
-                : <span className="text-2xl">🌿</span>
-              }
-            </motion.div>
-            <p className="font-baloo font-black text-gray-800 text-[14px]">{c.name}</p>
-            <p className="font-nunito text-gray-500 text-[10px] text-center leading-tight">{c.desc}</p>
-          </motion.div>
-        ))}
-      </div>
-      <p className="font-nunito text-center text-green-700 text-[11px] font-bold mt-4 bg-green-50 rounded-full py-1.5 px-3">
-        They will guide you through every adventure! 🌟
-      </p>
-    </motion.div>
-  );
-}
-
-// Circular badge — milestone badges render as emoji tiles; others try a PNG.
-function BadgeCircle({ slug, size = "md" }: { slug: string | null; size?: "sm" | "md" | "lg" | "xl" }) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const cls = {
-    sm: { outer: "w-10 h-10",  ring: "ring-2",     icon: "text-2xl", label: 4 },
-    md: { outer: "w-16 h-16",  ring: "ring-[3px]", icon: "text-3xl", label: 5 },
-    lg: { outer: "w-24 h-24",  ring: "ring-4",     icon: "text-5xl", label: 6 },
-    xl: { outer: "w-32 h-32",  ring: "ring-[5px]", icon: "text-6xl", label: 8 },
-  }[size];
-
-  // Milestone badges use emoji tiles — no PNG needed
-  const milestoneMeta = slug ? getMilestoneBadgeMeta(slug) : null;
-  if (milestoneMeta) {
-    return (
-      <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 bg-gradient-to-b from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg`}>
-        <span className={cls.icon}>{milestoneMeta.emoji}</span>
-      </div>
-    );
-  }
-
-  if (slug && !imgFailed) {
-    return (
-      <img src={`/badges/${slug}.png`} alt="badge" onError={() => setImgFailed(true)}
-        className={`${cls.outer} object-contain rounded-full`} />
-    );
-  }
-  return (
-    <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 bg-gradient-to-b from-blue-600 to-blue-900 flex flex-col items-center justify-center shadow-lg overflow-hidden`}>
-      <span className="text-yellow-300 leading-none" style={{ fontSize: cls.label }}>⭐</span>
-      <span className={cls.icon}>🏅</span>
-      <span className="text-yellow-200 font-black text-center leading-tight tracking-wide" style={{ fontSize: cls.label }}>NIMIPIKO<br/>CHAMPION</span>
-    </div>
-  );
-}
 
 // Steps 2–4 of the boss's learning journey (Cover is step 1, shown on welcome screen)
 const INTRO_ITEMS = [
@@ -425,9 +358,9 @@ export default function StoryDetailPage() {
                 className="flex-1 flex flex-col">
 
                 {/* Cover */}
-                <div className="relative">
+                <div className="relative h-72">
                   {details?.cover_url ? (
-                    <img src={getStorageUrl(details.cover_url)} alt={storyTitle} className="w-full h-72 object-cover"  loading="lazy" />
+                    <Image src={getStorageUrl(details.cover_url)} alt={storyTitle} fill className="object-cover" />
                   ) : (
                     <div className="w-full h-72 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 flex items-center justify-center">
                       <motion.span className="text-8xl" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: DURATION.loopBase, repeat: Infinity }}>
@@ -645,7 +578,7 @@ export default function StoryDetailPage() {
                 {/* Tweak 5: Cover image as faded background */}
                 {details?.cover_url && (
                   <div className="absolute inset-0 z-0 overflow-hidden">
-                    <img src={getStorageUrl(details.cover_url)} alt="" className="w-full h-full object-cover opacity-[0.06] blur-sm scale-110"  loading="lazy" />
+                    <Image src={getStorageUrl(details.cover_url)} alt="" fill className="object-cover opacity-[0.06] blur-sm scale-110" />
                   </div>
                 )}
 

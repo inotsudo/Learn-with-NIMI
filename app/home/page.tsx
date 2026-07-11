@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
-import { ChevronRight, Heart, Star, Flame, Play, Check, Lock } from "lucide-react";
+import { Heart, Star, Flame, Play, ChevronRight, Check } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import {
   getChildren, ensureParentRow, getStorageUrl,
@@ -20,12 +20,18 @@ import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import { ZoneDecorations } from "@/components/campus/ZoneDecorations";
 import AppShell              from "@/components/layout/AppShell";
 import WhoIsPlaying          from "@/components/home/WhoIsPlaying";
 import CreateChildModal      from "@/components/home/CreateChildModal";
 import CreateExplorerProfile from "@/components/home/CreateExplorerProfile";
 import MagicLoader           from "@/components/magic/MagicLoader";
+import HomeAdventureSection  from "@/components/home/HomeAdventureSection";
+import HomeStoryLibrarySection from "@/components/home/HomeStoryLibrarySection";
+import HomeStoryJourneyPanel from "@/components/home/HomeStoryJourneyPanel";
+import HomeWeekStreakPanel   from "@/components/home/HomeWeekStreakPanel";
+import HomeAchievementsPanel from "@/components/home/HomeAchievementsPanel";
+import HomeCommunityPanel    from "@/components/home/HomeCommunityPanel";
+import HomeMasterpiecePanel  from "@/components/home/HomeMasterpiecePanel";
 import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
@@ -130,25 +136,6 @@ function greeting() {
 const up      = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const } } };
 const pop     = { hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] as const } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
-
-// Stepping-stone path marker between campus zones (purely decorative)
-function CampusConnector() {
-  return (
-    <div className="-mt-2 flex items-center justify-center gap-2 mb-5 pointer-events-none select-none" aria-hidden>
-      <div className="w-6 h-px bg-emerald-200 rounded-full opacity-50" />
-      <motion.span className="text-[11px] opacity-25" animate={{ y: [0, -3, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}>🌿</motion.span>
-      <div className="flex items-center gap-1 opacity-30">
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-        <div className="w-5 h-px bg-emerald-300 rounded-full" />
-        <div className="w-2 h-2 rounded-full bg-emerald-300" />
-        <div className="w-5 h-px bg-emerald-300 rounded-full" />
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-      </div>
-      <motion.span className="text-[11px] opacity-25" animate={{ y: [0, -3, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}>🌿</motion.span>
-      <div className="w-6 h-px bg-emerald-200 rounded-full opacity-50" />
-    </div>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function HomePage() {
@@ -725,225 +712,24 @@ export default function HomePage() {
               <main className="flex-1 min-w-0 space-y-10">
 
                 {/* ── YOUR ADVENTURE ─────────────────────────────────────── */}
-                <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="relative">
-                  <motion.div variants={up} className="leaf-lg overflow-hidden border border-white/80 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
-
-                    {/* Header band */}
-                    <div className="relative px-5 py-4 overflow-hidden"
-                      style={{ background: curStory?.complete
-                        ? "linear-gradient(135deg,#fbbf24 0%,#f59e0b 55%,#f97316 100%)"
-                        : "linear-gradient(135deg,#059669 0%,#10b981 55%,#34d399 100%)" }}>
-                      <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
-                      <motion.span className="absolute top-3 right-5 text-2xl select-none pointer-events-none"
-                        animate={{ y: [0,-5,0], rotate: [0,10,0] }}
-                        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}>
-                        {curStory?.complete ? "🏆" : "⭐"}
-                      </motion.span>
-                      <p className="font-nunito text-white/65 text-[10px] uppercase tracking-widest mb-0.5">📖 Your Adventure</p>
-                      <h2 className="font-baloo font-black text-white text-[22px] sm:text-[24px] leading-tight">
-                        {curStory
-                          ? curStory.complete ? "Adventure Complete! 🎉" : "Continue the Journey!"
-                          : "Your Adventure Awaits!"}
-                      </h2>
-                    </div>
-
-                    {/* Content */}
-                    {curStory ? (
-                      <div className="flex gap-4 sm:gap-5 p-4 sm:p-5 bg-white">
-
-                        {/* Story cover */}
-                        <Link href={`/stories/${curStory.slug}`}
-                          className="relative rounded-2xl overflow-hidden shrink-0 transition-transform hover:scale-[1.03] active:scale-[0.97]"
-                          style={{
-                            width: 130, height: 130,
-                            boxShadow: "0 0 0 3px rgba(5,150,105,0.22), 0 8px 24px rgba(0,0,0,0.26)",
-                          }}>
-                          {curStory.cover_url
-                            ? <img src={getStorageUrl(curStory.cover_url)} alt={curStory.title} className="w-full h-full object-cover"  loading="lazy" />
-                            : <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-200 flex items-center justify-center text-5xl">
-                                {curStory.theme_emoji ?? "📖"}
-                              </div>
-                          }
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/15 hover:bg-black/25 transition">
-                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-xl">
-                              <Play className="w-4 h-4 fill-emerald-600 text-emerald-600 ml-0.5" />
-                            </div>
-                          </div>
-                        </Link>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          <div>
-                            <p className="font-nunito font-bold text-emerald-600 text-[11px] uppercase tracking-widest mb-1">
-                              {curStory.complete ? "✅ Completed!" : `Mission ${doneSlots} of ${totalSlots || 6}`}
-                            </p>
-                            <h3 className="font-baloo font-black text-gray-800 text-[19px] sm:text-[21px] leading-tight line-clamp-2">
-                              {curStory.title}
-                            </h3>
-                          </div>
-
-                          {/* Mission dots */}
-                          {!curStory.complete && slots.length > 0 && (
-                            <div className="flex items-center gap-2 my-2 flex-wrap">
-                              {slots.map((slot, i) => (
-                                <div key={i} className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shadow-sm transition-all ${
-                                  slot.completed
-                                    ? "bg-emerald-500 text-white shadow-emerald-200"
-                                    : "bg-gray-100 text-gray-400 border-2 border-gray-200"
-                                }`}>
-                                  {slot.completed ? "⭐" : i + 1}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Progress bar */}
-                          {!curStory.complete && (
-                            <div className="mb-3">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-nunito font-bold text-gray-400 text-[11px]">Progress</span>
-                                <span className="font-baloo font-black text-emerald-600 text-[12px]">{pct}%</span>
-                              </div>
-                              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                                <motion.div className="h-full rounded-full"
-                                  style={{ background: "linear-gradient(90deg,#34d399,#059669)" }}
-                                  initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                                  transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }} />
-                              </div>
-                            </div>
-                          )}
-
-                          {/* CTA button */}
-                          <Link href={`/stories/${curStory.slug}`}
-                            className="flex items-center justify-center gap-2 font-baloo font-black text-[15px] sm:text-[16px] py-3 leaf shadow-lg transition-all hover:-translate-y-0.5 active:scale-95"
-                            style={{
-                              background: curStory.complete
-                                ? "linear-gradient(135deg,#fbbf24,#f59e0b)"
-                                : "linear-gradient(135deg,#059669,#047857)",
-                              color: curStory.complete ? "#78350f" : "white",
-                              boxShadow: curStory.complete
-                                ? "0 4px 18px rgba(245,158,11,0.4)"
-                                : "0 4px 18px rgba(5,150,105,0.4)",
-                            }}>
-                            {curStory.complete ? "⭐ View My Certificate" : "Keep Going!"}
-                            <Play className="w-4 h-4" fill="currentColor" />
-                          </Link>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-4 p-8 text-center bg-white">
-                        <motion.span className="text-[56px] leading-none select-none"
-                          animate={{ y: [0,-8,0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>🔭</motion.span>
-                        <div>
-                          <p className="font-baloo font-black text-gray-800 text-[20px]">Your story awaits!</p>
-                          <p className="font-nunito text-gray-500 text-[14px] mt-1">Zilo found some great adventures at the Library.</p>
-                        </div>
-                        <Link href="/stories"
-                          className="flex items-center gap-2 font-baloo font-black text-white text-[16px] px-8 py-3.5 leaf shadow-xl transition-all hover:-translate-y-0.5 active:scale-95"
-                          style={{ background: "linear-gradient(135deg,#059669,#047857)", boxShadow: "0 6px 22px rgba(5,150,105,0.4)" }}>
-                          Start Your Journey <ChevronRight className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    )}
-                  </motion.div>
-                </motion.section>
+                <HomeAdventureSection
+                  curStory={curStory}
+                  doneSlots={doneSlots}
+                  totalSlots={totalSlots}
+                  pct={pct}
+                  slots={slots}
+                  up={up}
+                  stagger={stagger}
+                />
 
                 {/* ── STORY LIBRARY ─────────────────────────────────────────── */}
-                {stories.length > 0 && (
-                  <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={stagger} className="relative">
-                    <div className="leaf-lg border border-white/80 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/60 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] sm:p-5">
-                      <ZoneDecorations zone="library" />
-                      <CampusConnector />
-                      <motion.div variants={up} className="flex items-center justify-between gap-3 mb-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-sky-100 flex items-center justify-center text-[22px] shrink-0 shadow-sm">📚</div>
-                          <div>
-                            <p className="font-nunito text-[9px] uppercase tracking-widest text-sky-400 leading-none mb-0.5">The Library</p>
-                            <h2 className="font-baloo font-black text-[21px] sm:text-[23px] text-gray-800 leading-tight">Story Library</h2>
-                          </div>
-                        </div>
-                        <Link href="/stories" className="flex items-center gap-1 font-nunito font-bold text-sky-500 text-[13px] hover:underline">
-                          See all <ChevronRight className="w-4 h-4" />
-                        </Link>
-                      </motion.div>
-                      <motion.div variants={stagger} className="flex gap-4 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
-                        {stories.map((story) => {
-                          const isActive = !story.complete && story.unlocked && story.sid === curStory?.sid;
-                          const pctDone  = Math.round((story.progress ?? 0) * 100);
-                          return (
-                            <motion.div key={story.sid} variants={pop} className="shrink-0 w-[155px] sm:w-[172px]">
-                              {story.unlocked ? (
-                                <Link href={`/stories/${story.slug}`}
-                                  className="group block leaf overflow-hidden shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(15,23,42,0.12)]"
-                                  style={{ border: isActive ? "2px solid rgba(5,150,105,0.45)" : "1px solid rgba(219,234,254,0.8)" }}>
-                                  <div className="relative w-full overflow-hidden" style={{ aspectRatio: "1/1" }}>
-                                    {story.cover_url
-                                      ? <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"  loading="lazy" />
-                                      : <div className="w-full h-full flex items-center justify-center text-5xl"
-                                          style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}>
-                                          {story.theme_emoji ?? "📖"}
-                                        </div>
-                                    }
-                                    {story.complete && (
-                                      <div className="absolute inset-0 flex items-end justify-center pb-2 bg-emerald-600/20">
-                                        <span className="bg-emerald-500 text-white font-baloo font-black text-[10px] px-3 py-1 rounded-full shadow-md">✓ Complete!</span>
-                                      </div>
-                                    )}
-                                    {isActive && !story.complete && (
-                                      <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
-                                        <Play className="w-3.5 h-3.5 fill-white text-white ml-0.5" />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="bg-white px-3 pt-2 pb-3">
-                                    <p className="font-baloo font-black text-gray-800 text-[13px] leading-tight line-clamp-2 mb-2 group-hover:text-emerald-600 transition-colors">
-                                      {story.title}
-                                    </p>
-                                    {pctDone > 0 && !story.complete ? (
-                                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full transition-all"
-                                          style={{ width: `${pctDone}%`, background: "linear-gradient(90deg,#34d399,#059669)" }} />
-                                      </div>
-                                    ) : story.complete ? (
-                                      <div className="flex items-center gap-1">
-                                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                        <span className="font-nunito font-bold text-emerald-600 text-[11px]">All done!</span>
-                                      </div>
-                                    ) : (
-                                      <span className="font-nunito font-bold text-sky-500 text-[11px]">Start reading →</span>
-                                    )}
-                                  </div>
-                                </Link>
-                              ) : (
-                                <div className="leaf overflow-hidden border border-gray-100 opacity-55">
-                                  <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
-                                    {story.cover_url
-                                      ? <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                                          className="w-full h-full object-cover grayscale"  loading="lazy" />
-                                      : <div className="w-full h-full flex items-center justify-center text-5xl bg-gray-100">
-                                          {story.theme_emoji ?? "📖"}
-                                        </div>
-                                    }
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                      <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                                        <Lock className="w-5 h-5 text-gray-600" />
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="bg-gray-50 px-3 pt-2 pb-3">
-                                    <p className="font-baloo font-black text-gray-400 text-[12px] leading-tight line-clamp-2 mb-1">{story.title}</p>
-                                    <p className="font-nunito text-gray-400 text-[10px]">Finish the previous story to unlock</p>
-                                  </div>
-                                </div>
-                              )}
-                            </motion.div>
-                          );
-                        })}
-                      </motion.div>
-                    </div>
-                  </motion.section>
-                )}
+                <HomeStoryLibrarySection
+                  stories={stories}
+                  curStory={curStory}
+                  up={up}
+                  stagger={stagger}
+                  pop={pop}
+                />
 
               </main>
 
@@ -952,284 +738,19 @@ export default function HomePage() {
                 <div className="xl:sticky xl:top-[80px] flex flex-col gap-5">
 
                   {/* ── Story Journey ───────────────────────────────────────── */}
-                  <div className="overflow-hidden leaf-lg border border-white/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-                    <div className="relative px-5 pt-5 pb-5 overflow-hidden"
-                      style={{ background: curStory?.complete
-                        ? "linear-gradient(135deg,#f59e0b 0%,#d97706 55%,#b45309 100%)"
-                        : "linear-gradient(135deg,#059669 0%,#10b981 55%,#34d399 100%)" }}>
-                      <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
-                      <div className="flex items-center gap-3">
-                        {curStory?.cover_url ? (
-                          <img src={getStorageUrl(curStory.cover_url)} alt={curStory.title}
-                            className="w-12 h-12 rounded-xl object-cover border-2 border-white/40 shadow-md shrink-0"  loading="lazy" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-[22px] shrink-0 shadow-md">
-                            {curStory?.theme_emoji ?? "📖"}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-nunito text-white/60 text-[9px] uppercase tracking-widest mb-0.5">
-                            {curStory?.complete ? "Completed! 🎉" : "Your Journey"}
-                          </p>
-                          <h3 className="font-baloo font-black text-white text-[15px] leading-tight line-clamp-1">
-                            {curStory?.title ?? "Start Your Story"}
-                          </h3>
-                        </div>
-                      </div>
-                      {curStory && (
-                        <div className="mt-3 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                          <motion.div className="h-full bg-white rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.round((curStory.progress ?? 0) * 100)}%` }}
-                            transition={{ duration: 1, ease: "easeOut" }} />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Mission dots */}
-                    <div className="bg-white px-4 py-3">
-                      {slots.length > 0 ? (
-                        <>
-                          <div className="flex gap-1.5 justify-center mb-3">
-                            {slots.map((slot, i) => (
-                              <motion.div key={slot.slot_key}
-                                initial={{ scale: 0 }} animate={{ scale: 1 }}
-                                transition={{ delay: i * 0.06, type: "spring", stiffness: 400, damping: 20 }}
-                                className={`flex-1 h-2 rounded-full transition-all ${
-                                  slot.completed ? "bg-emerald-500" : "bg-gray-200"
-                                }`} />
-                            ))}
-                          </div>
-                          <p className="text-center font-nunito font-semibold text-gray-500 text-[11px] mb-3">
-                            {slots.filter(s => s.completed).length}/{slots.length} missions complete
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-center font-nunito text-gray-400 text-[12px] py-2 mb-2">
-                          Choose a story to begin your adventure!
-                        </p>
-                      )}
-
-                      {curStory ? (
-                        <Link href={`/stories/${curStory.slug}`}
-                          className="flex items-center justify-center gap-2 w-full font-baloo font-black text-white text-[13px] py-3 leaf transition-all hover:-translate-y-0.5 active:scale-95"
-                          style={{
-                            background: curStory.complete
-                              ? "linear-gradient(135deg,#f59e0b,#d97706)"
-                              : "linear-gradient(135deg,#059669,#10b981)",
-                            boxShadow: curStory.complete
-                              ? "0 4px 14px rgba(245,158,11,0.3)"
-                              : "0 4px 14px rgba(5,150,105,0.3)",
-                          }}>
-                          <Play className="w-3.5 h-3.5 fill-white" />
-                          {curStory.complete ? "See Certificate 🏆" : "Continue Story"}
-                        </Link>
-                      ) : (
-                        <Link href="/stories"
-                          className="flex items-center justify-center gap-2 w-full font-baloo font-black text-white text-[13px] py-3 leaf transition-all hover:-translate-y-0.5 active:scale-95"
-                          style={{ background: "linear-gradient(135deg,#059669,#10b981)", boxShadow: "0 4px 14px rgba(5,150,105,0.3)" }}>
-                          <Play className="w-3.5 h-3.5 fill-white" />
-                          Start First Story
-                        </Link>
-                      )}
-                    </div>
-                  </div>
+                  <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} />
 
                   {/* ── Week Streak ─────────────────────────────────────────── */}
-                  <div className="overflow-hidden leaf-lg border border-white/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-                    <div className="relative px-5 pt-4 pb-3 overflow-hidden"
-                      style={{ background: "linear-gradient(135deg,#f97316 0%,#ea580c 60%,#dc2626 100%)" }}>
-                      <div className="absolute -top-6 -right-6 w-22 h-22 rounded-full bg-white/10 pointer-events-none" />
-                      <div className="flex items-center gap-3">
-                        <motion.span className="text-[28px] leading-none"
-                          animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
-                          transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 2 }}>🔥</motion.span>
-                        <div>
-                          <p className="font-nunito text-white/60 text-[9px] uppercase tracking-widest leading-none mb-0.5">Learning Streak</p>
-                          <p className="font-baloo font-black text-white text-[20px] leading-tight">
-                            {consecutiveStreak} {consecutiveStreak === 1 ? "day" : "days"}
-                          </p>
-                        </div>
-                        <div className="ml-auto flex items-center gap-1.5 bg-white/15 rounded-full px-2.5 py-1">
-                          <Star className="w-3 h-3 fill-amber-300 text-amber-300" />
-                          <span className="font-baloo font-black text-white text-[12px]">{totalStars}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white px-4 py-3">
-                      <div className="flex justify-between gap-1">
-                        {["M","T","W","T","F","S","S"].map((day, i) => {
-                          const todayIdx = new Date().getDay();
-                          const adjustedToday = todayIdx === 0 ? 6 : todayIdx - 1;
-                          const isFuture = i > adjustedToday;
-                          const done = weekStreak[i] ?? false;
-                          const isToday = i === adjustedToday;
-                          return (
-                            <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                              <div className={`w-full aspect-square max-w-[32px] rounded-full flex items-center justify-center text-[11px] transition-all ${
-                                done ? "bg-orange-500 shadow-md shadow-orange-200" :
-                                isToday ? "bg-orange-100 border-2 border-orange-300" :
-                                isFuture ? "bg-gray-100" : "bg-gray-100"
-                              }`}>
-                                {done ? "🔥" : isToday ? "·" : ""}
-                              </div>
-                              <span className={`font-nunito font-bold text-[9px] ${isToday ? "text-orange-500" : "text-gray-400"}`}>{day}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {consecutiveStreak === 0 && (
-                        <p className="text-center font-nunito text-gray-400 text-[11px] mt-2.5">
-                          Complete a story activity to start your streak! 🔥
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  <HomeWeekStreakPanel weekStreak={weekStreak} consecutiveStreak={consecutiveStreak} totalStars={totalStars} />
 
                   {/* ── My Achievements ─────────────────────────────────────── */}
-                  <div className="overflow-hidden leaf-lg border border-white/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-                    <div className="relative flex items-center justify-between px-5 pt-5 pb-3 overflow-hidden"
-                      style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b,#f97316)" }}>
-                      <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
-                      <div>
-                        <p className="font-nunito text-white/60 text-[9px] uppercase tracking-widest mb-0.5">Trophy Room</p>
-                        <h3 className="font-baloo font-black text-white text-[18px]">My Treasures</h3>
-                      </div>
-                      <Link href="/user-profile" className="flex items-center gap-0.5 font-nunito font-bold text-white/80 text-[11px] hover:text-white">
-                        All <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                    {/* Wave between header and body */}
-                    <svg viewBox="0 0 300 16" preserveAspectRatio="none" className="w-full h-4 block"
-                      style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b,#f97316)" }}>
-                      <path d="M0,8 C50,0 100,16 150,8 C200,0 250,16 300,8 L300,16 L0,16 Z" fill="#fffbeb" />
-                    </svg>
-                    <div className="bg-gradient-to-b from-amber-50 to-orange-50 px-4 py-4">
-                      <div className="flex justify-around gap-2">
-                        {Array.from({ length: 3 }).map((_, i) => {
-                          const ach    = achievements[achievements.length - 1 - i];
-                          const badge  = ach ? parseBadgeSlug(ach.slug) : LOCKED_BADGE_PLACEHOLDERS[i] ?? LOCKED_BADGE_PLACEHOLDERS[0];
-                          const earned = !!ach;
-                          return (
-                            <div key={i} className={`flex flex-col items-center gap-2 flex-1 transition-all ${earned ? "" : "opacity-40 grayscale"}`}>
-                              <motion.div
-                                className="w-[78px] h-[78px] rounded-2xl flex items-center justify-center text-[40px] shadow-lg"
-                                style={{ background: `linear-gradient(145deg,${badge.from},${badge.to})`, boxShadow: earned ? `0 6px 24px ${badge.glow}55` : undefined }}
-                                animate={earned ? { scale: [1, 1.04, 1] } : undefined}
-                                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}>
-                                {badge.emoji}
-                              </motion.div>
-                              {earned
-                                ? <span className="bg-emerald-100 text-emerald-700 font-nunito font-black text-[9px] px-2 py-0.5 rounded-full">★ Earned</span>
-                                : <span className="bg-gray-100 text-gray-400 font-nunito font-black text-[9px] px-2 py-0.5 rounded-full">🔒 Locked</span>
-                              }
-                              <p className="font-nunito font-bold text-gray-600 text-[10px] text-center leading-tight">{badge.label}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {/* Trophy Room ambient atmosphere */}
-                      <div className="flex justify-center gap-4 mt-3 opacity-20 pointer-events-none select-none" aria-hidden>
-                        <motion.span className="text-[13px]" animate={{ y: [0, -3, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}>🎀</motion.span>
-                        <motion.span className="text-[15px]" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>⭐</motion.span>
-                        <motion.span className="text-[13px]" animate={{ y: [0, -3, 0] }} transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1.0 }}>✨</motion.span>
-                      </div>
-                    </div>
-                  </div>
+                  <HomeAchievementsPanel achievements={achievements} />
 
                   {/* ── Community Creations ─────────────────────────────────── */}
-                  {true && (
-                    <div className="overflow-hidden leaf-lg border border-white/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-                      <div className="relative flex items-center justify-between px-5 pt-5 pb-3 overflow-hidden"
-                        style={{ background: "linear-gradient(135deg,#14b8a6,#0d9488,#0891b2)" }}>
-                        <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full bg-white/10 pointer-events-none" />
-                        <div>
-                          <p className="font-nunito text-white/60 text-[9px] uppercase tracking-widest mb-0.5">Community Square</p>
-                          <h3 className="font-baloo font-black text-white text-[18px]">Community Creations</h3>
-                        </div>
-                        <Link href="/community" className="flex items-center gap-0.5 font-nunito font-bold text-white/80 text-[11px] hover:text-white">
-                          All <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                      {/* Wave between header and body */}
-                      <svg viewBox="0 0 300 16" preserveAspectRatio="none" className="w-full h-4 block"
-                        style={{ background: "linear-gradient(135deg,#14b8a6,#0d9488,#0891b2)" }}>
-                        <path d="M0,8 C50,0 100,16 150,8 C200,0 250,16 300,8 L300,16 L0,16 Z" fill="#f0fdf4" />
-                      </svg>
-                      <div className="bg-gradient-to-b from-teal-50 to-cyan-50 p-4 relative">
-                        {communityCreations.length > 0 ? (
-                          <div className="grid grid-cols-3 gap-2">
-                            {communityCreations.map((c) => (
-                              <Link key={c.id} href="/community"
-                                className="group relative aspect-square rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
-                                <img src={getStorageUrl(c.imageUrl)} alt={c.childName}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"  loading="lazy" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="absolute bottom-1 right-1 text-[10px]">🎨</div>
-                              </Link>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center gap-2 py-5 px-3 text-center">
-                            <motion.span className="text-[38px] leading-none"
-                              animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>🔭</motion.span>
-                            <p className="font-baloo font-black text-teal-700 text-[13px] leading-tight mt-1">Be the first explorer!</p>
-                            <p className="font-nunito text-teal-500 text-[11px] leading-relaxed">Share your masterpiece and inspire the whole campus.</p>
-                            <Link href="/community"
-                              className="mt-2 font-baloo font-black text-white text-[12px] px-5 py-2 leaf transition-all hover:-translate-y-0.5 active:scale-95"
-                              style={{ background: "linear-gradient(135deg,#14b8a6,#0d9488)", boxShadow: "0 4px 14px rgba(20,184,166,0.35)" }}>
-                              Visit Community Square
-                            </Link>
-                          </div>
-                        )}
-                        {/* Community Square ambient atmosphere */}
-                        <div className="flex justify-center gap-4 mt-3 opacity-20 pointer-events-none select-none" aria-hidden>
-                          <motion.span className="text-[13px]" animate={{ y: [0, -4, 0] }} transition={{ duration: 3.0, repeat: Infinity, ease: "easeInOut" }}>🎈</motion.span>
-                          <motion.span className="text-[13px]" animate={{ x: [0, 5, 0] }} transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}>🐦</motion.span>
-                          <motion.span className="text-[13px]" animate={{ rotate: [0, 8, -8, 0] }} transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}>🌳</motion.span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <HomeCommunityPanel communityCreations={communityCreations} />
 
                   {/* ── Masterpiece Studio ──────────────────────────────── */}
-                  <div className="overflow-hidden leaf-lg border border-white/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-                    <div className="relative flex items-center justify-between px-5 pt-5 pb-3 overflow-hidden"
-                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706,#92400e)" }}>
-                      <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
-                      <div>
-                        <p className="font-nunito text-white/60 text-[9px] uppercase tracking-widest mb-0.5">Story Forge</p>
-                        <h3 className="font-baloo font-black text-white text-[18px]">My Masterpiece</h3>
-                      </div>
-                      <Link href="/masterpiece" className="flex items-center gap-0.5 font-nunito font-bold text-white/80 text-[11px] hover:text-white">
-                        Create <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                    <svg viewBox="0 0 300 16" preserveAspectRatio="none" className="w-full h-4 block"
-                      style={{ background: "linear-gradient(135deg,#f59e0b,#d97706,#92400e)" }}>
-                      <path d="M0,8 C50,0 100,16 150,8 C200,0 250,16 300,8 L300,16 L0,16 Z" fill="#fffbeb" />
-                    </svg>
-                    <div className="bg-gradient-to-b from-amber-50 to-yellow-50 p-4 relative flex flex-col items-center gap-3 text-center">
-                      <motion.span className="text-[44px] leading-none"
-                        animate={{ y: [0, -6, 0], rotate: [0, 5, -5, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
-                        👑
-                      </motion.span>
-                      <div>
-                        <p className="font-baloo font-black text-amber-800 text-[13px] leading-tight">Become the Hero!</p>
-                        <p className="font-nunito text-amber-600 text-[11px] leading-relaxed mt-0.5">Create a personalized story book starring your child.</p>
-                      </div>
-                      <Link href="/masterpiece"
-                        className="font-baloo font-black text-white text-[12px] px-5 py-2 leaf transition-all hover:-translate-y-0.5 active:scale-95"
-                        style={{ background: "linear-gradient(135deg,#d97706,#b45309)", boxShadow: "0 4px 14px rgba(217,119,6,0.35)" }}>
-                        Create Masterpiece ✨
-                      </Link>
-                      <div className="flex justify-center gap-4 mt-1 opacity-20 pointer-events-none select-none" aria-hidden>
-                        <motion.span className="text-[13px]" animate={{ y: [0, -4, 0] }} transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}>📖</motion.span>
-                        <motion.span className="text-[13px]" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 2.3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>✨</motion.span>
-                        <motion.span className="text-[13px]" animate={{ y: [0, -3, 0] }} transition={{ duration: 3.1, repeat: Infinity, ease: "easeInOut", delay: 1.0 }}>🎭</motion.span>
-                      </div>
-                    </div>
-                  </div>
+                  <HomeMasterpiecePanel />
 
                 </div>
               </aside>

@@ -2,21 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Play, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import { getStorageUrl } from "@/lib/queries";
 
+import LandingNav             from "@/components/homepage/sections/LandingNav";
+import LandingDemoSection     from "@/components/homepage/sections/LandingDemoSection";
+import LandingAppPreviewSection from "@/components/homepage/sections/LandingAppPreviewSection";
+import LandingFAQSection      from "@/components/homepage/sections/LandingFAQSection";
+import LandingNewsletterSection from "@/components/homepage/sections/LandingNewsletterSection";
+import AppStoreBadges         from "@/components/homepage/LandingAppStoreBadges";
+
 /* ─────────────────────────────────────────────────────────────
-   DECORATION COMPONENTS
+   DECORATIONS
 ───────────────────────────────────────────────────────────── */
-
-const DEMO_VIDEO_ID = "70pXI1F2HEs"; // YouTube Shorts demo
-
-const CONFETTI_COLORS = [
-  "#F472B6","#FB923C","#FBBF24","#34D399",
-  "#60A5FA","#A78BFA","#F87171","#FDE68A","#6EE7B7",
-];
 
 function FloatCloud({ className = "", w = 140, delay = 0, opacity = 0.88, speed = 7 }: {
   className?: string; w?: number; delay?: number; opacity?: number; speed?: number;
@@ -40,484 +41,6 @@ function FloatCloud({ className = "", w = 140, delay = 0, opacity = 0.88, speed 
   );
 }
 
-function Butterfly({ className = "", delay = 0, size = 30, hue = 0 }: {
-  className?: string; delay?: number; size?: number; hue?: number;
-}) {
-  const noMotion = useReducedMotion();
-  return (
-    <motion.div
-      className={`absolute pointer-events-none select-none z-0 ${className}`}
-      animate={noMotion ? {} : { y:[0,-22,6,-16,4,-10,0], x:[0,14,-8,18,-4,10,0], rotate:[-8,8,-8] }}
-      transition={{ duration: 5.5, repeat: Infinity, ease:"easeInOut", delay }}
-      style={{ fontSize: size, filter: hue ? `hue-rotate(${hue}deg)` : undefined }}
-      aria-hidden
-    >
-      🦋
-    </motion.div>
-  );
-}
-
-function Star({ className = "", delay = 0, size = 18 }: {
-  className?: string; delay?: number; size?: number;
-}) {
-  const noMotion = useReducedMotion();
-  return (
-    <motion.span
-      className={`absolute pointer-events-none select-none z-0 ${className}`}
-      animate={noMotion ? {} : { opacity:[0.25,1,0.25], scale:[0.6,1.3,0.6], rotate:[0,20,-20,0] }}
-      transition={{ duration: 2.4, repeat: Infinity, ease:"easeInOut", delay }}
-      style={{ fontSize: size }}
-      aria-hidden
-    >
-      ⭐
-    </motion.span>
-  );
-}
-
-function Sparkle({ className = "", delay = 0, w = 32 }: {
-  className?: string; delay?: number; w?: number;
-}) {
-  return (
-    <motion.img
-      src="/themes/default/decorations/sparkle.png"
-      alt="" aria-hidden
-      className={`absolute pointer-events-none select-none z-0 ${className}`}
-      style={{ width: w }}
-      animate={{ opacity:[0.2,0.95,0.2], scale:[0.6,1.15,0.6], rotate:[0,60,0] }}
-      transition={{ duration: 2.8, repeat: Infinity, ease:"easeInOut", delay }}
-    />
-  );
-}
-
-function ConfettiRain({ count = 14, className = "" }: { count?: number; className?: string; }) {
-  const noMotion = useReducedMotion();
-  if (noMotion) return null;
-  return (
-    <div className={`absolute inset-0 pointer-events-none select-none z-0 overflow-hidden ${className}`} aria-hidden>
-      {Array.from({ length: count }).map((_, i) => {
-        const color   = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
-        const left    = `${5 + (i / count) * 90}%`;
-        const delay   = (i * 0.35) % 3.2;
-        const dur     = 3.2 + (i % 4) * 0.7;
-        const sz      = 6 + (i % 4) * 3;
-        const isRound = i % 3 === 0;
-        const drift   = i % 2 === 0 ? 24 : -24;
-        return (
-          <motion.div key={i}
-            className="absolute top-0"
-            style={{ left, width: sz, height: isRound ? sz : sz * 1.6, background: color, borderRadius: isRound ? "50%" : 3 }}
-            animate={{ y:["−5%","108%"], x:[0, drift], rotate:[0, 360*(i%2===0?1:-1)], opacity:[0,1,1,0] }}
-            transition={{ duration: dur, repeat: Infinity, ease:"linear", delay }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-/* Flower divider — one flower per grid cell so they spread perfectly edge-to-edge */
-const FLOWER_ROW = [
-  { f:"🌸", sz:26, mb:6  },
-  { f:"🌿", sz:20, mb:0  },
-  { f:"🌼", sz:30, mb:8  },
-  { f:"🌱", sz:18, mb:2  },
-  { f:"🌻", sz:34, mb:10 },
-  { f:"🍀", sz:22, mb:1  },
-  { f:"🌺", sz:28, mb:5  },
-  { f:"🌸", sz:24, mb:7  },
-  { f:"🌼", sz:30, mb:3  },
-  { f:"🌻", sz:32, mb:9  },
-  { f:"🍀", sz:22, mb:2  },
-  { f:"🌺", sz:26, mb:4  },
-  { f:"🌿", sz:20, mb:0  },
-  { f:"🌸", sz:28, mb:6  },
-  { f:"🌼", sz:30, mb:8  },
-  { f:"🌻", sz:34, mb:10 },
-  { f:"🌱", sz:18, mb:1  },
-  { f:"🍀", sz:22, mb:3  },
-  { f:"🌺", sz:26, mb:5  },
-  { f:"🌸", sz:24, mb:7  },
-] as const;
-
-function FlowerDivider({ bgColor = "transparent" }: { bgColor?: string }) {
-  return (
-    <div
-      className="w-full overflow-hidden pointer-events-none select-none"
-      style={{ height: 72, background: bgColor }}
-      aria-hidden
-    >
-      {/* CSS grid gives each flower an equal slot — no grouping, no gaps */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${FLOWER_ROW.length}, 1fr)`,
-          alignItems: "end",
-          height: "100%",
-        }}
-      >
-        {FLOWER_ROW.map(({ f, sz, mb }, i) => {
-          const dur   = 1.7 + (i % 7) * 0.22;
-          const delay = (i * 0.18) % 2.8;
-          const angle = 10 + (i % 4) * 3;
-          return (
-            <motion.span
-              key={i}
-              className="leading-none flex items-end justify-center"
-              style={{ fontSize: sz, paddingBottom: mb }}
-              animate={{ rotate: [-angle, angle, -angle], y: [0, -4, 0] }}
-              transition={{ duration: dur, repeat: Infinity, ease: "easeInOut", delay }}
-            >
-              {f}
-            </motion.span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   APP PREVIEW — phone mockup screens
-───────────────────────────────────────────────────────────── */
-
-function AppMockup({ screen }: { screen: number }) {
-  // Screen 0: Real app screenshot — the actual NIMIPIKO home world
-  if (screen === 0) return (
-    <img
-      src="/home-hero-mobile.png"
-      alt="NIMIPIKO home screen"
-      className="absolute inset-0 w-full h-full object-cover object-top select-none"
-      draggable={false}
-     loading="lazy" />
-  );
-
-  // Screen 1: Story reader — uses the real in-app parchment page frame
-  if (screen === 1) return (
-    <div className="absolute inset-0 overflow-hidden flex flex-col" style={{ background: "#1b3d27" }}>
-      {/* Status bar */}
-      <div className="flex items-center justify-between px-4 pt-10 pb-2 shrink-0">
-        <span className="text-[8px] font-bold text-green-200">9:41</span>
-        <div className="flex items-center gap-1.5">
-          <img loading="lazy" src="/nimi-logo.png" alt="" className="w-4 h-4 object-contain" draggable={false} />
-          <span className="text-[8px] font-black text-yellow-300">⭐ 245</span>
-        </div>
-      </div>
-      {/* Story header */}
-      <div className="flex items-center gap-2 px-3 pb-3 shrink-0">
-        <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-base shrink-0 shadow-md">🦁</div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white font-black text-[9.5px] leading-tight truncate">The Brave Lion</p>
-          <p className="text-green-300 text-[7px]">Chapter 2 · Page 4 of 12</p>
-        </div>
-        <img loading="lazy" src="/current-story.png" alt="" className="h-4 object-contain shrink-0" draggable={false} />
-      </div>
-      {/* Parchment page — uses real reader asset */}
-      <div className="flex-1 min-h-0 px-2 pb-1 flex flex-col">
-        <div className="relative flex-1">
-          <img loading="lazy" src="/themes/default/reader/page-background.png" alt=""
-            className="absolute inset-0 w-full h-full object-fill" draggable={false} />
-          <div className="relative z-10 h-full flex flex-col items-center justify-center px-7 py-6">
-            <p className="font-baloo font-black text-amber-900 text-[8.5px] leading-relaxed text-center">
-              &ldquo;Be brave, little lion,&rdquo;<br />said the old tree.<br />&ldquo;Your roar will shake<br />the whole forest someday.&rdquo;
-            </p>
-            <div className="flex justify-center gap-1 mt-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-700" />
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-            </div>
-          </div>
-        </div>
-        {/* Playback controls */}
-        <div className="flex items-center justify-center gap-4 py-2.5 shrink-0">
-          <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-[11px]">◀</button>
-          <button className="w-11 h-11 rounded-full bg-amber-400 flex items-center justify-center text-white text-[16px] shadow-lg">▶</button>
-          <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-[11px]">▶▶</button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Screen 2: Rewards — uses real certificate-frame and trophy assets
-  return (
-    <div className="absolute inset-0 overflow-hidden flex flex-col items-center" style={{ background: "var(--parchment, #fdf3e0)" }}>
-      <div className="flex items-center justify-between w-full px-4 pt-10 pb-1 shrink-0">
-        <span className="text-[8px] font-bold text-gray-600">9:41</span>
-        <span className="text-[8px] font-black text-amber-500">⭐ 260</span>
-      </div>
-      <img loading="lazy" src="/themes/default/rewards/trophy.png" alt="" className="w-14 h-14 object-contain drop-shadow-xl mt-1" draggable={false} />
-      <p className="font-baloo font-black text-gray-900 text-[12px] mt-1.5">Story Complete! 🎉</p>
-      <div className="flex gap-0.5 mt-1">
-        {Array.from({length:5}).map((_,i) => <span key={i} className="text-yellow-400 text-[15px]">★</span>)}
-      </div>
-      <p className="text-[7.5px] text-gray-500 mt-0.5 mb-3">+15 stars · Lion Champion badge unlocked</p>
-      {/* Real certificate frame asset */}
-      <div className="relative px-4 w-full">
-        <img loading="lazy" src="/themes/default/rewards/certificate-frame.png" alt="Certificate of Achievement"
-          className="w-full object-contain" draggable={false} />
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-10">
-          <p className="font-baloo font-black text-amber-800 text-[7px] uppercase tracking-widest leading-tight">Certificate of</p>
-          <p className="font-baloo font-black text-amber-900 text-[10px] leading-tight">Achievement</p>
-          <p className="font-nunito text-amber-700 text-[7px] text-center mt-0.5 leading-tight">
-            Amara completed<br /><span className="font-bold">The Brave Lion</span>
-          </p>
-          <img loading="lazy" src="/themes/default/rewards/ribbon.png" alt="" className="w-5 h-5 object-contain mt-1.5" draggable={false} />
-        </div>
-      </div>
-      <div className="mx-4 mt-2 w-[calc(100%-32px)] bg-[#15803d] text-white text-[8.5px] font-black text-center py-2 rounded-xl shadow-md shrink-0">
-        📥 Download Certificate
-      </div>
-    </div>
-  );
-}
-
-const PREVIEW_SCREENS = [
-  { label: "Home World",    icon: "🏠", desc: "A magical world Nimi, Piko and Zilo built just for your child — READ, CREATE, SING, EXPLORE and more." },
-  { label: "Story Reader",  icon: "📖", desc: "Beautifully illustrated stories read aloud in 3 languages, with vocabulary and page-turn narration."   },
-  { label: "Certificates",  icon: "🏆", desc: "Every completed story earns a real, printable certificate your child can hang on the wall."             },
-] as const;
-
-function DemoVideoSection() {
-  const [playing, setPlaying] = useState(false);
-
-  return (
-    <section className="relative bg-white px-5 sm:px-10 lg:px-14 py-16 sm:py-24 border-t border-gray-100 overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{ backgroundImage: "radial-gradient(circle, #15803d 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-
-      <div className="max-w-5xl mx-auto relative z-10">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={stagger}
-          className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-
-          {/* ── Copy side ─────────────────────────────────────────── */}
-          <motion.div variants={fadeUp} className="flex-1 text-center lg:text-left">
-            <span className="eyebrow inline-block text-green-800 mb-5 bg-green-200 px-4 py-1.5 rounded-full">
-              🎬 See it in action
-            </span>
-            <h2 className="font-baloo font-black text-gray-900 text-[30px] sm:text-[42px] leading-tight mb-5">
-              One minute.<br />
-              <span className="text-nimi-green">A world of learning.</span>
-            </h2>
-            <p className="font-nunito text-gray-500 text-[15px] leading-relaxed mb-8 max-w-md mx-auto lg:mx-0">
-              Watch how NIMIPIKO turns screen time into story time — with hands-on missions, songs, drawing and certificates your child can print and keep.
-            </p>
-            <ul className="flex flex-col gap-3 mb-8 max-w-sm mx-auto lg:mx-0">
-              {[
-                { icon: "📚", text: "Stories read aloud in 3 languages" },
-                { icon: "🎨", text: "6 creative missions per story" },
-                { icon: "🏆", text: "Certificates for every completion" },
-              ].map(({ icon, text }) => (
-                <li key={text} className="flex items-center gap-3 font-nunito text-[14px] text-gray-600">
-                  <span className="text-[18px] shrink-0">{icon}</span>
-                  {text}
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-              <span className="flex items-center gap-1.5 font-nunito text-gray-400 text-[12px]">
-                <span>⏱️</span>60-second tour
-              </span>
-              <span className="text-gray-300">·</span>
-              <span className="flex items-center gap-1.5 font-nunito text-gray-400 text-[12px]">
-                <span>🔒</span>No ads, no distractions
-              </span>
-            </div>
-          </motion.div>
-
-          {/* ── Portrait video (9:16 Short) ────────────────────────── */}
-          <motion.div variants={fadeUp} className="shrink-0 w-full max-w-[280px] sm:max-w-[300px]">
-            <div className="relative">
-              <div className="absolute -inset-5 rounded-[40px] bg-gradient-to-br from-green-100 to-emerald-200 opacity-80 blur-2xl" />
-              {/* Phone-style frame */}
-              <div className="relative overflow-hidden shadow-2xl"
-                style={{ borderRadius: "28px", aspectRatio: "9/16", background: "#000" }}>
-                {playing ? (
-                  <iframe
-                    src={`https://www.youtube.com/embed/${DEMO_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
-                    title="NIMIPIKO demo"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="absolute inset-0 w-full h-full border-0"
-                  />
-                ) : (
-                  <button onClick={() => setPlaying(true)}
-                    className="absolute inset-0 w-full h-full group cursor-pointer"
-                    aria-label="Play NIMIPIKO demo">
-                    <img loading="lazy" src="/home-hero-mobile.png" alt="NIMIPIKO app"
-                      className="absolute inset-0 w-full h-full object-cover object-top" draggable={false} />
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <div className="absolute w-24 h-24 rounded-full bg-white/20 animate-ping" style={{ animationDuration: "2.2s" }} />
-                        <div className="relative w-16 h-16 rounded-full bg-white shadow-2xl flex items-center justify-center">
-                          <Play className="w-6 h-6 fill-[#15803d] text-[#15803d] ml-0.5" />
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
-
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-function AppPreviewSection({ authed }: { authed: boolean }) {
-  const [active, setActive] = useState(0);
-
-  return (
-    <section className="py-20 sm:py-28 px-5 sm:px-10 lg:px-14 bg-white overflow-visible">
-      <div className="max-w-6xl mx-auto">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={stagger}>
-
-          <motion.div variants={fadeUp} className="text-center mb-14">
-            <span className="inline-block text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4"
-              style={{ color:"var(--ds-brand-primary)", background:"var(--ds-brand-subtle)" }}>
-              📱 Explore The App
-            </span>
-            <h2 className="font-baloo font-black text-gray-900 text-[30px] sm:text-[46px] leading-tight">
-              Built to enchant<br className="hidden sm:block" /> curious minds
-            </h2>
-            <p className="font-nunito text-gray-500 mt-4 text-[15px] max-w-md mx-auto leading-relaxed">
-              From the first story to the final badge — every screen designed to delight children and reassure parents.
-            </p>
-          </motion.div>
-
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-
-            {/* ── Feature tabs ── */}
-            <motion.div variants={fadeUp} className="flex flex-col gap-3 order-2 lg:order-1">
-              {PREVIEW_SCREENS.map((s, i) => (
-                <button key={s.label} onClick={() => setActive(i)}
-                  className={`flex items-start gap-4 p-5 rounded-2xl text-left transition-all duration-200 group ${
-                    active === i ? "bg-green-50 border-2 border-green-200 shadow-sm" : "border-2 border-transparent hover:bg-gray-50"
-                  }`}>
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-[20px] shrink-0 transition-colors ${
-                    active === i ? "bg-green-600" : "bg-gray-100 group-hover:bg-gray-200"
-                  }`}>
-                    {s.icon}
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-baloo font-black text-[16px] leading-snug transition-colors ${
-                      active === i ? "text-green-700" : "text-gray-700"
-                    }`}>{s.label}</p>
-                    <p className="font-nunito text-gray-500 text-[13px] leading-relaxed mt-0.5">{s.desc}</p>
-                  </div>
-                  {active === i && <div className="w-1 self-stretch rounded-full bg-green-400 shrink-0" />}
-                </button>
-              ))}
-
-              <div className="flex gap-3 mt-2">
-                <Link href={authed ? "/home" : "/signuppage"}
-                  className="flex-1 text-center text-white font-baloo font-black text-[14px] py-3.5 rounded-2xl transition-all hover:-translate-y-0.5"
-                  style={{ background: "linear-gradient(135deg, var(--nimi-green) 0%, #166534 100%)", boxShadow: "0 4px 16px rgba(21,128,61,0.35)" }}>
-                  Try It Free →
-                </Link>
-                <Link href="/stories"
-                  className="flex-1 text-center text-gray-600 font-baloo font-black text-[14px] py-3.5 rounded-2xl border-2 border-gray-200 hover:border-green-300 hover:text-green-700 transition-all">
-                  Browse Stories
-                </Link>
-              </div>
-            </motion.div>
-
-            {/* ── Phone mockup ── */}
-            <motion.div variants={fadeUp} className="flex justify-center order-1 lg:order-2">
-              <div className="relative">
-                <div className="absolute inset-[-20%] blur-3xl opacity-15 rounded-full"
-                  style={{ background: "radial-gradient(ellipse, var(--nimi-green) 0%, transparent 70%)" }} />
-
-                {/* Phone shell */}
-                <div className="relative w-[240px] h-[490px] rounded-[3rem] overflow-hidden"
-                  style={{ background: "#111827", boxShadow: "0 0 0 6px #1f2937, 0 0 0 7px #374151, 0 40px 80px rgba(0,0,0,0.40)" }}>
-                  {/* Notch */}
-                  <div className="absolute top-0 inset-x-0 flex justify-center z-20 pt-2">
-                    <div className="w-16 h-4 bg-gray-900 rounded-b-xl" />
-                  </div>
-                  {/* Home indicator */}
-                  <div className="absolute bottom-1.5 inset-x-0 flex justify-center z-20">
-                    <div className="w-12 h-1 bg-gray-700 rounded-full" />
-                  </div>
-                  {/* Screen */}
-                  <AnimatePresence mode="wait">
-                    <motion.div key={active}
-                      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-                      transition={{ duration: 0.3, ease: [0.22,1,0.36,1] }}
-                      className="absolute inset-0">
-                      <AppMockup screen={active} />
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                {/* Floating notification pills */}
-                <motion.div
-                  animate={{ y: [0,-6,0] }} transition={{ duration:3, repeat:Infinity, ease:"easeInOut" }}
-                  className="absolute -left-10 top-[28%] bg-white border border-gray-100 shadow-xl rounded-2xl px-3 py-2 flex items-center gap-2">
-                  <span className="text-xl">⭐</span>
-                  <div>
-                    <p className="font-baloo font-black text-gray-900 text-[12px] leading-none">+15 Stars!</p>
-                    <p className="font-nunito text-gray-400 text-[9px]">Mission complete</p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  animate={{ y: [0,6,0] }} transition={{ duration:3.5, repeat:Infinity, ease:"easeInOut", delay:0.8 }}
-                  className="absolute -right-10 top-[52%] bg-white border border-gray-100 shadow-xl rounded-2xl px-3 py-2 flex items-center gap-2">
-                  <span className="text-xl">🏅</span>
-                  <div>
-                    <p className="font-baloo font-black text-gray-900 text-[12px] leading-none">New Badge!</p>
-                    <p className="font-nunito text-gray-400 text-[9px]">Lion Champion</p>
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   FAQ
-───────────────────────────────────────────────────────────── */
-
-const FAQ_ITEMS = [
-  {
-    q: "What age is NIMIPIKO designed for?",
-    a: "Stories and missions are crafted for children aged 3–10. Each story is tagged by age range so you always pick the perfect fit — and content grows with your child.",
-  },
-  {
-    q: "Is it safe? No ads, no strangers?",
-    a: "Completely. NIMIPIKO is ad-free, has no social chat features, and children cannot make in-app purchases. Every story is reviewed by certified child development educators. Your child's data is never shared or sold — ever.",
-  },
-  {
-    q: "Can my child switch between languages?",
-    a: "Yes! Switch between English, French, and Kinyarwanda anytime from settings. Progress in each language is saved separately — nothing is lost when you switch.",
-  },
-  {
-    q: "How many children can share one account?",
-    a: "A single family account supports multiple children, each with their own profile, adventure map, badge collection, and progress dashboard.",
-  },
-  {
-    q: "What if I want to cancel?",
-    a: "Cancel anytime from your account settings in one tap. You keep full access until the end of your current billing period. No penalties, no awkward calls, no hidden fees.",
-  },
-  {
-    q: "Does it work on slow or mobile internet?",
-    a: "NIMIPIKO is optimised for lower-bandwidth connections and loads quickly on mobile data. We're also building offline-first features — coming soon.",
-  },
-  {
-    q: "Do I need to be there while my child uses it?",
-    a: "That's entirely up to you. NIMIPIKO is safe for independent use, but learning together makes it even more magical. The parent dashboard keeps you fully informed either way.",
-  },
-] as const;
-
-/* Slowly fluctuates ±8 every few seconds to look live */
 function EarlyAccessPill() {
   return (
     <span className="inline-flex items-center gap-1.5 font-nunito font-semibold text-[12px] text-gray-700 bg-white/85 backdrop-blur-sm border border-green-100 px-3 py-1 rounded-full shadow-sm">
@@ -564,92 +87,9 @@ function StickyMobileCTA({ href, visible }: { href: string; visible: boolean }) 
   );
 }
 
-function FAQSection() {
-  const [open, setOpen] = useState<number | null>(null);
-
-  return (
-    <section className="relative px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-white">
-      <div className="max-w-3xl mx-auto">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={stagger}>
-          <motion.div variants={fadeUp} className="text-center mb-14">
-            <span className="eyebrow inline-block text-gray-700 mb-4 bg-gray-100 px-4 py-1.5 rounded-full">
-              💬 Quick Answers
-            </span>
-            <h2 className="font-baloo font-black text-gray-900 text-[28px] sm:text-[42px] leading-tight">
-              Questions parents ask
-            </h2>
-            <p className="font-nunito text-gray-500 mt-3 text-[15px] max-w-lg mx-auto">
-              Everything you need to know before getting started.
-            </p>
-          </motion.div>
-
-          <div className="divide-y divide-gray-100 border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
-            {FAQ_ITEMS.map((item, i) => (
-              <motion.div key={i} variants={fadeUp}>
-                <button
-                  onClick={() => setOpen(open === i ? null : i)}
-                  className="w-full flex items-center justify-between text-left px-6 py-5 hover:bg-gray-50 transition-colors gap-4"
-                >
-                  <span className="font-baloo font-black text-gray-900 text-[15px] sm:text-[17px] leading-snug">
-                    {item.q}
-                  </span>
-                  <motion.div
-                    animate={{ rotate: open === i ? 45 : 0 }}
-                    transition={{ duration: 0.22, ease: "easeInOut" }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[18px] font-light shrink-0 transition-colors"
-                    style={{
-                      background: open === i ? "var(--nimi-green)" : "var(--ds-brand-subtle)",
-                      color: open === i ? "white" : "var(--ds-brand-primary)",
-                    }}
-                  >
-                    +
-                  </motion.div>
-                </button>
-                <AnimatePresence initial={false}>
-                  {open === i && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <p className="font-nunito text-gray-500 text-[14px] sm:text-[15px] leading-relaxed px-6 pb-6 pt-1">
-                        {item.a}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div variants={fadeUp} className="mt-8 text-center">
-            <p className="font-nunito text-gray-400 text-[14px]">
-              Still have questions?{" "}
-              <Link href="/help" className="font-bold hover:underline transition-colors" style={{ color: "var(--ds-brand-primary)" }}>
-                Visit our Help Center →
-              </Link>
-            </p>
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
 /* ─────────────────────────────────────────────────────────────
    PAGE DATA
 ───────────────────────────────────────────────────────────── */
-
-const NAV_LINKS = [
-  { label:"Home",       href:"/",          img:"/themes/default/navs/home.png"       },
-  { label:"Stories",    href:"/stories",   img:"/themes/default/navs/Stories.png"    },
-  { label:"Activities", href:"/missions",  img:"/themes/default/navs/activities.png" },
-  { label:"Community",  href:"/community", img:"/themes/default/navs/community.png"  },
-  { label:"Parents",    href:"/parents",   img:"/themes/default/navs/parent.png"     },
-  { label:"Help",       href:"/help",      img:"/themes/default/navs/about.png"      },
-] as const;
 
 const fadeUp = {
   hidden:  { opacity:0, y:30 },
@@ -663,261 +103,17 @@ const stagger = {
 interface Story { id:string; slug:string; title:string; cover_url?:string; theme_emoji?:string; }
 
 /* ─────────────────────────────────────────────────────────────
-   APP STORE BADGES
-   Set NEXT_PUBLIC_IOS_URL / NEXT_PUBLIC_ANDROID_URL in .env
-   to activate. Shows "coming soon" state when empty.
-───────────────────────────────────────────────────────────── */
-
-const IOS_URL     = process.env.NEXT_PUBLIC_IOS_URL     ?? ""; // App Store / TestFlight
-const ANDROID_URL = process.env.NEXT_PUBLIC_ANDROID_URL ?? ""; // Google Play Store
-const APK_URL     = process.env.NEXT_PUBLIC_APK_URL     ?? ""; // Direct APK download
-
-function AppStoreBadges({ className = "", size = "md" }: { className?: string; size?: "sm" | "md" }) {
-  const h = size === "sm" ? "h-9" : "h-11";
-  const textSm = size === "sm" ? "text-[10px]" : "text-[11px]";
-  const textLg = size === "sm" ? "text-[12px]" : "text-[13px]";
-
-  // Android: prefer Play Store, fall back to direct APK, fall back to signup
-  const androidUrl  = ANDROID_URL || APK_URL || "/signuppage";
-  const androidDirect = !ANDROID_URL && !!APK_URL; // true = direct APK download
-
-  // iOS: App Store / TestFlight, fall back to signup
-  const iosUrl = IOS_URL || "/signuppage";
-
-  const isExternal = (u: string) => u.startsWith("http");
-
-  return (
-    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
-
-      {/* ── App Store (iOS) ── */}
-      <a href={iosUrl}
-        target={isExternal(iosUrl) ? "_blank" : undefined}
-        rel={isExternal(iosUrl) ? "noopener noreferrer" : undefined}
-        aria-label="Download on the App Store"
-        className={`${h} inline-flex items-center hover:opacity-85 active:scale-95 transition-all duration-150 rounded-[7px] overflow-hidden`}>
-        <svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" className={`${h} w-auto`} aria-hidden>
-          <rect width="120" height="40" rx="7" fill="black"/>
-          <text x="38" y="14" fontFamily="system-ui,sans-serif" fontSize="7" fill="white" fontWeight="400">Download on the</text>
-          <text x="38" y="27" fontFamily="system-ui,sans-serif" fontSize="13" fill="white" fontWeight="600">App Store</text>
-          <path d="M16 10.5c1.8-2.2 4.6-2 4.6-2s.4 2.6-1.4 4.2c-1.9 1.7-4 1.4-4 1.4s-.5-2.2.8-3.6zm-1.2 4.8c.9 0 2.5-1.2 4.6-1.2 3.6 0 5 2.6 5 2.6s-2.8 1.4-2.8 4.8c0 3.8 3.4 5.2 3.4 5.2s-2.4 6.7-5.6 6.7c-1.5 0-2.6-.9-4-.9-1.5 0-3 1-4 1C8 33.5 5 27 5 22c0-4.6 2.9-7 5.6-7 1.6 0 2.8 1.3 4.2 1.3z" fill="white"/>
-        </svg>
-      </a>
-
-      {/* ── Google Play or Direct APK ── */}
-      {androidDirect ? (
-        /* Direct APK download badge */
-        <a href={androidUrl} download aria-label="Download APK for Android"
-          className={`${h} inline-flex items-center gap-2 bg-[#1a1a2e] hover:bg-[#16213e] active:scale-95 transition-all duration-150 rounded-[7px] px-3`}>
-          <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-            {/* Android robot */}
-            <path d="M7 18h10V9H7v9zm4-1H9v-2h2v2zm4 0h-2v-2h2v2zm-6-4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z" fill="#3DDC84"/>
-            <path d="M5 20h14a1 1 0 001-1V8a1 1 0 00-1-1H5a1 1 0 00-1 1v11a1 1 0 001 1z" stroke="#3DDC84" strokeWidth="1.5" fill="none"/>
-            <path d="M8.5 7L7 4.5M15.5 7L17 4.5" stroke="#3DDC84" strokeWidth="1.5" strokeLinecap="round"/>
-            <circle cx="9.5" cy="6" r="0.75" fill="#3DDC84"/>
-            <circle cx="14.5" cy="6" r="0.75" fill="#3DDC84"/>
-          </svg>
-          <div className="flex flex-col leading-tight">
-            <span className={`${textSm} text-gray-400 font-medium`}>Download</span>
-            <span className={`${textLg} text-white font-bold`}>Android APK</span>
-          </div>
-        </a>
-      ) : (
-        /* Google Play Store badge */
-        <a href={androidUrl}
-          target={isExternal(androidUrl) ? "_blank" : undefined}
-          rel={isExternal(androidUrl) ? "noopener noreferrer" : undefined}
-          aria-label="Get it on Google Play"
-          className={`${h} inline-flex items-center hover:opacity-85 active:scale-95 transition-all duration-150 rounded-[7px] overflow-hidden`}>
-          <svg viewBox="0 0 135 40" xmlns="http://www.w3.org/2000/svg" className={`${h} w-auto`} aria-hidden>
-            <rect width="135" height="40" rx="7" fill="black"/>
-            <text x="42" y="14" fontFamily="system-ui,sans-serif" fontSize="7" fill="white" fontWeight="400">GET IT ON</text>
-            <text x="42" y="27" fontFamily="system-ui,sans-serif" fontSize="13" fill="white" fontWeight="600">Google Play</text>
-            <path d="M12 8l16 12-16 12V8z" fill="#00C853"/>
-            <path d="M12 8l8.5 8.5L12 25V8z" fill="#00BCD4"/>
-            <path d="M20.5 16.5L28 20l-7.5 3.5-8.5-7 8-7 8 7z" fill="#FFD600"/>
-            <path d="M12 25l8.5-8.5L28 20l-8 7.5-8-2.5z" fill="#FF3D00"/>
-          </svg>
-        </a>
-      )}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   NEWSLETTER SECTION
-───────────────────────────────────────────────────────────── */
-
-const NL_BENEFITS = [
-  { icon: "📖", text: "New story drops every month" },
-  { icon: "🏆", text: "Learning tips & child milestones" },
-  { icon: "🎁", text: "Members-only activities & printables" },
-];
-
-function NewsletterSection() {
-  const [email, setEmail]   = useState("");
-  const [name,  setName]    = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || status === "loading") return;
-    setStatus("loading");
-    try {
-      const res = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), name: name.trim(), source: "landing_footer" }),
-      });
-      setStatus(res.ok ? "ok" : "err");
-    } catch { setStatus("err"); }
-  }
-
-  return (
-    <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 border-t border-green-900/40"
-      style={{ background: "linear-gradient(135deg, #052e16 0%, #14532d 45%, #15803d 100%)" }}>
-
-      {/* dot-grid texture */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
-      {/* ambient glows */}
-      <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(74,222,128,0.07) 0%, transparent 70%)" }} />
-      <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(74,222,128,0.05) 0%, transparent 70%)" }} />
-
-      <div className="max-w-5xl mx-auto relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-
-          {/* ── Left: copy + benefits ── */}
-          <div>
-            {/* live pill */}
-            <div className="inline-flex items-center gap-2 border px-4 py-1.5 rounded-full mb-7"
-              style={{ background: "rgba(74,222,128,0.12)", borderColor: "rgba(74,222,128,0.28)" }}>
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
-              <span className="font-nunito font-bold text-green-300 text-[12px] tracking-wide">
-                Early access — founding families only
-              </span>
-            </div>
-
-            <h3 className="font-baloo font-black text-white text-[28px] sm:text-[36px] leading-[1.15] mb-4">
-              New stories every month —{" "}
-              <span className="text-green-300">be the first to know.</span>
-            </h3>
-            <p className="font-nunito text-green-100/65 text-[15px] leading-relaxed mb-8 max-w-md">
-              Be among the first families on NIMIPIKO. Get new story alerts, learning tips and founding-member updates — straight to your inbox.
-            </p>
-
-            <div className="space-y-3.5">
-              {NL_BENEFITS.map(b => (
-                <div key={b.text} className="flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[17px] shrink-0"
-                    style={{ background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.22)" }}>
-                    {b.icon}
-                  </div>
-                  <span className="font-nunito text-green-100/75 text-[14px]">{b.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Right: form card ── */}
-          <div className="border rounded-3xl p-7 sm:p-9 shadow-2xl"
-            style={{ background: "rgba(255,255,255,0.10)", borderColor: "rgba(255,255,255,0.14)" }}>
-            {status === "ok" ? (
-              <motion.div initial={{ opacity: 0, y: 12, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="text-center py-5">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5"
-                  style={{ background: "rgba(74,222,128,0.18)", border: "1px solid rgba(74,222,128,0.30)" }}>
-                  🎉
-                </div>
-                <p className="font-baloo font-black text-white text-[22px] mb-2">You&apos;re on the list!</p>
-                <p className="font-nunito text-green-200/65 text-[14px] leading-relaxed">
-                  Watch your inbox for NIMIPIKO updates.<br />No spam, ever. Unsubscribe any time.
-                </p>
-              </motion.div>
-            ) : (
-              <>
-                <div className="mb-6">
-                  <p className="font-baloo font-black text-white text-[20px] leading-tight mb-1">Subscribe — it&apos;s free</p>
-                  <p className="font-nunito text-green-200/55 text-[13px]">No spam. Unsubscribe any time.</p>
-                </div>
-
-                <form onSubmit={submit} className="space-y-4">
-                  <div>
-                    <label className="block font-nunito font-bold text-green-200/75 text-[11px] tracking-widest uppercase mb-1.5">
-                      Your name <span className="text-green-400/45 font-normal normal-case tracking-normal">— optional</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Amina"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      className="w-full text-white rounded-xl px-4 py-3 text-[14px] font-nunito focus:outline-none transition-all placeholder-white/40"
-                      style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.16)" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-nunito font-bold text-green-200/75 text-[11px] tracking-widest uppercase mb-1.5">
-                      Email address <span className="text-red-400/60">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={e => { setEmail(e.target.value); if (status === "err") setStatus("idle"); }}
-                      required
-                      className="w-full text-white rounded-xl px-4 py-3 text-[14px] font-nunito focus:outline-none transition-all placeholder-white/40"
-                      style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.16)" }}
-                    />
-                  </div>
-
-                  {status === "err" && (
-                    <p className="font-nunito text-red-300/90 text-[12px] flex items-center gap-1.5">
-                      <span>⚠</span> Something went wrong — please try again.
-                    </p>
-                  )}
-
-                  <button type="submit" disabled={status === "loading"}
-                    className="w-full bg-white hover:bg-green-50 active:scale-[0.98] disabled:opacity-60 text-[var(--nimi-green)] font-baloo font-black text-[15px] py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 mt-2">
-                    {status === "loading" ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-green-700/25 border-t-green-700 rounded-full animate-spin shrink-0" />
-                        Subscribing…
-                      </>
-                    ) : "Subscribe for free →"}
-                  </button>
-
-                  <div className="flex items-center gap-1.5 justify-center pt-0.5">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-400/50 shrink-0" aria-hidden>
-                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                    <span className="font-nunito text-green-300/45 text-[11px]">Your data is safe &amp; never shared.</span>
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
    PAGE COMPONENT
 ───────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
   const noMotion = useReducedMotion();
-  const [menuOpen,       setMenuOpen]       = useState(false);
-  const [stories,        setStories]        = useState<Story[]>([]);
-  const [authed,         setAuthed]         = useState(false);
-  const [scrolled,       setScrolled]       = useState(false);
-  const [ctaVisible,     setCtaVisible]     = useState(false);
-  const [testimonials,   setTestimonials]   = useState<{
+  const [menuOpen,     setMenuOpen]     = useState(false);
+  const [stories,      setStories]      = useState<Story[]>([]);
+  const [authed,       setAuthed]       = useState(false);
+  const [scrolled,     setScrolled]     = useState(false);
+  const [ctaVisible,   setCtaVisible]   = useState(false);
+  const [testimonials, setTestimonials] = useState<{
     id: string; name: string; role: string; location: string | null;
     quote: string; rating: number; avatar_url: string | null;
   }[]>([]);
@@ -979,118 +175,18 @@ export default function LandingPage() {
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <div className="min-h-screen font-nunito overflow-x-clip w-full" style={{ backgroundColor: 'var(--parchment)' }}>
 
-      {/* ══ NAV ══════════════════════════════════════════════════════ */}
-      <nav className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-300 ${
-        scrolled ? "bg-white/95 backdrop-blur-2xl border-b-2 border-gray-300 shadow-[0_8px_40px_rgba(0,0,0,0.14)]" : ""
-      }`}>
-        <div className="flex items-center justify-between px-4 sm:px-6 lg:px-10 py-3 w-full">
-
-          <Link href="/" className={`shrink-0 transition-opacity duration-200 ${
-            menuOpen ? "opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto" : "opacity-100"
-          }`}>
-            <img loading="lazy" src="/nimi-logo.png" alt="NIMIPIKO"
-              className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-contain drop-shadow-md" />
-          </Link>
-
-          <ul className="hidden lg:flex items-center gap-3 xl:gap-4">
-            {NAV_LINKS.map(n => (
-              <motion.li key={n.label}
-                whileHover={{ scale:1.08, y:-2 }} whileTap={{ scale:0.94 }}
-                transition={{ type:"spring", stiffness:400, damping:20 }}>
-                <Link href={n.href}>
-                  <img loading="lazy" src={n.img} alt={n.label} draggable={false}
-                    className="h-9 xl:h-10 w-auto object-contain select-none drop-shadow-sm" />
-                </Link>
-              </motion.li>
-            ))}
-          </ul>
-
-          <div className="hidden lg:flex items-center gap-2.5 shrink-0">
-            {authed ? (
-              <Link href="/home" className="font-baloo font-bold text-[13px] xl:text-[14px] text-white px-4 xl:px-5 py-2 rounded-full shadow-sm transition-colors whitespace-nowrap" style={{backgroundColor:'var(--nimi-green)'}}>
-                Go to Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link href="/loginpage" className="font-baloo font-bold text-[13px] xl:text-[14px] text-gray-700 px-4 xl:px-5 py-2 rounded-full border border-gray-200/80 hover:bg-gray-50/80 transition-all whitespace-nowrap backdrop-blur-sm">
-                  Log In
-                </Link>
-                <Link href="/signuppage" className="font-baloo font-bold text-[13px] xl:text-[14px] text-white px-4 xl:px-5 py-2 rounded-full shadow-sm transition-all hover:-translate-y-px whitespace-nowrap" style={{backgroundColor:'var(--nimi-green)', boxShadow:'0 2px 12px rgba(21,128,61,0.30)'}}>
-                  Get Started
-                </Link>
-              </>
-            )}
-          </div>
-
-          <button onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu" aria-expanded={menuOpen}
-            className="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-full hover:bg-gray-100/70 transition-colors shrink-0">
-            {(["a","b","c"] as const).map((k,i) => (
-              <motion.span key={k}
-                className="block w-[22px] h-[2px] rounded-full bg-gray-700"
-                animate={i===0?(menuOpen?{rotate:45,y:7}:{rotate:0,y:0}):i===1?(menuOpen?{opacity:0,scaleX:0}:{opacity:1,scaleX:1}):(menuOpen?{rotate:-45,y:-7}:{rotate:0,y:0})}
-                transition={{ duration:i===1?0.15:0.25, ease:"easeInOut" }} />
-            ))}
-          </button>
-        </div>
-      </nav>
-
-      {/* ══ DRAWER ═══════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {menuOpen && (
-          <>
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.2}}
-              className="fixed inset-0 z-40 backdrop-blur-sm bg-black/20" onClick={() => setMenuOpen(false)} />
-            <motion.div initial={{x:"-100%"}} animate={{x:0}} exit={{x:"-100%"}}
-              transition={{type:"spring", damping:26, stiffness:280}}
-              className="fixed left-0 top-0 h-[100dvh] w-72 z-50 shadow-2xl flex flex-col overflow-hidden"
-              style={{background:"#f2ead8"}}>
-              <div className="flex flex-col items-center pt-6 pb-2 px-5 shrink-0">
-                <img loading="lazy" src="/nimi-logo.png" alt="NIMIPIKO" className="w-40 h-40 object-contain drop-shadow-sm" />
-              </div>
-              <nav className="flex flex-col px-4 flex-1 justify-center gap-0.5 overflow-y-auto">
-                {NAV_LINKS.map(({label,href,img}) => (
-                  <motion.div key={label} whileHover={{scale:1.05,y:-2}} whileTap={{scale:0.96}}
-                    transition={{type:"spring",stiffness:400,damping:20}}>
-                    <Link href={href} onClick={() => setMenuOpen(false)} className="flex items-center px-4 py-2">
-                      <img loading="lazy" src={img} alt={label} draggable={false} className="h-10 w-auto object-contain select-none" />
-                    </Link>
-                  </motion.div>
-                ))}
-              </nav>
-              <div className="mx-6 border-t border-black/8 shrink-0" />
-              <div className="px-6 py-4 shrink-0 flex flex-col gap-2.5">
-                {authed ? (
-                  <Link href="/home" onClick={() => setMenuOpen(false)}
-                    className="w-full text-center font-baloo font-bold text-white py-2.5 rounded-full text-[14px] shadow-md transition-colors"
-                    style={{backgroundColor:'var(--nimi-green)'}}>
-                    Go to Dashboard
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/loginpage" onClick={() => setMenuOpen(false)}
-                      className="w-full text-center font-baloo font-bold text-gray-700 border border-gray-300 py-2.5 rounded-full text-[14px] hover:bg-black/5 transition-colors">
-                      Log In
-                    </Link>
-                    <Link href="/signuppage" onClick={() => setMenuOpen(false)}
-                      className="w-full text-center font-baloo font-bold text-white py-2.5 rounded-full text-[14px] shadow-md transition-colors"
-                      style={{backgroundColor:'var(--nimi-green)'}}>
-                      Get Started
-                    </Link>
-                  </>
-                )}
-              </div>
-              <div className="shrink-0">
-                <FlowerDivider bgColor="rgba(242,234,216,0.8)" />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* ══ NAV + DRAWER ═════════════════════════════════════════════ */}
+      <LandingNav
+        scrolled={scrolled}
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        authed={authed}
+      />
 
       {/* ══ HERO MOBILE ══════════════════════════════════════════════ */}
       <section className="sm:hidden relative overflow-hidden" style={{minHeight:"100svh"}}>
-        <img loading="eager" fetchPriority="high" src="/themes/default/hero/hero-background.png" alt="" aria-hidden
-          className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+        <Image src="/themes/default/hero/hero-background.png" alt="" aria-hidden fill priority
+          className="object-cover object-top pointer-events-none select-none"
           style={{willChange:"transform",transform:"translateZ(0)"}} />
         <div className="absolute inset-x-0 top-0 h-[45%] pointer-events-none"
           style={{background:"linear-gradient(to bottom,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.85) 55%,transparent 100%)"}} />
@@ -1122,15 +218,14 @@ export default function LandingPage() {
           </svg>
         </div>
       </section>
-      {/* EarlyAccessPill — sits below the hero on mobile */}
       <div className="sm:hidden flex justify-center bg-white pb-4 -mt-1">
         <EarlyAccessPill />
       </div>
 
       {/* ══ HERO TABLET ══════════════════════════════════════════════ */}
       <section className="hidden sm:block xl:hidden relative overflow-hidden" style={{minHeight:"100svh"}}>
-        <img loading="eager" fetchPriority="high" src="/themes/default/hero/tablet-background.png" alt="" aria-hidden
-          className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+        <Image src="/themes/default/hero/tablet-background.png" alt="" aria-hidden fill priority
+          className="object-cover object-top pointer-events-none select-none"
           style={{willChange:"transform",transform:"translateZ(0)"}} />
         <div className="absolute inset-x-0 top-0 h-[52%] pointer-events-none"
           style={{background:"linear-gradient(to bottom,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.65) 55%,transparent 100%)"}} />
@@ -1176,8 +271,8 @@ export default function LandingPage() {
 
       {/* ══ HERO DESKTOP ═════════════════════════════════════════════ */}
       <section className="hidden xl:block relative overflow-hidden" style={{minHeight:"100svh"}}>
-        <img loading="eager" fetchPriority="high" src="/themes/default/hero/new-background.png" alt="" aria-hidden
-          className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none" />
+        <Image src="/themes/default/hero/new-background.png" alt="" aria-hidden fill priority
+          className="object-cover object-top pointer-events-none select-none" />
         <div className="absolute inset-y-0 left-0 w-[46%] pointer-events-none"
           style={{background:"linear-gradient(to right,rgba(255,255,255,0.96) 0%,rgba(255,255,255,0.9) 42%,rgba(255,255,255,0.4) 73%,transparent 100%)"}} />
         <FloatCloud className="top-20 left-[44%]" w={180} delay={0} opacity={0.45} speed={10} />
@@ -1227,10 +322,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-
       {/* ══ WHY NIMIPIKO ════════════════════════════════════════════ */}
       <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-gray-50">
-
         <div className="max-w-6xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-14">
@@ -1246,7 +339,6 @@ export default function LandingPage() {
             </motion.div>
 
             <div className="grid sm:grid-cols-3 gap-6 lg:gap-8">
-              {/* Stories card */}
               <motion.div variants={fadeUp}>
                 <motion.div whileHover={{y:-8,rotate:-0.5}} transition={{type:"spring",stiffness:260,damping:20}}
                   className="relative overflow-hidden shadow-lg flex flex-col h-full"
@@ -1274,7 +366,6 @@ export default function LandingPage() {
                 </motion.div>
               </motion.div>
 
-              {/* Missions card */}
               <motion.div variants={fadeUp}>
                 <motion.div whileHover={{y:-8,rotate:0.5}} transition={{type:"spring",stiffness:260,damping:20}}
                   className="relative overflow-hidden shadow-lg flex flex-col h-full"
@@ -1306,7 +397,6 @@ export default function LandingPage() {
                 </motion.div>
               </motion.div>
 
-              {/* Progress card */}
               <motion.div variants={fadeUp}>
                 <motion.div whileHover={{y:-8,rotate:-0.5}} transition={{type:"spring",stiffness:260,damping:20}}
                   className="relative overflow-hidden shadow-lg flex flex-col h-full"
@@ -1342,14 +432,13 @@ export default function LandingPage() {
       </section>
 
       {/* ══ DEMO VIDEO ═══════════════════════════════════════════════ */}
-      <DemoVideoSection />
+      <LandingDemoSection />
 
       {/* ══ APP PREVIEW ══════════════════════════════════════════════ */}
-      <AppPreviewSection authed={authed} />
+      <LandingAppPreviewSection authed={authed} />
 
       {/* ══ HOW IT WORKS ════════════════════════════════════════════ */}
       <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-gray-50 border-y border-gray-100">
-
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-16">
@@ -1392,12 +481,10 @@ export default function LandingPage() {
             </div>
           </motion.div>
         </div>
-
       </section>
 
       {/* ══ LANGUAGES ════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-white border-t border-gray-100">
-
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-14">
@@ -1476,8 +563,8 @@ export default function LandingPage() {
                         <Link href={`/stories/${story.slug}`} className="group block">
                           <div className="relative overflow-hidden aspect-[4/3] bg-gray-100 mb-2.5 shadow-sm group-hover:shadow-xl transition-shadow duration-300" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                             {story.cover_url ? (
-                              <img loading="lazy" src={getStorageUrl(story.cover_url)} alt={story.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              <Image src={getStorageUrl(story.cover_url)} alt={story.title} fill
+                                className="object-cover group-hover:scale-110 transition-transform duration-500" />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-green-100 to-emerald-200 flex items-center justify-center">
                                 <span className="text-5xl">{story.theme_emoji ?? "📖"}</span>
@@ -1485,7 +572,7 @@ export default function LandingPage() {
                             )}
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
                               <div className="w-12 h-12 bg-white/95 rounded-full flex items-center justify-center shadow-xl">
-                                <Play className="w-5 h-5 fill-[var(--nimi-green)] text-[var(--nimi-green)] ml-0.5" strokeWidth={0} />
+                                <svg className="w-5 h-5 fill-[var(--nimi-green)] ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                               </div>
                             </div>
                           </div>
@@ -1510,7 +597,6 @@ export default function LandingPage() {
 
       {/* ══ SAFE FOR KIDS ════════════════════════════════════════════ */}
       <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-white border-t border-gray-100">
-
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-14">
@@ -1587,8 +673,8 @@ export default function LandingPage() {
                       </p>
                       <div className="flex items-center gap-3">
                         {t.avatar_url ? (
-                          <img loading="lazy" src={t.avatar_url} alt={t.name}
-                            className="w-12 h-12 rounded-full object-cover shrink-0 shadow-md ring-2 ring-white/20" />
+                          <Image src={t.avatar_url} alt={t.name} width={48} height={48}
+                            className="rounded-full object-cover shrink-0 shadow-md ring-2 ring-white/20" />
                         ) : (
                           <div className={`w-12 h-12 rounded-full ${color} flex items-center justify-center shrink-0 shadow-md`}>
                             <span className="font-baloo font-black text-white text-[14px]">{initials}</span>
@@ -1613,7 +699,6 @@ export default function LandingPage() {
 
       {/* ══ PRICING ══════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-white border-t border-gray-100">
-
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-14">
@@ -1646,45 +731,44 @@ export default function LandingPage() {
                       animate={{ boxShadow: ["0 0 0 0 rgba(21,128,61,0.5)", "0 0 0 8px rgba(21,128,61,0)", "0 0 0 0 rgba(21,128,61,0)"] }}
                       transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
                       className="flex items-center gap-1.5 bg-[var(--nimi-green)] text-white font-baloo font-black text-[11px] px-5 py-1.5 rounded-full shadow-lg whitespace-nowrap tracking-wide"
-                      style={{ display: "inline-flex" }}
-                    >
+                      style={{ display: "inline-flex" }}>
                       ★ MOST POPULAR
                     </motion.span>
                   </div>
-                <div className="relative overflow-hidden shadow-xl flex flex-col flex-1 border-2 border-[var(--ds-border-brand)]/40" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
-                  <div className="bg-cta-gradient px-7 pt-8 pb-5 flex items-center gap-4">
-                    <span className="text-[44px]">🌟</span>
-                    <div>
-                      <h3 className="font-baloo font-black text-white text-[22px] leading-tight">NIMIPIKO Club</h3>
-                      <p className="font-nunito text-green-100 text-[12px]">Unlimited learning, every month</p>
-                    </div>
-                  </div>
-                  <div className="bg-white p-7 flex flex-col gap-5 flex-1">
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-baloo font-black text-gray-900 text-[38px] leading-none">$14.99</span>
-                      <span className="font-nunito text-gray-400 text-[14px]">/ month</span>
-                    </div>
-                    <p className="font-nunito text-gray-400 text-[11px] -mt-3">or 9,900 RWF/month · Cancel anytime</p>
-                    <ul className="flex flex-col gap-3">
-                      {["All Interactive Stories","3 Languages (EN / FR / RW)","Creative Missions & Songs","Achievement Certificates","Parent Progress Dashboard","Nimi AI Learning Companion"].map(f => (
-                        <li key={f} className="flex items-center gap-2.5 font-nunito text-[13px] text-gray-700">
-                          <CheckCircle2 className="w-4 h-4 text-[var(--ds-brand-primary)] shrink-0" />{f}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex items-center gap-2.5 bg-green-50 border border-green-100 rounded-2xl px-4 py-3 mt-1">
-                      <span className="text-[22px] shrink-0">🛡️</span>
+                  <div className="relative overflow-hidden shadow-xl flex flex-col flex-1 border-2 border-[var(--ds-border-brand)]/40" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+                    <div className="bg-cta-gradient px-7 pt-8 pb-5 flex items-center gap-4">
+                      <span className="text-[44px]">🌟</span>
                       <div>
-                        <p className="font-baloo font-black text-green-800 text-[13px] leading-tight">30-day money-back guarantee</p>
-                        <p className="font-nunito text-green-600 text-[11px]">Not happy? Full refund, no questions asked.</p>
+                        <h3 className="font-baloo font-black text-white text-[22px] leading-tight">NIMIPIKO Club</h3>
+                        <p className="font-nunito text-green-100 text-[12px]">Unlimited learning, every month</p>
                       </div>
                     </div>
-                    <Link href={authed ? "/pricing" : "/signuppage"} className="mt-auto w-full text-center text-white font-baloo font-black py-3.5 shadow-md transition-all hover:-translate-y-0.5 active:scale-95 text-[15px]" style={{backgroundColor:'var(--nimi-green)', borderRadius:'var(--leaf-r)', boxShadow:'0 6px 20px rgba(5,150,105,0.35)'}}>
-                      Start Free → Get Full Access
-                    </Link>
-                    <p className="text-center font-nunito text-gray-400 text-[11px] -mt-2">No credit card needed to explore</p>
+                    <div className="bg-white p-7 flex flex-col gap-5 flex-1">
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-baloo font-black text-gray-900 text-[38px] leading-none">$14.99</span>
+                        <span className="font-nunito text-gray-400 text-[14px]">/ month</span>
+                      </div>
+                      <p className="font-nunito text-gray-400 text-[11px] -mt-3">or 9,900 RWF/month · Cancel anytime</p>
+                      <ul className="flex flex-col gap-3">
+                        {["All Interactive Stories","3 Languages (EN / FR / RW)","Creative Missions & Songs","Achievement Certificates","Parent Progress Dashboard","Nimi AI Learning Companion"].map(f => (
+                          <li key={f} className="flex items-center gap-2.5 font-nunito text-[13px] text-gray-700">
+                            <CheckCircle2 className="w-4 h-4 text-[var(--ds-brand-primary)] shrink-0" />{f}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex items-center gap-2.5 bg-green-50 border border-green-100 rounded-2xl px-4 py-3 mt-1">
+                        <span className="text-[22px] shrink-0">🛡️</span>
+                        <div>
+                          <p className="font-baloo font-black text-green-800 text-[13px] leading-tight">30-day money-back guarantee</p>
+                          <p className="font-nunito text-green-600 text-[11px]">Not happy? Full refund, no questions asked.</p>
+                        </div>
+                      </div>
+                      <Link href={authed ? "/pricing" : "/signuppage"} className="mt-auto w-full text-center text-white font-baloo font-black py-3.5 shadow-md transition-all hover:-translate-y-0.5 active:scale-95 text-[15px]" style={{backgroundColor:'var(--nimi-green)', borderRadius:'var(--leaf-r)', boxShadow:'0 6px 20px rgba(5,150,105,0.35)'}}>
+                        Start Free → Get Full Access
+                      </Link>
+                      <p className="text-center font-nunito text-gray-400 text-[11px] -mt-2">No credit card needed to explore</p>
+                    </div>
                   </div>
-                </div>
                 </div>
               </motion.div>
 
@@ -1805,9 +889,7 @@ export default function LandingPage() {
           </motion.div>
         </motion.div>
 
-        {/* World horizon — brand illustration strip */}
         <div className="relative mt-12 pointer-events-none select-none overflow-hidden" style={{ height: "clamp(80px,14vw,160px)" }} aria-hidden>
-          {/* top-fade so assets blend smoothly into the green gradient above */}
           <div className="absolute inset-x-0 top-0 h-10 z-10"
             style={{ background: "linear-gradient(to bottom, #bbf7d0, transparent)" }} />
           <div className="absolute bottom-0 inset-x-0 max-w-4xl mx-auto flex items-end justify-center gap-3 sm:gap-6 px-4">
@@ -1823,10 +905,10 @@ export default function LandingPage() {
       </section>
 
       {/* ══ FAQ ══════════════════════════════════════════════════════ */}
-      <FAQSection />
+      <LandingFAQSection />
 
       {/* ══ NEWSLETTER ═══════════════════════════════════════════════ */}
-      <NewsletterSection />
+      <LandingNewsletterSection />
 
       {/* ══ STICKY MOBILE CTA ════════════════════════════════════════ */}
       <StickyMobileCTA href={authed ? "/home" : "/signuppage"} visible={ctaVisible} />
@@ -1841,7 +923,6 @@ export default function LandingPage() {
               <p className="font-nunito text-gray-400 text-[12px] max-w-[190px] text-center sm:text-left leading-relaxed">
                 Where every child becomes the hero of their own story.
               </p>
-              {/* Social links */}
               <div className="flex items-center gap-3 mt-1">
                 {[
                   { href: "https://www.facebook.com/nimipiko", title: "Facebook", d: "M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" },

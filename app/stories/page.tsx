@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
@@ -163,7 +164,7 @@ export default function StoryLibraryPage() {
                 className="page-shell mb-6 overflow-hidden cursor-pointer">
                 <div className="relative h-36 sm:h-44">
                   {currentStory.cover_url ? (
-                    <img src={getStorageUrl(currentStory.cover_url)} alt={currentStory.title} className="w-full h-full object-cover" draggable={false}  loading="lazy" />
+                    <Image src={getStorageUrl(currentStory.cover_url)} alt={currentStory.title} fill className="object-cover" draggable={false} />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                       <span className="text-6xl">{currentStory.theme_emoji}</span>
@@ -249,8 +250,8 @@ export default function StoryLibraryPage() {
 
                           <div className="relative aspect-[4/3] overflow-hidden">
                             {hasCover ? (
-                              <img src={getStorageUrl(story.cover_url!)} alt={story.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" draggable={false}  loading="lazy" />
+                              <Image src={getStorageUrl(story.cover_url!)} alt={story.title} fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-500" draggable={false} />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                                 <motion.span className="text-5xl" animate={isCurrent ? { scale: [1, 1.1, 1] } : {}}
@@ -297,7 +298,7 @@ export default function StoryLibraryPage() {
                           className="overflow-hidden page-card opacity-60 hover:opacity-80 transition-all group" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                           <div className="relative aspect-[4/3] overflow-hidden">
                             {hasCover ? (
-                              <img src={getStorageUrl(story.cover_url!)} alt="" className="w-full h-full object-cover grayscale opacity-25 group-hover:opacity-35 transition-opacity" draggable={false}  loading="lazy" />
+                              <Image src={getStorageUrl(story.cover_url!)} alt="" fill className="object-cover grayscale opacity-25 group-hover:opacity-35 transition-opacity" draggable={false} />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                                 <span className="text-5xl opacity-20">{story.theme_emoji}</span>
