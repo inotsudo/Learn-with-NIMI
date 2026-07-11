@@ -1,35 +1,47 @@
-// app/api/creations/[id]/share/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { creations } from '../../data';
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-export async function POST(request: NextRequest, context: any) {
-  const { id } = context.params; // ✅ safe
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-  const creation = creations.find(c => c.id === id);
+type RouteContext = { params: Promise<{ id: string }> };
 
-  if (!creation) {
-    return NextResponse.json({ error: 'Creation not found' }, { status: 404 });
+// POST — increment share_count on the creation
+export async function POST(req: NextRequest, ctx: RouteContext) {
+  const { id } = await ctx.params;
+
+  const authHeader = req.headers.get("authorization") ?? "";
+  const token = authHeader.replace("Bearer ", "");
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data, error } = await supabase.rpc("increment_share_count", { creation_id: id });
+  if (error) {
+    // Fallback: manual increment if RPC not available
+    const { data: row } = await supabase.from("creations").select("share_count").eq("id", id).single();
+    if (!row) return NextResponse.json({ error: "Creation not found" }, { status: 404 });
+    await supabase.from("creations").update({ share_count: (row.share_count ?? 0) + 1 }).eq("id", id);
+    return NextResponse.json({ success: true, shares: (row.share_count ?? 0) + 1 });
   }
 
-  // Example share logic: increment a share count
-  if (!('shares' in creation)) {
-    (creation as any).shares = 0;
-  }
-  (creation as any).shares += 1;
-
-  return NextResponse.json({ success: true, updated: creation });
+  return NextResponse.json({ success: true, shares: data });
 }
 
-// Optional GET to check shares
-export async function GET(request: NextRequest, context: any) {
-  const { id } = context.params;
+// GET — return current share count
+export async function GET(_req: NextRequest, ctx: RouteContext) {
+  const { id } = await ctx.params;
 
-  const creation = creations.find(c => c.id === id);
+  const { data, error } = await supabase
+    .from("creations")
+    .select("share_count")
+    .eq("id", id)
+    .single();
 
-  if (!creation) {
-    return NextResponse.json({ error: 'Creation not found' }, { status: 404 });
-  }
+  if (error || !data) return NextResponse.json({ error: "Creation not found" }, { status: 404 });
 
-  return NextResponse.json({ id, shares: (creation as any).shares || 0 });
+  return NextResponse.json({ id, shares: data.share_count ?? 0 });
 }
-
