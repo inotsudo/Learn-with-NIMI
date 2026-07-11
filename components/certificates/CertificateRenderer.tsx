@@ -274,7 +274,7 @@ export default function CertificateRenderer({
             <img src="/themes/default/characters/nimi.png" alt="Nimi" style={{
               position: "absolute", left: -18, bottom: -4, width: 122, height: "auto",
               zIndex: 5, filter: "drop-shadow(4px 6px 14px rgba(0,0,0,0.18))",
-            }} />
+            }}  loading="lazy" />
 
             {/* Checklist box */}
             <div style={{
@@ -302,7 +302,7 @@ export default function CertificateRenderer({
             <img src="/themes/default/characters/piko.png" alt="Piko" style={{
               position: "absolute", right: -18, top: 10, width: 94, height: "auto",
               zIndex: 5, filter: "drop-shadow(4px 6px 14px rgba(0,0,0,0.18))",
-            }} />
+            }}  loading="lazy" />
           </div>
 
           {/* Bottom: medallion + NIMIPIKO + shield */}

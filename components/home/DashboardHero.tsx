@@ -88,7 +88,7 @@ export default function DashboardHero({ childName, themeTitle, themeEmoji, level
             src={assets.nimiCircle}
             alt="NIMI"
             className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-yellow-400 shadow-lg shadow-yellow-400/25"
-          />
+           loading="lazy" />
         </motion.div>
 
         <div className="text-center">
@@ -109,7 +109,7 @@ export default function DashboardHero({ childName, themeTitle, themeEmoji, level
             src={assets.pikoCircle}
             alt="PIKO"
             className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-blue-300 shadow-lg shadow-blue-300/25"
-          />
+           loading="lazy" />
         </motion.div>
       </div>
 

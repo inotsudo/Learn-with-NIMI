@@ -201,7 +201,7 @@ export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps)
                     style={{
                       background: 'transparent'
                     }}
-                  />
+                   loading="lazy" />
 
                 </div>
 

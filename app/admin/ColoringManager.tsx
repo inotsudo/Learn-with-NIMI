@@ -273,7 +273,7 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
               )}
             </button>
             <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white" />
+              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
               <div className="hidden sm:block leading-tight">
                 <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
                 <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
@@ -339,7 +339,7 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
                 >
                   <div className="flex items-center gap-3">
                     {b.cover_url ? (
-                      <img src={getStorageUrl(b.cover_url)} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                      <img src={getStorageUrl(b.cover_url)} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0"  loading="lazy" />
                     ) : (
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition ${
                         isSelected ? `${accent.button} text-white` : 'bg-gray-100 text-gray-400'

@@ -188,7 +188,7 @@ export function UserProfileMenu() {
           onClick={() => !isLoading && fileInputRef.current?.click()}
         >
           {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt="Avatar" className="h-28 w-28 rounded-full object-cover" />
+            <img src={profile.avatar_url} alt="Avatar" className="h-28 w-28 rounded-full object-cover"  loading="lazy" />
           ) : (
             <span className="text-gray-500">{isLoading ? "Uploading..." : "Click or Drag & Drop Avatar"}</span>
           )}

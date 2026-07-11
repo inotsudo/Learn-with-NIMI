@@ -57,7 +57,7 @@ export default function BottomNavBar() {
           <Link href="/talk-to-nimi" aria-label="Talk to Nimi">
             <div className={`w-[64px] h-[64px] rounded-full p-[3px] ${cv.navigationStyle.fabGradient} ${cv.navigationStyle.fabShadow} active:scale-90 transition-transform duration-100`}>
               <div className="w-full h-full rounded-full bg-white flex items-center justify-center border-2 border-ds-border">
-                <img src={assets.nimiCircle} alt="" aria-hidden="true" className="w-10 h-10 rounded-full object-cover" />
+                <img src={assets.nimiCircle} alt="" aria-hidden="true" className="w-10 h-10 rounded-full object-cover"  loading="lazy" />
               </div>
             </div>
           </Link>
@@ -70,7 +70,7 @@ export default function BottomNavBar() {
         >
           {/* World bottom bar texture */}
           <img src={assets.navigation.bottomBar} alt="" aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.07]" />
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.07]"  loading="lazy" />
 
           {/* Icons + labels row — 68 px tall to accommodate labels */}
           <div className="relative z-10 flex items-stretch h-[68px] px-1">

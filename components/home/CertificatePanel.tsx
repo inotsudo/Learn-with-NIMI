@@ -73,7 +73,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
         <div className="relative bg-white border border-ds-border shadow-ds-card overflow-hidden" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
           {/* World certificate frame texture */}
           <img src={assets.rewards.certificateFrame} alt="" aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.06]" />
+            className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.06]"  loading="lazy" />
 
           <div className="relative z-10">
             <div className="relative overflow-hidden text-center py-4 px-4"
@@ -138,7 +138,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
               <div className="flex items-end justify-around mt-1">
                 <div className="text-center">
                   <img src={assets.nimiCircle} alt="NIMI"
-                    className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-yellow-200 shadow-xl" />
+                    className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-yellow-200 shadow-xl"  loading="lazy" />
                   <p className="text-[10px] mt-1.5 text-gray-500 leading-tight">
                     Cheer: <span className="font-black italic text-ds-text">Nimi</span>
                   </p>
@@ -153,7 +153,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
 
                 <div className="text-center">
                   <img src={assets.pikoCircle} alt="PIKO"
-                    className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-blue-200 shadow-xl" />
+                    className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-blue-200 shadow-xl"  loading="lazy" />
                   <p className="text-[10px] mt-1.5 text-gray-500 leading-tight">
                     Cheer: <span className="font-black italic text-ds-text">Piko</span>
                   </p>
@@ -182,7 +182,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
       <div className="relative bg-white border border-ds-border shadow-ds-card overflow-hidden" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
         {/* World certificate frame texture */}
         <img src={assets.rewards.certificateFrame} alt="" aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.07]" />
+          className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.07]"  loading="lazy" />
 
         <div className="relative z-10">
           <div className="relative overflow-hidden text-center py-4 px-4"
@@ -240,7 +240,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
             <div className="flex items-end justify-around mt-1">
               <div className="text-center">
                 <img src={assets.nimiCircle} alt="NIMI"
-                  className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-yellow-300 shadow-xl" />
+                  className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-yellow-300 shadow-xl"  loading="lazy" />
                 <p className="text-[11px] mt-2 text-gray-500 leading-tight">
                   {t("signedByLabel").replace("{name}", "Nimi")}
                 </p>
@@ -259,7 +259,7 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
 
               <div className="text-center">
                 <img src={assets.pikoCircle} alt="PIKO"
-                  className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-blue-300 shadow-xl" />
+                  className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-blue-300 shadow-xl"  loading="lazy" />
                 <p className="text-[11px] mt-2 text-gray-500 leading-tight">
                   {t("signedByLabel").replace("{name}", "Piko")}
                 </p>
@@ -283,9 +283,9 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
               {t("levelCompleteLabel").replace("{level}", String(level))}
             </p>
             <div className="flex justify-center gap-1 mt-2 items-center">
-              <img src={assets.nimiCircle} alt="NIMI" className="w-7 h-7 rounded-full object-cover border border-yellow-300" />
+              <img src={assets.nimiCircle} alt="NIMI" className="w-7 h-7 rounded-full object-cover border border-yellow-300"  loading="lazy" />
               <div className="w-7 h-7 bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center text-base shadow">⭐</div>
-              <img src={assets.pikoCircle} alt="PIKO" className="w-7 h-7 rounded-full object-cover border border-blue-300" />
+              <img src={assets.pikoCircle} alt="PIKO" className="w-7 h-7 rounded-full object-cover border border-blue-300"  loading="lazy" />
             </div>
           </div>
           <p className="text-[11px] text-gray-500 leading-relaxed flex-1 min-w-0">

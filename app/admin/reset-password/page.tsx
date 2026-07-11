@@ -46,7 +46,7 @@ export default function AdminResetPasswordPage() {
             src="/nimi-logo-circle.png"
             alt="NIMIPIKO"
             className="w-16 h-16 rounded-full object-cover mx-auto mb-3 shadow-md"
-          />
+           loading="lazy" />
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">NIMIPIKO</h1>
           <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-semibold uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5" /> Admin Console

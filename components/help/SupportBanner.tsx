@@ -17,7 +17,7 @@ export default function SupportBanner() {
           src={assets.nimiCircle}
           alt="NIMI"
           className="w-14 h-14 rounded-full object-cover border-4 border-white/30 shrink-0"
-        />
+         loading="lazy" />
         <div>
           <h3 className="font-black text-lg">{t("stillNeedHelpTitle")}</h3>
           <p className="text-white/80 text-sm mt-0.5">{t("stillNeedHelpDesc")}</p>

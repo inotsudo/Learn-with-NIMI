@@ -345,29 +345,29 @@ export default function HomePage() {
               {/* ── Layer 2: World environment assets ── */}
               {/* Left forest edge */}
               <img src="/themes/default/world/tree-2.png" alt="" aria-hidden
-                className="absolute bottom-0 left-0 h-[230px] w-auto object-contain pointer-events-none select-none" />
+                className="absolute bottom-0 left-0 h-[230px] w-auto object-contain pointer-events-none select-none"  loading="lazy" />
               <img src="/themes/default/world/tree-1.png" alt="" aria-hidden
-                className="absolute bottom-0 left-[7%] h-[175px] w-auto object-contain pointer-events-none select-none opacity-85" />
+                className="absolute bottom-0 left-[7%] h-[175px] w-auto object-contain pointer-events-none select-none opacity-85"  loading="lazy" />
               <img src="/themes/default/world/birdhouse.png" alt="" aria-hidden
-                className="absolute bottom-14 left-[14%] h-[90px] w-auto object-contain pointer-events-none select-none opacity-90" />
+                className="absolute bottom-14 left-[14%] h-[90px] w-auto object-contain pointer-events-none select-none opacity-90"  loading="lazy" />
               {/* Right forest edge */}
               <img src="/themes/default/world/greenhouse.png" alt="" aria-hidden
-                className="absolute bottom-0 right-0 h-[210px] w-auto object-contain pointer-events-none select-none" />
+                className="absolute bottom-0 right-0 h-[210px] w-auto object-contain pointer-events-none select-none"  loading="lazy" />
               <img src="/themes/default/world/tree-4.png" alt="" aria-hidden
-                className="absolute bottom-0 right-[7%] h-[170px] w-auto object-contain pointer-events-none select-none opacity-85" />
+                className="absolute bottom-0 right-[7%] h-[170px] w-auto object-contain pointer-events-none select-none opacity-85"  loading="lazy" />
               <img src="/themes/default/world/tree-3.png" alt="" aria-hidden
-                className="absolute bottom-0 right-[15%] h-[145px] w-auto object-contain pointer-events-none select-none opacity-75" />
+                className="absolute bottom-0 right-[15%] h-[145px] w-auto object-contain pointer-events-none select-none opacity-75"  loading="lazy" />
               {/* Ground flowers + stones */}
               <img src="/themes/default/world/flower-garden.png" alt="" aria-hidden
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[65px] w-auto object-contain pointer-events-none select-none opacity-80" />
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[65px] w-auto object-contain pointer-events-none select-none opacity-80"  loading="lazy" />
               <img src="/themes/default/world/stepping-stones.png" alt="" aria-hidden
-                className="absolute bottom-0 left-[38%] h-[42px] w-auto object-contain pointer-events-none select-none opacity-60" />
+                className="absolute bottom-0 left-[38%] h-[42px] w-auto object-contain pointer-events-none select-none opacity-60"  loading="lazy" />
 
               {/* ── Corner art frames ── */}
               <img src="/themes/default/decorations/corner-tl.png" alt="" aria-hidden
-                className="absolute top-0 left-0 w-[110px] pointer-events-none select-none opacity-55" />
+                className="absolute top-0 left-0 w-[110px] pointer-events-none select-none opacity-55"  loading="lazy" />
               <img src="/themes/default/decorations/corner-tr.png" alt="" aria-hidden
-                className="absolute top-0 right-0 w-[110px] pointer-events-none select-none opacity-55" />
+                className="absolute top-0 right-0 w-[110px] pointer-events-none select-none opacity-55"  loading="lazy" />
 
               {/* ── Floating magical orbs ── */}
               <motion.img src="/themes/default/decorations/floating-1.png" alt="" aria-hidden
@@ -391,9 +391,9 @@ export default function HomePage() {
               <div className="absolute top-9  right-[40%] w-3   h-3  bg-orange-300  rounded-full           opacity-80 pointer-events-none" />
               <div className="absolute top-7  right-[46%] w-1.5 h-5  bg-cyan-300    rounded-sm -rotate-10 opacity-85 pointer-events-none" />
               <img src="/themes/default/decorations/sparkle.png" alt="" aria-hidden
-                className="absolute top-5 left-[38%] w-8 opacity-80 pointer-events-none select-none" />
+                className="absolute top-5 left-[38%] w-8 opacity-80 pointer-events-none select-none"  loading="lazy" />
               <img src="/themes/default/decorations/sparkle.png" alt="" aria-hidden
-                className="absolute top-8 right-[38%] w-6 opacity-70 pointer-events-none select-none" />
+                className="absolute top-8 right-[38%] w-6 opacity-70 pointer-events-none select-none"  loading="lazy" />
 
               {/* ══════════════════════════════════════════════════════════════
                    Layer 3 — CONTENT (3 columns, items aligned to bottom)
@@ -432,7 +432,7 @@ export default function HomePage() {
                         <div className="relative w-[110px] h-[110px] rounded-2xl overflow-hidden shrink-0"
                           style={{ boxShadow: "0 0 0 3px rgba(255,255,255,0.3), 0 8px 24px rgba(0,0,0,0.35)" }}>
                           <img src={curStory.cover_url ? getStorageUrl(curStory.cover_url) : "/current-story.png"}
-                            alt={curStory.title} className="w-full h-full object-cover" />
+                            alt={curStory.title} className="w-full h-full object-cover"  loading="lazy" />
                           <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-xl">
                               <Play className="w-4 h-4 fill-violet-600 text-violet-600 ml-0.5" />
@@ -759,7 +759,7 @@ export default function HomePage() {
                             boxShadow: "0 0 0 3px rgba(5,150,105,0.22), 0 8px 24px rgba(0,0,0,0.26)",
                           }}>
                           {curStory.cover_url
-                            ? <img src={getStorageUrl(curStory.cover_url)} alt={curStory.title} className="w-full h-full object-cover" />
+                            ? <img src={getStorageUrl(curStory.cover_url)} alt={curStory.title} className="w-full h-full object-cover"  loading="lazy" />
                             : <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-200 flex items-center justify-center text-5xl">
                                 {curStory.theme_emoji ?? "📖"}
                               </div>
@@ -879,7 +879,7 @@ export default function HomePage() {
                                   <div className="relative w-full overflow-hidden" style={{ aspectRatio: "1/1" }}>
                                     {story.cover_url
                                       ? <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"  loading="lazy" />
                                       : <div className="w-full h-full flex items-center justify-center text-5xl"
                                           style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}>
                                           {story.theme_emoji ?? "📖"}
@@ -920,7 +920,7 @@ export default function HomePage() {
                                   <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
                                     {story.cover_url
                                       ? <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                                          className="w-full h-full object-cover grayscale" />
+                                          className="w-full h-full object-cover grayscale"  loading="lazy" />
                                       : <div className="w-full h-full flex items-center justify-center text-5xl bg-gray-100">
                                           {story.theme_emoji ?? "📖"}
                                         </div>
@@ -961,7 +961,7 @@ export default function HomePage() {
                       <div className="flex items-center gap-3">
                         {curStory?.cover_url ? (
                           <img src={getStorageUrl(curStory.cover_url)} alt={curStory.title}
-                            className="w-12 h-12 rounded-xl object-cover border-2 border-white/40 shadow-md shrink-0" />
+                            className="w-12 h-12 rounded-xl object-cover border-2 border-white/40 shadow-md shrink-0"  loading="lazy" />
                         ) : (
                           <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-[22px] shrink-0 shadow-md">
                             {curStory?.theme_emoji ?? "📖"}
@@ -1163,7 +1163,7 @@ export default function HomePage() {
                               <Link key={c.id} href="/community"
                                 className="group relative aspect-square rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
                                 <img src={getStorageUrl(c.imageUrl)} alt={c.childName}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"  loading="lazy" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="absolute bottom-1 right-1 text-[10px]">🎨</div>
                               </Link>

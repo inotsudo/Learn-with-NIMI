@@ -140,7 +140,7 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
                           <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 mb-2">
                             {page.image_url ? (
                               <label className="w-full h-full cursor-pointer group relative">
-                                <img src={getStorageUrl(page.image_url)} alt={`Page ${page.page_number}`} className="w-full h-full object-cover" />
+                                <img src={getStorageUrl(page.image_url)} alt={`Page ${page.page_number}`} className="w-full h-full object-cover"  loading="lazy" />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
                                   <span className="text-white text-[10px] font-bold bg-black/50 rounded-lg px-3 py-1.5">Replace Image</span>
                                 </div>

@@ -42,7 +42,7 @@ export default function Header({ simple }: HeaderProps) {
                   src={assets.nimiCircle}
                   alt="NIMIPIKO"
                   className="w-10 h-10 rounded-full object-cover border-2 border-yellow-400 shadow group-hover:scale-105 transition-transform"
-                />
+                 loading="lazy" />
               )}
             </div>
             <div>

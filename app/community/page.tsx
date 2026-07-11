@@ -165,7 +165,7 @@ function CreationCard({
             src={imgUrl}
             alt={creation.description ?? `${creation.childName}'s creation`}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-          />
+           loading="lazy" />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
             <motion.span

@@ -19,9 +19,9 @@ export default function NextStoryCard({ story }: Props) {
   return (
     <div className="relative overflow-hidden border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/60 to-white shadow-[0_16px_34px_rgba(15,23,42,0.08)] flex flex-col h-full" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
       <img src={assets.storyCard.background} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.08]" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.08]"  loading="lazy" />
       <img src={assets.storyCard.frame} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-40 z-[1]" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-40 z-[1]"  loading="lazy" />
       <div className="absolute inset-x-4 top-4 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
 
       <div className="relative z-10 flex flex-col flex-1">
@@ -37,7 +37,7 @@ export default function NextStoryCard({ story }: Props) {
         <div className="relative mx-3 mt-3 leaf overflow-hidden h-28 flex-shrink-0 border border-white/70 shadow-[0_8px_22px_rgba(15,23,42,0.08)]">
           {story.cover_url ? (
             <img src={getStorageUrl(story.cover_url)} alt={story.title}
-              className="absolute inset-0 w-full h-full object-cover opacity-40" />
+              className="absolute inset-0 w-full h-full object-cover opacity-40"  loading="lazy" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
               <span className="text-5xl opacity-30">{story.theme_emoji}</span>
@@ -47,7 +47,7 @@ export default function NextStoryCard({ story }: Props) {
             <motion.div animate={m.floatSoft.animate} transition={m.floatSoft.transition}>
               <div className="relative w-12 h-12 flex items-center justify-center">
                 <img src={assets.storyCard.badge} alt="" aria-hidden="true"
-                  className="absolute inset-0 w-full h-full opacity-90" />
+                  className="absolute inset-0 w-full h-full opacity-90"  loading="lazy" />
                 <Lock className="relative z-10 w-5 h-5 text-white drop-shadow-sm" />
               </div>
             </motion.div>

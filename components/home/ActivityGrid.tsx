@@ -64,7 +64,7 @@ export default function ActivityGrid({ completedCategories, starsByCategory }: A
                   src={activity.mascot === "piko" ? assets.pikoCircle : assets.nimiCircle}
                   alt={activity.mascot.toUpperCase()}
                   className="relative w-12 h-12 rounded-full object-cover border-2 border-white shadow-[0_10px_20px_rgba(15,23,42,0.12)]"
-                />
+                 loading="lazy" />
                 <div className="absolute -bottom-1 -right-1 bg-[var(--ds-brand-soft)] rounded-full w-6 h-6 flex items-center justify-center text-sm shadow leading-none">
                   {activity.emoji}
                 </div>

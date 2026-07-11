@@ -141,7 +141,7 @@ export default function BadgeRenderer({
             filter: "drop-shadow(2px 4px 8px rgba(0,0,0,0.22))",
             zIndex: 2,
           }}
-        />
+         loading="lazy" />
 
         {/* Piko character */}
         <img
@@ -154,7 +154,7 @@ export default function BadgeRenderer({
             filter: "drop-shadow(2px 4px 8px rgba(0,0,0,0.22))",
             zIndex: 2,
           }}
-        />
+         loading="lazy" />
       </div>
     </div>
   );

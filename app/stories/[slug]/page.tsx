@@ -51,7 +51,7 @@ function MeetCharactersCard({ assets }: { assets: { nimiCircle: string; pikoCirc
             <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: DURATION.loopBase, repeat: Infinity, delay: CHARS.indexOf(c) * 0.4 }}
               className={`w-16 h-16 rounded-full bg-gradient-to-br ${c.bg} border-4 ${c.border} shadow-lg flex items-center justify-center overflow-hidden`}>
               {c.img
-                ? <img src={c.img} alt={c.name} className="w-full h-full object-cover rounded-full" />
+                ? <img src={c.img} alt={c.name} className="w-full h-full object-cover rounded-full"  loading="lazy" />
                 : <span className="text-2xl">🌿</span>
               }
             </motion.div>
@@ -427,7 +427,7 @@ export default function StoryDetailPage() {
                 {/* Cover */}
                 <div className="relative">
                   {details?.cover_url ? (
-                    <img src={getStorageUrl(details.cover_url)} alt={storyTitle} className="w-full h-72 object-cover" />
+                    <img src={getStorageUrl(details.cover_url)} alt={storyTitle} className="w-full h-72 object-cover"  loading="lazy" />
                   ) : (
                     <div className="w-full h-72 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 flex items-center justify-center">
                       <motion.span className="text-8xl" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: DURATION.loopBase, repeat: Infinity }}>
@@ -645,7 +645,7 @@ export default function StoryDetailPage() {
                 {/* Tweak 5: Cover image as faded background */}
                 {details?.cover_url && (
                   <div className="absolute inset-0 z-0 overflow-hidden">
-                    <img src={getStorageUrl(details.cover_url)} alt="" className="w-full h-full object-cover opacity-[0.06] blur-sm scale-110" />
+                    <img src={getStorageUrl(details.cover_url)} alt="" className="w-full h-full object-cover opacity-[0.06] blur-sm scale-110"  loading="lazy" />
                   </div>
                 )}
 

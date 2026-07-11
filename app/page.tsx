@@ -188,7 +188,7 @@ function AppMockup({ screen }: { screen: number }) {
       alt="NIMIPIKO home screen"
       className="absolute inset-0 w-full h-full object-cover object-top select-none"
       draggable={false}
-    />
+     loading="lazy" />
   );
 
   // Screen 1: Story reader — uses the real in-app parchment page frame

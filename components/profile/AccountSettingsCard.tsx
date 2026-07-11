@@ -47,7 +47,7 @@ export default function AccountSettingsCard({ childId, childName, avatarUrl, onC
               src={avatarSrc}
               alt={childName}
               className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md"
-            />
+             loading="lazy" />
           ) : (
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)] flex items-center justify-center border-2 border-white shadow-md">
               <User size={24} className="text-white" />

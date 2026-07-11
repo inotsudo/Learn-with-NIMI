@@ -19,7 +19,7 @@ export default function NimiEncouragement({ childName }: Props) {
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.75),transparent_45%)]" />
       <img src={assets.storyCard.background} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.08]" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.08]"  loading="lazy" />
 
       {/* Themed sparkle ornaments */}
       {[
@@ -48,7 +48,7 @@ export default function NimiEncouragement({ childName }: Props) {
           className="shrink-0"
         >
           <img src={assets.nimiCircle} alt="NIMI"
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-[var(--ds-brand-primary)]/50 shadow-xl" />
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-[var(--ds-brand-primary)]/50 shadow-xl"  loading="lazy" />
         </motion.div>
 
         {/* CENTER — message */}

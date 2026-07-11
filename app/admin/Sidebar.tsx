@@ -69,7 +69,7 @@ export default function Sidebar({ currentTable, onSelectTable, collapsed, onTogg
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div className={`px-4 py-3 flex items-center gap-3 border-b border-ds-border ${collapsed ? 'lg:justify-center lg:px-2' : ''}`}>
-        <img src="/nimi-logo.png" alt="NimiPiko" className="w-10 h-10 rounded-xl object-cover ring-2 ring-gray-100 flex-shrink-0" />
+        <img src="/nimi-logo.png" alt="NimiPiko" className="w-10 h-10 rounded-xl object-cover ring-2 ring-gray-100 flex-shrink-0"  loading="lazy" />
         <div className={`overflow-hidden flex-1 ${collapsed ? 'lg:hidden' : ''}`}>
           <p className="font-extrabold text-ds-text text-[15px] leading-tight">NimiPiko</p>
           <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider">Admin Studio</p>

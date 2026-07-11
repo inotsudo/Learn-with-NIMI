@@ -42,7 +42,7 @@ export default function DailyAdventureSidebar({ activitiesCompleted }: Props) {
             src={assets.nimiCircle}
             alt="NIMI"
             className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full object-cover border-2 border-white shadow"
-          />
+           loading="lazy" />
         </div>
         <p className="font-black text-ds-text text-sm mt-3">
           {t("activitiesCompletedLabel").replace("{count}", String(activitiesCompleted))}
@@ -85,7 +85,7 @@ export default function DailyAdventureSidebar({ activitiesCompleted }: Props) {
           src={assets.nimiCircle}
           alt="Nimi"
           className="w-12 h-12 rounded-full object-cover border-2 shadow shrink-0" style={{ borderColor: 'var(--nimi-green)' }}
-        />
+         loading="lazy" />
         <div className="bg-emerald-50 rounded-xl rounded-tl-none px-3 py-2">
           <p className="text-emerald-800 text-xs font-semibold">{t("pikoEncouragement")}</p>
         </div>

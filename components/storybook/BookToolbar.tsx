@@ -32,14 +32,14 @@ export default function BookToolbar({ title, onExit }: Props) {
             </div>
             <div className="relative flex-1">
               <img src={assets.reader.chapterHeader} alt="" aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.18]" />
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.18]"  loading="lazy" />
               <p className="relative font-baloo font-bold text-ds-text text-[14px] truncate">{title}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <div className="relative flex-1 bg-white/80 rounded-full h-1.5 overflow-hidden border border-emerald-100">
               <img src={assets.reader.progress} alt="" aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.45]" />
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.45]"  loading="lazy" />
               <div className={`relative h-full bg-gradient-to-r ${assets.storyCard.progressFill} rounded-full transition-all duration-500`}
                 style={{ width: `${progress}%` }} />
             </div>

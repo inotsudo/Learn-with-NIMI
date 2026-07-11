@@ -24,7 +24,7 @@ export default function MyProfile({ childName, avatar, categoriesMastered }: Pro
           <img
             src={avatar ?? "/default-avatar.png"} alt={childName}
             className="w-20 h-20 rounded-full object-cover border-4 border-yellow-300 shadow-lg"
-            onError={e => { (e.target as HTMLImageElement).src = "/avatar.png"; }} />
+            loading="lazy" onError={e => { (e.target as HTMLImageElement).src = "/avatar.png"; }} />
         )}
       </div>
       <div className="flex items-center justify-center gap-1 mt-1 mb-0.5">

@@ -89,7 +89,7 @@ function CurrentlyWearing({ cosmetics, nimiSrc, pikoSrc, onUnequip }: {
                 title="Click to remove"
               >
                 {slot.src && (
-                  <img src={slot.src} alt={slot.label} className="w-5 h-5 rounded-full object-cover shrink-0 border border-green-200" />
+                  <img src={slot.src} alt={slot.label} className="w-5 h-5 rounded-full object-cover shrink-0 border border-green-200"  loading="lazy" />
                 )}
                 <span className="text-base leading-none">{item.emoji}</span>
                 <span className="font-black text-[11px]">{t(item.nameKey)}</span>

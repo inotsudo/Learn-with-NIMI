@@ -30,7 +30,7 @@ export default function MissionCompleteBanner({ storySlug }: Props) {
       className="relative overflow-hidden leaf-lg border border-[var(--ds-brand-primary)]/30 bg-gradient-to-br from-white via-emerald-50/70 to-amber-50/60 p-6 text-center shadow-[0_16px_34px_rgba(15,23,42,0.08)]"
     >
       <img src={assets.rewards.celebration} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.06]" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.06]"  loading="lazy" />
 
       <RewardBurst active config={CONFETTI_BURST} className="absolute inset-0" />
 
@@ -40,9 +40,9 @@ export default function MissionCompleteBanner({ storySlug }: Props) {
           transition={{ ...SPRING.gentle, delay: 0.2 }}
           className="relative w-14 h-14 mx-auto mb-2"
         >
-          <img src={assets.starMascot} alt="" className="w-14 h-14" />
+          <img src={assets.starMascot} alt="" className="w-14 h-14"  loading="lazy" />
           <img src={assets.rewards.badgeFrame} alt="" aria-hidden="true"
-            className="absolute inset-0 w-full h-full pointer-events-none opacity-60" />
+            className="absolute inset-0 w-full h-full pointer-events-none opacity-60"  loading="lazy" />
         </motion.div>
 
         <AnimatedCheckmark className="mx-auto mb-2" />

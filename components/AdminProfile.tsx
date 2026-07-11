@@ -150,7 +150,7 @@ export default function AdminProfile() {
             }
             alt="Avatar"
             className="w-20 h-20 rounded-full object-cover border-2 border-[#ff9a9e]"
-          />
+           loading="lazy" />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}

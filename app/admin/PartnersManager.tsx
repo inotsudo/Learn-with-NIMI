@@ -168,7 +168,7 @@ export default function PartnersManager({ onOpenSidebar }: PartnersManagerProps)
           <div className="space-y-3">
             {rows.map((r, idx) => (
               <div key={r.id} className={`bg-white border rounded-2xl p-4 flex items-center gap-4 transition ${r.active ? 'border-green-200' : 'border-ds-border opacity-60'}`}>
-                <img src={r.logo_url} alt={r.name} className="w-14 h-10 object-contain rounded-lg bg-gray-50 p-1 shrink-0" />
+                <img src={r.logo_url} alt={r.name} className="w-14 h-10 object-contain rounded-lg bg-gray-50 p-1 shrink-0"  loading="lazy" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-baloo font-black text-ds-text text-[14px]">{r.name}</span>

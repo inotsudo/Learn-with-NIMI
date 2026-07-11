@@ -32,7 +32,7 @@ export default function ProfileCard({ avatar, childName, level, categoriesComple
             src={avatar ?? "/default-avatar.png"} alt={childName}
             className="w-24 h-24 rounded-full object-cover border-4 shadow-lg"
             style={{ borderColor: 'var(--nimi-green)' }}
-            onError={e => { (e.target as HTMLImageElement).src = "/avatar.png"; }} />
+            loading="lazy" onError={e => { (e.target as HTMLImageElement).src = "/avatar.png"; }} />
         )}
       </motion.div>
 

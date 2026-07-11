@@ -42,7 +42,7 @@ export default function DailyAdventureGrid({ completedInLevel }: DailyAdventureG
                 src={activity.mascot === "piko" ? assets.pikoCircle : assets.nimiCircle}
                 alt={activity.mascot.toUpperCase()}
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow"
-              />
+               loading="lazy" />
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full w-7 h-7 flex items-center justify-center text-base shadow-[0_8px_18px_rgba(15,23,42,0.12)] border border-gray-200 leading-none">
                 {activity.emoji}
               </div>

@@ -15,7 +15,7 @@ interface Props {
 /**
  * Universal child avatar renderer.
  * - If avatarUrl starts with "ava:" → renders the SVG avatar builder character
- * - If avatarUrl starts with "http" → renders as <img>
+ * - If avatarUrl starts with "http" → renders as <img loading="lazy">
  * - Otherwise → renders the string as an emoji
  */
 export default function ChildAvatar({ avatarUrl, name, size = 40, className = "", fallbackEmoji = "🧒" }: Props) {
@@ -34,7 +34,7 @@ export default function ChildAvatar({ avatarUrl, name, size = 40, className = ""
         height={size}
         className={`rounded-full object-cover ${className}`}
         style={{ width: size, height: size }}
-      />
+       loading="lazy" />
     );
   }
 

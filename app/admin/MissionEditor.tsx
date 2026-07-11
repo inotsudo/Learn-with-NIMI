@@ -900,7 +900,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Cover Image (Optional)</label>
             {coverUrl ? (
               <div className="flex items-center gap-3">
-                <img src={getStorageUrl(coverUrl)} alt="Cover" className="w-20 h-20 rounded-2xl object-cover border border-gray-100 shadow-sm" />
+                <img src={getStorageUrl(coverUrl)} alt="Cover" className="w-20 h-20 rounded-2xl object-cover border border-gray-100 shadow-sm"  loading="lazy" />
                 {!locked && (
                   <button onClick={() => updateContentJson('cover_image_url', undefined)} className="text-xs font-bold text-red-500 hover:text-red-600 px-3 py-1.5 rounded-full hover:bg-red-50 transition">Remove</button>
                 )}
@@ -935,7 +935,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
             <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
             <div className="relative">
               {coverUrl && (
-                <img src={getStorageUrl(coverUrl)} alt="Cover" className="w-full h-32 object-cover rounded-2xl mb-3 border-2 border-white/30" />
+                <img src={getStorageUrl(coverUrl)} alt="Cover" className="w-full h-32 object-cover rounded-2xl mb-3 border-2 border-white/30"  loading="lazy" />
               )}
               <p className="font-extrabold text-lg leading-tight">{vf.title || 'Untitled mission'}</p>
               {vf.subtitle && <p className="text-sm text-white/80 mt-0.5">{vf.subtitle}</p>}
@@ -1288,7 +1288,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
                                 src={getStorageUrl(page.image_url)}
                                 alt={`Page ${page.page_number}`}
                                 className="absolute inset-0 w-full h-full object-cover"
-                              />
+                               loading="lazy" />
                               {/* Replace overlay */}
                               <label className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                                 <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">

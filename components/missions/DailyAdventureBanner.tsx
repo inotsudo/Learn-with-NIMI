@@ -65,7 +65,7 @@ export default function DailyAdventureBanner({ themeTitle, themeEmoji, level }: 
               src={assets.nimiCircle}
               alt="NIMI"
               className="w-12 h-12 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-yellow-400 shadow-lg"
-            />
+             loading="lazy" />
           </motion.div>
 
           <div

@@ -429,7 +429,7 @@ export default function StoryMissionPage() {
                 <AnimatedCheckmark className="mx-auto mb-3" />
 
                 <div className="mx-auto inline-flex items-center justify-center gap-2 rounded-full border border-amber-200 bg-white/90 px-4 py-2 mb-3 shadow-sm">
-                  <img src={assets.starMascot} alt="" className="w-6 h-6" />
+                  <img src={assets.starMascot} alt="" className="w-6 h-6"  loading="lazy" />
                   <span className="font-baloo font-black text-amber-500 text-[28px]">+{result.stars_earned}</span>
                   <span className="font-nunito text-gray-600 text-[14px] font-bold">{t("storyStarsLabel")}</span>
                 </div>

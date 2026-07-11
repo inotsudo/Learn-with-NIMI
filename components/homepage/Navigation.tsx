@@ -22,7 +22,7 @@ function Logo() {
   const assets = getThemeAssets(themeId);
   return (
     <Link href="/" className="shrink-0 mr-auto">
-      <img src={assets.nimiLogo} alt="NIMIPIKO — Grow With Every Story" className="h-28 w-auto sm:h-32" />
+      <img src={assets.nimiLogo} alt="NIMIPIKO — Grow With Every Story" className="h-28 w-auto sm:h-32"  loading="lazy" />
     </Link>
   );
 }

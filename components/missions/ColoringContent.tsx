@@ -113,7 +113,7 @@ export default function ColoringContent({ mission, coloringPages, onComplete, co
                     src={getStorageUrl(cp.template_image_url)}
                     alt={`Page ${idx + 1}`}
                     className="w-full aspect-[3/4] object-cover"
-                  />
+                   loading="lazy" />
                 ) : (
                   <div
                     className="w-full aspect-[3/4] flex items-center justify-center"

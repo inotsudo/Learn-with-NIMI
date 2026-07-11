@@ -82,7 +82,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
             {/* Nimi waving */}
             <div className="relative mt-6">
               <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-yellow-400 shadow-2xl ring-4 ring-yellow-100/30">
-                <img src={assets.nimiCircle} alt="NIMI" className="w-full h-full object-cover" />
+                <img src={assets.nimiCircle} alt="NIMI" className="w-full h-full object-cover"  loading="lazy" />
               </div>
               <motion.span
                 className="absolute -top-3 -right-2 text-3xl drop-shadow"
@@ -147,7 +147,7 @@ export default function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
 
               <div className="relative shrink-0">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-yellow-400 shadow-xl">
-                  <img src={assets.nimiCircle} alt="NIMI" className="w-full h-full object-cover" />
+                  <img src={assets.nimiCircle} alt="NIMI" className="w-full h-full object-cover"  loading="lazy" />
                 </div>
                 <div className="absolute -bottom-2 -right-3 bg-white text-gray-800 text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm border border-gray-200 rotate-6">
                   BYE!

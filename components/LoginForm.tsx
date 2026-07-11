@@ -22,8 +22,6 @@ export default function LoginForm() {
 
       if (error) throw error;
 
-      console.log("Logged in!", data.user);
-      // optionally redirect or update state here
     } catch (error: any) {
       setErrorMsg(error.message || "Login failed");
     } finally {

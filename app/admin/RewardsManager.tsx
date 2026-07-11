@@ -66,7 +66,7 @@ function initials(name: string) {
 function Avatar({ avatarUrl, name, size }: { avatarUrl: string | null; name: string; size: 'sm' | 'lg' }) {
   const dims = size === 'lg' ? 'w-16 h-16 rounded-2xl' : 'w-11 h-11 rounded-full'
   if (avatarUrl && avatarUrl.startsWith('http')) {
-    return <img src={avatarUrl} alt={name} className={`${dims} object-cover flex-shrink-0 ring-2 ring-white shadow-sm`} />
+    return <img src={avatarUrl} alt={name} className={`${dims} object-cover flex-shrink-0 ring-2 ring-white shadow-sm`}  loading="lazy" />
   }
   if (avatarUrl) {
     return (
@@ -257,7 +257,7 @@ export default function RewardsManager({ initialChildId, onNavigate, onOpenSideb
               <Trophy className="w-3.5 h-3.5" /> {badges.length} awarded
             </span>
             <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white" />
+              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
               <div className="hidden sm:block leading-tight">
                 <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
                 <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>

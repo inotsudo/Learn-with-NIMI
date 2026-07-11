@@ -16,7 +16,7 @@ function BottomScene({ src, height = 250, opacity = 0.12 }: { src: string; heigh
       maskImage: "linear-gradient(to top, black 20%, transparent 100%)",
       WebkitMaskImage: "linear-gradient(to top, black 20%, transparent 100%)",
     }}>
-      <img src={src} alt="" className="w-full h-full object-cover object-bottom" draggable={false} />
+      <img src={src} alt="" className="w-full h-full object-cover object-bottom" draggable={false}  loading="lazy" />
     </div>
   );
 }
@@ -35,7 +35,7 @@ function SideElement({ src, side, bottom = 0, width = 200, height = 250, opacity
       WebkitMaskComposite: "source-in" as any,
     }}>
       <img src={src} alt="" className="w-full h-full object-cover" draggable={false}
-        style={side === "right" ? { transform: "scaleX(-1)" } : undefined} />
+        style={side === "right" ? { transform: "scaleX(-1)" } : undefined}  loading="lazy" />
     </div>
   );
 }
@@ -53,7 +53,7 @@ function Cloud({ src, x, y, opacity = 0.06, scale = 1, duration = 50 }: {
       animate={{ x: [0, 25, 0] }}
       transition={{ duration, repeat: Infinity, ease: "easeInOut" }}
     >
-      <img src={src} alt="" className="w-full h-auto" draggable={false} />
+      <img src={src} alt="" className="w-full h-auto" draggable={false}  loading="lazy" />
     </motion.div>
   );
 }
@@ -68,7 +68,7 @@ function BackdropScene({ src, opacity = 0.06 }: { src: string; opacity?: number 
       maskComposite: "intersect",
       WebkitMaskComposite: "source-in" as any,
     }}>
-      <img src={src} alt="" className="w-full h-full object-cover object-bottom" draggable={false} />
+      <img src={src} alt="" className="w-full h-full object-cover object-bottom" draggable={false}  loading="lazy" />
     </div>
   );
 }

@@ -221,7 +221,7 @@ export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManag
                 {/* Avatar */}
                 <div className="shrink-0">
                   {r.avatar_url ? (
-                    <img src={r.avatar_url} alt={r.name} className="w-12 h-12 rounded-full object-cover" />
+                    <img src={r.avatar_url} alt={r.name} className="w-12 h-12 rounded-full object-cover"  loading="lazy" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center font-baloo font-black text-white text-[16px]">
                       {r.name.charAt(0).toUpperCase()}

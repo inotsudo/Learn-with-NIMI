@@ -37,7 +37,7 @@ export function StickerPreviewCard({
             src={url || "/placeholder.svg?height=400&width=400&query=sticker%20preview"}
             alt={`${child.name} ${t("stickerPreviewAlt")}`}
             className="w-full rounded-md border"
-          />
+           loading="lazy" />
         ) : null}
         <MiniGloryStickerButton child={child} badge={badge} language={language} />
         <canvas ref={canvasRef} className="hidden" width={720} height={720} />

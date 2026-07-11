@@ -81,8 +81,8 @@ export default function Sidebar({ activeChild, isOpen, onClose, onLogoutClick }:
       {/* Brand logo */}
       <Link href="/home" onClick={onClose} className="flex flex-col items-center mb-10 leaf border border-[color:var(--ds-border-primary)]/70 bg-white/90 p-2 shadow-[0_12px_26px_rgba(15,23,42,0.06)] transition-transform duration-200 hover:scale-[1.01]">
         <img src={assets.nimiLogo} alt="NIMIPIKO"
-          className="w-20 h-20 rounded-full border-2 border-white shadow-[0_10px_28px_rgba(15,23,42,0.08)]" />
-        <img src={assets.nimiLogoText} alt="NIMIPIKO" className="h-7 w-auto mt-2" />
+          className="w-20 h-20 rounded-full border-2 border-white shadow-[0_10px_28px_rgba(15,23,42,0.08)]"  loading="lazy" />
+        <img src={assets.nimiLogoText} alt="NIMIPIKO" className="h-7 w-auto mt-2"  loading="lazy" />
         <p className="mt-1 px-2 py-0.5 rounded-full bg-[var(--ds-brand-soft)] text-[8px] font-bold text-[var(--ds-brand-primary)] select-none">
           🌟 Learn • Play • Grow 🌟
         </p>

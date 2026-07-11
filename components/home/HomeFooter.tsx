@@ -32,7 +32,7 @@ export default function HomeFooter() {
         {/* Brand row */}
         <div className="flex items-center gap-4">
           <img src={assets.nimiCircle} alt="NIMI"
-            className="w-12 h-12 rounded-full border-2 border-yellow-300 shadow-lg" />
+            className="w-12 h-12 rounded-full border-2 border-yellow-300 shadow-lg"  loading="lazy" />
           <div className="text-center">
             <p className="font-black text-2xl tracking-widest leading-none bg-gradient-to-r from-pink-300 via-purple-200 to-cyan-300 bg-clip-text text-transparent drop-shadow">
               NIMIPIKO
@@ -42,7 +42,7 @@ export default function HomeFooter() {
             </p>
           </div>
           <img src={assets.pikoCircle} alt="PIKO"
-            className="w-12 h-12 rounded-full border-2 border-blue-300 shadow-lg" />
+            className="w-12 h-12 rounded-full border-2 border-blue-300 shadow-lg"  loading="lazy" />
         </div>
 
         {/* Divider */}

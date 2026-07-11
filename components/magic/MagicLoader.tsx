@@ -54,7 +54,7 @@ function NimiWalking({ reduced }: AnimProps) {
       <motion.div className="absolute bottom-0 left-1/2 -translate-x-1/2"
         animate={reduced ? {} : MOTION.floatBounce.animate}
         transition={reduced ? {} : MOTION.floatBounce.transition}>
-        <img src={assets.nimiCircle} alt="Nimi" className="w-16 h-16 rounded-full border-3 border-yellow-400/50 shadow-xl" draggable={false} />
+        <img src={assets.nimiCircle} alt="Nimi" className="w-16 h-16 rounded-full border-3 border-yellow-400/50 shadow-xl" draggable={false}  loading="lazy" />
       </motion.div>
 
       {/* Sparkle trail */}

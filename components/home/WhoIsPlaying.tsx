@@ -59,7 +59,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
         className="flex items-center gap-3 mb-2"
       >
         <img src={assets.nimiCircle} alt="NIMI"
-          className="w-14 h-14 rounded-full border-3 border-yellow-300 shadow-xl" />
+          className="w-14 h-14 rounded-full border-3 border-yellow-300 shadow-xl"  loading="lazy" />
         <div>
           <p className="font-black text-3xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-yellow-200 to-cyan-300">
             NIMIPIKO
@@ -69,7 +69,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
           </p>
         </div>
         <img src={assets.pikoCircle} alt="PIKO"
-          className="w-14 h-14 rounded-full border-3 border-blue-300 shadow-xl" />
+          className="w-14 h-14 rounded-full border-3 border-blue-300 shadow-xl"  loading="lazy" />
       </motion.div>
 
       {/* Who's playing? */}

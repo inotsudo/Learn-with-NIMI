@@ -387,7 +387,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
                   className="flex-1 flex items-center gap-3 pr-3 sm:pr-4 py-3.5 text-left min-w-0"
                   onClick={() => setSelectedId(s.id)}>
                   {s.cover_url ? (
-                    <img src={getStorageUrl(s.cover_url)} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100 flex-shrink-0" />
+                    <img src={getStorageUrl(s.cover_url)} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100 flex-shrink-0"  loading="lazy" />
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600 font-bold text-[13px] flex-shrink-0">
                       {s.sort_order}

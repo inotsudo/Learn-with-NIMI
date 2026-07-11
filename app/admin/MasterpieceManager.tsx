@@ -238,7 +238,7 @@ export default function MasterpieceManager() {
             {orders.map(order => (
               <div key={order.id} className="bg-white rounded-xl border p-4 flex items-center gap-4">
                 {order.child_photo_url ? (
-                  <img src={order.child_photo_url} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400" />
+                  <img src={order.child_photo_url} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400"  loading="lazy" />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl">👤</div>
                 )}

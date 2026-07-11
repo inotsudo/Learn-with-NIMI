@@ -68,7 +68,7 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
                     <div className="relative h-32 bg-gradient-to-br from-gray-100 to-gray-200">
                       {story.cover_url ? (
                         <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                          className="absolute inset-0 w-full h-full object-cover" />
+                          className="absolute inset-0 w-full h-full object-cover"  loading="lazy" />
                       ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                           <span className="text-5xl">{story.theme_emoji}</span>
@@ -79,7 +79,7 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
                       {/* World badge — number chip */}
                       <div className="absolute top-2.5 left-2.5 w-7 h-7 flex items-center justify-center">
                         <img src={assets.storyCard.badge} alt="" aria-hidden="true"
-                          className="absolute inset-0 w-full h-full" />
+                          className="absolute inset-0 w-full h-full"  loading="lazy" />
                         <span className="relative z-10 text-white font-black text-xs drop-shadow-sm">
                           {story.sort_order}
                         </span>
@@ -100,7 +100,7 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
                     {/* Info panel — world texture layered in white section */}
                     <div className="p-3 bg-white flex-1 flex flex-col relative overflow-hidden">
                       <img src={assets.storyCard.background} alt="" aria-hidden="true"
-                        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.07]" />
+                        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.07]"  loading="lazy" />
                       <div className="relative z-10 flex flex-col flex-1">
                         <p className="font-black text-ds-text text-sm leading-tight">
                           {story.theme_emoji} {story.title}
@@ -140,7 +140,7 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100">
                     {story.cover_url ? (
                       <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                        className="absolute inset-0 w-full h-full object-cover grayscale opacity-40" />
+                        className="absolute inset-0 w-full h-full object-cover grayscale opacity-40"  loading="lazy" />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                         <span className="text-4xl grayscale opacity-40">{story.theme_emoji}</span>

@@ -27,7 +27,7 @@ export default function StoryLibraryProgress({ stories, currentStoryId }: Props)
     <div className="relative overflow-hidden leaf border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/40 to-white shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
       {/* World card texture */}
       <img src={assets.storyCard.background} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]"  loading="lazy" />
 
       <div className="absolute inset-x-4 top-4 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
       <div className="relative z-10 p-5">
@@ -69,7 +69,7 @@ export default function StoryLibraryProgress({ stories, currentStoryId }: Props)
                     }`}>
                     {story.cover_url ? (
                       <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                        className={`absolute inset-0 w-full h-full object-cover ${!story.unlocked ? "grayscale" : ""}`} />
+                        className={`absolute inset-0 w-full h-full object-cover ${!story.unlocked ? "grayscale" : ""}`}  loading="lazy" />
                     ) : (
                       <div className={`absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ${!story.unlocked ? "grayscale" : ""}`}>
                         <span className="text-3xl">{story.theme_emoji}</span>

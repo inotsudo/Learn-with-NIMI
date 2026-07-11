@@ -716,7 +716,7 @@ export default function ParentsZonePage() {
                                   }`}
                                   style={{ borderRadius: 'var(--leaf-r)' }}>
                                   <img src={`/assets/icon-${iconMap[slot.slot_key] ?? "flipflop"}.svg`}
-                                    alt="" className="w-8 h-8 rounded-lg shrink-0" />
+                                    alt="" className="w-8 h-8 rounded-lg shrink-0"  loading="lazy" />
                                   <div className="flex-1 min-w-0">
                                     <p className={`text-[12px] font-bold truncate ${slot.completed ? "text-ds-text" : "text-gray-400"}`}>
                                       {slot.title || slot.slot_key.replace(/_/g, " ")}
@@ -845,7 +845,7 @@ export default function ParentsZonePage() {
                                 className="flex flex-col items-center gap-2 text-center"
                               >
                                 <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-b from-amber-300 to-yellow-500 ring-[3px] ring-amber-400 shadow-[0_6px_20px_rgba(251,191,36,0.45)] relative">
-                                  <img src={assets.badgeExplorer} alt="" className="w-10 h-10" />
+                                  <img src={assets.badgeExplorer} alt="" className="w-10 h-10"  loading="lazy" />
                                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
                                     <span className="text-[8px] text-white font-black">✓</span>
                                   </div>
@@ -879,7 +879,7 @@ export default function ParentsZonePage() {
                             animate={{ rotate: [0, -8, 8, 0] }}
                             transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
                           >
-                            <img src={assets.starMascot} alt="" className="w-16 h-16 mx-auto mb-3 opacity-40" />
+                            <img src={assets.starMascot} alt="" className="w-16 h-16 mx-auto mb-3 opacity-40"  loading="lazy" />
                           </motion.div>
                           <p className="text-ds-text font-black text-[15px] mb-1">No badges yet</p>
                           <p className="text-gray-400 text-[12px] font-nunito">

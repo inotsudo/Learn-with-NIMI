@@ -84,7 +84,7 @@ function BookInner({ story, onComplete, completed, onExit }: {
               <div className="w-full h-full flex flex-col items-center justify-center p-6 relative overflow-hidden">
                 {/* World completion art — golden starburst (HP) / treasure chest + bubbles (Ocean) */}
                 <img src={assets.reader.completion} alt="" aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.22]" />
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.22]"  loading="lazy" />
                 {Array.from({ length: 8 }).map((_, i) => (
                   <span key={i} className="absolute text-yellow-400/20" style={{
                     left: `${10 + (i * 11) % 80}%`, top: `${8 + (i * 13) % 75}%`,
@@ -93,9 +93,9 @@ function BookInner({ story, onComplete, completed, onExit }: {
                 ))}
                 <div className="relative z-10 flex items-end justify-center gap-0 mb-4">
                   <img src={assets.nimiCircle} alt="Nimi"
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-yellow-400 shadow-2xl shadow-yellow-500/30 -mr-3 relative z-10" />
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-yellow-400 shadow-2xl shadow-yellow-500/30 -mr-3 relative z-10"  loading="lazy" />
                   <img src={assets.pikoCircle} alt="Piko"
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-blue-400 shadow-2xl shadow-blue-500/30 -ml-3" />
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-blue-400 shadow-2xl shadow-blue-500/30 -ml-3"  loading="lazy" />
                 </div>
                 <div className="relative z-10 text-center">
                   <p className="font-baloo font-black text-yellow-300 text-[28px] sm:text-[34px] drop-shadow-lg">{ t("storyBookTheEnd") }</p>

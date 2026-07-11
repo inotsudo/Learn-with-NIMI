@@ -14,5 +14,5 @@ interface Props {
 export default function Flag({ lang, className = "w-5 h-4" }: Props) {
   const src = FLAGS[lang];
   if (!src) return <span className={className}>🌐</span>;
-  return <img src={src} alt={lang.toUpperCase()} className={`${className} rounded-sm object-cover`} />;
+  return <img src={src} alt={lang.toUpperCase()} className={`${className} rounded-sm object-cover`}  loading="lazy" />;
 }

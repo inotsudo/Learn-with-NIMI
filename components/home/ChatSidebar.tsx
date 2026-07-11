@@ -98,7 +98,7 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount }: 
           <p className="text-[11px] text-gray-500 leading-snug">{t("nimiTipBody")}</p>
         </div>
         <img src={assets.nimiCircle} alt="NIMI"
-          className="w-10 h-10 rounded-full object-cover border-2 border-yellow-300 shadow flex-shrink-0" />
+          className="w-10 h-10 rounded-full object-cover border-2 border-yellow-300 shadow flex-shrink-0"  loading="lazy" />
       </div>
     </div>
   );

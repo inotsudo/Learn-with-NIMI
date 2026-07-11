@@ -107,7 +107,7 @@ export default function StoryJourney({ completedSteps }: Props) {
                   <div className="relative">
                     <img src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
                       alt={step.isPiko ? "PIKO" : "NIMI"}
-                      className="w-[60px] h-[60px] rounded-full object-cover border-4 border-white shadow-md" />
+                      className="w-[60px] h-[60px] rounded-full object-cover border-4 border-white shadow-md"  loading="lazy" />
                     <div className="absolute -bottom-1.5 -right-1.5 bg-white/90 rounded-full w-7 h-7 flex items-center justify-center text-base shadow border border-gray-200 leading-none">
                       {step.emoji}
                     </div>
@@ -165,7 +165,7 @@ export default function StoryJourney({ completedSteps }: Props) {
                   <div className="relative">
                     <img src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
                       alt={step.isPiko ? "PIKO" : "NIMI"}
-                      className="w-14 h-14 rounded-full object-cover border-4 border-white shadow-md" />
+                      className="w-14 h-14 rounded-full object-cover border-4 border-white shadow-md"  loading="lazy" />
                     <div className="absolute -bottom-1.5 -right-1.5 bg-white/90 rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-gray-200 leading-none">
                       {step.emoji}
                     </div>
@@ -216,7 +216,7 @@ export default function StoryJourney({ completedSteps }: Props) {
                     <div className="relative">
                       <img src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
                         alt={step.isPiko ? "PIKO" : "NIMI"}
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-4 border-white shadow-md" />
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-4 border-white shadow-md"  loading="lazy" />
                       <div className="absolute -bottom-1.5 -right-1.5 bg-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-gray-200 leading-none">
                         {step.emoji}
                       </div>

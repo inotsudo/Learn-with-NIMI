@@ -23,7 +23,7 @@ export default function HelpSupportPage() {
           <HeroBanner zone="communitySquare" className="mb-4">
             <div className="relative z-10 p-5 flex items-center gap-4">
               <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: DURATION.loopFloat, repeat: Infinity, ease: EASE.standard }}>
-                <img src={assets.nimiCircle} alt="NIMI" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white/50 shadow-lg" />
+                <img src={assets.nimiCircle} alt="NIMI" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white/50 shadow-lg"  loading="lazy" />
               </motion.div>
               <div className="flex-1">
                 <h1 className="font-baloo font-black text-white text-[24px] sm:text-[30px] leading-tight">{t("helpSupportTitle")}</h1>

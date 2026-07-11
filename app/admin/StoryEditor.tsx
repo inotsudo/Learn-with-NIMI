@@ -645,7 +645,7 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
           <div className="w-full h-full flex items-center justify-center"><div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" /></div>
         ) : page.image_url ? (
           <>
-            <img src={getStorageUrl(page.image_url)} alt={`Page ${page.page_number}`} className="w-full h-full object-cover" />
+            <img src={getStorageUrl(page.image_url)} alt={`Page ${page.page_number}`} className="w-full h-full object-cover"  loading="lazy" />
             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
               <span className="text-white text-[11px] font-bold bg-black/50 rounded-lg px-3 py-1.5">Replace</span>
             </div>
@@ -723,7 +723,7 @@ function ColoringPageCard({ page, onUpdated }: { page: ColoringPage; onUpdated: 
           <div className="w-full h-full flex items-center justify-center"><div className="w-5 h-5 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" /></div>
         ) : page.template_image_url ? (
           <>
-            <img src={getStorageUrl(page.template_image_url)} alt={`Coloring ${page.page_number}`} className="w-full h-full object-cover" />
+            <img src={getStorageUrl(page.template_image_url)} alt={`Coloring ${page.page_number}`} className="w-full h-full object-cover"  loading="lazy" />
             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
               <span className="text-white text-[11px] font-bold bg-black/50 rounded-lg px-2.5 py-1">Replace</span>
             </div>

@@ -208,7 +208,7 @@ export default function ColoringEditor({ book, onSaved }: ColoringEditorProps) {
                   }`}
                 >
                   {p.template_image_url ? (
-                    <img src={getStorageUrl(p.template_image_url)} alt={`Page ${p.page_number}`} className="w-full h-full object-cover" />
+                    <img src={getStorageUrl(p.template_image_url)} alt={`Page ${p.page_number}`} className="w-full h-full object-cover"  loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-300">
                       <ImageIcon size={20} />
@@ -357,7 +357,7 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Template Image</label>
             {imageUrl ? (
               <div className="flex items-center gap-3">
-                <img src={getStorageUrl(imageUrl)} alt={`Page ${page.page_number}`} className="w-16 h-20 rounded-xl object-cover border border-gray-100 shadow-sm" />
+                <img src={getStorageUrl(imageUrl)} alt={`Page ${page.page_number}`} className="w-16 h-20 rounded-xl object-cover border border-gray-100 shadow-sm"  loading="lazy" />
                 <button onClick={() => setImageUrl('')} className="text-xs font-bold text-red-500 hover:text-red-600 px-3 py-1.5 rounded-full hover:bg-red-50 transition">Remove</button>
               </div>
             ) : (
@@ -390,7 +390,7 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
             <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
             <div className="relative">
               {imageUrl ? (
-                <img src={getStorageUrl(imageUrl)} alt={`Page ${page.page_number}`} className="w-full h-48 object-cover rounded-2xl mb-3 border-2 border-white/30 bg-white" />
+                <img src={getStorageUrl(imageUrl)} alt={`Page ${page.page_number}`} className="w-full h-48 object-cover rounded-2xl mb-3 border-2 border-white/30 bg-white"  loading="lazy" />
               ) : (
                 <div className="w-full h-48 rounded-2xl mb-3 border-2 border-white/30 bg-white/10 flex items-center justify-center text-white/60">
                   <ImageIcon size={28} />

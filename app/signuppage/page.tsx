@@ -14,7 +14,7 @@ import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 
 export default function SignupPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
       <SignupInner />
     </Suspense>
   );
@@ -280,7 +280,7 @@ function SignupInner() {
       <div className="relative z-10 flex items-center gap-3 mt-10 max-w-md">
         <img
           src={assets.nimiCircle} alt="NIMI"
-          className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 shadow-md flex-shrink-0" />
+          className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 shadow-md flex-shrink-0"  loading="lazy" />
         <div className="bg-white border border-ds-border rounded-2xl rounded-bl-sm shadow-sm px-4 py-3">
           <p className="text-sm font-bold text-ds-text leading-snug">
             Every great adventure starts with a single step. Let&apos;s go! ✨

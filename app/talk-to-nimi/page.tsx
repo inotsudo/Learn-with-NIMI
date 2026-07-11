@@ -405,7 +405,7 @@ function NimiChatPageContent({
                     >
                       {isNimi && (
                         <img src={assets.nimiCircle} alt="NIMI"
-                          className="w-9 h-9 rounded-full object-cover flex-shrink-0 shadow border-2 border-emerald-100" />
+                          className="w-9 h-9 rounded-full object-cover flex-shrink-0 shadow border-2 border-emerald-100"  loading="lazy" />
                       )}
                       <div className={`text-[14px] leading-relaxed px-4 py-2.5 shadow-sm max-w-[78%] ${
                         isNimi

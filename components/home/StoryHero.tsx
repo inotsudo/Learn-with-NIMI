@@ -35,7 +35,7 @@ function WorldAtmosphere({ assets, gradientClass }: AtmosphereProps) {
         alt=""
         className="absolute inset-0 w-full h-full object-cover"
         draggable={false}
-      />
+       loading="lazy" />
       {/* Theme gradient tint — reinforces world palette, aids readability */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-55`} />
     </>
@@ -162,7 +162,7 @@ export default function StoryHero({ childName, childAvatar, story, slots, introV
                 src={getStorageUrl(story.cover_url)}
                 alt={story.title}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
-              />
+               loading="lazy" />
             ) : (
               <WorldElements
                 assets={assets}
@@ -185,7 +185,7 @@ export default function StoryHero({ childName, childAvatar, story, slots, introV
             src={assets.storyCurrentCover}
             alt="Current Story"
             className="absolute top-3 sm:top-4 left-3 sm:left-4 z-20 h-[28px] sm:h-[36px] w-auto drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-          />
+           loading="lazy" />
 
           {/* Content text — z-10 */}
           <div className="relative z-10 p-5 sm:p-7 md:p-8 pt-12 sm:pt-14 max-w-[65%] sm:max-w-[55%] flex flex-col justify-center min-h-[260px] sm:min-h-[320px]">
@@ -200,7 +200,7 @@ export default function StoryHero({ childName, childAvatar, story, slots, introV
                 src={assets.storyContinue}
                 alt={isComplete ? "View Certificate" : introViewed < 4 ? "Start Intro" : "Continue Story"}
                 className="h-[36px] sm:h-[44px] w-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
-              />
+               loading="lazy" />
             </motion.div>
           </div>
         </div>

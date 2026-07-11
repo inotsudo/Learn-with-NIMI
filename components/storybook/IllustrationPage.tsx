@@ -23,12 +23,13 @@ const IllustrationPage = forwardRef<HTMLDivElement, Props>(({ imageUrl, side, te
     <div ref={ref} className="w-full h-full relative overflow-hidden select-none leaf-lg border border-amber-100/70" style={{ background: "#faf6ee" }}>
       {/* World page texture — parchment hatching (HP) / sea-glass waves (Ocean) */}
       <img src={assets.reader.pageBackground} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]"  loading="lazy" />
 
       {/* Story illustration */}
       <img
         src={url}
         alt=""
+        loading="lazy"
         onLoad={() => setLoaded(true)}
         draggable={false}
         className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
@@ -42,7 +43,7 @@ const IllustrationPage = forwardRef<HTMLDivElement, Props>(({ imageUrl, side, te
 
       {/* World page frame — burned edges (HP) / coral wave border (Ocean) */}
       <img src={assets.reader.pageFrame} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.09]" />
+        className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.09]"  loading="lazy" />
 
       {/* Story text overlay */}
       <AnimatePresence>

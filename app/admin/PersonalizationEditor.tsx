@@ -92,7 +92,7 @@ function PagePlacementCard({
       >
         {imageUrl ? (
           <img src={imageUrl} alt={`Page ${page.page_number}`}
-            className="absolute inset-0 w-full h-full object-cover" />
+            className="absolute inset-0 w-full h-full object-cover"  loading="lazy" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-300 text-sm font-bold">
             No image

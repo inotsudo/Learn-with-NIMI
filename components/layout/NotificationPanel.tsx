@@ -103,7 +103,7 @@ export default function NotificationPanel({ isOpen, onClose, onCountChange }: Pr
           >
             {/* World panel texture */}
             <img src={assets.storyCard.background} alt="" aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]" />
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]"  loading="lazy" />
 
             <div className="relative z-10">
               {/* Header */}

@@ -148,7 +148,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
                         <div className="flex items-center gap-3">
                           {p.image_url ? (
                             <img src={p.image_url.startsWith('/') ? p.image_url : getStorageUrl(p.image_url)}
-                              alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100" />
+                              alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100"  loading="lazy" />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300 text-lg">
                               {p.type === 'challenge' ? '🏆' : p.type === 'certificate' ? '📜' : '🎨'}

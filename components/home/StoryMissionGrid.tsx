@@ -88,7 +88,7 @@ export default function StoryMissionGrid({ storySlug, slots }: Props) {
                           src={mission.mascot === "nimi" ? assets.nimiCircle : assets.pikoCircle}
                           alt=""
                           className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-white/30 shadow-xl object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
+                         loading="lazy" />
                         <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center text-sm shadow-lg">
                           {mission.emoji}
                         </div>

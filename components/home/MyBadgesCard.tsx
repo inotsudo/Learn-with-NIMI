@@ -25,7 +25,7 @@ export default function MyBadgesCard({ slots }: Props) {
   return (
     <div className="relative overflow-hidden border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/40 to-white leaf p-4 flex flex-col shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
       <img src={assets.storyCard.background} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]" />
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]"  loading="lazy" />
       <div className="absolute inset-x-4 top-4 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
       <div className="relative z-10 flex flex-col flex-1">
         <div className="mb-3 flex justify-center">
@@ -53,11 +53,11 @@ export default function MyBadgesCard({ slots }: Props) {
                       is ? "border-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)]" : "border-gray-200 bg-gray-50"
                     }`}>
                     <img src={b.icon} alt={b.label}
-                      className={`w-12 h-12 ${is ? "" : "grayscale opacity-30"}`} />
+                      className={`w-12 h-12 ${is ? "" : "grayscale opacity-30"}`}  loading="lazy" />
                   </motion.div>
                   {is && (
                     <img src={assets.rewards.badgeFrame} alt="" aria-hidden="true"
-                      className="absolute inset-0 w-full h-full pointer-events-none opacity-75" />
+                      className="absolute inset-0 w-full h-full pointer-events-none opacity-75"  loading="lazy" />
                   )}
                   {!is && (
                     <div className="absolute inset-0 flex items-center justify-center">

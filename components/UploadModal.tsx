@@ -149,7 +149,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
                 <input {...getInputProps()} />
                 {preview ? (
                   <div className="relative h-48 w-full rounded-md overflow-hidden mb-4">
-                    <img src={preview} alt="Preview" className="object-contain w-full h-full" />
+                    <img src={preview} alt="Preview" className="object-contain w-full h-full"  loading="lazy" />
                   </div>
                 ) : (
                   <div className="space-y-3">

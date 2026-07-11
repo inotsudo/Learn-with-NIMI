@@ -82,7 +82,7 @@ export default function AchievementRow({ slots, storyTitle, storySlug, isComplet
             <>
               <div className="relative w-20 h-20 overflow-hidden border-2 border-white/10 mb-2 shadow-lg" style={{ borderRadius: 'var(--leaf-r)' }}>
                 {nextStory.cover_url ? (
-                  <img src={getStorageUrl(nextStory.cover_url)} alt="" className="absolute inset-0 w-full h-full object-cover grayscale opacity-25" />
+                  <img src={getStorageUrl(nextStory.cover_url)} alt="" className="absolute inset-0 w-full h-full object-cover grayscale opacity-25"  loading="lazy" />
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-700/30 to-gray-900/50 flex items-center justify-center">
                     <span className="text-3xl opacity-25">{nextStory.theme_emoji}</span>

@@ -23,7 +23,7 @@ export default function EncouragementBanner({ childName }: Props) {
       <motion.div className="relative shrink-0"
         animate={{ y: [0, -3, 0] }} transition={{ duration: 3, repeat: Infinity }}>
         <img src={assets.nimiCircle} alt="NIMI"
-          className="w-14 h-14 rounded-full border-[3px] border-yellow-400 shadow-lg" />
+          className="w-14 h-14 rounded-full border-[3px] border-yellow-400 shadow-lg"  loading="lazy" />
         <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
           <span className="text-[8px]">💬</span>
         </div>

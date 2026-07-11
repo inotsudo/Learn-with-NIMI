@@ -407,7 +407,7 @@ export default function MasterpiecePage() {
                   >
                     {photoPreview ? (
                       <>
-                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover"  loading="lazy" />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition rounded-full">
                           <Camera className="w-8 h-8 text-white" />
                           <p className="text-white text-[12px] font-bold mt-1">Change</p>
