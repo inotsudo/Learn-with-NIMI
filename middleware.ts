@@ -66,20 +66,32 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // 2. Admin route protection — redirect unauthenticated visitors to /admin/login
+  // 2. Admin route protection — session + admins table check
   if (
     pathname.startsWith("/admin") &&
     !pathname.startsWith("/admin/login") &&
     !pathname.startsWith("/admin/reset-password")
   ) {
     const supabase = createMiddlewareClient({ req, res });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       const loginUrl = new URL("/admin/login", req.url);
       loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Verify the user is in the admins table — prevents regular parents
+    // from seeing admin UI during the client-side check window.
+    const { data: adminRow } = await supabase
+      .from("admins")
+      .select("id")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    if (!adminRow) {
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("error", "not_admin");
       return NextResponse.redirect(loginUrl);
     }
   }
