@@ -81,7 +81,7 @@ export default function StoryLibraryPage() {
 
       const perStory: Record<string, number> = {};
       for (const row of progressData ?? []) {
-        const m = row.missions as any;
+        const m = row.missions as { stars?: number; story_slots?: { story_id?: string } | { story_id?: string }[] } | null;
         const storyId = Array.isArray(m?.story_slots) ? m.story_slots[0]?.story_id : m?.story_slots?.story_id;
         if (storyId) perStory[storyId] = (perStory[storyId] ?? 0) + (m?.stars ?? 0);
       }
@@ -127,14 +127,14 @@ export default function StoryLibraryPage() {
           <HeroBanner zone="library" className="mb-6">
             <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full bg-white/10" />
             <div className="absolute -bottom-8 -left-8 w-44 h-44 rounded-full bg-white/10" />
-            {[
+            {(([
               { top: "20%", left: "6%",  size: 16, delay: 0 },
               { top: "65%", left: "14%", size: 11, delay: 0.7 },
               { top: "25%", right: "5%", size: 20, delay: 0.4 },
               { top: "70%", right: "9%", size: 13, delay: 1.1 },
-            ].map((s, i) => (
+            ]) as Array<{top:string;size:number;delay:number;left?:string;right?:string}>).map((s, i) => (
               <motion.span key={i} className="absolute pointer-events-none select-none"
-                style={{ top: s.top, left: (s as any).left, right: (s as any).right, fontSize: s.size }}
+                style={{ top: s.top, left: s.left, right: s.right, fontSize: s.size }}
                 animate={{ opacity:[0.3,1,0.3], scale:[0.7,1.3,0.7], rotate:[0,20,-20,0] }}
                 transition={{ duration: DURATION.loopBase + DURATION.moderate, repeat: Infinity, delay: s.delay }} aria-hidden>⭐</motion.span>
             ))}

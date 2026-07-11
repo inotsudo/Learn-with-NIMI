@@ -224,7 +224,7 @@ export default function HomePage() {
       .limit(3)
       .then(({ data }) => {
         if (data) setCommunityCreations(
-          data.map((r: any) => ({ id: r.id, imageUrl: r.image_url, childName: r.child_name, type: r.type }))
+          data.map(r => ({ id: r.id as string, imageUrl: (r.image_url as string | null) ?? "", childName: (r.child_name as string | null) ?? "", type: (r.type as string | null) ?? "art" }))
         );
       });
 

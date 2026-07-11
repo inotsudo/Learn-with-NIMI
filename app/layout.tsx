@@ -7,6 +7,7 @@ import { UserProvider } from "@/contexts/UserContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppThemeProvider } from "@/contexts/AppThemeProvider";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import ErrorBoundary from "@/components/layout/ErrorBoundary";
 
 const baloo  = Baloo_2({ subsets: ["latin"], variable: "--font-baloo",  weight: ["400","500","600","700","800"] });
 const nunito = Nunito ({  subsets: ["latin"], variable: "--font-nunito", weight: ["400","600","700","800","900"] });
@@ -79,7 +80,9 @@ r.setProperty("--theme-sidebar","#FFFFFF");
               <UserProvider>
                 <ThemeProvider>
                   <AppThemeProvider>
-                    {children}
+                    <ErrorBoundary>
+                      {children}
+                    </ErrorBoundary>
                     <CookieConsentBanner />
                   </AppThemeProvider>
                 </ThemeProvider>

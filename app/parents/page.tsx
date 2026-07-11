@@ -147,11 +147,11 @@ export default function ParentsZonePage() {
           .order("felt_at", { ascending: false })
           .limit(10);
         if (feelingRows) {
-          setFeelings(feelingRows.map((r: any) => ({
-            story_id: r.story_id,
-            title: r.stories?.title ?? "Story",
-            feeling: r.feeling,
-            felt_at: r.felt_at,
+          setFeelings(feelingRows.map(r => ({
+            story_id: ((r as Record<string, unknown>).story_id as string | null) ?? "",
+            title: ((r as Record<string, unknown>).stories as Record<string,unknown> | null)?.title as string ?? "Story",
+            feeling: r.feeling as string,
+            felt_at: r.felt_at as string,
           })));
         }
       }
@@ -167,7 +167,7 @@ export default function ParentsZonePage() {
       if (codeRes.code) setReferralCode(codeRes.code);
       const redemptions = redemptionsRes.data ?? [];
       setReferralCount(redemptions.length);
-      setReferralRewards(redemptions.filter((r: any) => r.reward_granted_at).length);
+      setReferralRewards(redemptions.filter(r => r.reward_granted_at).length);
 
       setLoading(false);
     })();

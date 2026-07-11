@@ -358,10 +358,10 @@ export default function ChallengesPage() {
                 <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-white/10 pointer-events-none" />
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
 
-                {[{t:"12%",l:"5%",d:0},{t:"70%",l:"7%",d:0.55},{t:"18%",r:"5%",d:0.3},{t:"66%",r:"8%",d:0.9}].map((s,i) => (
+                {([ {t:"12%",l:"5%",d:0},{t:"70%",l:"7%",d:0.55},{t:"18%",r:"5%",d:0.3},{t:"66%",r:"8%",d:0.9} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i) => (
                   <motion.span key={i}
                     className="absolute text-xl pointer-events-none select-none"
-                    style={{ top:s.t, left:(s as any).l, right:(s as any).r }}
+                    style={{ top:s.t, left:s.l, right:s.r }}
                     animate={{ opacity:[0.3,0.9,0.3], y:[0,-7,0], scale:[0.8,1.25,0.8] }}
                     transition={{ duration:2.5, repeat:Infinity, delay:s.d }}
                     aria-hidden

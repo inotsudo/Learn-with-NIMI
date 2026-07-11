@@ -168,9 +168,10 @@ export default function StoryMissionPage() {
 
       if (missionData) {
         // Resolve language-specific version
-        const versions = (missionData.mission_versions ?? []) as any[];
-        const langVersion = versions.find((v: any) => v.language === child.language && v.published) ??
-                           versions.find((v: any) => v.language === "en" && v.published);
+        type VersionRow = { language: string; published: boolean; title?: string | null; subtitle?: string | null; tip_text?: string | null; content_json?: Record<string, unknown> | null; media_url?: string | null };
+        const versions = (missionData.mission_versions ?? []) as VersionRow[];
+        const langVersion = versions.find(v => v.language === child.language && v.published) ??
+                           versions.find(v => v.language === "en" && v.published);
 
         const childN = child.name;
         const resolved: Mission = {
@@ -380,8 +381,8 @@ export default function StoryMissionPage() {
 
           {/* Post-completion delight layer */}
           {completed && mission && (() => {
-            const questions = Array.isArray((mission.content as any)?.questions) ? (mission.content as any).questions : [];
-            const vocabulary = Array.isArray((mission.content as any)?.vocabulary) ? (mission.content as any).vocabulary : [];
+            const questions = Array.isArray(mission.content?.questions) ? (mission.content.questions as QuestionData[]) : [];
+            const vocabulary = Array.isArray(mission.content?.vocabulary) ? (mission.content.vocabulary as VocabWord[]) : [];
             return (
               <div className="space-y-4 mt-4">
                 {/* 1. Nimi personal reaction */}

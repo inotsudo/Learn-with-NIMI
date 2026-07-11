@@ -229,9 +229,9 @@ export default function MasterpiecePage() {
             <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
 
             {/* Floating sparkles */}
-            {[{t:"15%",l:"7%",d:0},{t:"70%",l:"11%",d:0.7},{t:"20%",r:"6%",d:0.35},{t:"65%",r:"9%",d:1.1}].map((s,i)=>(
+            {([ {t:"15%",l:"7%",d:0},{t:"70%",l:"11%",d:0.7},{t:"20%",r:"6%",d:0.35},{t:"65%",r:"9%",d:1.1} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i)=>(
               <motion.span key={i} className="absolute pointer-events-none select-none text-[15px]"
-                style={{ top:s.t, left:(s as any).l, right:(s as any).r }}
+                style={{ top:s.t, left:s.l, right:s.r }}
                 animate={{ opacity:[0.3,1,0.3], y:[0,-6,0] }}
                 transition={{ duration:2.5, repeat:Infinity, delay:s.d }} aria-hidden>
                 {["✨","⭐","👑","🌟"][i]}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 const EFFECTIVE_DATE = "July 10, 2026";
@@ -25,7 +26,7 @@ export default function PrivacyPolicyPage() {
       <header className="bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <img src="/nimi-logo.png" alt="NIMIPIKO" className="w-9 h-9 object-contain"  loading="lazy" />
+            <Image src="/nimi-logo.png" alt="NIMIPIKO" width={36} height={36} className="object-contain" />
             <span className="font-baloo font-black text-gray-800 text-[16px] hidden sm:block">NIMIPIKO</span>
           </Link>
           <div className="flex-1" />

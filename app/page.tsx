@@ -206,7 +206,7 @@ export default function LandingPage() {
           <div className="flex justify-center mt-1.5">
             <motion.div whileHover={{scale:1.06}} whileTap={{scale:0.93}} transition={{type:"spring",stiffness:420,damping:22}}>
               <Link href={authed ? "/home" : "/signuppage"}>
-                <img loading="lazy" src="/themes/default/navs/start-learning.png" alt="Start Learning" draggable={false}
+                <Image src="/themes/default/navs/start-learning.png" alt="Start Learning" width={150} height={100} draggable={false}
                   className="h-auto object-contain drop-shadow-lg select-none" style={{width:"clamp(118px,34vw,150px)"}} />
               </Link>
             </motion.div>
@@ -345,13 +345,13 @@ export default function LandingPage() {
                   style={{background:"linear-gradient(145deg,#FDF2F8,#FCE7F3)", borderRadius:'var(--leaf-r-lg)'}}>
                   <div className="p-7 flex flex-col flex-1">
                     <div className="flex items-center gap-3 mb-5">
-                      <img loading="lazy" src="/themes/default/quick-actions/btn-read.png" alt="" className="w-14 h-14 object-contain drop-shadow-sm" />
+                      <Image src="/themes/default/quick-actions/btn-read.png" alt="" width={56} height={56} className="object-contain drop-shadow-sm" />
                       <div>
                         <div className="w-8 h-1.5 rounded-full bg-pink-400 mb-1" />
                         <h3 className="font-baloo font-black text-gray-900 text-[20px]">Stories</h3>
                       </div>
                     </div>
-                    <img loading="lazy" src="/themes/default/characters/nimi.png" alt="Nimi" className="w-28 h-28 object-contain self-center mb-4 drop-shadow" />
+                    <Image src="/themes/default/characters/nimi.png" alt="Nimi" width={112} height={112} className="object-contain self-center mb-4 drop-shadow" />
                     <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-5">
                       Beautifully illustrated stories that build reading, vocabulary and imagination — in 3 languages.
                     </p>
@@ -372,16 +372,16 @@ export default function LandingPage() {
                   style={{background:"linear-gradient(145deg,#FFF7ED,#FFEDD5)", borderRadius:'var(--leaf-r-lg)'}}>
                   <div className="p-7 flex flex-col flex-1">
                     <div className="flex items-center gap-3 mb-5">
-                      <img loading="lazy" src="/themes/default/quick-actions/btn-create.png" alt="" className="w-14 h-14 object-contain drop-shadow-sm" />
+                      <Image src="/themes/default/quick-actions/btn-create.png" alt="" width={56} height={56} className="object-contain drop-shadow-sm" />
                       <div>
                         <div className="w-8 h-1.5 rounded-full bg-orange-400 mb-1" />
                         <h3 className="font-baloo font-black text-gray-900 text-[20px]">Missions</h3>
                       </div>
                     </div>
                     <div className="flex justify-center gap-2 mb-4">
-                      <img loading="lazy" src="/themes/default/quick-actions/btn-move.png" alt="" className="w-12 h-12 object-contain" />
-                      <img loading="lazy" src="/themes/default/characters/piko.png" alt="Piko" className="w-24 h-24 object-contain drop-shadow -mt-2" />
-                      <img loading="lazy" src="/themes/default/quick-actions/btn-sing.png" alt="" className="w-12 h-12 object-contain" />
+                      <Image src="/themes/default/quick-actions/btn-move.png" alt="" width={48} height={48} className="object-contain" />
+                      <Image src="/themes/default/characters/piko.png" alt="Piko" width={96} height={96} className="object-contain drop-shadow -mt-2" />
+                      <Image src="/themes/default/quick-actions/btn-sing.png" alt="" width={48} height={48} className="object-contain" />
                     </div>
                     <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-5">
                       Hands-on activities: drawing, singing, moving and exploring. Learning through play, not passive screens.
@@ -403,15 +403,15 @@ export default function LandingPage() {
                   style={{background:"linear-gradient(145deg,#EFF6FF,#DBEAFE)", borderRadius:'var(--leaf-r-lg)'}}>
                   <div className="p-7 flex flex-col flex-1">
                     <div className="flex items-center gap-3 mb-5">
-                      <img loading="lazy" src="/themes/default/rewards/trophy.png" alt="" className="w-14 h-14 object-contain drop-shadow-sm" />
+                      <Image src="/themes/default/rewards/trophy.png" alt="" width={56} height={56} className="object-contain drop-shadow-sm" />
                       <div>
                         <div className="w-8 h-1.5 rounded-full bg-blue-500 mb-1" />
                         <h3 className="font-baloo font-black text-gray-900 text-[20px]">Progress</h3>
                       </div>
                     </div>
                     <div className="flex justify-center items-end gap-2 mb-4">
-                      <img loading="lazy" src="/themes/default/characters/zilo.png" alt="Zilo" className="w-24 h-24 object-contain drop-shadow" />
-                      <img loading="lazy" src="/themes/default/rewards/ribbon.png" alt="" className="w-14 h-14 object-contain" />
+                      <Image src="/themes/default/characters/zilo.png" alt="Zilo" width={96} height={96} className="object-contain drop-shadow" />
+                      <Image src="/themes/default/rewards/ribbon.png" alt="" width={56} height={56} className="object-contain" />
                     </div>
                     <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-5">
                       Every milestone is celebrated. Parents track achievements while kids earn badges and certificates.
@@ -918,7 +918,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-10 mb-10">
             <div className="flex flex-col items-center sm:items-start gap-3">
-              <img loading="lazy" src="/nimi-logo.png" alt="NIMIPIKO" className="w-14 h-14 object-contain" />
+              <Image src="/nimi-logo.png" alt="NIMIPIKO" width={56} height={56} className="object-contain" />
               <p className="font-baloo font-black text-white text-[17px]">NIMIPIKO</p>
               <p className="font-nunito text-gray-400 text-[12px] max-w-[190px] text-center sm:text-left leading-relaxed">
                 Where every child becomes the hero of their own story.

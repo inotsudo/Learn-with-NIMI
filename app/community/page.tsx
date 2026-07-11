@@ -30,16 +30,18 @@ function timeAgo(dateStr: string): string {
   return d < 7 ? `${d}d ago` : `${Math.floor(d / 7)}w ago`;
 }
 
-function mapCreation(c: any, uid: string): Creation {
+type CreationRow = { id: string; child_name?: string | null; children?: { avatar_url?: string | null } | null; age?: number | null; description?: string | null; image_url?: string | null; likes?: { user_id: string }[] | null; type?: string | null; created_at: string };
+
+function mapCreation(c: CreationRow, uid: string): Creation {
   return {
     id: c.id,
     childName: c.child_name || "Friend",
-    childAvatar: c.children?.avatar_url || undefined,
-    age: c.age,
-    description: c.description,
-    imageUrl: c.image_url,
+    childAvatar: c.children?.avatar_url ?? undefined,
+    age: c.age ?? 0,
+    description: c.description ?? undefined,
+    imageUrl: c.image_url ?? "",
     likes: c.likes?.length || 0,
-    likedByUser: c.likes?.some((l: any) => l.user_id === uid) || false,
+    likedByUser: c.likes?.some(l => l.user_id === uid) || false,
     isPublic: true,
     type: c.type || "art",
     createdAt: c.created_at,
@@ -368,7 +370,7 @@ export default function CommunityPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setUserId(user.id);
       const { data } = await supabase.from("children").select("name, avatar_url").order("created_at");
-      if (data) setFriends(data.map((c: any) => ({ name: c.name, avatar: c.avatar_url || "🌟" })));
+      if (data) setFriends(data.map(c => ({ name: c.name ?? "Friend", avatar: c.avatar_url || "🌟" })));
     })();
   }, []);
 
@@ -381,7 +383,7 @@ export default function CommunityPage() {
       .eq("status", "approved")
       .order("created_at", { ascending: false })
       .range(from, to);
-    const mapped = (data ?? []).map((c: any) => mapCreation(c, userId));
+    const mapped = (data ?? []).map(c => mapCreation(c as CreationRow, userId));
     setCreations(prev => refresh ? mapped : [...prev, ...mapped]);
     setTotalCount(count ?? 0);
     setHasMore((count || 0) > to + 1);
@@ -436,10 +438,10 @@ export default function CommunityPage() {
             <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
 
             {/* Floating stars */}
-            {[{t:"13%",l:"4%",d:0},{t:"71%",l:"8%",d:0.55},{t:"18%",r:"5%",d:0.3},{t:"67%",r:"8%",d:0.95}].map((s,i) => (
+            {([ {t:"13%",l:"4%",d:0},{t:"71%",l:"8%",d:0.55},{t:"18%",r:"5%",d:0.3},{t:"67%",r:"8%",d:0.95} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i) => (
               <motion.span key={i}
                 className="absolute text-xl pointer-events-none select-none"
-                style={{ top:s.t, left:(s as any).l, right:(s as any).r }}
+                style={{ top:s.t, left:s.l, right:s.r }}
                 animate={{ opacity:[0.25,0.9,0.25], y:[0,-7,0] }}
                 transition={{ duration:2.6, repeat:Infinity, delay:s.d }}
                 aria-hidden

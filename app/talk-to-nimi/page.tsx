@@ -244,14 +244,14 @@ function NimiChatPageContent({
           <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
 
           {/* Floaters */}
-          {[
+          {(([
             { top:"14%", left:"6%",  emoji:"⭐", delay:0   },
             { top:"68%", left:"10%", emoji:"✨", delay:0.6 },
             { top:"18%", right:"5%", emoji:"💬", delay:0.3 },
             { top:"66%", right:"8%", emoji:"⭐", delay:1   },
-          ].map((d, i) => (
+          ]) as Array<{top:string;emoji:string;delay:number;left?:string;right?:string}>).map((d, i) => (
             <motion.span key={i} className="absolute pointer-events-none select-none text-[14px]"
-              style={{ top:d.top, left:(d as any).left, right:(d as any).right }}
+              style={{ top:d.top, left:d.left, right:d.right }}
               animate={noMotion ? {} : { opacity:[0.3,1,0.3], y:[0,-5,0] }}
               transition={noMotion ? {} : { duration:2.4, repeat:Infinity, delay:d.delay }}
               aria-hidden>
