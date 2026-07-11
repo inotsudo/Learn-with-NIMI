@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
         details: result.status,
       }, { status: 400 });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[CyberSource]", err);
     return NextResponse.json({ error: "Payment processing error" }, { status: 500 });
   }

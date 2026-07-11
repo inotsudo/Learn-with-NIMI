@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
 
   const { data: targets, error } = await sb.rpc("get_push_reminder_targets");
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const _emsg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: _emsg }, { status: 500 });
   }
 
   const byParent = new Map<string, { child_name: string }[]>();

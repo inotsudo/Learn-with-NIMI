@@ -96,7 +96,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(creation, { status: 201, headers: { "Cache-Control": "no-store" } });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Upload route error:", err);
     return NextResponse.json({ error: "Unexpected server error" }, { status: 500 });
   }

@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       { success: false, message: "Payment service unavailable." },
       { status: response.status }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Checkout]", error);
     return NextResponse.json(
       { success: false, message: "An unexpected error occurred." },

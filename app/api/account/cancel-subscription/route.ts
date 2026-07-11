@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const _emsg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: _emsg }, { status: 500 });
   }
 
   // Send cancellation confirmation email (best-effort)

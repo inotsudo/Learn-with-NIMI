@@ -36,8 +36,9 @@ export async function POST(req: Request) {
     let authorizedAmount: number;
     try {
       ({ csStatus, isAuthorized, authorizedAmount } = await verifyCybersourceTransaction(transactionId));
-    } catch (verifyErr: any) {
-      console.error("[ConfirmPayment] Verify failed:", verifyErr.message);
+    } catch (verifyErr: unknown) {
+      const _vmsg = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
+      console.error("[ConfirmPayment] Verify failed:", _vmsg);
       return NextResponse.json(
         { success: false, message: "Could not verify payment with gateway." },
         { status: 502 }
@@ -206,7 +207,7 @@ export async function POST(req: Request) {
       { success: false, status: csStatus, message: payload.message || "Transaction declined." },
       { status: 402 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[ConfirmPayment]", err);
     return NextResponse.json({ success: false, message: "Server Error" }, { status: 500 });
   }

@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       await supabase.from("orders").update({ payment_status: "failed" }).eq("id", orderId);
       return NextResponse.json({ error: "MoMo payment request failed" }, { status: 400 });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[MTN MoMo]", err);
     return NextResponse.json({ error: "Payment processing error" }, { status: 500 });
   }
@@ -225,7 +225,7 @@ export async function GET(req: NextRequest) {
     } else {
       return NextResponse.json({ status: "pending" });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[MTN MoMo status]", err);
     return NextResponse.json({ status: "pending" });
   }

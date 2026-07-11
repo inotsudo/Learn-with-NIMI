@@ -6,6 +6,11 @@ import { createClient } from "@supabase/supabase-js";
 import { PDFDocument, rgb } from "pdf-lib";
 import sharp from "sharp";
 
+interface StoryPageVersion { image_url?: string; language?: string; text?: string }
+interface StoryPage { page_number?: number; text?: string; story_page_versions?: StoryPageVersion[] }
+interface Story { title?: string; personalization_config?: Record<string, unknown>; story_pages?: StoryPage[] }
+interface PageCfg { x: number; y: number; size: number }
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -46,21 +51,23 @@ export async function POST(req: NextRequest) {
 
     await supabase.from("masterpiece_orders").update({ status: "processing" }).eq("id", masterpieceId);
 
-    const story = mp.stories as any;
-    const config = story.personalization_config || {};
+    const story = mp.stories as Story;
+    const config = (story.personalization_config ?? {}) as {
+      pages?: Record<string, PageCfg>;
+      photoPages?: number[];
+      photoOnAllPages?: boolean;
+      photoX?: number; photoY?: number; photoSize?: number;
+    };
 
-    // Resolve photo placement for a given page number.
-    // Supports new per-page config (config.pages[n]) and legacy flat config.
-    function getPageConfig(pageNumber: number): { x: number; y: number; size: number } {
+    function getPageConfig(pageNumber: number): PageCfg {
       const perPage = config.pages?.[String(pageNumber)];
       if (perPage) return perPage;
-      // Legacy flat config fallback
       return { x: config.photoX ?? 200, y: config.photoY ?? 300, size: config.photoSize ?? 150 };
     }
 
     // Get story pages sorted by page number
-    const pages = (story.story_pages || [])
-      .sort((a: any, b: any) => (a.page_number ?? 0) - (b.page_number ?? 0));
+    const pages = (story.story_pages ?? [])
+      .sort((a, b) => (a.page_number ?? 0) - (b.page_number ?? 0));
 
     // Create PDF
     const pdf = PDFDocument.create();
@@ -98,7 +105,7 @@ export async function POST(req: NextRequest) {
 
       // Get the page image
       const version = (page.story_page_versions || []).find(
-        (v: any) => v.language === mp.language
+        (v: { language?: string }) => v.language === mp.language
       ) || (page.story_page_versions || [])[0];
 
       if (version?.image_url) {
@@ -128,12 +135,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Embed child photo on pages that have a placement configured
-      const pageConfig = getPageConfig(page.page_number);
+      const pageConfig = getPageConfig(page.page_number ?? 0);
       const photoPagesConfig = config.pages
         ? Object.keys(config.pages).map(Number)      // new: pages with explicit config
         : (config.photoPages || []);                  // legacy: explicit list
       const shouldAddPhoto = config.photoOnAllPages
-        || photoPagesConfig.includes(page.page_number);
+        || photoPagesConfig.includes(page.page_number ?? 0);
 
       if (shouldAddPhoto && mp.child_photo_url) {
         try {
@@ -209,7 +216,7 @@ export async function POST(req: NextRequest) {
     }).eq("id", masterpieceId);
 
     return NextResponse.json({ success: true, pdfUrl });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[Masterpiece Generate]", err);
     return NextResponse.json({ error: "PDF generation failed" }, { status: 500 });
   }

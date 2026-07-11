@@ -81,7 +81,7 @@ export async function POST() {
 
     const captureContext = await response.text();
     return NextResponse.json({ captureContext });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[CyberSource Flex]", err);
     return NextResponse.json({ error: "Failed to initialize payment" }, { status: 500 });
   }
