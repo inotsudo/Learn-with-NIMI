@@ -7,6 +7,8 @@ import { Check, Download, Share2, Star } from "lucide-react";
 import Link from "next/link";
 import { ACTIVITIES } from "@/app/_activityData";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 
 const CERT_CONFETTI = [
   { color: "#FFD700", top: "18%", left: "5%"  },
@@ -39,6 +41,8 @@ interface Props {
 
 export default function CertificatePanel({ completedSteps, level }: Props) {
   const { t } = useLanguage();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
   const [shareCopied, setShareCopied] = useState(false);
   const allDone = completedSteps.length >= TOTAL_STEPS;
   const done = Math.min(completedSteps.length, TOTAL_STEPS);
@@ -66,99 +70,105 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
     return (
       <>
         {/* In-Progress card */}
-        <div className="bg-white/10 backdrop-blur border-4 border-white/15 rounded-3xl shadow-xl overflow-hidden">
-          <div className="relative overflow-hidden text-center py-4 px-4"
-            style={{ background: "linear-gradient(180deg, #7c3aed 0%, #4c1d95 100%)" }}>
-            <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 400 12" preserveAspectRatio="none" style={{ height: 12 }}>
-              <path d="M0,0 Q100,12 200,6 Q300,0 400,10 L400,12 L0,12 Z" fill="white" />
-            </svg>
-            <motion.p
-              className="relative z-10 font-black text-white tracking-widest uppercase drop-shadow-lg"
-              style={{ fontSize: "clamp(1rem, 3vw, 1.3rem)" }}
-              animate={{ scale: [1, 1.03, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}>
-              {t("levelInProgressLabel").replace("{level}", String(level))}
-            </motion.p>
-          </div>
+        <div className="relative bg-white border border-ds-border shadow-ds-card overflow-hidden" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+          {/* World certificate frame texture */}
+          <img src={assets.rewards.certificateFrame} alt="" aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.06]" />
 
-          <div className="px-5 pt-5 pb-4 text-center">
-            <p className="font-bold text-white text-base leading-tight">{t("keepGoingLabel")}</p>
-            <p className="theme-text-muted text-sm mt-0.5 mb-4">
-              {t("completeLevelStepsLabel").replace("{steps}", String(TOTAL_STEPS)).replace("{level}", String(level))}
-            </p>
-
-            {/* Progress bar */}
-            <div className="mb-3">
-              <div className="flex justify-between text-[10px] font-bold theme-text-muted mb-1">
-                <span>Progress</span>
-                <span>{done}/{TOTAL_STEPS} steps</span>
-              </div>
-              <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
-                <motion.div
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }} />
-              </div>
+          <div className="relative z-10">
+            <div className="relative overflow-hidden text-center py-4 px-4"
+              style={{ background: "linear-gradient(180deg, #7c3aed 0%, #4c1d95 100%)" }}>
+              <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 400 12" preserveAspectRatio="none" style={{ height: 12 }}>
+                <path d="M0,0 Q100,12 200,6 Q300,0 400,10 L400,12 L0,12 Z" fill="white" />
+              </svg>
+              <motion.p
+                className="relative z-10 font-black text-white tracking-widest uppercase drop-shadow-lg"
+                style={{ fontSize: "clamp(1rem, 3vw, 1.3rem)" }}
+                animate={{ scale: [1, 1.03, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}>
+                {t("levelInProgressLabel").replace("{level}", String(level))}
+              </motion.p>
             </div>
 
-            {/* Step icons */}
-            <div className="flex flex-wrap justify-center gap-2 mb-5">
-              {STEP_ICONS.map(item => {
-                const isComplete = completedSteps.includes(item.step);
-                return (
-                  <Link key={item.step} href={item.href}>
-                    <div className="relative">
-                      <div className={`w-9 h-9 rounded-full backdrop-blur flex items-center justify-center text-lg shadow-sm border-2 transition-all ${
-                        isComplete ? `${item.bg} border-white/20` : "bg-white/10 border-white/20 grayscale opacity-50"
-                      }`}>
-                        {item.icon}
-                      </div>
-                      {isComplete && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center border-2 border-white shadow">
-                          <Check className="w-2 h-2 text-white" strokeWidth={3} />
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            <div className="px-5 pt-5 pb-4 text-center">
+              <p className="font-bold text-gray-900 text-base leading-tight">{t("keepGoingLabel")}</p>
+              <p className="text-gray-500 text-sm mt-0.5 mb-4">
+                {t("completeLevelStepsLabel").replace("{steps}", String(TOTAL_STEPS)).replace("{level}", String(level))}
+              </p>
 
-            {/* NIMI + progress medal + PIKO */}
-            <div className="flex items-end justify-around mt-1">
-              <div className="text-center">
-                <img src="/nimi-logo-circle.png" alt="NIMI"
-                  className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 theme-border shadow-xl" />
-                <p className="text-[10px] mt-1.5 theme-text-muted leading-tight">
-                  Cheer: <span className="font-black italic theme-text">Nimi</span>
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center mb-2">
-                <div className="w-[60px] h-[60px] rounded-full flex items-center justify-center shadow-xl border-4 theme-border"
-                  style={{ background: "linear-gradient(145deg, #e9d5ff, #c084fc)" }}>
-                  <span className="text-2xl font-black text-white drop-shadow">{pct}%</span>
+              {/* Progress bar */}
+              <div className="mb-3">
+                <div className="flex justify-between text-[10px] font-bold text-gray-500 mb-1">
+                  <span>{t("storyCertProgress")}</span>
+                  <span>{done}/{TOTAL_STEPS} steps</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                  <motion.div
+                    className={`bg-gradient-to-r ${assets.storyCard.progressFill} h-full rounded-full`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }} />
                 </div>
               </div>
 
-              <div className="text-center">
-                <img src="/piko-logo-circle.png.png" alt="PIKO"
-                  className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-blue-200 shadow-xl" />
-                <p className="text-[10px] mt-1.5 theme-text-muted leading-tight">
-                  Cheer: <span className="font-black italic theme-text">Piko</span>
-                </p>
+              {/* Step icons */}
+              <div className="flex flex-wrap justify-center gap-2 mb-5">
+                {STEP_ICONS.map(item => {
+                  const isComplete = completedSteps.includes(item.step);
+                  return (
+                    <Link key={item.step} href={item.href}>
+                      <div className="relative">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg shadow-sm border-2 transition-all ${
+                          isComplete ? `${item.bg} border-transparent` : "bg-gray-100 border-gray-200 grayscale opacity-50"
+                        }`}>
+                          {item.icon}
+                        </div>
+                        {isComplete && (
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[var(--ds-brand-primary)] rounded-full flex items-center justify-center border-2 border-white shadow">
+                            <Check className="w-2 h-2 text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            </div>
 
-            {/* CTA */}
-            {nextStep && (
-              <Link href={nextStep.href} className="block mt-4">
-                <Button className="w-full theme-accent hover:theme-accent text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
-                  ▶ CONTINUE STORY
-                </Button>
-              </Link>
-            )}
+              {/* NIMI + progress medal + PIKO */}
+              <div className="flex items-end justify-around mt-1">
+                <div className="text-center">
+                  <img src={assets.nimiCircle} alt="NIMI"
+                    className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-yellow-200 shadow-xl" />
+                  <p className="text-[10px] mt-1.5 text-gray-500 leading-tight">
+                    Cheer: <span className="font-black italic text-ds-text">Nimi</span>
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center mb-2">
+                  <div className="w-[60px] h-[60px] rounded-full flex items-center justify-center shadow-xl border-4 border-purple-200"
+                    style={{ background: "linear-gradient(145deg, #e9d5ff, #c084fc)" }}>
+                    <span className="text-2xl font-black text-white drop-shadow">{pct}%</span>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <img src={assets.pikoCircle} alt="PIKO"
+                    className="w-[60px] h-[60px] rounded-full object-cover mx-auto border-4 border-blue-200 shadow-xl" />
+                  <p className="text-[10px] mt-1.5 text-gray-500 leading-tight">
+                    Cheer: <span className="font-black italic text-ds-text">Piko</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* CTA */}
+              {nextStep && (
+                <Link href={nextStep.href} className="block mt-4">
+                  <Button className="w-full bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
+                    {t("storyCertContinueStory")}
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </>
@@ -169,121 +179,134 @@ export default function CertificatePanel({ completedSteps, level }: Props) {
   return (
     <>
       {/* STORY COMPLETE card */}
-      <div className="bg-white/10 backdrop-blur border-4 border-white/15 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="relative bg-white border border-ds-border shadow-ds-card overflow-hidden" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+        {/* World certificate frame texture */}
+        <img src={assets.rewards.certificateFrame} alt="" aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.07]" />
 
-        <div className="relative overflow-hidden text-center py-4 px-4"
-          style={{ background: "linear-gradient(180deg, #5b21b6 0%, #4c1d95 100%)" }}>
-          {CERT_CONFETTI.map((c, i) => (
-            <motion.div key={i} className="absolute rounded-full pointer-events-none"
-              style={{ background: c.color, top: c.top, left: c.left, width: i % 2 === 0 ? 8 : 5, height: i % 2 === 0 ? 8 : 5 }}
-              animate={{ y: [-4, 4, -4], rotate: [0, 180, 360], opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 1.8 + i * 0.15, repeat: Infinity, delay: i * 0.1 }} />
-          ))}
-          <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 400 12" preserveAspectRatio="none" style={{ height: 12 }}>
-            <path d="M0,0 Q100,12 200,6 Q300,0 400,10 L400,12 L0,12 Z" fill="white" />
-          </svg>
-          <motion.p
-            className="relative z-10 font-black text-white tracking-widest uppercase drop-shadow-lg"
-            style={{ fontSize: "clamp(1.1rem, 3vw, 1.4rem)", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
-            animate={{ scale: [1, 1.03, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}>
-            {t("levelCompleteLabel").replace("{level}", String(level))}
-          </motion.p>
-        </div>
-
-        <div className="px-5 pt-5 pb-4 text-center">
-          <p className="font-bold text-white text-base leading-tight">{t("congratulationsLabel")}</p>
-          <p className="theme-text-muted text-sm mt-0.5">{t("youEarnedYourLabel")}</p>
-
-          <div className="my-3 relative">
-            <span className="absolute -top-1 left-3 text-yellow-400 text-lg">★</span>
-            <span className="absolute -top-1 right-3 text-yellow-400 text-lg">★</span>
-            <h3 className="font-black theme-text tracking-wide leading-tight"
-              style={{ fontSize: "clamp(1.6rem, 4vw, 2rem)" }}>
-              {t("levelCertificateLabel").replace("{level}", String(level))}
-            </h3>
-          </div>
-
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-yellow-400 text-sm">✦</span>
-            <div className="flex-1 h-px bg-white/20" />
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-2 mb-5">
-            {STEP_ICONS.map((item, i) => (
-              <div key={i} className="relative">
-                <div className={`w-10 h-10 ${item.bg} backdrop-blur border border-white/20 rounded-full flex items-center justify-center text-xl shadow-md`}>
-                  {item.icon}
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white shadow">
-                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-                </div>
-              </div>
+        <div className="relative z-10">
+          <div className="relative overflow-hidden text-center py-4 px-4"
+            style={{ background: "linear-gradient(180deg, #5b21b6 0%, #4c1d95 100%)" }}>
+            {CERT_CONFETTI.map((c, i) => (
+              <motion.div key={i} className="absolute rounded-full pointer-events-none"
+                style={{ background: c.color, top: c.top, left: c.left, width: i % 2 === 0 ? 8 : 5, height: i % 2 === 0 ? 8 : 5 }}
+                animate={{ y: [-4, 4, -4], rotate: [0, 180, 360], opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.8 + i * 0.15, repeat: Infinity, delay: i * 0.1 }} />
             ))}
+            <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 400 12" preserveAspectRatio="none" style={{ height: 12 }}>
+              <path d="M0,0 Q100,12 200,6 Q300,0 400,10 L400,12 L0,12 Z" fill="white" />
+            </svg>
+            <motion.p
+              className="relative z-10 font-black text-white tracking-widest uppercase drop-shadow-lg"
+              style={{ fontSize: "clamp(1.1rem, 3vw, 1.4rem)", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
+              animate={{ scale: [1, 1.03, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}>
+              {t("levelCompleteLabel").replace("{level}", String(level))}
+            </motion.p>
           </div>
 
-          <div className="flex items-end justify-around mt-1">
-            <div className="text-center">
-              <img src="/nimi-logo-circle.png" alt="NIMI"
-                className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-yellow-300 shadow-xl" />
-              <p className="text-[11px] mt-2 theme-text-muted leading-tight">
-                {t("signedByLabel").replace("{name}", "Nimi")}
-              </p>
+          <div className="px-5 pt-5 pb-4 text-center">
+            <p className="font-bold text-gray-900 text-base leading-tight">{t("congratulationsLabel")}</p>
+            <p className="text-gray-500 text-sm mt-0.5">{t("youEarnedYourLabel")}</p>
+
+            <div className="my-3 relative">
+              <span className="absolute -top-1 left-3 text-yellow-400 text-lg">★</span>
+              <span className="absolute -top-1 right-3 text-yellow-400 text-lg">★</span>
+              <h3 className="font-black text-ds-text tracking-wide leading-tight"
+                style={{ fontSize: "clamp(1.6rem, 4vw, 2rem)" }}>
+                {t("levelCertificateLabel").replace("{level}", String(level))}
+              </h3>
             </div>
 
-            <motion.div className="flex flex-col items-center mb-2"
-              animate={{ scale: [1, 1.08, 1], rotate: [0, 3, -3, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}>
-              <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-2xl border-4 border-yellow-200"
-                style={{ background: "linear-gradient(145deg, #FFE066, #FFC300, #FF9900)" }}>
-                <Star className="w-9 h-9 fill-white text-white drop-shadow-lg" />
-              </div>
-              <div className="w-4 h-3 mt-0.5 rounded-b-sm"
-                style={{ background: "linear-gradient(180deg, #c0392b, #922b21)" }} />
-            </motion.div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-yellow-400 text-sm">✦</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
 
-            <div className="text-center">
-              <img src="/piko-logo-circle.png.png" alt="PIKO"
-                className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-blue-300 shadow-xl" />
-              <p className="text-[11px] mt-2 theme-text-muted leading-tight">
-                {t("signedByLabel").replace("{name}", "Piko")}
-              </p>
+            <div className="flex flex-wrap justify-center gap-2 mb-5">
+              {STEP_ICONS.map((item, i) => (
+                <div key={i} className="relative">
+                  <div className={`w-10 h-10 ${item.bg} border border-transparent rounded-full flex items-center justify-center text-xl shadow-md`}>
+                    {item.icon}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[var(--ds-brand-primary)] rounded-full flex items-center justify-center border-2 border-white shadow">
+                    <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-end justify-around mt-1">
+              <div className="text-center">
+                <img src={assets.nimiCircle} alt="NIMI"
+                  className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-yellow-300 shadow-xl" />
+                <p className="text-[11px] mt-2 text-gray-500 leading-tight">
+                  {t("signedByLabel").replace("{name}", "Nimi")}
+                </p>
+              </div>
+
+              <motion.div className="flex flex-col items-center mb-2"
+                animate={{ scale: [1, 1.08, 1], rotate: [0, 3, -3, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}>
+                <div className="w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-2xl border-4 border-yellow-200"
+                  style={{ background: "linear-gradient(145deg, #FFE066, #FFC300, #FF9900)" }}>
+                  <Star className="w-9 h-9 fill-white text-white drop-shadow-lg" />
+                </div>
+                <div className="w-4 h-3 mt-0.5 rounded-b-sm"
+                  style={{ background: "linear-gradient(180deg, #c0392b, #922b21)" }} />
+              </motion.div>
+
+              <div className="text-center">
+                <img src={assets.pikoCircle} alt="PIKO"
+                  className="w-[72px] h-[72px] rounded-full object-cover mx-auto border-4 border-blue-300 shadow-xl" />
+                <p className="text-[11px] mt-2 text-gray-500 leading-tight">
+                  {t("signedByLabel").replace("{name}", "Piko")}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Download / Share card */}
-      <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-3xl shadow-md p-4">
-        <h3 className="font-black theme-text text-[11px] uppercase mb-3 text-center tracking-widest">
+      <div className="bg-white border border-ds-border shadow-sm p-4" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+        <h3 className="font-black text-ds-text text-[11px] uppercase mb-3 text-center tracking-widest">
           {t("downloadShareCertTitle")}
         </h3>
         <div className="flex flex-col sm:flex-row gap-3 mb-3 sm:items-center">
-          <div className="flex-shrink-0 w-full sm:w-[110px] bg-gradient-to-br from-yellow-50 to-purple-50 border-4 border-double theme-border-strong rounded-xl p-2 text-center shadow-sm">
-            <p className="text-[9px] sm:text-[7px] font-black theme-text-muted uppercase leading-tight">
+          <div className="flex-shrink-0 w-full sm:w-[110px] bg-gradient-to-br from-yellow-50 to-purple-50 border-4 border-double border-yellow-400 leaf p-2 text-center shadow-sm">
+            <p className="text-[9px] sm:text-[7px] font-black text-gray-500 uppercase leading-tight">
               🌟 {t("levelCertificateLabel").replace("{level}", String(level))}
             </p>
-            <p className="text-[9px] sm:text-[7px] theme-text-muted mt-0.5 leading-tight">
+            <p className="text-[9px] sm:text-[7px] text-gray-500 mt-0.5 leading-tight">
               {t("levelCompleteLabel").replace("{level}", String(level))}
             </p>
             <div className="flex justify-center gap-1 mt-2 items-center">
-              <img src="/nimi-logo-circle.png" alt="NIMI" className="w-7 h-7 rounded-full object-cover border border-yellow-300" />
+              <img src={assets.nimiCircle} alt="NIMI" className="w-7 h-7 rounded-full object-cover border border-yellow-300" />
               <div className="w-7 h-7 bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center text-base shadow">⭐</div>
-              <img src="/piko-logo-circle.png.png" alt="PIKO" className="w-7 h-7 rounded-full object-cover border border-blue-300" />
+              <img src={assets.pikoCircle} alt="PIKO" className="w-7 h-7 rounded-full object-cover border border-blue-300" />
             </div>
           </div>
-          <p className="text-[11px] theme-text-muted leading-relaxed flex-1 min-w-0">
+          <p className="text-[11px] text-gray-500 leading-relaxed flex-1 min-w-0">
             {t("shareAchievementText")}
           </p>
         </div>
         <div className="space-y-2">
-          <Button onClick={() => window.print()}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
+          <Button onClick={() => {
+              const params = new URLSearchParams({
+                child: "Champion",
+                story: `Level ${level} Complete`,
+                stars: String(done * 10),
+                date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+              });
+              window.open(`/api/certificate?${params}`, "_blank");
+            }}
+            className="w-full bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
             <Download className="w-4 h-4" /> {t("downloadPdfLabel")}
           </Button>
           <Button onClick={handleShare}
-            className="w-full theme-accent hover:theme-accent text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
+            className="w-full bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] text-white font-black rounded-full text-xs h-9 gap-2 tracking-wide">
             <Share2 className="w-4 h-4" /> {shareCopied ? t("linkCopiedLabel") : t("shareLabel")}
           </Button>
         </div>

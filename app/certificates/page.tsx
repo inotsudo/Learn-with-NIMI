@@ -4,16 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getChildren, getChildAchievements, getMaxCurriculumLevel, type ChildAchievement } from "@/lib/queries";
 import AppShell from "@/components/layout/AppShell";
+import { PageSurface } from "@/components/layout/primitives";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import CertificatesHeader from "@/components/certificates/CertificatesHeader";
 import AchievementDashboard from "@/components/certificates/AchievementDashboard";
 import type { Lang } from "@/app/_achievementData";
-import MagicBackground from "@/components/magic/MagicBackground";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 export default function CertificatesPage() {
   const { t } = useLanguage();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
   const [mounted, setMounted] = useState(false);
   const [hasChildren, setHasChildren] = useState(true);
   const [childName, setChildName] = useState("Explorer");
@@ -60,13 +64,21 @@ export default function CertificatesPage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
-          <MagicBackground variant="castle" />
-          <p className="relative z-10 theme-text font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="relative z-10 theme-accent text-white font-black rounded-full px-6 py-2.5 shadow hover:theme-accent transition">
-            Go Home
-          </Link>
-        </div>
+        <PageSurface className="items-center justify-center px-4">
+          <div className="flex flex-col items-center text-center max-w-xs gap-4 py-12">
+            <div className="relative">
+              <img src={assets.nimiCircle} alt="NIMI" className="w-28 h-28 rounded-full object-cover border-4 border-yellow-400 shadow-xl" />
+              <span className="absolute -bottom-1 -right-1 text-3xl">🏆</span>
+            </div>
+            <div className="bg-white border border-ds-border rounded-2xl rounded-tl-none px-5 py-3 shadow-ds-card">
+              <p className="font-baloo font-black text-ds-text text-[16px] leading-snug">Add a learner to start earning certificates!</p>
+            </div>
+            <p className="text-gray-500 text-sm">Create a learner profile so your child can collect achievements and badges.</p>
+            <Link href="/home" className="text-white font-baloo font-black px-8 py-3 shadow-md transition hover:-translate-y-0.5 active:scale-95" style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r)' }}>
+              🏠 Go to Home
+            </Link>
+          </div>
+        </PageSurface>
       </AppShell>
     );
   }
@@ -74,27 +86,33 @@ export default function CertificatesPage() {
   if (loadError) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
-          <MagicBackground variant="castle" />
-          <p className="relative z-10 text-5xl mb-1">😵</p>
-          <p className="relative z-10 font-bold theme-text">{t("missionLoadErrorTitle")}</p>
-          <p className="relative z-10 text-sm theme-text-muted -mt-2">{t("missionLoadErrorHint")}</p>
-          <button
-            onClick={() => setReloadKey(k => k + 1)}
-            className="relative z-10 px-6 py-2 rounded-full bg-blue-500 text-white font-black text-sm shadow-md hover:bg-blue-600 transition"
-          >
-            {t("tryAgainBtn")}
-          </button>
-        </div>
+        <PageSurface className="items-center justify-center px-4">
+          <div className="flex flex-col items-center text-center max-w-xs gap-4 py-12">
+            <div className="relative">
+              <img src={assets.nimiCircle} alt="NIMI" className="w-28 h-28 rounded-full object-cover border-4 border-yellow-400 shadow-xl" />
+              <span className="absolute -bottom-1 -right-1 text-3xl">😵</span>
+            </div>
+            <div className="bg-white border border-ds-border rounded-2xl rounded-tl-none px-5 py-3 shadow-ds-card">
+              <p className="font-baloo font-black text-ds-text text-[16px] leading-snug">{t("missionLoadErrorTitle")}</p>
+              <p className="text-gray-500 text-sm mt-1">{t("missionLoadErrorHint")}</p>
+            </div>
+            <button
+              onClick={() => setReloadKey(k => k + 1)}
+              className="text-white font-baloo font-black px-8 py-3 shadow-md transition hover:-translate-y-0.5 active:scale-95"
+              style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r)' }}
+            >
+              {t("tryAgainBtn")}
+            </button>
+          </div>
+        </PageSurface>
       </AppShell>
     );
   }
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
-        <MagicBackground variant="castle" />
-        <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+      <PageSurface>
+        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <CertificatesHeader />
           <AchievementDashboard
             childName={childName}
@@ -103,7 +121,7 @@ export default function CertificatesPage() {
             maxLevel={maxLevel}
           />
         </main>
-      </div>
+      </PageSurface>
     </AppShell>
   );
 }

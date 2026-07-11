@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
+import { sendRenewalConfirmation } from "@/lib/email";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -177,6 +178,18 @@ export async function GET(req: NextRequest) {
         current_period_end: newEnd.toISOString(),
         renewal_attempts: 0,
       }).eq("id", sub.id);
+
+      // Send renewal confirmation email (best-effort)
+      const { data: parent } = await supabase.from("parents").select("email, name").eq("id", sub.parent_id).maybeSingle();
+      if (parent?.email) {
+        void sendRenewalConfirmation({
+          to: parent.email,
+          parentName: parent.name ?? "there",
+          amount: String(sub.amount),
+          currency: sub.currency,
+          periodEnd: newEnd.toISOString(),
+        });
+      }
       results.renewed++;
     } else if (pm.provider === "mtn_momo" && chargeResult.ok) {
       // MoMo request sent — user needs to approve. Mark pending.

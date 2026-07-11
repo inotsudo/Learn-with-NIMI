@@ -1,74 +1,70 @@
 "use client";
 
-import { ListChecks, Star, Award, GraduationCap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+function useCountUp(target: number, duration = 800) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setCount(0); return; }
+    const steps = 28;
+    const interval = duration / steps;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      setCount(Math.round((step / steps) * target));
+      if (step >= steps) clearInterval(timer);
+    }, interval);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return count;
+}
+
+interface StatPillProps {
+  emoji: string;
+  value: number;
+  label: string;
+  gradient: string;
+  delay: number;
+}
+
+function StatPill({ emoji, value, label, gradient, delay }: StatPillProps) {
+  const animated = useCountUp(value);
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85, y: 8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.4, delay, type: "spring", stiffness: 260, damping: 20 }}
+      className="flex-1 flex flex-col items-center gap-1.5 py-4 px-2"
+    >
+      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-3xl shadow-md`}>
+        {emoji}
+      </div>
+      <p className="font-baloo font-black text-ds-text text-[24px] leading-none tabular-nums">{animated}</p>
+      <p className="text-ds-muted text-[11px] font-bold text-center leading-tight">{label}</p>
+    </motion.div>
+  );
+}
+
 interface Props {
-  activitiesCompleted: number;
-  activitiesTotal: number;
   starsCollected: number;
   badgesEarned: number;
   certificates: number;
 }
 
-export default function StatsRow({
-  activitiesCompleted, activitiesTotal, starsCollected, badgesEarned, certificates,
-}: Props) {
+export default function StatsRow({ starsCollected, badgesEarned, certificates }: Props) {
   const { t } = useLanguage();
 
-  const stats = [
-    {
-      icon: ListChecks,
-      iconBg: "bg-indigo-400/20",
-      iconColor: "text-indigo-200",
-      borderColor: "border-indigo-100",
-      value: activitiesCompleted,
-      suffix: t("statOfTotal").replace("{total}", String(activitiesTotal)),
-      label: t("statActivitiesLabel"),
-    },
-    {
-      icon: Star,
-      iconBg: "bg-yellow-400/20",
-      iconColor: "text-yellow-200",
-      borderColor: "border-yellow-100",
-      value: starsCollected,
-      suffix: "",
-      label: t("statStarsLabel"),
-    },
-    {
-      icon: Award,
-      iconBg: "theme-accent-muted",
-      iconColor: "theme-text",
-      borderColor: "theme-border",
-      value: badgesEarned,
-      suffix: "",
-      label: t("statBadgesLabel"),
-    },
-    {
-      icon: GraduationCap,
-      iconBg: "bg-green-400/20",
-      iconColor: "text-green-200",
-      borderColor: "border-green-100",
-      value: certificates,
-      suffix: "",
-      label: t("statCertificatesLabel"),
-    },
+  const stats: StatPillProps[] = [
+    { emoji: "⭐", value: starsCollected, label: t("statStarsLabel"),        gradient: "from-amber-300 to-yellow-400",   delay: 0 },
+    { emoji: "🏅", value: badgesEarned,   label: t("statBadgesLabel"),       gradient: "from-violet-400 to-purple-500",  delay: 0.08 },
+    { emoji: "🎓", value: certificates,   label: t("statCertificatesLabel"), gradient: "from-emerald-400 to-teal-500",   delay: 0.16 },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {stats.map((stat, i) => (
-        <div key={i} className={`bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4`}>
-          <div className={`w-10 h-10 ${stat.iconBg} rounded-full flex items-center justify-center mb-2`}>
-            <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
-          </div>
-          <p className="font-black text-2xl text-white">
-            {stat.value}
-            {stat.suffix && <span className="text-sm theme-text-muted font-bold">{stat.suffix}</span>}
-          </p>
-          <p className="theme-text text-xs font-semibold mt-0.5">{stat.label}</p>
-        </div>
-      ))}
+    <div className="bg-ds-card border border-ds-border shadow-ds-card flex divide-x divide-ds-border overflow-hidden" style={{ borderRadius: 'var(--leaf-r)' }}>
+      {stats.map((s, i) => <StatPill key={i} {...s} />)}
     </div>
   );
 }

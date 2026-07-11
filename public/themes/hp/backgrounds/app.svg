@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#FEF9EC"/>
+      <stop offset="55%"  stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="100%" r="55%">
+      <stop offset="0%"   stop-color="#F59E0B" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <rect width="1200" height="800" fill="url(#glow)"/>
+  <!-- Castle silhouette — very faint, bottom of screen -->
+  <!-- Main keep -->
+  <rect x="510" y="630" width="180" height="170" fill="#78350F" opacity="0.06"/>
+  <!-- Central tower -->
+  <rect x="555" y="560" width="90" height="240" fill="#78350F" opacity="0.07"/>
+  <polygon points="555,560 600,510 645,560" fill="#78350F" opacity="0.07"/>
+  <!-- Left tower -->
+  <rect x="410" y="650" width="70" height="150" fill="#78350F" opacity="0.05"/>
+  <polygon points="410,650 445,612 480,650" fill="#78350F" opacity="0.05"/>
+  <!-- Right tower -->
+  <rect x="720" y="650" width="70" height="150" fill="#78350F" opacity="0.05"/>
+  <polygon points="720,650 755,612 790,650" fill="#78350F" opacity="0.05"/>
+  <!-- Far turrets -->
+  <rect x="290" y="700" width="46" height="100" fill="#78350F" opacity="0.04"/>
+  <polygon points="290,700 313,668 336,700" fill="#78350F" opacity="0.04"/>
+  <rect x="864" y="700" width="46" height="100" fill="#78350F" opacity="0.04"/>
+  <polygon points="864,700 887,668 910,700" fill="#78350F" opacity="0.04"/>
+  <!-- Ground mist -->
+  <ellipse cx="600" cy="810" rx="700" ry="70" fill="#92400E" opacity="0.03"/>
+</svg>

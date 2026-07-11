@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 60">
+  <!-- Left arm lines -->
+  <line x1="20" y1="28" x2="168" y2="28" stroke="#D4A017" stroke-width="1.8" opacity="0.75"/>
+  <line x1="20" y1="33" x2="148" y2="33" stroke="#D4A017" stroke-width="0.6" opacity="0.4"/>
+  <!-- Right arm lines -->
+  <line x1="232" y1="28" x2="380" y2="28" stroke="#D4A017" stroke-width="1.8" opacity="0.75"/>
+  <line x1="252" y1="33" x2="380" y2="33" stroke="#D4A017" stroke-width="0.6" opacity="0.4"/>
+  <!-- Flanking diamonds -->
+  <polygon points="173,24 178,28 173,32 168,28" fill="#D4A017" opacity="0.7"/>
+  <polygon points="227,24 232,28 227,32 222,28" fill="#D4A017" opacity="0.7"/>
+  <!-- Central star ornament -->
+  <text x="200" y="34" text-anchor="middle" font-family="serif" font-size="20" fill="#D4A017" opacity="0.9">✦</text>
+  <!-- Small accent dots along lines -->
+  <circle cx="55" cy="28" r="2" fill="#D4A017" opacity="0.45"/>
+  <circle cx="95" cy="28" r="2" fill="#D4A017" opacity="0.45"/>
+  <circle cx="135" cy="28" r="2" fill="#D4A017" opacity="0.45"/>
+  <circle cx="265" cy="28" r="2" fill="#D4A017" opacity="0.45"/>
+  <circle cx="305" cy="28" r="2" fill="#D4A017" opacity="0.45"/>
+  <circle cx="345" cy="28" r="2" fill="#D4A017" opacity="0.45"/>
+  <!-- Top and bottom thin rules -->
+  <line x1="60" y1="18" x2="340" y2="18" stroke="#D4A017" stroke-width="0.4" opacity="0.25"/>
+  <line x1="60" y1="43" x2="340" y2="43" stroke="#D4A017" stroke-width="0.4" opacity="0.25"/>
+</svg>

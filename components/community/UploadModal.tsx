@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SPRING } from "@/lib/design-system/motion";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -14,7 +15,7 @@ const CREATION_TYPES: { id: CreationType; emoji: string; labelKey: string }[] = 
 ];
 
 const inputClass =
-  "w-full border-2 border-white/20 bg-white/10 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition placeholder:text-white/40";
+  "w-full border border-ds-border bg-ds-input leaf px-3 py-2 text-sm font-semibold text-ds-text focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400";
 
 export default function UploadModal({
   open,
@@ -31,6 +32,7 @@ export default function UploadModal({
 }) {
   const { t } = useLanguage();
   const [dragActive, setDragActive] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
@@ -67,10 +69,11 @@ export default function UploadModal({
           initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.85, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="theme-darker backdrop-blur-xl border-2 border-white/15 rounded-3xl shadow-2xl w-full max-w-lg my-8 overflow-hidden"
+          transition={SPRING.modal}
+          className="bg-white border border-ds-border shadow-2xl w-full max-w-lg my-8 overflow-hidden"
+          style={{ borderRadius: 'var(--leaf-r-lg)' }}
         >
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-4 flex items-center justify-between sticky top-0">
+          <div className="px-5 py-4 flex items-center justify-between sticky top-0" style={{ backgroundColor: 'var(--nimi-green)' }}>
             <p className="text-white font-black text-lg tracking-wide">{t("uploadArtworkTitle")}</p>
             <button
               onClick={() => !formState.isUploading && onClose()}
@@ -113,8 +116,8 @@ export default function UploadModal({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition
-                ${dragActive ? "theme-border-strong theme-accent-muted" : "border-white/25 bg-white/5 hover:bg-white/10"}
+              className={`border-2 border-dashed leaf p-4 text-center cursor-pointer transition
+                ${dragActive ? "border-[var(--ds-border-brand)] bg-[var(--ds-brand-subtle)]" : "border-gray-300 bg-gray-50 hover:bg-gray-100"}
                 ${formState.isUploading ? "opacity-50 pointer-events-none" : ""}
               `}
             >
@@ -129,7 +132,7 @@ export default function UploadModal({
                   />
                 </div>
               ) : (
-                <p className="theme-text font-semibold text-sm">{t("dragDropImageLabel")}</p>
+                <p className="text-ds-text font-semibold text-sm">{t("dragDropImageLabel")}</p>
               )}
               <input
                 ref={fileInputRef}
@@ -142,7 +145,7 @@ export default function UploadModal({
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold theme-text uppercase tracking-wide">{t("chooseTypeLabel")}</label>
+              <label className="text-xs font-bold text-ds-text uppercase tracking-wide">{t("chooseTypeLabel")}</label>
               <div className="flex gap-2">
                 {CREATION_TYPES.map((option) => (
                   <button
@@ -150,10 +153,10 @@ export default function UploadModal({
                     type="button"
                     onClick={() => setFormState((prev) => ({ ...prev, creationType: option.id }))}
                     disabled={formState.isUploading}
-                    className={`flex-1 flex flex-col items-center gap-1 rounded-xl border-2 py-2 text-xs font-bold transition ${
+                    className={`flex-1 flex flex-col items-center gap-1 leaf border-2 py-2 text-xs font-bold transition ${
                       formState.creationType === option.id
-                        ? "theme-border-strong theme-accent-muted text-white"
-                        : "border-white/15 bg-white/5 theme-text hover:bg-white/10"
+                        ? "border-[var(--ds-border-brand)] bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)]"
+                        : "border-ds-border bg-white text-ds-text hover:bg-gray-50"
                     }`}
                   >
                     <span className="text-lg">{option.emoji}</span>
@@ -164,9 +167,9 @@ export default function UploadModal({
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold theme-text uppercase tracking-wide">{t("sharingMethodLabel")}</label>
+              <label className="text-xs font-bold text-ds-text uppercase tracking-wide">{t("sharingMethodLabel")}</label>
               <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold theme-text">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-ds-text">
                   <input
                     type="radio"
                     name="shareMethod"
@@ -174,12 +177,12 @@ export default function UploadModal({
                     checked={formState.shareMethod === "public"}
                     onChange={() => setFormState((prev) => ({ ...prev, isPublic: true, shareMethod: "public" }))}
                     disabled={formState.isUploading}
-                    className="accent-purple-500"
+                    className="accent-green-600"
                   />
                   <span>{t("sharePubliclyLabel")}</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold theme-text">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-ds-text">
                   <input
                     type="radio"
                     name="shareMethod"
@@ -187,25 +190,46 @@ export default function UploadModal({
                     checked={formState.shareMethod === "whatsapp"}
                     onChange={() => setFormState((prev) => ({ ...prev, isPublic: false, shareMethod: "whatsapp" }))}
                     disabled={formState.isUploading}
-                    className="accent-purple-500"
+                    className="accent-green-600"
                   />
                   <span>{t("shareWhatsappLabel")}</span>
                 </label>
               </div>
             </div>
 
+            {/* COPPA/GDPR consent — required before submit */}
+            <label className={`flex items-start gap-3 cursor-pointer p-3 rounded-xl border transition ${
+              consentChecked ? "border-green-300 bg-green-50" : "border-amber-200 bg-amber-50"
+            }`}>
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+                disabled={formState.isUploading}
+                className="mt-0.5 w-4 h-4 accent-green-600 shrink-0 cursor-pointer"
+              />
+              <span className="font-nunito text-[12px] text-gray-700 leading-relaxed">
+                I agree to the{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-green-700 underline font-bold">
+                  Terms of Use
+                </a>{" "}
+                and confirm I have the right to share this content on Nimipiko.
+              </span>
+            </label>
+
             <div className="flex gap-3 pt-1">
               <button
                 onClick={(e) => onSubmit(e)}
-                disabled={formState.isUploading || !formState.imageFile}
-                className="flex-1 theme-accent text-white font-black rounded-full py-2.5 text-sm hover:theme-accent transition disabled:opacity-60"
+                disabled={formState.isUploading || !formState.imageFile || !consentChecked}
+                className="flex-1 text-white font-black py-2.5 text-sm transition disabled:opacity-60"
+                style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}
               >
                 {formState.isUploading ? t("uploadingLabel") : t("uploadBtnLabel")}
               </button>
               <button
                 onClick={() => !formState.isUploading && onClose()}
                 disabled={formState.isUploading}
-                className="flex-1 border-2 border-white/20 theme-text font-black rounded-full py-2.5 text-sm hover:bg-white/10 transition disabled:opacity-60"
+                className="flex-1 border border-ds-border text-ds-text font-black rounded-full py-2.5 text-sm hover:bg-gray-50 transition disabled:opacity-60"
               >
                 {t("cancel")}
               </button>

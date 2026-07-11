@@ -17,6 +17,14 @@ const CS_HOST = CS_ENV === "production"
   : "apitest.cybersource.com";
 
 function getPrivateKey(): string {
+  // Prefer env var (required on serverless — Vercel filesystem is read-only)
+  const keyEnv = process.env.CYBERSOURCE_PRIVATE_KEY;
+  if (keyEnv) {
+    const pem = keyEnv.replace(/\\n/g, "\n");
+    const start = pem.indexOf("-----BEGIN");
+    return start > 0 ? pem.slice(start) : pem;
+  }
+  // Fallback: local file path (dev/self-hosted only)
   const keyPath = process.env.CYBERSOURCE_PRIVATE_KEY_PATH;
   if (keyPath) {
     const resolved = path.resolve(keyPath);
@@ -26,7 +34,7 @@ function getPrivateKey(): string {
       return start > 0 ? content.slice(start) : content;
     }
   }
-  throw new Error("CyberSource private key not found at " + (keyPath ?? "undefined"));
+  throw new Error("CyberSource private key not configured. Set CYBERSOURCE_PRIVATE_KEY env var.");
 }
 
 function generateHeaders(method: string, resource: string, payload: string): Record<string, string> {

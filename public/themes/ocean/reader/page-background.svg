@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <pattern id="waves" width="100" height="28" patternUnits="userSpaceOnUse">
+      <path d="M0,14 Q25,5 50,14 Q75,23 100,14" fill="none" stroke="#0284C7" stroke-width="0.9" opacity="0.28"/>
+      <path d="M0,22 Q25,14 50,22 Q75,30 100,22" fill="none" stroke="#0EA5E9" stroke-width="0.5" opacity="0.14"/>
+    </pattern>
+    <pattern id="micro" width="60" height="20" patternUnits="userSpaceOnUse">
+      <path d="M0,10 Q15,5 30,10 Q45,15 60,10" fill="none" stroke="#BAE6FD" stroke-width="0.4" opacity="0.2"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="50%" r="55%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#BAE6FD" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.04"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#waves)"/>
+  <rect width="400" height="300" fill="url(#micro)"/>
+  <rect width="400" height="300" fill="url(#glow)"/>
+  <!-- Soft scattered bubbles -->
+  <circle cx="40" cy="80" r="5" fill="none" stroke="#0EA5E9" stroke-width="0.6" opacity="0.1"/>
+  <circle cx="350" cy="200" r="7" fill="none" stroke="#0284C7" stroke-width="0.6" opacity="0.08"/>
+  <circle cx="200" cy="50" r="4" fill="none" stroke="#BAE6FD" stroke-width="0.6" opacity="0.12"/>
+  <circle cx="80" cy="240" r="6" fill="none" stroke="#0EA5E9" stroke-width="0.5" opacity="0.08"/>
+</svg>

@@ -83,7 +83,7 @@ export default function ColoringImporter({ storyId, storyTitle, onDone, onClose 
                 <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
                 <p className="text-[16px] font-extrabold text-gray-800">Import Complete!</p>
                 <p className="text-[13px] text-gray-500 mt-1">{files.length} coloring pages imported.</p>
-                <button onClick={onClose} className="mt-4 bg-indigo-600 text-white font-bold text-[13px] rounded-xl px-6 py-2.5">Done</button>
+                <button onClick={onClose} className="mt-4 bg-green-600 text-white font-bold text-[13px] rounded-xl px-6 py-2.5">Done</button>
               </div>
             ) : (
               <>

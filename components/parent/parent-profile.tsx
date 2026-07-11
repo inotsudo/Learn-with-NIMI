@@ -266,7 +266,7 @@ export function UserProfileMenu() {
 
           <div className="flex items-center justify-between">
             <div className="font-medium">Subscription</div>
-            <span className={`font-bold ${profile.subscription_status === "premium" ? "theme-text-muted" : "text-gray-700"}`}>{profile.subscription_status}</span>
+            <span className={`font-bold ${profile.subscription_status === "premium" ? "text-gray-500" : "text-gray-700"}`}>{profile.subscription_status}</span>
           </div>
         </div>
 

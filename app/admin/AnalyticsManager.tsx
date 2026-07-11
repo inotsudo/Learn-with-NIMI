@@ -14,6 +14,7 @@ import CurriculumAnalyticsTab from './CurriculumAnalyticsTab'
 import LanguageAnalyticsTab from './LanguageAnalyticsTab'
 import AchievementAnalyticsTab from './AchievementAnalyticsTab'
 import ContentAnalyticsTab from './ContentAnalyticsTab'
+import RevenueAnalyticsTab from './RevenueAnalyticsTab'
 import { exportXLSX } from './exportUtils'
 import {
   computeLearnerAnalytics, computeCurriculumAnalytics, computeLanguageAnalytics,
@@ -38,15 +39,18 @@ interface ProgressRow {
   missions: { category_slug: string; mission_versions: { language: Lang; title: string }[] } | null
 }
 
-const accent = ACCENT.indigo
+const accent = ACCENT.emerald
+
+import { DollarSign } from 'lucide-react'
 
 const TABS = [
-  { key: 'overview', label: 'Overview', icon: BarChart3 },
-  { key: 'learners', label: 'Learners', icon: Users },
-  { key: 'curriculum', label: 'Curriculum', icon: Layers },
-  { key: 'languages', label: 'Languages', icon: Globe },
-  { key: 'achievements', label: 'Achievements', icon: Award },
-  { key: 'content', label: 'Content', icon: FileText },
+  { key: 'overview',     label: 'Overview',     icon: BarChart3 },
+  { key: 'revenue',      label: 'Revenue',       icon: DollarSign },
+  { key: 'learners',     label: 'Learners',      icon: Users },
+  { key: 'curriculum',   label: 'Curriculum',    icon: Layers },
+  { key: 'languages',    label: 'Languages',     icon: Globe },
+  { key: 'achievements', label: 'Achievements',  icon: Award },
+  { key: 'content',      label: 'Content',       icon: FileText },
 ] as const
 
 type TabKey = typeof TABS[number]['key']
@@ -396,6 +400,7 @@ export default function AnalyticsManager({ onNavigate, onOpenSidebar }: Analytic
 
       {/* Body */}
       <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+        {tab === 'revenue' && <RevenueAnalyticsTab />}
         {tab === 'learners' && <LearnerAnalyticsTab analytics={learnerAnalytics} />}
         {tab === 'curriculum' && <CurriculumAnalyticsTab analytics={curriculumAnalytics} />}
         {tab === 'languages' && <LanguageAnalyticsTab analytics={languageAnalytics} />}
@@ -405,10 +410,10 @@ export default function AnalyticsManager({ onNavigate, onOpenSidebar }: Analytic
         <>
         {/* Overview stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <StatCard icon={Sparkles} label="Missions Completed" value={totalCompletions} accentKey="indigo" />
+          <StatCard icon={Sparkles} label="Missions Completed" value={totalCompletions} accentKey="emerald" />
           <StatCard icon={Star} label="Stars Earned" value={totalStars} accentKey="amber" />
           <StatCard icon={Users} label="Active Learners" value={`${activeLearners}/${totalChildren}`} accentKey="emerald" />
-          <StatCard icon={TrendingUp} label="Avg Stars / Mission" value={avgStars.toFixed(1)} accentKey="violet" />
+          <StatCard icon={TrendingUp} label="Avg Stars / Mission" value={avgStars.toFixed(1)} accentKey="teal" />
         </div>
 
         {/* Activity Trend */}

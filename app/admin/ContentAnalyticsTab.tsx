@@ -6,7 +6,7 @@ import StatCard from './StatCard'
 import { exportCSV } from './exportUtils'
 import type { ContentAnalytics } from '@/lib/adminAnalytics'
 
-const accent = ACCENT.indigo
+const accent = ACCENT.emerald
 
 const STATUS_BAR_COLOR: Record<ContentStatus, string> = {
   draft: 'bg-gray-300',
@@ -16,7 +16,7 @@ const STATUS_BAR_COLOR: Record<ContentStatus, string> = {
 }
 
 const STATUS_ACCENT: Record<ContentStatus, AccentKey> = {
-  draft: 'indigo',
+  draft: 'teal',
   review: 'blue',
   published: 'emerald',
   archived: 'rose',

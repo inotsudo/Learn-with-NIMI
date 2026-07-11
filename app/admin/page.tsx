@@ -44,6 +44,7 @@ const NotificationsManager = dynamicView(() => import('./NotificationsManager'))
 const CurriculumManager = dynamicView(() => import('./CurriculumManager'))
 const CommunityManager = dynamicView(() => import('./CommunityManager'))
 const ProductsManager = dynamicView(() => import('./ProductsManager'))
+const MasterpieceManager = dynamicView(() => import('./MasterpieceManager'))
 const StorySlotsManager = dynamicView(() => import('./StorySlotsManager'))
 const StoryOrderingManager = dynamicView(() => import('./StoryOrderingManager'))
 const StoryPublishingManager = dynamicView(() => import('./StoryPublishingManager'))
@@ -52,6 +53,14 @@ const ContentMediaManager = dynamicView(() => import('./ContentMediaManager'))
 const WeeklyChallengesManager = dynamicView(() => import('./WeeklyChallengesManager'))
 const FamiliesManager = dynamicView(() => import('./FamiliesManager'))
 const ContentLibraryManager = dynamicView(() => import('./ContentLibraryManager'))
+const SchoolsManager = dynamicView(() => import('./SchoolsManager'))
+const NewsletterManager    = dynamicView(() => import('./NewsletterManager'))
+const ReferralManager      = dynamicView(() => import('./ReferralManager'))
+const DiscountCodesManager = dynamicView(() => import('./DiscountCodesManager'))
+const GiftManager          = dynamicView(() => import('./GiftManager'))
+const TestimonialsManager         = dynamicView(() => import('./TestimonialsManager'))
+const PartnersManager             = dynamicView(() => import('./PartnersManager'))
+const CertificateTemplatesManager = dynamicView(() => import('./CertificateTemplatesManager'))
 
 const tables = [
   'categories', 'mission_versions',
@@ -132,19 +141,19 @@ export default function AdminPanel() {
 
   if (checking) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4c1d95] text-indigo-200 text-sm font-semibold text-center px-6">
+      <div className="h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 text-gray-500 text-sm font-semibold text-center px-6">
         <p>{checkTimedOut ? "This is taking longer than expected..." : "Checking admin access..."}</p>
         {checkTimedOut && (
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setCheckTimedOut(false); setRetryKey(k => k + 1) }}
-              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition"
+              className="px-4 py-2 rounded-full bg-white hover:bg-gray-100 border border-ds-border text-ds-text text-xs font-bold transition"
             >
               Try again
             </button>
             <button
               onClick={() => router.replace('/admin/login')}
-              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition"
+              className="px-4 py-2 rounded-full bg-white hover:bg-gray-100 border border-ds-border text-ds-text text-xs font-bold transition"
             >
               Go to login
             </button>
@@ -170,6 +179,13 @@ export default function AdminPanel() {
   const isAudioView = currentTable === 'audio'
   const isWeeklyChallengesView = currentTable === 'weekly_challenges'
   const isFamiliesView = currentTable === 'families'
+  const isSchoolsView      = currentTable === 'school_inquiries'
+  const isNewsletterView   = currentTable === 'newsletter_signups'
+  const isReferralView      = currentTable === 'referral_redemptions'
+  const isDiscountCodesView = currentTable === 'discount_codes'
+  const isGiftView          = currentTable === 'gift_subscriptions'
+  const isTestimonialsView  = currentTable === 'testimonials'
+  const isPartnersView      = currentTable === 'partners'
   const isContentLibraryView = currentTable === 'content_library'
 
   const isColoringView = currentTable === 'coloring_pages' || currentTable.startsWith('coloring_pages:')
@@ -183,7 +199,8 @@ export default function AdminPanel() {
   const isParentsView = currentTable === 'parents' || currentTable.startsWith('parents:')
   const initialParentId = isParentsView ? currentTable.split(':')[1] : undefined
 
-  const isCertificatesView = currentTable === 'child_achievements'
+  const isCertificatesView         = currentTable === 'child_achievements'
+  const isCertTemplatesView        = currentTable === 'certificate_templates'
 
   const isRewardsView = currentTable === 'child_badges' || currentTable.startsWith('child_badges:')
   const initialRewardChildId = isRewardsView ? currentTable.split(':')[1] : undefined
@@ -203,6 +220,7 @@ export default function AdminPanel() {
 
   const isCommunityView = currentTable === 'creations'
   const isProductsView = currentTable === 'products'
+  const isMasterpieceView = currentTable === 'masterpieces'
 
   return (
     <ToastProvider>
@@ -237,6 +255,13 @@ export default function AdminPanel() {
           {isAudioView && <ContentMediaManager title="Audio" description="Manage audio content for sing along missions." missionType="sing" mediaField="media_url" onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isWeeklyChallengesView && <WeeklyChallengesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isFamiliesView && <FamiliesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isSchoolsView     && <SchoolsManager     onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isNewsletterView  && <NewsletterManager  onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isReferralView       && <ReferralManager       onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isDiscountCodesView  && <DiscountCodesManager  onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isGiftView           && <GiftManager           onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isTestimonialsView   && <TestimonialsManager   onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isPartnersView       && <PartnersManager       onOpenSidebar={() => setSidebarOpen(true)} />}
           {isContentLibraryView && <ContentLibraryManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isStoryView && (
             <StoryManager initialStoryId={initialStoryId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
@@ -256,6 +281,9 @@ export default function AdminPanel() {
           {isCertificatesView && (
             <CertificatesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
+          {isCertTemplatesView && (
+            <CertificateTemplatesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
+          )}
           {isRewardsView && (
             <RewardsManager initialChildId={initialRewardChildId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
@@ -272,28 +300,29 @@ export default function AdminPanel() {
           {isCurriculumView && <CurriculumManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isCommunityView && <CommunityManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isProductsView && <ProductsManager />}
+          {isMasterpieceView && <MasterpieceManager />}
           {currentTable === 'Dashboard' && <DashboardHome onNavigate={setCurrentTable} />}
           {currentTable === 'Help' && (
             <div className="flex items-center justify-center h-full p-8">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 max-w-md text-center">
-                <div className="w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-4">
+                <div className="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4">
                   <HelpCircle className="w-7 h-7" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Help &amp; Support</h2>
+                <h2 className="text-xl font-bold text-ds-text mb-2">Help &amp; Support</h2>
                 <p className="text-gray-500 text-sm mb-4">
                   Need help managing NIMIPIKO content, accounts, or settings?
                   Our team is here to support you.
                 </p>
                 <a
                   href="mailto:support@nimipiko.com"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-green-600 hover:text-green-700"
                 >
                   <Mail className="w-4 h-4" /> support@nimipiko.com
                 </a>
               </div>
             </div>
           )}
-          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isRewardsView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
+          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
             <TableView table={currentTable} />
           )}
           </ErrorBoundary>

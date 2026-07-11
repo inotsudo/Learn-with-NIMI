@@ -110,7 +110,7 @@ export default function ProductsManager() {
           <p className="text-sm text-gray-500 mt-1">Manage subscription plans, one-time purchases, and school licensing tiers</p>
         </div>
         <button onClick={startCreate}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition">
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition">
           <Plus className="w-4 h-4" /> Add Product
         </button>
       </div>
@@ -120,19 +120,19 @@ export default function ProductsManager() {
         {products.map(p => (
           <div key={p.id}
             className={`rounded-2xl border-2 p-5 transition ${
-              p.is_active ? 'border-indigo-200 bg-white' : 'border-gray-200 bg-gray-50 opacity-60'
+              p.is_active ? 'border-green-200 bg-white' : 'border-gray-200 bg-gray-50 opacity-60'
             }`}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ${
-                  p.product_type === 'subscription' ? 'bg-indigo-500' : 'bg-amber-500'
+                  p.product_type === 'subscription' ? 'bg-green-600' : 'bg-amber-500'
                 }`}>
                   {p.product_type === 'subscription' ? <Repeat className="w-5 h-5" /> : <Package className="w-5 h-5" />}
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 text-[16px]">{p.name}</h3>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600">{p.tier}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">{p.tier}</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{p.org_type}</span>
                     {p.product_type === 'subscription' && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600">/{p.billing_interval}</span>
@@ -184,8 +184,8 @@ export default function ProductsManager() {
 
       {/* Edit/Create form */}
       {(editing || creating) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-ds-card border border-ds-border w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
             <h3 className="font-bold text-xl text-gray-900 mb-4">
               {creating ? 'Create Product' : `Edit: ${editing!.name}`}
             </h3>
@@ -295,13 +295,13 @@ export default function ProductsManager() {
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeature())}
                     placeholder="e.g. all_stories"
                     className="flex-1 border rounded-xl px-3 py-2 text-sm" />
-                  <button onClick={addFeature} className="bg-indigo-100 text-indigo-600 font-bold px-3 rounded-xl text-sm">Add</button>
+                  <button onClick={addFeature} className="bg-green-50 text-green-700 font-bold px-3 rounded-xl text-sm">Add</button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {form.features.map((f, i) => (
-                    <span key={i} className="flex items-center gap-1 text-[11px] bg-indigo-50 text-indigo-600 pl-2 pr-1 py-0.5 rounded-full">
+                    <span key={i} className="flex items-center gap-1 text-[11px] bg-green-50 text-green-700 pl-2 pr-1 py-0.5 rounded-full">
                       {f}
-                      <button onClick={() => removeFeature(i)} className="hover:bg-indigo-200 rounded-full p-0.5">
+                      <button onClick={() => removeFeature(i)} className="hover:bg-green-200 rounded-full p-0.5">
                         <X className="w-3 h-3" />
                       </button>
                     </span>
@@ -314,7 +314,7 @@ export default function ProductsManager() {
             <div className="flex gap-3 mt-6">
               <button onClick={cancel} className="flex-1 py-2.5 rounded-xl border text-gray-500 font-bold text-sm">Cancel</button>
               <button onClick={save} disabled={saving || !form.name.trim()}
-                className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
                 {saving ? 'Saving...' : <><Check className="w-4 h-4" /> Save</>}
               </button>
             </div>

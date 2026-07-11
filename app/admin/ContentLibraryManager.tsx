@@ -108,7 +108,7 @@ export default function ContentLibraryManager({ onNavigate, onOpenSidebar }: Pro
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder="Search content..." value={search} onChange={e => setSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300 w-48" />
+                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-500 w-48" />
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function ContentLibraryManager({ onNavigate, onOpenSidebar }: Pro
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition whitespace-nowrap ${
-                tab === t.key ? 'bg-indigo-100 text-indigo-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                tab === t.key ? 'bg-green-50 text-green-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
               }`}>
               {t.icon && <t.icon size={14} />}
               {t.label}
@@ -166,7 +166,7 @@ export default function ContentLibraryManager({ onNavigate, onOpenSidebar }: Pro
                       <td className="px-5 py-3">
                         <input type="text" defaultValue={item.media_url ?? ''} placeholder="Upload or paste URL..."
                           onBlur={e => handleSaveUrl(item.id, e.target.value)}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] font-medium text-gray-600 focus:outline-none focus:border-indigo-300 max-w-[200px]" />
+                          className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] font-medium text-gray-600 focus:outline-none focus:border-green-500 max-w-[200px]" />
                       </td>
                       <td className="px-5 py-3">
                         {item.media_url ? (

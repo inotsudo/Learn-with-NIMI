@@ -24,18 +24,18 @@ export default function GalleryHeader({ search, onSearchChange, filter, onFilter
 
   return (
     <div>
-      <h1 className="font-black text-2xl sm:text-3xl text-white">{t("communityGalleryTitle")}</h1>
-      <p className="theme-text text-sm mt-1">{t("communityGallerySubtitle")}</p>
+      <h1 className="font-black text-2xl sm:text-3xl text-ds-text">{t("communityGalleryTitle")}</h1>
+      <p className="text-gray-500 text-sm mt-1">{t("communityGallerySubtitle")}</p>
 
       <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
         <div className="relative w-full sm:w-64 shrink-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 theme-text-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             value={search}
             onChange={e => onSearchChange(e.target.value)}
             placeholder={t("searchArtworkPlaceholder")}
-            className="w-full bg-white/10 backdrop-blur border-2 border-white/15 rounded-full pl-9 pr-4 py-2 text-sm font-semibold text-white placeholder:text-white/40 placeholder:font-medium focus:outline-none focus:theme-border-strong"
+            className="w-full bg-ds-input border border-ds-border rounded-full pl-9 pr-4 py-2 text-sm font-semibold text-ds-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition"
           />
         </div>
 
@@ -46,8 +46,8 @@ export default function GalleryHeader({ search, onSearchChange, filter, onFilter
               onClick={() => onFilterChange(tab.id)}
               className={`px-4 py-2 rounded-full text-xs sm:text-sm font-black transition-colors ${
                 filter === tab.id
-                  ? "theme-accent text-white shadow"
-                  : "border-2 border-white/20 theme-text bg-white/10 backdrop-blur"
+                  ? "bg-[var(--nimi-green)] text-white shadow"
+                  : "border border-ds-border text-ds-text bg-white hover:bg-gray-50"
               }`}
             >
               {t(tab.labelKey)}
@@ -55,7 +55,7 @@ export default function GalleryHeader({ search, onSearchChange, filter, onFilter
           ))}
         </div>
 
-        <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur border-2 border-white/15 rounded-full px-4 py-2 shadow-sm text-sm font-bold theme-text shrink-0 sm:ml-auto">
+        <div className="flex items-center gap-1.5 bg-white border border-ds-border shadow-ds-card rounded-full px-4 py-2 text-sm font-bold text-ds-text shrink-0 sm:ml-auto">
           <span>{t("sortByNewest")}</span>
           <ChevronDown className="w-4 h-4" />
         </div>

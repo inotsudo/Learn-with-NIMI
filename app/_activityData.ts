@@ -22,7 +22,6 @@ export interface ActivityConfig {
   subtitleKey: string;
   emoji: string;
   mascot: "nimi" | "piko";
-  gradient: string;
   borderColor: string;
   numBg: string;
   numBgGlass: string;
@@ -40,7 +39,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     subtitleKey: "activityMorningSongSubtitle",
     emoji: "🎧",
     mascot: "nimi",
-    gradient: "from-purple-400 to-pink-500",
     borderColor: "border-purple-200",
     numBg: "bg-purple-600",
     numBgGlass: "bg-purple-400/20",
@@ -56,7 +54,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     subtitleKey: "activityMovementSubtitle",
     emoji: "🤸",
     mascot: "nimi",
-    gradient: "from-pink-400 to-pink-600",
     borderColor: "border-pink-200",
     numBg: "bg-pink-600",
     numBgGlass: "bg-pink-400/20",
@@ -72,7 +69,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     subtitleKey: "activityArtistiqueSubtitle",
     emoji: "🎨",
     mascot: "nimi",
-    gradient: "from-orange-400 to-orange-600",
     borderColor: "border-orange-200",
     numBg: "bg-orange-500",
     numBgGlass: "bg-orange-400/20",
@@ -87,8 +83,7 @@ export const ACTIVITIES: ActivityConfig[] = [
     titleKey: "activityHistoriqueTitle",
     subtitleKey: "activityHistoriqueSubtitle",
     emoji: "🏛️",
-    mascot: "piko",
-    gradient: "from-amber-600 to-yellow-700",
+    mascot: "nimi",
     borderColor: "border-amber-300",
     numBg: "bg-amber-700",
     numBgGlass: "bg-amber-400/20",
@@ -103,10 +98,9 @@ export const ACTIVITIES: ActivityConfig[] = [
     titleKey: "activityZoomTitle",
     subtitleKey: "activityZoomSubtitle",
     emoji: "🔍",
-    mascot: "piko",
-    gradient: "from-green-400 to-green-600",
+    mascot: "nimi",
     borderColor: "border-green-200",
-    numBg: "bg-green-600",
+    numBg: "bg-[var(--nimi-green)]",
     numBgGlass: "bg-green-400/20",
     numTextGlass: "text-green-200",
     stars: 15,
@@ -119,8 +113,7 @@ export const ACTIVITIES: ActivityConfig[] = [
     titleKey: "activityDiscoveryTitle",
     subtitleKey: "activityDiscoverySubtitle",
     emoji: "🌱",
-    mascot: "piko",
-    gradient: "from-teal-400 to-blue-500",
+    mascot: "nimi",
     borderColor: "border-teal-200",
     numBg: "bg-teal-600",
     numBgGlass: "bg-teal-400/20",
@@ -136,7 +129,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     subtitleKey: "activityFlipFlopSubtitle",
     emoji: "📖",
     mascot: "nimi",
-    gradient: "from-indigo-400 to-indigo-600",
     borderColor: "border-indigo-200",
     numBg: "bg-indigo-600",
     numBgGlass: "bg-indigo-400/20",
@@ -152,7 +144,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     subtitleKey: "activityColoringSubtitle",
     emoji: "🖍️",
     mascot: "nimi",
-    gradient: "from-yellow-400 to-yellow-500",
     borderColor: "border-yellow-200",
     numBg: "bg-yellow-500",
     numBgGlass: "bg-yellow-400/20",

@@ -188,7 +188,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
         <p className="text-xs text-gray-400 mt-1 max-w-sm">{loadError}</p>
         <button
           onClick={fetchData}
-          className={`mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition ${accent.button}`}
+          className="mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition bg-green-600 hover:bg-green-700"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Try again
         </button>
@@ -199,7 +199,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
   return (
     <div>
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 ${accent.soft}`}>
+      <header className="bg-white border-b border-ds-border px-4 sm:px-6 py-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3.5 min-w-0">
             <button
@@ -208,7 +208,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
             >
               <Menu size={17} />
             </button>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-green-50 text-green-600">
               <Award className="w-6 h-6" />
             </div>
             <div className="min-w-0">
@@ -219,7 +219,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
                 Category-mastery badges &amp; program-completion certificates earned by learners
               </p>
               <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
+                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-green-600">Dashboard</button>
                 <span className="mx-1.5 text-gray-300">/</span>
                 <span className="font-bold text-gray-500">Certificates</span>
               </p>
@@ -331,7 +331,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
                     key={t}
                     onClick={() => setTypeFilter(t)}
                     className={`text-xs font-bold px-3 py-1 rounded-full transition ${
-                      typeFilter === t ? `text-white ${accent.button}` : 'text-gray-500 hover:text-gray-700'
+                      typeFilter === t ? 'text-white bg-green-600 hover:bg-green-700' : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
                     {t === 'all' ? 'All' : t === 'badge' ? 'Badges' : 'Certificates'}
@@ -342,7 +342,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
                 <button
                   onClick={() => setLangFilter('all')}
                   className={`text-xs font-bold px-3 py-1 rounded-full transition ${
-                    langFilter === 'all' ? `text-white ${accent.button}` : 'text-gray-500 hover:text-gray-700'
+                    langFilter === 'all' ? 'text-white bg-green-600 hover:bg-green-700' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   All
@@ -352,7 +352,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
                     key={lang}
                     onClick={() => setLangFilter(lang)}
                     className={`text-xs font-bold px-3 py-1 rounded-full transition ${
-                      langFilter === lang ? `text-white ${accent.button}` : 'text-gray-500 hover:text-gray-700'
+                      langFilter === lang ? 'text-white bg-green-600 hover:bg-green-700' : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
                     {LANGUAGE_META[lang].flag}

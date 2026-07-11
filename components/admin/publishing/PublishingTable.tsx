@@ -53,7 +53,7 @@ export default function PublishingTable({ stories, selected, onToggleSelect, onS
           <tr className="border-b border-gray-100 bg-gray-50/50">
             <th className="px-4 py-3 w-10">
               <input type="checkbox" checked={allSelected} onChange={onSelectAll}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
             </th>
             {['Story', 'Readiness', 'Languages', 'Status', 'Actions'].map(h => (
               <th key={h} className="px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
@@ -69,10 +69,10 @@ export default function PublishingTable({ stories, selected, onToggleSelect, onS
             const isPublished = s.status === 'published'
 
             return (
-              <tr key={s.id} className={`border-b border-gray-50 transition ${selected.has(s.id) ? 'bg-indigo-50/30' : 'hover:bg-gray-50/50'}`}>
+              <tr key={s.id} className={`border-b border-gray-50 transition ${selected.has(s.id) ? 'bg-green-50/30' : 'hover:bg-gray-50/50'}`}>
                 <td className="px-4 py-3">
                   <input type="checkbox" checked={selected.has(s.id)} onChange={() => onToggleSelect(s.id)}
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
                 </td>
                 <td className="px-4 py-3">
                   <button onClick={() => onEdit(s.id)} className="text-left hover:underline">
@@ -85,7 +85,7 @@ export default function PublishingTable({ stories, selected, onToggleSelect, onS
                     <ReadinessRing score={r.score} size={36} strokeWidth={4} />
                     <div>
                       <span className="text-[13px] font-bold text-gray-700">{r.score}%</span>
-                      <button onClick={() => onViewChecklist(s)} className="block text-[10px] text-indigo-500 hover:text-indigo-700 font-medium">
+                      <button onClick={() => onViewChecklist(s)} className="block text-[10px] text-green-600 hover:text-green-800 font-medium">
                         View checklist
                       </button>
                     </div>
@@ -104,7 +104,7 @@ export default function PublishingTable({ stories, selected, onToggleSelect, onS
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1">
                     <button onClick={() => onPreview(s.slug)} title="Preview"
-                      className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+                      className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-green-600 hover:border-green-200 transition">
                       <Eye size={14} />
                     </button>
                     {isPublished ? (

@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { Send, ChevronRight, Mic, Volume2, VolumeX } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { useNimiChat, type ChatMessage } from "@/hooks/useNimiChat";
 import { useSpeechToText, speechErrorKey } from "@/hooks/useSpeechToText";
 import QuickReplyChips from "./QuickReplyChips";
@@ -22,7 +25,10 @@ function greetingFor(name: string): ChatMessage {
 
 export default function TalkToNimi({ childName }: Props) {
   const { t, language } = useLanguage();
+  const m = useThemeMotion();
   const router = useRouter();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
   const messagesRef = useRef<HTMLDivElement>(null);
   const exchangeCountRef = useRef(0);
 
@@ -62,19 +68,19 @@ export default function TalkToNimi({ childName }: Props) {
   const showMic = micSupported && language !== "rw";
 
   return (
-    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md overflow-hidden flex flex-col h-full">
+    <div className="bg-white border border-ds-border shadow-ds-card overflow-hidden flex flex-col h-full" style={{ borderRadius: 'var(--leaf-r)' }}>
 
       {/* Header */}
-      <div className="theme-accent px-3 py-2.5 flex items-center gap-2 flex-shrink-0">
-        <motion.button whileTap={{ scale: 0.9 }}
-          className="w-7 h-7 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white flex-shrink-0 transition">
+      <div className="px-3 py-2.5 flex items-center gap-2 flex-shrink-0" style={{ backgroundColor: 'var(--nimi-green)' }}>
+        <motion.button whileTap={m.buttonPress}
+          className="w-7 h-7 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center flex-shrink-0 transition">
           <ChevronRight className="w-4 h-4 rotate-180" />
         </motion.button>
-        <img src="/nimi-logo-circle.png" alt="NIMI"
+        <img src={assets.nimiCircle} alt="NIMI"
           className="w-7 h-7 rounded-full object-cover border-2 border-yellow-300 flex-shrink-0 shadow" />
         <span className="font-black text-white text-[12px] tracking-wide flex-1">{t("talkToNimiTitle")}</span>
-        <motion.button whileTap={{ scale: 0.9 }}
-          className="w-7 h-7 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white flex-shrink-0 transition font-black text-sm">
+        <motion.button whileTap={m.buttonPress}
+          className="w-7 h-7 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center flex-shrink-0 transition font-black text-sm">
           ✕
         </motion.button>
       </div>
@@ -89,19 +95,20 @@ export default function TalkToNimi({ childName }: Props) {
             return (
               <div key={idx} className={`flex items-end gap-2 ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.from === "nimi" && (
-                  <img src="/nimi-logo-circle.png" alt="NIMI"
+                  <img src={assets.nimiCircle} alt="NIMI"
                     className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-md border-2 border-yellow-200" />
                 )}
                 <div className={`text-[10.5px] leading-snug px-3 py-2 max-w-[72%] shadow-sm ${
                   msg.from === "nimi"
-                    ? "bg-white/15 backdrop-blur text-white rounded-2xl rounded-bl-sm border border-white/20"
-                    : "theme-accent text-white rounded-2xl rounded-br-sm"
-                }`}>
+                    ? "bg-gray-100 border border-ds-border text-ds-text rounded-2xl rounded-bl-sm"
+                    : "text-white rounded-2xl rounded-br-sm"
+                }`}
+                style={msg.from === "user" ? { backgroundColor: 'var(--nimi-green)' } : undefined}>
                   {showTyping ? (
                     <span className="flex items-center gap-1 py-1" aria-label={t("nimiThinking")}>
                       {[0, 0.15, 0.3].map(delay => (
                         <motion.span key={delay}
-                          className="w-1.5 h-1.5 theme-accent-muted rounded-full"
+                          className="w-1.5 h-1.5 bg-green-400 rounded-full"
                           animate={{ y: [0, -3, 0] }}
                           transition={{ duration: 0.6, repeat: Infinity, delay }} />
                       ))}
@@ -126,11 +133,11 @@ export default function TalkToNimi({ childName }: Props) {
         )}
 
         {/* Input */}
-        <div className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-full border-2 border-white/20 px-3 py-1 shadow-sm mb-3 mt-2 flex-shrink-0">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-full border border-ds-border px-3 py-1 shadow-sm mb-3 mt-2 flex-shrink-0">
           {language !== "rw" && (
-            <motion.button onClick={toggleSpeak} whileTap={{ scale: 0.88 }} disabled={isTyping}
+            <motion.button onClick={toggleSpeak} whileTap={m.buttonPress} disabled={isTyping}
               aria-label={isSpeaking ? t("stopReadingLabel") : t("readAloudLabel")}
-              className="w-7 h-7 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center theme-text flex-shrink-0 transition disabled:opacity-50">
+              className="w-7 h-7 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600 flex-shrink-0 transition disabled:opacity-50">
               {isSpeaking ? (
                 <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: Infinity }}>
                   <VolumeX className="w-3.5 h-3.5" />
@@ -146,23 +153,24 @@ export default function TalkToNimi({ childName }: Props) {
             onKeyDown={e => e.key === "Enter" && sendChat()}
             placeholder={listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
             disabled={isTyping || listening}
-            className="flex-1 min-w-0 text-[10.5px] bg-transparent focus:outline-none text-white placeholder-white/40 disabled:opacity-60" />
+            className="flex-1 min-w-0 text-[10.5px] bg-transparent focus:outline-none text-ds-text placeholder-gray-400 disabled:opacity-60" />
           {showMic && (
             <motion.button onClick={() => (listening ? stopListening() : startListening())}
-              whileTap={{ scale: 0.88 }}
+              whileTap={m.buttonPress}
               aria-label={t("micButtonLabel")}
               animate={listening ? { scale: [1, 1.15, 1] } : {}}
               transition={listening ? { duration: 0.8, repeat: Infinity } : {}}
               disabled={isTyping}
               className={`w-7 h-7 rounded-full flex items-center justify-center text-white flex-shrink-0 transition shadow disabled:opacity-50 ${
-                listening ? "bg-red-500 hover:bg-red-600" : "theme-accent-muted hover:theme-accent-muted"
+                listening ? "bg-red-500 hover:bg-red-600" : "bg-green-300 hover:bg-green-400"
               }`}>
               <Mic className="w-3 h-3" />
             </motion.button>
           )}
-          <motion.button onClick={() => sendChat()} whileTap={{ scale: 0.88 }}
+          <motion.button onClick={() => sendChat()} whileTap={m.buttonPress}
             disabled={isTyping || !chatInput.trim()}
-            className="w-7 h-7 theme-accent hover:theme-accent disabled:theme-accent-muted rounded-full flex items-center justify-center text-white flex-shrink-0 transition shadow">
+            className="w-7 h-7 disabled:bg-gray-200 flex items-center justify-center text-white flex-shrink-0 transition shadow"
+            style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}>
             <Send className="w-3 h-3" />
           </motion.button>
         </div>

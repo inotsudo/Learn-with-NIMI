@@ -16,9 +16,9 @@ export default function PublishingChecklistModal({ story, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-50" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 max-w-lg w-full max-h-[85vh] overflow-auto">
+        <div className="bg-white rounded-2xl shadow-ds-card border border-ds-border max-w-lg w-full max-h-[85vh] overflow-auto">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
             <div>
               <h2 className="text-[16px] font-extrabold text-gray-800">Story Checklist</h2>

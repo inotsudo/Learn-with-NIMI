@@ -112,7 +112,7 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
             </div>
           </div>
           <button onClick={handleCreate} disabled={creating}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] rounded-xl px-4 py-2.5 shadow-sm transition disabled:opacity-50">
+            className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-xl px-4 py-2.5 shadow-sm transition disabled:opacity-50">
             <Plus size={16} /> New Challenge
           </button>
         </div>
@@ -164,7 +164,7 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Type</label>
                         <select defaultValue={c.type}
                           onChange={e => handleChallengeSave(c.id, 'type', e.target.value)}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300 bg-white">
+                          className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                           <option value="kindness">Kindness</option>
                           <option value="friendship">Friendship</option>
                           <option value="responsibility">Responsibility</option>
@@ -176,13 +176,13 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Stars Reward</label>
                         <input type="number" defaultValue={c.stars}
                           onBlur={e => handleChallengeSave(c.id, 'stars', Number(e.target.value))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300" />
+                          className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500" />
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Difficulty</label>
                         <select defaultValue={c.difficulty ?? 'easy'}
                           onChange={e => handleChallengeSave(c.id, 'difficulty', e.target.value)}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300 bg-white">
+                          className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                           <option value="easy">⭐ Easy</option>
                           <option value="medium">⭐⭐ Medium</option>
                           <option value="hard">⭐⭐⭐ Hard</option>
@@ -192,20 +192,20 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Duration (min)</label>
                         <input type="number" defaultValue={c.estimated_minutes ?? 2}
                           onBlur={e => handleChallengeSave(c.id, 'estimated_minutes', Number(e.target.value))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300" />
+                          className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500" />
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Reward Badge</label>
                         <input type="text" defaultValue={c.reward_badge ?? ''}
                           onBlur={e => handleChallengeSave(c.id, 'reward_badge', e.target.value)}
                           placeholder="kind-heart"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300" />
+                          className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500" />
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Sort Order</label>
                         <input type="number" defaultValue={c.sort_order}
                           onBlur={e => handleChallengeSave(c.id, 'sort_order', Number(e.target.value))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300" />
+                          className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500" />
                       </div>
                     </div>
 
@@ -241,13 +241,13 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
                             <label className="text-[10px] font-bold text-gray-400 block mb-0.5">Title</label>
                             <input type="text" defaultValue={v.title}
                               onBlur={e => handleVersionSave(v.id, 'title', e.target.value)}
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300" />
+                              className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500" />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold text-gray-400 block mb-0.5">Description</label>
                             <textarea defaultValue={v.description} rows={2}
                               onBlur={e => handleVersionSave(v.id, 'description', e.target.value)}
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-[12px] text-gray-600 focus:outline-none focus:border-indigo-300 resize-none" />
+                              className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-[12px] text-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none" />
                           </div>
                           {/* Audio instruction per language */}
                           <VersionAudioUpload versionId={v.id} audioUrl={(v.content_json?.audio_url as string) ?? null} language={v.language} onSaved={load} />
@@ -300,20 +300,20 @@ function ChallengeMediaUpload({ label, icon, accept, url, challengeId, field, on
   return (
     <div>
       {uploading ? (
-        <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-3">
-          <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-[12px] font-bold text-indigo-700">Uploading...</span>
+        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-3">
+          <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-[12px] font-bold text-green-700">Uploading...</span>
         </div>
       ) : url ? (
         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
           <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
           <span className="text-[11px] text-emerald-700 font-medium truncate flex-1">{url.split('/').pop()}</span>
-          <button onClick={() => ref.current?.click()} className="text-[10px] font-bold text-indigo-600 hover:underline">Replace</button>
+          <button onClick={() => ref.current?.click()} className="text-[10px] font-bold text-green-700 hover:underline">Replace</button>
           <button onClick={handleRemove} className="text-[10px] font-bold text-red-500 hover:underline">Remove</button>
         </div>
       ) : (
         <button onClick={() => ref.current?.click()}
-          className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-4 text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition">
+          className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-4 text-gray-400 hover:border-green-400 hover:text-green-600 transition">
           {icon}
           <span className="text-[12px] font-bold">{label}</span>
         </button>
@@ -350,19 +350,19 @@ function VersionAudioUpload({ versionId, audioUrl, language, onSaved }: {
     <div>
       <label className="text-[10px] font-bold text-gray-400 block mb-0.5">🔊 Audio Instruction ({language.toUpperCase()})</label>
       {uploading ? (
-        <div className="flex items-center gap-2 bg-indigo-50 rounded-lg px-2.5 py-2">
-          <div className="w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-[11px] text-indigo-600">Uploading...</span>
+        <div className="flex items-center gap-2 bg-green-50 rounded-lg px-2.5 py-2">
+          <div className="w-3 h-3 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-[11px] text-green-700">Uploading...</span>
         </div>
       ) : audioUrl ? (
         <div className="flex items-center gap-1.5 bg-emerald-50 rounded-lg px-2.5 py-2">
           <Volume2 size={12} className="text-emerald-500 shrink-0" />
           <span className="text-[10px] text-emerald-700 font-medium truncate flex-1">{audioUrl.split('/').pop()}</span>
-          <button onClick={() => ref.current?.click()} className="text-[9px] font-bold text-indigo-600 hover:underline">Replace</button>
+          <button onClick={() => ref.current?.click()} className="text-[9px] font-bold text-green-700 hover:underline">Replace</button>
           <button onClick={handleRemove} className="text-[9px] font-bold text-red-500 hover:underline">Remove</button>
         </div>
       ) : (
-        <label className="flex items-center justify-center gap-1.5 border border-dashed border-gray-200 rounded-lg py-2 text-gray-400 hover:text-indigo-500 hover:border-indigo-300 cursor-pointer transition">
+        <label className="flex items-center justify-center gap-1.5 border border-dashed border-gray-200 rounded-lg py-2 text-gray-400 hover:text-green-600 hover:border-green-400 cursor-pointer transition">
           <Volume2 size={12} />
           <span className="text-[11px] font-bold">Upload Audio</span>
           <input type="file" accept="audio/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f) }} />

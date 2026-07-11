@@ -2,14 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Lock, Shield, Sparkles } from "lucide-react";
+import { motion, MotionConfig } from "framer-motion";
+import { ArrowLeft, Mail, Lock, Shield } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import AuthBackground from "@/components/auth/AuthBackground";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 
 export default function ForgotPasswordPage() {
   const { t } = useLanguage();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
+  const m = useThemeMotion();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,7 +32,7 @@ export default function ForgotPasswordPage() {
     setMessage("");
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://nimi-learn.onrender.com/reset-password",
+      redirectTo: `${window.location.origin}/reset-password`,
     });
 
     if (resetError) {
@@ -39,7 +45,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center px-4 py-10 sm:py-14">
+    <MotionConfig reducedMotion="user">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-10 sm:py-14 relative overflow-hidden">
 
       <AuthBackground />
 
@@ -49,31 +56,28 @@ export default function ForgotPasswordPage() {
         <div className="text-center lg:text-left mb-10 lg:mb-0">
           <Link
             href="/loginpage"
-            className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur rounded-full px-4 py-1.5 text-sm font-bold theme-text hover:bg-white/20 transition"
+            className="inline-flex items-center gap-2 bg-white border border-ds-border rounded-full px-4 py-1.5 text-sm font-bold text-gray-600 hover:bg-gray-50 transition"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Login
           </Link>
 
-          <h1 className="font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-tight mt-4">
+          <h1 className="font-black text-4xl sm:text-5xl lg:text-6xl text-ds-text leading-tight mt-4">
             Don&apos;t worry,<br />
-            <span className="relative inline-block px-2">
-              <span className="bg-gradient-to-r from-fuchsia-400 to-purple-300 bg-clip-text text-transparent">Explorer!</span>
-              <Sparkles className="absolute -right-7 top-1 w-6 h-6 text-yellow-300" />
-            </span>
+            <span className="text-[var(--ds-brand-primary)]">Explorer!</span>
           </h1>
 
-          <p className="theme-text mt-4 text-sm sm:text-base max-w-sm mx-auto lg:mx-0">
+          <p className="text-gray-500 mt-4 text-sm sm:text-base max-w-sm mx-auto lg:mx-0">
             It happens! Reset your password and get back to your adventure.
           </p>
 
           <div className="mt-10 flex flex-col items-center lg:items-start gap-2">
-            <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3 max-w-[220px] ml-0 sm:ml-10">
-              <p className="text-sm font-bold text-white text-center leading-snug">
+            <div className="bg-white border border-ds-border rounded-2xl rounded-bl-sm shadow-sm px-4 py-3 max-w-[220px] ml-0 sm:ml-10">
+              <p className="text-sm font-bold text-ds-text text-center leading-snug">
                 No problem! Let&apos;s get you back on track! ✨
               </p>
             </div>
             <motion.img
-              src="/nimipiko.png" alt="NIMI"
+              src={assets.nimiAuth} alt="NIMI"
               className="w-56 h-56 sm:w-64 sm:h-64 rounded-full object-cover -mt-2"
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }} />
@@ -81,28 +85,28 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Right: forgot password card */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 theme-card border-2 border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-4">
+        <div className="w-full max-w-md mx-auto lg:mx-0 bg-white border border-ds-border shadow-ds-card p-6 sm:p-8 space-y-4" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
 
           <div className="flex flex-col items-center text-center mb-1">
-            <div className="w-16 h-16 rounded-full theme-accent-muted flex items-center justify-center mb-3">
-              <Lock className="w-7 h-7 theme-text" />
+            <div className="w-16 h-16 rounded-full bg-[var(--ds-brand-subtle)] flex items-center justify-center mb-3">
+              <Lock className="w-7 h-7 text-[var(--ds-brand-primary)]" />
             </div>
-            <h2 className="font-black text-2xl text-white">Forgot Password?</h2>
-            <p className="theme-text text-sm mt-1">
+            <h2 className="font-black text-2xl text-ds-text">Forgot Password?</h2>
+            <p className="text-gray-500 text-sm mt-1">
               No worries! Enter your email and we&apos;ll send you a link to reset your password.
             </p>
           </div>
 
           {(error || message) && (
-            <div className={`rounded-xl p-2.5 text-center text-sm font-semibold ${error ? "bg-red-500/10 text-red-300" : "bg-green-500/10 text-green-300"}`}>
+            <div className={`leaf p-2.5 text-center text-sm font-semibold ${error ? "bg-red-50 text-red-600" : "bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)]"}`}>
               {error || message}
             </div>
           )}
 
           {/* Email */}
           <div>
-            <label className="flex items-center gap-1.5 font-bold theme-text text-sm mb-1.5">
-              <Mail className="w-4 h-4 theme-text-muted" /> Email Address
+            <label className="flex items-center gap-1.5 font-bold text-ds-text text-sm mb-1.5">
+              <Mail className="w-4 h-4 text-gray-400" /> Email Address
             </label>
             <input
               type="email"
@@ -111,22 +115,23 @@ export default function ForgotPasswordPage() {
               onKeyDown={e => e.key === "Enter" && handleResetPassword()}
               placeholder={t("resetPlaceholderEmail")}
               disabled={loading}
-              className="w-full border-2 border-white/20 bg-white/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:theme-border-strong transition placeholder:text-white/40" />
+              className="w-full border border-ds-border bg-ds-input leaf px-4 py-2.5 text-sm font-semibold text-ds-text focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400" />
           </div>
 
           <motion.button
             onClick={handleResetPassword}
             disabled={loading}
-            whileTap={{ scale: 0.97 }}
-            className="relative w-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-rose-500 hover:opacity-90 text-white font-black rounded-2xl py-3.5 shadow-lg transition disabled:opacity-60 flex items-center justify-center gap-2"
+            whileTap={m.buttonPress}
+            className="w-full text-white font-black py-3.5 shadow-md transition disabled:opacity-60 flex items-center justify-center gap-2"
+            style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r)' }}
           >
             <Mail className="w-4 h-4" />
             {loading ? t("resetSending") : t("resetSendBtn")}
           </motion.button>
 
-          <p className="text-center text-sm theme-text">
+          <p className="text-center text-sm text-gray-600">
             Remember your password?{" "}
-            <Link href="/loginpage" className="text-white font-bold hover:underline">
+            <Link href="/loginpage" className="text-[var(--nimi-green)] font-bold hover:underline">
               Back to Login
             </Link>
           </p>
@@ -136,24 +141,25 @@ export default function ForgotPasswordPage() {
       {/* Bottom mascot bubble */}
       <div className="relative z-10 flex items-center gap-3 mt-10 max-w-md">
         <img
-          src="/nimipiko.png" alt="NIMI"
+          src={assets.nimiAuth} alt="NIMI"
           className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 shadow-md flex-shrink-0" />
-        <div className="bg-white/15 backdrop-blur border border-white/20 rounded-2xl rounded-bl-sm shadow-lg px-4 py-3">
-          <p className="text-sm font-bold text-white leading-snug">
-            You&apos;ve got this! Every adventure starts with a fresh step. 💜
+        <div className="bg-white border border-ds-border rounded-2xl rounded-bl-sm shadow-sm px-4 py-3">
+          <p className="text-sm font-bold text-ds-text leading-snug">
+            You&apos;ve got this! Every adventure starts with a fresh step. 💚
           </p>
         </div>
       </div>
 
       {/* Security note */}
-      <div className="relative z-10 w-full max-w-md mt-4 flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
-        <div className="w-9 h-9 rounded-full theme-accent/30 flex items-center justify-center flex-shrink-0">
-          <Shield className="w-4 h-4 theme-text" />
+      <div className="relative z-10 w-full max-w-md mt-4 flex items-center gap-3 bg-gray-50 border border-ds-border leaf px-4 py-3">
+        <div className="w-9 h-9 rounded-full bg-[var(--ds-brand-subtle)] flex items-center justify-center flex-shrink-0">
+          <Shield className="w-4 h-4 text-[var(--ds-brand-primary)]" />
         </div>
-        <p className="text-sm theme-text">
-          <span className="font-bold text-white">Your security is our priority.</span> We&apos;ll never share your information with anyone.
+        <p className="text-sm text-gray-600">
+          <span className="font-bold text-ds-text">Your security is our priority.</span> We&apos;ll never share your information with anyone.
         </p>
       </div>
     </div>
+    </MotionConfig>
   );
 }

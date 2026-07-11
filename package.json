@@ -317,6 +317,7 @@
     "path-scurry": "^1.11.1",
     "path-to-regexp": "^6.3.0",
     "path-type": "^4.0.0",
+    "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.4.54",
     "picocolors": "^1.1.1",
     "picomatch": "^2.3.1",

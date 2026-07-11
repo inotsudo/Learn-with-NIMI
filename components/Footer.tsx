@@ -39,13 +39,13 @@ export default function Footer() {
       visible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
     }`}>
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white/90 border-2 border-pink-200 rounded-lg p-2 shadow-sm flex flex-col items-center backdrop-blur-sm">
-          <div className="flex items-center text-pink-500">
-            <Heart className="w-4 h-4 fill-pink-400 mr-1 animate-pulse" />
+        <div className="bg-white border border-ds-border rounded-lg p-2 shadow-sm flex flex-col items-center">
+          <div className="flex items-center text-gray-500">
+            <Heart className="w-4 h-4 fill-gray-300 mr-1 animate-pulse" />
             <span className="text-xs font-semibold">
               {t('madeWithLove') || "Made with love"}
             </span>
-            <Heart className="w-4 h-4 fill-pink-400 ml-1 animate-pulse" />
+            <Heart className="w-4 h-4 fill-gray-300 ml-1 animate-pulse" />
           </div>
           <div className="text-gray-500 text-[10px] mt-0.5">
             © {new Date().getFullYear()} NIMI Play

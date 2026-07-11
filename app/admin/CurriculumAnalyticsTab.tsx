@@ -6,7 +6,7 @@ import StatCard from './StatCard'
 import { exportCSV } from './exportUtils'
 import type { CurriculumAnalytics } from '@/lib/adminAnalytics'
 
-const accent = ACCENT.indigo
+const accent = ACCENT.emerald
 
 export default function CurriculumAnalyticsTab({ analytics }: { analytics: CurriculumAnalytics }) {
   const { maxLevel, totalJourneys, levelStats, categoryStats, avgTimeToCompleteLevel1Days, dropOff } = analytics
@@ -37,7 +37,7 @@ export default function CurriculumAnalyticsTab({ analytics }: { analytics: Curri
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Layers} label="Curriculum Levels" value={maxLevel} accentKey="indigo" />
+        <StatCard icon={Layers} label="Curriculum Levels" value={maxLevel} accentKey="emerald" />
         <StatCard icon={Footprints} label="Learner Journeys" value={totalJourneys} accentKey="emerald" />
         <StatCard
           icon={Clock}

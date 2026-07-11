@@ -16,16 +16,15 @@ export default function MissionCard({ mission, completed, onComplete }: MissionC
 
   return (
     <Card
-      className={`transition duration-300 hover:shadow-2xl border-none overflow-hidden ${
-        completed
-          ? "bg-gradient-to-r from-green-100 to-emerald-100 shadow-xl"
-          : "bg-white shadow-lg hover:scale-105"
+      className={`transition duration-300 bg-white border border-ds-border shadow-ds-card overflow-hidden hover:shadow-lg ${
+        completed ? "ring-1 ring-green-200" : "hover:scale-105"
       }`}
+      style={{ borderRadius: 'var(--leaf-r)' }}
     >
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-xl bg-gradient-to-br from-orange-500 to-pink-500 animate-bounce">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-xl bg-green-500 animate-bounce">
               {completed ? (
                 <CheckCircle className="w-8 h-8 text-white" />
               ) : (
@@ -35,10 +34,10 @@ export default function MissionCard({ mission, completed, onComplete }: MissionC
             <div>
               <CardTitle className="text-2xl text-gray-800 mb-2">{mission.title}</CardTitle>
               <div className="flex items-center space-x-4">
-                <Badge className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-3 py-1">
+                <Badge className="bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] px-3 py-1">
                   ⏰ {mission.time}
                 </Badge>
-                <Badge variant="outline" className="theme-border-strong theme-text-muted px-3 py-1">
+                <Badge variant="outline" className="border-ds-border text-gray-500 px-3 py-1">
                   🎯 {mission.type}
                 </Badge>
               </div>
@@ -63,7 +62,7 @@ export default function MissionCard({ mission, completed, onComplete }: MissionC
           <p className="text-gray-800 mb-2">🏆 <strong>Piko Victory:</strong> {mission.pikoVictory}</p>
           <p className="text-gray-800 mb-2">🧰 <strong>Materials:</strong> {mission.materials.join(", ")}</p>
           {mission.funFact && (
-            <p className="theme-text-muted italic mt-2">💡 Fun Fact: {mission.funFact}</p>
+            <p className="text-gray-500 italic mt-2">💡 Fun Fact: {mission.funFact}</p>
           )}
         </div>
 
@@ -79,7 +78,8 @@ export default function MissionCard({ mission, completed, onComplete }: MissionC
         {!completed && (
           <Button
             onClick={() => onComplete(mission.id)}
-            className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white px-6 py-3 rounded-full shadow-lg text-lg font-bold transition hover:scale-105"
+            className="text-white px-6 py-3 shadow-sm text-lg font-bold transition hover:scale-105"
+            style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}
           >
             <Play className="w-5 h-5 mr-2" />
             Start Mission

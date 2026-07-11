@@ -3,11 +3,11 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ChevronLeft, Volume2, VolumeX } from "lucide-react";
-import AppShell from "@/components/layout/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { ACTIVITIES, type ActivityConfig } from "@/app/_activityData";
 import type { CurriculumMission } from "@/lib/queries";
-import AuthBackground from "@/components/auth/AuthBackground";
 
 interface MissionShellProps {
   activity: ActivityConfig;
@@ -21,6 +21,8 @@ interface MissionShellProps {
 
 export default function MissionShell({ activity, mission, completedCount, completed, level, levelComplete, children }: MissionShellProps) {
   const { t } = useLanguage();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
   const [soundOn, setSoundOn] = useState(true);
 
   const title = mission?.title || t(activity.titleKey);
@@ -35,30 +37,28 @@ export default function MissionShell({ activity, mission, completedCount, comple
   const progressPct = Math.min(100, (completedCount / ACTIVITIES.length) * 100);
 
   return (
-    <AppShell>
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col">
-        <AuthBackground />
+    <div className="min-h-screen bg-ds-page flex flex-col">
         <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full space-y-4">
 
           {/* Header row */}
           <div className="flex items-center gap-3">
             <Link href="/missions"
-              className="flex items-center gap-1 theme-text font-bold text-sm hover:text-white transition shrink-0">
+              className="flex items-center gap-1 text-gray-500 font-bold text-sm hover:text-gray-900 transition shrink-0">
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline">{t("backToAdventure")}</span>
             </Link>
 
             <div className="flex-1 text-center min-w-0">
-              <h1 className="font-black text-lg sm:text-2xl text-white truncate">
+              <h1 className="font-black text-lg sm:text-2xl text-ds-text truncate">
                 {activity.emoji} {title}
               </h1>
               {subtitle && (
-                <p className="theme-text text-xs sm:text-sm font-semibold truncate">{subtitle}</p>
+                <p className="text-gray-500 text-xs sm:text-sm font-semibold truncate">{subtitle}</p>
               )}
             </div>
 
             <button onClick={() => setSoundOn(s => !s)}
-              className="w-9 h-9 rounded-full bg-white/10 backdrop-blur border-2 border-white/15 shadow-sm flex items-center justify-center theme-text hover:bg-white/20 transition shrink-0"
+              className="w-9 h-9 rounded-full bg-white border border-ds-border shadow-sm flex items-center justify-center text-gray-500 hover:bg-gray-50 transition shrink-0"
               aria-label={soundOn ? t("pauseLabel") : t("playSongLabel")}>
               {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -66,11 +66,11 @@ export default function MissionShell({ activity, mission, completedCount, comple
 
           {/* Level-complete / mission-complete banner */}
           {levelComplete ? (
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl shadow-md p-3 text-center text-white font-black text-sm">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 shadow-md p-3 text-center text-white font-black text-sm" style={{ borderRadius: 'var(--leaf-r)' }}>
               {t("curriculumLevelMastered").replace("{level}", String(level))}
             </div>
           ) : completed ? (
-            <div className="bg-green-400/20 backdrop-blur border border-green-300/30 rounded-2xl p-3 text-center text-green-200 font-bold text-sm">
+            <div className="bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/20 p-3 text-center text-[var(--ds-brand-primary)] font-bold text-sm" style={{ borderRadius: 'var(--leaf-r)' }}>
               {t("missionCompletedLabel")}
             </div>
           ) : null}
@@ -79,46 +79,45 @@ export default function MissionShell({ activity, mission, completedCount, comple
           <div className="lg:grid lg:grid-cols-[1fr_280px] lg:gap-4 lg:items-start space-y-4 lg:space-y-0">
             <div>{children}</div>
 
-            <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4 space-y-3">
-              <p className="font-black text-white text-sm">{t("missionProgressTitle")}</p>
+            <div className="bg-white border border-ds-border shadow-ds-card p-4 space-y-3" style={{ borderRadius: 'var(--leaf-r)' }}>
+              <p className="font-black text-ds-text text-sm">{t("missionProgressTitle")}</p>
 
               <div>
-                <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all"
+                <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                  <div className="bg-ds-progress-fill h-full rounded-full transition-all"
                     style={{ width: `${progressPct}%` }} />
                 </div>
-                <p className="text-center font-black text-white text-lg mt-2">
+                <p className="text-center font-black text-ds-text text-lg mt-2">
                   {completedCount}/{ACTIVITIES.length}
                 </p>
               </div>
 
-              <p className="theme-text-muted text-xs text-center">{t("missionProgressDesc")}</p>
+              <p className="text-gray-500 text-xs text-center">{t("missionProgressDesc")}</p>
 
-              <div className={`rounded-xl p-2.5 text-center border backdrop-blur ${completed ? "bg-green-400/20 border-green-300/30" : "bg-yellow-400/20 border-yellow-300/30"}`}>
-                <p className="text-[10px] font-black uppercase tracking-wide theme-text">{t("rewardLabel")}</p>
-                <p className="text-lg font-black text-yellow-200">⭐ {stars}</p>
+              <div className={`leaf p-2.5 text-center border ${completed ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-border-brand)]/30" : "bg-yellow-50 border-yellow-200"}`}>
+                <p className="text-[10px] font-black uppercase tracking-wide text-gray-600">{t("rewardLabel")}</p>
+                <p className="text-lg font-black text-yellow-600">⭐ {stars}</p>
               </div>
             </div>
           </div>
 
           {/* Nimi Says banner */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-2xl shadow-md p-4 sm:p-5 text-white flex items-center justify-between gap-4 flex-wrap">
+          <div className="bg-ds-action-subtle border border-ds-border-brand shadow-sm p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap" style={{ borderRadius: 'var(--leaf-r)' }}>
             <div className="flex items-center gap-3 min-w-0">
-              <img src="/nimi-logo-circle.png" alt="NIMI"
-                className="w-12 h-12 rounded-full object-cover border-4 border-white/30 shrink-0" />
+              <img src={assets.nimiCircle} alt="NIMI"
+                className="w-12 h-12 rounded-full object-cover border-4 border-ds-border-brand shrink-0" />
               <div className="min-w-0">
-                <p className="font-black text-sm">{t("nimiSaysLabel")}</p>
-                <p className="theme-text text-sm mt-0.5">{tip}</p>
+                <p className="font-black text-gray-900 text-sm">{t("nimiSaysLabel")}</p>
+                <p className="text-gray-600 text-sm mt-0.5">{tip}</p>
               </div>
             </div>
             <Link href={nextHref}
-              className="bg-white/15 backdrop-blur border border-white/25 text-white font-black rounded-full px-5 py-2.5 text-sm shrink-0 hover:bg-white/25 transition">
+              className="bg-ds-action hover:opacity-90 text-white font-black rounded-full px-5 py-2.5 text-sm shrink-0 transition">
               {nextLabel}
             </Link>
           </div>
 
         </main>
       </div>
-    </AppShell>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCw, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { RefreshCw, Volume2, VolumeX, Wifi, WifiOff, Settings2 } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useNimiReader } from "@/contexts/NimiReaderContext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
@@ -11,9 +12,9 @@ import type { Child } from "@/lib/queries";
 import LanguageSwitchDialog from "@/components/LanguageSwitchDialog";
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English",     flag: "en" },
-  { code: "fr", label: "Français",    flag: "fr" },
-  { code: "rw", label: "Kinyarwanda", flag: "rw" },
+  { code: "en", label: "English",     flag: "🇬🇧" },
+  { code: "fr", label: "Français",    flag: "🇫🇷" },
+  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
 ];
 
 function ToggleSwitch({ on, onClick }: { on: boolean; onClick: () => void }) {
@@ -22,10 +23,12 @@ function ToggleSwitch({ on, onClick }: { on: boolean; onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-pressed={on}
-      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${on ? "bg-green-500" : "bg-gray-300"}`}
+      className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${on ? "bg-[var(--nimi-green)]" : "bg-gray-200"}`}
     >
-      <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? "translate-x-5" : "translate-x-0"}`}
+      <motion.span
+        animate={{ x: on ? 24 : 2 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md block"
       />
     </button>
   );
@@ -44,8 +47,6 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
   const [switching, setSwitching] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
-  const [showLangDropdown, setShowLangDropdown] = useState(false);
-  const currentLang = LANGS.find(l => l.code === language) ?? LANGS[0];
 
   useEffect(() => {
     setPendingCount(getQueuedCompletions().length);
@@ -69,65 +70,106 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
-      <h3 className="font-black text-white mb-2">{t("appPreferencesTitle")}</h3>
-
-      <div className="flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm theme-text">{t("soundLabel")}</span>
-        <ToggleSwitch on={isReaderActive} onClick={toggleReader} />
+    <div className="bg-ds-card border border-ds-border shadow-ds-card overflow-hidden" style={{ borderRadius: 'var(--leaf-r)' }}>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-ds-border">
+        <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
+          <Settings2 size={15} className="text-gray-500" />
+        </div>
+        <div>
+          <p className="font-baloo font-black text-ds-text text-[14px] leading-tight">{t("appPreferencesTitle")}</p>
+          <p className="text-ds-muted text-[11px]">{t("appPreferencesSubtitle")}</p>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm theme-text">{t("languageLabel")}</span>
-        <div className="relative">
-          <button
-            onClick={() => setShowLangDropdown(v => !v)}
-            className="flex items-center gap-1.5 bg-white/5 border-2 border-white/15 rounded-full px-3 py-1.5 text-sm font-bold theme-text hover:bg-white/10 transition"
-          >
-            <span>{currentLang.flag} {currentLang.label}</span>
-            <ChevronDown className="w-3.5 h-3.5" />
-          </button>
-          {showLangDropdown && (
-            <div className="absolute right-0 mt-2 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-40">
-              {LANGS.map(lang => (
+      <div className="divide-y divide-gray-100">
+        {/* Sound / read-aloud */}
+        <div className="flex items-center gap-4 px-5 py-4">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isReaderActive ? "bg-emerald-100" : "bg-gray-100"}`}>
+            {isReaderActive
+              ? <Volume2 size={18} className="text-emerald-600" />
+              : <VolumeX size={18} className="text-gray-400" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-[13px] text-ds-text">{t("soundLabel")}</p>
+            <p className="text-[11px] text-ds-muted">{t("soundDesc")}</p>
+          </div>
+          <ToggleSwitch on={isReaderActive} onClick={toggleReader} />
+        </div>
+
+        {/* Language */}
+        <div className="px-5 py-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">🌍</span>
+            <div>
+              <p className="font-bold text-[13px] text-ds-text">{t("languageLabel")}</p>
+              <p className="text-[11px] text-ds-muted">{t("languageDesc")}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {LANGS.map(lang => {
+              const active = lang.code === language;
+              return (
                 <button
                   key={lang.code}
-                  onClick={() => {
-                    setShowLangDropdown(false);
-                    if (lang.code !== language) setPendingLanguage(lang.code);
-                  }}
-                  className="flex items-center gap-2 px-3 py-2.5 w-full hover:bg-white/10 transition text-sm"
+                  onClick={() => { if (lang.code !== language) setPendingLanguage(lang.code); }}
+                  className={`flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border-2 text-center transition-all ${
+                    active
+                      ? "border-[var(--nimi-green)] bg-[var(--ds-brand-subtle)] shadow-sm"
+                      : "border-ds-border hover:border-gray-300 bg-ds-card"
+                  }`}
                 >
-                  <span>{lang.flag}</span>
-                  <span className="font-medium theme-text">{lang.label}</span>
+                  <span className="text-xl">{lang.flag}</span>
+                  <span className={`text-[10px] font-black leading-tight ${active ? "text-[var(--ds-brand-primary)]" : "text-ds-muted"}`}>
+                    {lang.label}
+                  </span>
+                  {active && (
+                    <span className="text-[8px] font-black text-[var(--ds-brand-primary)] bg-[var(--nimi-green)]/10 px-1.5 py-0.5 rounded-full">
+                      Active
+                    </span>
+                  )}
                 </button>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-between py-3 last:border-0 gap-2">
-        <div className="flex items-center gap-2">
-          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnline ? "bg-green-400" : "bg-orange-400"}`} />
-          <span className="font-bold text-sm theme-text">
-            {isOnline ? t("onlineLabel") : t("offlineLabel")}
-          </span>
+        {/* Online status + sync */}
+        <div className="flex items-center gap-4 px-5 py-4">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isOnline ? "bg-emerald-100" : "bg-orange-100"}`}>
+            {isOnline
+              ? <Wifi size={18} className="text-emerald-600" />
+              : <WifiOff size={18} className="text-orange-500" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${isOnline ? "bg-emerald-500" : "bg-orange-400"}`} />
+              <p className="font-bold text-[13px] text-ds-text">
+                {isOnline ? t("onlineLabel") : t("offlineLabel")}
+              </p>
+            </div>
+            <p className="text-[11px] text-ds-muted mt-0.5">
+              {pendingCount > 0
+                ? t("activitiesWaitingSyncLabel").replace("{count}", String(pendingCount))
+                : t("allProgressSavedLabel")}
+            </p>
+          </div>
+          <AnimatePresence>
+            {pendingCount > 0 && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                onClick={syncNow}
+                disabled={syncing || !isOnline}
+                className="flex items-center gap-1.5 bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] border border-[var(--ds-border-brand)]/30 font-bold text-[11px] px-3 py-1.5 rounded-full transition disabled:opacity-50 shrink-0"
+              >
+                <RefreshCw size={12} className={syncing ? "animate-spin" : ""} />
+                {syncing ? t("syncingLabel") : t("syncNowBtn")}
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
-        {pendingCount > 0 ? (
-          <button
-            onClick={syncNow}
-            disabled={syncing || !isOnline}
-            className="flex items-center gap-1.5 theme-accent-muted theme-text font-bold text-xs px-3 py-1.5 rounded-full hover:theme-accent-muted transition disabled:opacity-60"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-            {syncing
-              ? t("syncingLabel")
-              : `${t("pendingSyncCountLabel").replace("{count}", String(pendingCount))} · ${t("syncNowBtn")}`}
-          </button>
-        ) : (
-          <span className="text-green-300 text-xs font-bold">{t("allSyncedLabel")}</span>
-        )}
       </div>
 
       <LanguageSwitchDialog

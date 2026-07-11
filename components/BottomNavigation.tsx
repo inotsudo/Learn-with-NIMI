@@ -35,33 +35,33 @@ export default function BottomNavigation() {
       name: t("home") || fallbackName("home", language),
       href: "/",
       icon: Home,
-      activeColor: "bg-pink-200 text-pink-700",
-      hoverColor: "hover:bg-pink-100 hover:text-pink-600",
-      underlineColor: "bg-pink-500",
+      activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
+      hoverColor: "hover:bg-gray-50 hover:text-[var(--ds-nav-active-text)]",
+      underlineColor: "bg-[var(--ds-nav-active-text)]",
     },
     {
       name: fallbackName("mission", language),
       href: "/missions",
       icon: BookOpen,
-      activeColor: "bg-green-200 text-green-700",
-      hoverColor: "hover:bg-green-100 hover:text-green-600",
-      underlineColor: "bg-green-500",
+      activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
+      hoverColor: "hover:bg-gray-50 hover:text-[var(--ds-nav-active-text)]",
+      underlineColor: "bg-[var(--ds-nav-active-text)]",
     },
     {
       name: t("community") || fallbackName("community", language),
       href: "/community",
       icon: Users,
-      activeColor: "theme-accent-soft theme-text-muted",
-      hoverColor: "hover:theme-accent-soft hover:theme-text-muted",
-      underlineColor: "theme-accent",
+      activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
+      hoverColor: "hover:bg-gray-50 hover:text-[var(--ds-nav-active-text)]",
+      underlineColor: "bg-[var(--ds-nav-active-text)]",
     },
     {
       name: fallbackName("Guardian", language),
       href: "/parents",
       icon: UserCheck,
-      activeColor: "bg-yellow-200 text-yellow-700",
-      hoverColor: "hover:bg-yellow-100 hover:text-yellow-600",
-      underlineColor: "bg-yellow-500",
+      activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
+      hoverColor: "hover:bg-gray-50 hover:text-[var(--ds-nav-active-text)]",
+      underlineColor: "bg-[var(--ds-nav-active-text)]",
     },
   ];
 
@@ -75,7 +75,7 @@ export default function BottomNavigation() {
       </div>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t-4 border-pink-300 shadow-2xl z-50 h-16 md:h-20"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-ds-border shadow-ds-nav z-50 h-16 md:h-20"
         aria-label="Primary"
       >
         <div className="flex items-center justify-around h-full max-w-4xl mx-auto px-2 sm:px-4">

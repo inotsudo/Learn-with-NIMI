@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160">
+  <defs>
+    <linearGradient id="pearl-border" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#BAE6FD"/>
+      <stop offset="40%" stop-color="#E0F9FF"/>
+      <stop offset="80%" stop-color="#7DD3FC"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer iridescent pearl border -->
+  <rect x="2" y="2" width="296" height="156" rx="12" fill="none" stroke="url(#pearl-border)" stroke-width="2.5" opacity="0.85"/>
+  <!-- Inner soft border -->
+  <rect x="7" y="7" width="286" height="146" rx="9" fill="none" stroke="#BAE6FD" stroke-width="0.8" opacity="0.4"/>
+  <!-- Wave top decoration -->
+  <path d="M18,7 Q30,13 42,7 Q54,1 66,7 Q78,13 90,7 Q102,1 114,7 Q126,13 138,7 Q150,1 162,7 Q174,13 186,7 Q198,1 210,7 Q222,13 234,7 Q246,1 258,7 Q270,13 282,7" fill="none" stroke="#0284C7" stroke-width="1" opacity="0.28"/>
+  <!-- Wave bottom decoration -->
+  <path d="M18,153 Q30,147 42,153 Q54,159 66,153 Q78,147 90,153 Q102,159 114,153 Q126,147 138,153 Q150,159 162,153 Q174,147 186,153 Q198,159 210,153 Q222,147 234,153 Q246,159 258,153 Q270,147 282,153" fill="none" stroke="#0284C7" stroke-width="1" opacity="0.28"/>
+  <!-- Corner pearl ornaments (4 corners) -->
+  <circle cx="14" cy="14" r="7" fill="#BAE6FD" opacity="0.55"/>
+  <circle cx="14" cy="14" r="3.5" fill="#E0F9FF" opacity="0.6"/>
+  <circle cx="14" cy="14" r="1.5" fill="white" opacity="0.55"/>
+  <circle cx="286" cy="14" r="7" fill="#BAE6FD" opacity="0.55"/>
+  <circle cx="286" cy="14" r="3.5" fill="#E0F9FF" opacity="0.6"/>
+  <circle cx="286" cy="14" r="1.5" fill="white" opacity="0.55"/>
+  <circle cx="14" cy="146" r="7" fill="#BAE6FD" opacity="0.55"/>
+  <circle cx="14" cy="146" r="3.5" fill="#E0F9FF" opacity="0.6"/>
+  <circle cx="14" cy="146" r="1.5" fill="white" opacity="0.55"/>
+  <circle cx="286" cy="146" r="7" fill="#BAE6FD" opacity="0.55"/>
+  <circle cx="286" cy="146" r="3.5" fill="#E0F9FF" opacity="0.6"/>
+  <circle cx="286" cy="146" r="1.5" fill="white" opacity="0.55"/>
+  <!-- Side mid-point bubble accents -->
+  <circle cx="2" cy="80" r="4.5" fill="#0EA5E9" opacity="0.2"/>
+  <circle cx="298" cy="80" r="4.5" fill="#0EA5E9" opacity="0.2"/>
+  <!-- Label -->
+  <text x="150" y="22" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#0284C7" opacity="0.5" letter-spacing="2">PEARL CARD</text>
+</svg>

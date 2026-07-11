@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import supabase from "@/lib/supabaseClient"
 import {
   BookOpen, CheckCircle2, AlertTriangle, Users, Award, Trophy,
-  Plus, Upload, Rocket, Bell, ArrowRight,
+  Plus, Upload, Rocket, Bell, ArrowRight, DollarSign, CreditCard, TrendingUp,
 } from 'lucide-react'
 import { computeReadiness, type ReadinessResult } from '@/lib/storyReadiness'
 import ReadinessRing from '@/components/admin/story-readiness/ReadinessRing'
@@ -17,24 +17,36 @@ interface StoryRow {
   slots_filled: number;
 }
 
+interface RevenueStats {
+  activeSubscriptions: number;
+  mrr: number;
+  totalRevenue: number;
+  newThisMonth: number;
+}
+
 export default function Dashboard({ onNavigate }: DashboardProps) {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ published: 0, ready: 0, missing: 0, children: 0, certs: 0, challenges: 0 })
+  const [revenue, setRevenue] = useState<RevenueStats>({ activeSubscriptions: 0, mrr: 0, totalRevenue: 0, newThisMonth: 0 })
   const [stories, setStories] = useState<StoryRow[]>([])
   const [storyReadiness, setStoryReadiness] = useState<{ title: string; slug: string; result: ReadinessResult }[]>([])
 
   useEffect(() => {
     void (async () => {
       try {
+        const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
         const [
           { data: storiesData }, { data: childrenData }, { data: achievementsData },
           { data: slotsData }, { data: missionVersions },
+          { data: subsData }, { data: ordersData },
         ] = await Promise.all([
           supabase.from('stories').select('id, title, slug, status, sort_order, age_min, age_max, published_at, cover_url').order('sort_order'),
           supabase.from('children').select('id'),
           supabase.from('child_achievements').select('id, type'),
           supabase.from('story_slots').select('story_id, slot_key, mission_id'),
           supabase.from('mission_versions').select('id, mission_id, published, language'),
+          supabase.from('nimipiko_subscriptions').select('id, amount, currency, status, created_at').eq('status', 'active'),
+          supabase.from('orders').select('amount, currency, payment_status, completed_at'),
         ])
 
         const allStories = storiesData ?? []
@@ -55,6 +67,15 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
         const { count: challengeCount } = await supabase.from('weekly_challenges').select('*', { count: 'exact', head: true })
         setStats({ published, ready, missing, children: (childrenData ?? []).length, certs, challenges: challengeCount ?? 0 })
+
+        // Revenue stats — convert all to USD equivalent (RWF ÷ 1350)
+        const toUSD = (amt: number, currency: string) => currency === 'RWF' ? amt / 1350 : amt
+        const activeSubs = subsData ?? []
+        const orders = (ordersData ?? []).filter(o => o.payment_status === 'completed')
+        const mrr = activeSubs.reduce((sum, s) => sum + toUSD(s.amount, s.currency), 0)
+        const totalRevenue = orders.reduce((sum, o) => sum + toUSD(o.amount, o.currency), 0)
+        const newThisMonth = activeSubs.filter(s => new Date(s.created_at) >= monthStart).length
+        setRevenue({ activeSubscriptions: activeSubs.length, mrr, totalRevenue, newThisMonth })
         setStories(storyRows)
 
         const { data: storyVersions } = await supabase.from('story_versions').select('story_id, intro_video_url, theme_song_url, meet_characters_url, story_intro_url')
@@ -96,7 +117,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-[20px] sm:text-[22px] font-extrabold text-gray-900">Dashboard</h1>
         <button onClick={() => onNavigate?.('stories')}
-          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[12px] sm:text-[13px] rounded-lg px-4 py-2.5 shadow-sm transition">
+          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold text-[12px] sm:text-[13px] rounded-lg px-4 py-2.5 shadow-sm transition">
           <Plus size={15} /> New Story
         </button>
       </div>
@@ -104,12 +125,12 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {[
-          { icon: BookOpen,      label: 'Published',    value: stats.published, color: 'text-indigo-600 bg-indigo-50' },
+          { icon: BookOpen,      label: 'Published',    value: stats.published, color: 'text-green-600 bg-green-50' },
           { icon: CheckCircle2,  label: 'Ready',        value: stats.ready,     color: 'text-emerald-600 bg-emerald-50' },
           { icon: AlertTriangle, label: 'Incomplete',    value: stats.missing,   color: 'text-amber-600 bg-amber-50' },
           { icon: Users,         label: 'Children',     value: stats.children,  color: 'text-blue-600 bg-blue-50' },
           { icon: Award,         label: 'Certificates', value: stats.certs,     color: 'text-rose-600 bg-rose-50' },
-          { icon: Trophy,        label: 'Challenges',   value: stats.challenges, color: 'text-purple-600 bg-purple-50' },
+          { icon: Trophy,        label: 'Challenges',   value: stats.challenges, color: 'text-gray-600 bg-gray-100' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3">
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.color}`}>
@@ -123,6 +144,28 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         ))}
       </div>
 
+      {/* Revenue strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        {[
+          { icon: CreditCard,  label: 'Active Subs',     value: revenue.activeSubscriptions, suffix: '', color: 'text-violet-600 bg-violet-50' },
+          { icon: DollarSign,  label: 'MRR (est.)',       value: `$${revenue.mrr.toFixed(0)}`, suffix: '/mo', color: 'text-green-600 bg-green-50' },
+          { icon: TrendingUp,  label: 'Total Revenue',    value: `$${revenue.totalRevenue.toFixed(0)}`, suffix: '', color: 'text-emerald-600 bg-emerald-50' },
+          { icon: Users,       label: 'New This Month',   value: revenue.newThisMonth, suffix: '', color: 'text-blue-600 bg-blue-50' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.color}`}>
+              <s.icon size={16} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[19px] font-extrabold text-gray-900 leading-none tabular-nums">
+                {s.value}<span className="text-[11px] font-medium text-gray-400">{s.suffix}</span>
+              </p>
+              <p className="text-[11px] font-medium text-gray-400 mt-0.5">{s.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Stories + Readiness */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
 
@@ -130,7 +173,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-gray-50">
             <h2 className="text-[14px] sm:text-[15px] font-extrabold text-gray-800">Stories</h2>
-            <button onClick={() => onNavigate?.('stories')} className="text-[12px] font-semibold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition">
+            <button onClick={() => onNavigate?.('stories')} className="text-[12px] font-semibold text-green-600 hover:text-green-700 flex items-center gap-1 transition">
               View all <ArrowRight size={12} />
             </button>
           </div>
@@ -141,7 +184,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               return (
                 <button key={s.id} onClick={() => onNavigate?.(`stories:${s.id}`)}
                   className="w-full flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50/50 transition text-left">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-[12px] flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600 font-bold text-[12px] flex-shrink-0">
                     {s.sort_order}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -151,7 +194,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   <div className="flex items-center gap-2.5 flex-shrink-0">
                     <div className="hidden sm:flex items-center gap-1.5">
                       <div className="w-14 bg-gray-100 rounded-full h-1.5">
-                        <div className={`h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-indigo-400'}`} style={{ width: `${pct}%` }} />
+                        <div className={`h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-green-400'}`} style={{ width: `${pct}%` }} />
                       </div>
                       <span className="text-[11px] font-bold text-gray-500 w-8">{s.slots_filled}/6</span>
                     </div>
@@ -179,7 +222,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           <div className="space-y-1.5 mb-4">
             {[
               { color: 'bg-emerald-500', label: 'Ready', count: storyReadiness.filter(s => s.result.status === 'ready').length },
-              { color: 'bg-indigo-500', label: 'In Progress', count: storyReadiness.filter(s => s.result.status === 'in_progress' || s.result.status === 'nearly_ready').length },
+              { color: 'bg-green-500', label: 'In Progress', count: storyReadiness.filter(s => s.result.status === 'in_progress' || s.result.status === 'nearly_ready').length },
               { color: 'bg-amber-400', label: 'Needs Work', count: storyReadiness.filter(s => s.result.status === 'draft').length },
             ].map(r => (
               <div key={r.label} className="flex items-center gap-2.5">
@@ -213,10 +256,10 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {[
-          { icon: Plus,         label: 'Create Story',     table: 'stories',            color: 'text-indigo-600 bg-indigo-50' },
+          { icon: Plus,         label: 'Create Story',     table: 'stories',            color: 'text-green-600 bg-green-50' },
           { icon: Upload,       label: 'Upload Media',     table: 'Buckets',            color: 'text-blue-600 bg-blue-50' },
           { icon: Rocket,       label: 'Publish',          table: 'stories',            color: 'text-emerald-600 bg-emerald-50' },
-          { icon: Trophy,       label: 'New Challenge',    table: 'weekly_challenges',  color: 'text-purple-600 bg-purple-50' },
+          { icon: Trophy,       label: 'New Challenge',    table: 'weekly_challenges',  color: 'text-gray-600 bg-gray-100' },
         ].map(a => (
           <button key={a.label} onClick={() => onNavigate?.(a.table)}
             className="bg-white rounded-xl border border-gray-100 p-3.5 flex items-center gap-3 hover:border-gray-200 hover:shadow-sm transition text-left">

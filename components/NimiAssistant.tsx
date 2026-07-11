@@ -1,15 +1,22 @@
+"use client";
+
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 
 export default function NimiAssistant({ mood = "happy", phrase = "" }) {
-  const moodImageMap = {
-    happy: "/nimi/happy.png",
-    sad: "/nimi/sad.jpeg",
-    locked: "/nimi/locked.png",
-    celebration: "/nimi/celebration.jpeg",
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
+
+  const moodImage: Record<string, string> = {
+    happy:       assets.nimiHappy,
+    sad:         assets.nimiSad,
+    locked:      assets.nimiLocked,
+    celebration: assets.nimiCelebration,
   };
 
-  const moodImage = moodImageMap[mood as keyof typeof moodImageMap] || "/nimi/happy.png";
+  const src = moodImage[mood] ?? assets.nimiHappy;
 
   return (
     <motion.div
@@ -19,7 +26,7 @@ export default function NimiAssistant({ mood = "happy", phrase = "" }) {
       className="flex items-center gap-3 bg-white rounded-xl shadow p-3 max-w-xs"
     >
       <Image
-        src={moodImage}
+        src={src}
         alt={mood}
         width={50}
         height={50}

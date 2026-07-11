@@ -6,7 +6,7 @@ import StatCard from './StatCard'
 import { exportCSV } from './exportUtils'
 import type { LanguageAnalytics } from '@/lib/adminAnalytics'
 
-const accent = ACCENT.indigo
+const accent = ACCENT.emerald
 
 export default function LanguageAnalyticsTab({ analytics }: { analytics: LanguageAnalytics }) {
   const { usage, totalSwitches, childrenWhoSwitched, switchesPerActiveLearner, topSwitchPairs } = analytics
@@ -56,7 +56,7 @@ export default function LanguageAnalyticsTab({ analytics }: { analytics: Languag
 
       {/* Switch frequency */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <StatCard icon={Repeat} label="Total Language Switches" value={totalSwitches} accentKey="violet" />
+        <StatCard icon={Repeat} label="Total Language Switches" value={totalSwitches} accentKey="teal" />
         <StatCard icon={Users} label="Children Who Switched" value={childrenWhoSwitched} accentKey="amber" />
         <StatCard icon={ArrowRightLeft} label="Switches / Active Learner" value={switchesPerActiveLearner.toFixed(2)} accentKey="emerald" />
       </div>

@@ -137,21 +137,21 @@ export default function FlipFlopImporter({ storyId, storyTitle, language, onDone
                 <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
                 <p className="text-[16px] font-extrabold text-gray-800">Import Complete!</p>
                 <p className="text-[13px] text-gray-500 mt-1">{images.length} pages imported with {matched} audio files.</p>
-                <button onClick={onClose} className="mt-4 bg-indigo-600 text-white font-bold text-[13px] rounded-xl px-6 py-2.5">
+                <button onClick={onClose} className="mt-4 bg-green-600 text-white font-bold text-[13px] rounded-xl px-6 py-2.5">
                   Done
                 </button>
               </div>
             ) : (
               <>
                 {/* Instructions */}
-                <div className="bg-indigo-50 rounded-xl p-4 text-[12px] text-indigo-700">
+                <div className="bg-green-50 rounded-xl p-4 text-[12px] text-green-700">
                   <p className="font-bold mb-1">How to import:</p>
                   <p>Select all page images and audio files at once. Name files with numbers (001.jpg, 002.jpg, etc.) so pages and audio match automatically.</p>
                 </div>
 
                 {/* File picker */}
                 <button onClick={() => inputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-gray-200 rounded-xl py-8 text-center hover:border-indigo-300 hover:bg-indigo-50/30 transition">
+                  className="w-full border-2 border-dashed border-gray-200 rounded-xl py-8 text-center hover:border-green-300 hover:bg-green-50/30 transition">
                   <Upload size={28} className="mx-auto text-gray-400 mb-2" />
                   <p className="text-[13px] font-bold text-gray-600">Select Files</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">Images (jpg, png) + Audio (mp3, wav)</p>
@@ -165,7 +165,7 @@ export default function FlipFlopImporter({ storyId, storyTitle, language, onDone
                     <p className="text-[12px] font-bold text-gray-700">Detected:</p>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1.5">
-                        <ImageIcon size={14} className="text-indigo-500" />
+                        <ImageIcon size={14} className="text-green-500" />
                         <span className="text-[12px] font-medium text-gray-600">{images.length} pages</span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -193,7 +193,7 @@ export default function FlipFlopImporter({ storyId, storyTitle, language, onDone
                       <span>{progress}%</span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div className="bg-indigo-600 h-full rounded-full transition-all" style={{ width: `${progress}%` }} />
+                      <div className="bg-green-600 h-full rounded-full transition-all" style={{ width: `${progress}%` }} />
                     </div>
                     <p className="text-[10px] text-gray-400 mt-1">Large files may take a moment. Please wait.</p>
                   </div>
@@ -211,7 +211,7 @@ export default function FlipFlopImporter({ storyId, storyTitle, language, onDone
                     Cancel
                   </button>
                   <button onClick={handleImport} disabled={images.length === 0 || importing}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] rounded-xl py-2.5 transition disabled:opacity-50">
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-xl py-2.5 transition disabled:opacity-50">
                     {importing ? 'Importing...' : `Import ${images.length} Pages`}
                   </button>
                 </div>

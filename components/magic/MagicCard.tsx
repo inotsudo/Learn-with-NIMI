@@ -2,7 +2,9 @@
 
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
-import { useKidTheme } from "@/contexts/ThemeProvider";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getComponentVariant } from "@/lib/design-system/componentVariants";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 
 interface Props {
   children: ReactNode;
@@ -16,28 +18,29 @@ interface Props {
 export default function MagicCard({
   children, variant = "default", hover = true, delay = 0, className = "", onClick,
 }: Props) {
-  const { theme } = useKidTheme();
+  const { themeId } = useAppTheme();
+  const cv = getComponentVariant(themeId);
+  const m = useThemeMotion();
 
   const baseStyles = {
-    default: `border rounded-[24px] transition-all`,
-    glow: `border rounded-[24px] transition-all shadow-lg`,
-    elevated: `border rounded-[24px] transition-all shadow-xl`,
-    paper: `rounded-[24px] transition-all shadow-md`,
+    default:  `border ${cv.cardStyle.radius} transition-all shadow-ds-card`,
+    glow:     `border ${cv.cardStyle.radius} transition-all shadow-ds-hover`,
+    elevated: `border ${cv.cardStyle.radius} transition-all shadow-ds-hover`,
+    paper:    `${cv.cardStyle.radius} transition-all shadow-ds-card`,
   };
+
+  const entrance = m.cardEntrance;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, type: "spring", stiffness: 120 }}
-      whileHover={hover && !onClick ? { y: -3 } : hover ? { y: -3, scale: 1.01 } : {}}
-      whileTap={onClick ? { scale: 0.98 } : {}}
+      initial={entrance.initial}
+      animate={entrance.animate}
+      transition={{ ...entrance.transition, delay }}
+      whileHover={hover && !onClick ? { y: -3 } : hover ? m.cardHoverSm : {}}
+      whileTap={onClick ? m.buttonPress : {}}
       onClick={onClick}
-      className={`${baseStyles[variant]} ${onClick ? "cursor-pointer" : ""} ${className}`}
-      style={{
-        backgroundColor: variant === "paper" ? "#faf6ee" : theme.bgCard,
-        borderColor: variant === "paper" ? "rgba(180,160,130,0.2)" : theme.border,
-      }}
+      className={`${baseStyles[variant]} ${onClick ? "cursor-pointer" : ""} bg-white border-ds-border ${className}`}
+      style={variant === "paper" ? { backgroundColor: "#faf6ee", borderColor: "rgba(180,160,130,0.2)" } : undefined}
     >
       {children}
     </motion.div>

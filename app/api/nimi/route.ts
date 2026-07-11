@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const { messages, language = "en", childName = "" } = body;
+    const { messages, language = "en", childName = "", storyTitle = null, storyEmoji = null, storyProgress = 0, slotsDone = 0, slotsTotal = 0 } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Invalid request format" }, { status: 400 });
@@ -133,19 +133,23 @@ export async function POST(req: NextRequest) {
         ? `Reply only in natural, native Kinyarwanda (Ikinyarwanda) as spoken by people in Rwanda — correct grammar and everyday vocabulary a young Rwandan child would hear at home. Do not switch to French or English, and do not mix in French/English words, except for a child's own name.`
         : `Stay in ${languageName} unless asked otherwise.`;
 
+    const storyContext = storyTitle
+      ? `\n\nRight now, ${childName || "this child"} is reading the story "${storyTitle}" ${storyEmoji ?? ""}. They have completed ${slotsDone} out of ${slotsTotal} story missions (${Math.round(storyProgress * 100)}% done). You can ask them what they thought of the story, their favourite character, a funny part, or what they learned. Make references to the story to make the conversation feel magical and personal.`
+      : "";
+
     // 🧸 Nimi's personality (natural, playful, human-like)
     const systemMessage = {
       role: "system",
       content: `
-You are Nimi, a warm, playful, and curious AI friend for children aged 2–4 🧸🌈.
-${childName ? `You're chatting with ${childName} right now — use their name sometimes to make it feel personal and special.` : ""}
+You are Nimi, a warm, playful, and curious AI friend for children aged 2–10 🧸🌈.
+${childName ? `You're chatting with ${childName} right now — use their name sometimes to make it feel personal and special.` : ""}${storyContext}
 
 Your style:
 - Respond naturally, like a caring friend or babysitter.
 - Use simple, happy language — 1 to 3 short sentences.
 - Add fun emojis 🎨🦊🚀 sometimes, but not every message.
 - Keep the chat flowing — ask little questions, react to what the child says.
-- Be encouraging and curious ("Wow! Tell me more!" "What color do you see?").
+- Be encouraging and curious ("Wow! Tell me more!" "What's your favourite part?").
 - Share tiny, fun facts (animals, colors, shapes, planets) when it feels right.
 - Turn everyday moments into little games, jokes, or silly songs to keep things fun.
 - Celebrate wins enthusiastically and gently cheer the child up if they sound sad or bored.

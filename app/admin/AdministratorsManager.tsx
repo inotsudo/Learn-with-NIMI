@@ -63,7 +63,7 @@ function AdminCard({ row, isSelf, amSuperadmin, roleSaving, roleError, savedFlas
             <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">You</span>
           )}
           {row.role === 'superadmin' ? (
-            <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${accent.tile}`}>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-100 text-green-700">
               <ShieldCheck className="w-3 h-3" /> Superadmin
             </span>
           ) : (
@@ -83,7 +83,7 @@ function AdminCard({ row, isSelf, amSuperadmin, roleSaving, roleError, savedFlas
           </span>
         )}
         {isSelf ? (
-          <button onClick={() => onNavigate('Profile')} className={`text-xs font-bold hover:underline ${accent.text}`}>
+          <button onClick={() => onNavigate('Profile')} className="text-xs font-bold hover:underline text-green-600">
             Edit in My Profile →
           </button>
         ) : amSuperadmin ? (
@@ -92,14 +92,14 @@ function AdminCard({ row, isSelf, amSuperadmin, roleSaving, roleError, savedFlas
               <button
                 onClick={() => onRoleChange(row, 'admin')}
                 disabled={roleSaving === row.id}
-                className={`px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${row.role === 'admin' ? `${accent.soft} ${accent.text}` : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                className={`px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${row.role === 'admin' ? 'bg-green-50 text-green-700' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
               >
                 Admin
               </button>
               <button
                 onClick={() => onRoleChange(row, 'superadmin')}
                 disabled={roleSaving === row.id}
-                className={`px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${row.role === 'superadmin' ? `${accent.soft} ${accent.text}` : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                className={`px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${row.role === 'superadmin' ? 'bg-green-50 text-green-700' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
               >
                 Superadmin
               </button>
@@ -234,7 +234,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
   return (
     <div>
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 ${accent.soft}`}>
+      <header className="bg-white border-b border-ds-border px-4 sm:px-6 py-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3.5 min-w-0">
             <button
@@ -243,7 +243,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
             >
               <Menu size={17} />
             </button>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-green-50 text-green-600">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div className="min-w-0">
@@ -254,14 +254,14 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
                 Manage admin accounts &amp; roles
               </p>
               <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
+                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-green-600">Dashboard</button>
                 <span className="mx-1.5 text-gray-300">/</span>
                 <span className="font-bold text-gray-500">Administrators</span>
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`inline-flex items-center gap-1.5 bg-white border border-gray-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm ${accent.text}`}>
+            <span className="inline-flex items-center gap-1.5 bg-white border border-ds-border px-3.5 py-2 rounded-full text-sm font-bold shadow-sm text-green-600">
               <ShieldCheck className="w-3.5 h-3.5" /> {admins.length} admins
             </span>
             <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
@@ -292,7 +292,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
             <p className="text-xs text-gray-400 mt-1 max-w-sm">{loadError}</p>
             <button
               onClick={fetchData}
-              className={`mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition ${accent.button}`}
+              className="mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition bg-green-600 hover:bg-green-700"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Try again
             </button>
@@ -326,7 +326,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
             {amSuperadmin ? (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-1">
-                  <UserPlus className={`w-4 h-4 ${accent.text}`} /> Add Administrator
+                  <UserPlus className="w-4 h-4 text-green-600" /> Add Administrator
                 </h3>
                 <p className="text-xs text-gray-400 mb-4">
                   Grant admin console access to someone who already has a NIMIPIKO account.
@@ -339,7 +339,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
                       placeholder="parent@example.com"
                       value={newEmail}
                       onChange={e => setNewEmail(e.target.value)}
-                      className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm ${accent.ring}`}
+                      className="w-full bg-ds-input border border-ds-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                   </div>
                   <div className="sm:w-40">
@@ -347,7 +347,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
                     <select
                       value={newRole}
                       onChange={e => setNewRole(e.target.value as 'admin' | 'superadmin')}
-                      className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm bg-white ${accent.ring}`}
+                      className="w-full bg-ds-input border border-ds-border rounded-xl px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <option value="admin">Admin</option>
                       <option value="superadmin">Superadmin</option>
@@ -356,7 +356,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
                   <button
                     onClick={handleAdd}
                     disabled={addPending || !newEmail.trim()}
-                    className={`text-sm font-bold text-white px-5 py-2.5 rounded-full transition whitespace-nowrap ${accent.button} disabled:opacity-40 disabled:cursor-not-allowed`}
+                    className="text-sm font-bold text-white px-5 py-2.5 rounded-full transition whitespace-nowrap bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {addPending ? 'Adding...' : 'Add Administrator'}
                   </button>

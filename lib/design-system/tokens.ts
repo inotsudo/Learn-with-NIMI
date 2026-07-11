@@ -190,3 +190,161 @@ export const rewards = {
   sticker: "🌟",
   chest: "🎁",
 } as const;
+
+
+// ═══════════════════════════════════════════════════════════════
+// HOMEPAGE / MARKETING Design Tokens  (hp namespace)
+// CSS mirror: styles/homepage.css  §1 :root custom properties
+// Tailwind mirror: tailwind.config.ts  extend.colors["hp-*"]
+// ═══════════════════════════════════════════════════════════════
+
+export const hp = {
+
+  // ── Colors ─────────────────────────────────────────────────
+  color: {
+    // Primary green — CTA buttons, "every story." headline
+    green: {
+      50:  "#F0FDF4",
+      100: "#DCFCE7",
+      400: "#22C55E",  // lighter accent / Grow icon
+      500: "#16A34A",  // primary CTA + green headline
+      600: "#15803D",  // hover
+      700: "#166534",  // pressed
+    },
+
+    // Activity pill colors (right-side hero overlay)
+    // These are the background colors of the labeled pill buttons.
+    activityPill: {
+      read:    "#F97316",  // orange
+      create:  "#EC4899",  // hot pink
+      explore: "#10B981",  // teal
+      move:    "#22C55E",  // emerald
+      sing:    "#EAB308",  // amber
+      grow:    "#16A34A",  // dark green
+    },
+
+    // Activity icon circle colors (bottom row — intentionally different from pills)
+    // The design uses distinct hues for the icon circles vs. the pill buttons.
+    activityIcon: {
+      read:    "#F97316",  // orange   (same)
+      create:  "#EC4899",  // pink     (same)
+      explore: "#3B82F6",  // blue     (different from pill teal)
+      move:    "#F59E0B",  // amber    (different from pill emerald)
+      sing:    "#8B5CF6",  // violet   (different from pill amber)
+      grow:    "#22C55E",  // emerald  (different from pill dark green)
+    },
+
+    // Neutrals
+    dark:    "#111827",  // heading text, icon fills
+    surface: "#FFFFFF",  // page bg, card bg, nav bg
+    gray: {
+      50:  "#F9FAFB",  // hover backgrounds
+      100: "#F3F4F6",  // drawer dividers
+      200: "#E5E7EB",  // card borders, secondary button outline
+      400: "#9CA3AF",  // placeholder text, muted icons
+      500: "#6B7280",  // subtitle / body text
+      700: "#374151",  // nav link default
+      900: "#111827",  // alias for dark
+    },
+  },
+
+  // ── Shadows ────────────────────────────────────────────────
+  // Each shadow is element-specific, not a generic size scale.
+  shadow: {
+    nav:      "0 2px 8px rgba(0,0,0,0.06)",
+    card:     "0 4px 16px rgba(0,0,0,0.08)",
+    cardHover:"0 8px 28px rgba(0,0,0,0.14)",
+    cta:      "0 4px 12px rgba(22,163,74,0.35)",  // green-tinted CTA glow
+    pill:     "0 3px 10px rgba(0,0,0,0.18)",
+    play:     "0 2px 8px rgba(0,0,0,0.20)",
+    char:     "0 8px 32px rgba(0,0,0,0.12)",      // character illustration
+  },
+
+  // ── Border Radius ──────────────────────────────────────────
+  radius: {
+    sm:   "8px",      // drawer nav items, small chips
+    md:   "12px",     // medium cards, tooltips
+    card: "16px",     // story cards
+    pill: "9999px",   // all pill buttons + icon circles
+  },
+
+  // ── Transitions ────────────────────────────────────────────
+  // Single easing curve throughout — physical, no bounce.
+  ease: "cubic-bezier(0.4, 0, 0.2, 1)",
+  duration: {
+    fast: "150ms",  // micro-interactions (scale, color swap)
+    base: "200ms",  // standard hover states
+    slow: "300ms",  // drawer open/close, modals
+  },
+
+  // ── Z-Index Scale ──────────────────────────────────────────
+  // Closed set — nothing uses an arbitrary z-value.
+  z: {
+    base:    0,
+    card:    1,
+    overlay: 10,
+    sticky:  50,
+    nav:     100,
+    drawer:  200,   // overlay = 200, panel = 201 (calc in CSS)
+    modal:   300,
+    toast:   400,
+  },
+
+  // ── Breakpoints ────────────────────────────────────────────
+  // Numeric px values matching tailwind.config.ts screens.
+  breakpoint: {
+    xs:  375,
+    sm:  640,
+    md:  768,
+    lg:  1024,
+    xl:  1280,
+    xxl: 1536,
+  },
+
+  // ── Layout ─────────────────────────────────────────────────
+  layout: {
+    containerMaxPx:    1280,
+    containerPadPx:    40,    // desktop gutter
+    containerPadSmPx:  20,    // mobile gutter
+    navHeightPx:       72,
+    heroMinHPx:        580,
+    heroTextRatio:     0.32,  // left column share
+    heroIllustRatio:   0.68,  // right column share
+    sectionGapPx:      64,    // desktop section rhythm
+    sectionGapSmPx:    40,    // mobile section rhythm
+    cardGapPx:         20,    // story card grid gap
+    storyGridCols: {
+      desktop: 4,
+      laptop:  3,
+      tablet:  2,
+      mobile:  2,
+    },
+  },
+
+  // ── Typography ─────────────────────────────────────────────
+  font: {
+    display: "var(--font-baloo), 'Baloo 2', cursive",
+    body:    "var(--font-nunito), 'Nunito', sans-serif",
+    size: {
+      heroFluid: "clamp(40px, 4.5vw, 64px)",  // continuous scaling, no breakpoint jumps
+      h2:        "1.5rem",
+      body:      "1.125rem",
+      sm:        "0.875rem",
+      xs:        "0.8125rem",
+    },
+    weight: {
+      regular:   400,
+      medium:    500,
+      semibold:  600,
+      bold:      700,
+      extrabold: 800,
+    },
+  },
+
+} as const;
+
+// ── Derived types ──────────────────────────────────────────────
+// Use these to enforce valid activity keys wherever activity-keyed
+// maps or switch statements appear in the codebase.
+export type HpActivityPillKey = keyof typeof hp.color.activityPill;
+export type HpActivityIconKey = keyof typeof hp.color.activityIcon;

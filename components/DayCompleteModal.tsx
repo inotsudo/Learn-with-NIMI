@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Howl } from "howler";
-import { motion } from "framer-motion"; // <-- Add this
+import { motion } from "framer-motion";
+import { DURATION, EASE } from "@/lib/design-system/motion";
 
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -36,11 +37,11 @@ const DayCompleteModal = ({
       aria-live="polite"
     >
       <motion.div
-        className="bg-white rounded-xl p-8 shadow-xl text-center max-w-xs w-full"
+        className="bg-white leaf-lg p-8 shadow-xl text-center max-w-xs w-full"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: DURATION.moderate }}
       >
         <motion.div
           className="text-6xl mb-5 select-none"
@@ -48,7 +49,7 @@ const DayCompleteModal = ({
             scale: [1, 1.05, 1],
             opacity: [1, 0.85, 1]
           }}
-          transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+          transition={{ repeat: Infinity, duration: DURATION.loopDrift, ease: EASE.standard }}
           aria-hidden="true"
         >
           🏆

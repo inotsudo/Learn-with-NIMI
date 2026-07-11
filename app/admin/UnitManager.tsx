@@ -37,7 +37,7 @@ interface UnitRow {
 
 type EditableField = 'title' | 'theme_emoji' | 'description'
 
-const accent = ACCENT.indigo
+const accent = ACCENT.green
 
 export default function UnitManager() {
   const [loading, setLoading] = useState(true)
@@ -354,7 +354,7 @@ export default function UnitManager() {
                       onBlur={() => saveUnit(unit)}
                       disabled={busy}
                       placeholder={`Unit ${unit.unit_number}`}
-                      className="flex-1 min-w-[160px] font-bold text-gray-800 border border-transparent hover:border-gray-200 focus:border-indigo-300 rounded-lg px-2.5 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
+                      className="flex-1 min-w-[160px] font-bold text-gray-800 border border-transparent hover:border-gray-200 focus:border-green-500 rounded-lg px-2.5 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-200 transition"
                     />
                     <input
                       value={unit.theme_emoji}
@@ -363,7 +363,7 @@ export default function UnitManager() {
                       disabled={busy}
                       placeholder="🐾"
                       title="Theme"
-                      className="w-16 text-center text-lg border border-transparent hover:border-gray-200 focus:border-indigo-300 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition flex-shrink-0"
+                      className="w-16 text-center text-lg border border-transparent hover:border-gray-200 focus:border-green-500 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-200 transition flex-shrink-0"
                     />
                     <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full flex-shrink-0 ${unit.lessonCount > 0 ? `${accent.soft} ${accent.text}` : 'bg-gray-100 text-gray-400'}`}>
                       <BookOpen size={12} /> {unit.lessonCount} lesson{unit.lessonCount === 1 ? '' : 's'}
@@ -395,7 +395,7 @@ export default function UnitManager() {
                     disabled={busy}
                     placeholder="What will learners explore in this unit?"
                     rows={2}
-                    className="w-full text-sm text-gray-600 border border-transparent hover:border-gray-200 focus:border-indigo-300 rounded-lg px-2.5 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition resize-none"
+                    className="w-full text-sm text-gray-600 border border-transparent hover:border-gray-200 focus:border-green-500 rounded-lg px-2.5 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-200 transition resize-none"
                   />
 
                   <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -403,7 +403,7 @@ export default function UnitManager() {
                       value={unit.status}
                       onChange={e => handleStatusChange(unit, e.target.value as UnitStatus)}
                       disabled={busy}
-                      className={`text-xs font-bold px-2.5 py-1.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition disabled:opacity-50 ${UNIT_STATUS_META[unit.status].badge}`}
+                      className={`text-xs font-bold px-2.5 py-1.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-green-200 transition disabled:opacity-50 ${UNIT_STATUS_META[unit.status].badge}`}
                     >
                       {UNIT_STATUSES.map(s => <option key={s} value={s}>{UNIT_STATUS_META[s].label}</option>)}
                     </select>

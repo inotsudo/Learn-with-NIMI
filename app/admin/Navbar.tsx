@@ -191,7 +191,7 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
         </button>
 
         <div className="relative flex-1 max-w-lg hidden sm:block" ref={searchBoxRef}>
-          <div className="flex items-center bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 focus-within:border-indigo-300 focus-within:bg-white transition">
+          <div className="flex items-center bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 focus-within:border-green-500 focus-within:bg-white transition">
             <Search size={15} className="text-gray-400 mr-2 flex-shrink-0" />
             <input type="text" placeholder="Search stories, children, parents..." value={search}
               onChange={e => setSearch(e.target.value)} onFocus={() => setSearchFocused(true)} onKeyDown={handleSearchKeyDown}
@@ -244,7 +244,7 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
           {/* Profile */}
           <button onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-1.5 sm:gap-2 bg-gray-50 hover:bg-gray-100 pl-1.5 pr-1.5 sm:pr-2.5 py-1.5 rounded-lg transition">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-green-600 flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">
               {adminName[0].toUpperCase()}
             </div>
             <span className="text-[13px] font-semibold text-gray-700 hidden sm:inline max-w-[120px] truncate">{adminName}</span>

@@ -37,22 +37,30 @@ export interface StreakInfo {
   longest: number;
 }
 
-export function computeStreaks(activityDates: Set<string>, today: Date = new Date()): StreakInfo {
-  const activeToday = activityDates.has(toDateStr(today));
+export function computeStreaks(
+  activityDates: Set<string>,
+  today: Date = new Date(),
+  shieldedDates: Set<string> = new Set()
+): StreakInfo {
+  const effectiveDates = shieldedDates.size > 0
+    ? new Set([...activityDates, ...shieldedDates])
+    : activityDates;
+
+  const activeToday = effectiveDates.has(toDateStr(today));
 
   let current = 0;
-  if (activityDates.size > 0) {
+  if (effectiveDates.size > 0) {
     const cursor = new Date(today);
     if (!activeToday) cursor.setDate(cursor.getDate() - 1);
-    while (activityDates.has(toDateStr(cursor))) {
+    while (effectiveDates.has(toDateStr(cursor))) {
       current++;
       cursor.setDate(cursor.getDate() - 1);
     }
   }
 
   let longest = 0;
-  if (activityDates.size > 0) {
-    const sorted = Array.from(activityDates).sort();
+  if (effectiveDates.size > 0) {
+    const sorted = Array.from(effectiveDates).sort();
     let run = 1;
     longest = 1;
     for (let i = 1; i < sorted.length; i++) {

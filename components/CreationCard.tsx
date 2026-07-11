@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share2, Globe, Lock } from "lucide-react";
 import { motion } from "framer-motion";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 
 type CommentType = {
   id: number;
@@ -42,6 +43,7 @@ export default function CreationCard({
   onComment,
   onClick,
 }: CreationCardProps) {
+  const m = useThemeMotion();
   const [commentInput, setCommentInput] = useState("");
   const [likeAnimating, setLikeAnimating] = useState(false);
 
@@ -75,7 +77,7 @@ export default function CreationCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       onClick={() => onClick?.(creation)}
-      className="bg-white border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden rounded-2xl cursor-pointer"
+      className={`bg-white border border-ds-border shadow-ds-card hover:shadow-lg ${m.transitionSlow} hover:scale-[1.02] overflow-hidden leaf-lg cursor-pointer`}
     >
       <div className="relative h-48 w-full">
         <img
@@ -103,7 +105,7 @@ export default function CreationCard({
           </Badge>
         </div>
         <div className="absolute bottom-2 left-2">
-          <Badge className="bg-white/90 text-gray-800 font-semibold">
+          <Badge className="bg-white text-gray-800 font-semibold border border-ds-border">
             {creation.type}
           </Badge>
         </div>
@@ -114,7 +116,7 @@ export default function CreationCard({
         <p className="text-sm text-muted-foreground">
           {creation.childName}, {creation.age} yrs
         </p>
-        <p className="text-xs theme-text-muted">from {creation.mission}</p>
+        <p className="text-xs text-gray-500">from {creation.mission}</p>
 
         <div className="flex gap-2 pt-2">
           <motion.button
@@ -123,7 +125,7 @@ export default function CreationCard({
               e.stopPropagation();
               handleLike();
             }}
-            className="bg-gradient-to-r from-red-400 to-pink-400 hover:from-red-500 hover:to-pink-500 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-600"
+            className="bg-[var(--nimi-green)] hover:bg-[var(--ds-brand-hover)] text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)]"
           >
             <motion.span
               animate={likeAnimating ? {

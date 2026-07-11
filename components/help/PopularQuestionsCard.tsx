@@ -16,21 +16,21 @@ export default function PopularQuestionsCard() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div id="faq-section" className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
-      <h3 className="font-black text-white mb-2">{t("popularQuestionsTitle")}</h3>
+    <div id="faq-section" className="bg-white border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>
+      <h3 className="font-black text-ds-text mb-2">{t("popularQuestionsTitle")}</h3>
       {FAQ_ITEMS.map((item, i) => (
-        <div key={item.questionKey} className="border-b border-white/15 last:border-0">
+        <div key={item.questionKey} className="border-b border-ds-border last:border-0">
           <button
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
             className="flex items-center gap-3 py-3 w-full text-left"
           >
-            <span className="font-bold text-sm theme-text flex-1">{t(item.questionKey)}</span>
+            <span className="font-bold text-sm text-ds-text flex-1">{t(item.questionKey)}</span>
             <ChevronDown
-              className={`w-4 h-4 theme-text-muted shrink-0 transition-transform duration-200 ${openIndex === i ? "rotate-180" : ""}`}
+              className={`w-4 h-4 text-gray-500 shrink-0 transition-transform duration-200 ${openIndex === i ? "rotate-180 text-[var(--ds-brand-primary)]" : ""}`}
             />
           </button>
           {openIndex === i && (
-            <p className="theme-text text-sm pb-3 pl-1 leading-relaxed">
+            <p className="text-gray-600 text-sm pb-3 pl-1 leading-relaxed">
               {t(item.answerKey)}
             </p>
           )}

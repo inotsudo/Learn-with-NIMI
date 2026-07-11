@@ -25,7 +25,7 @@ interface UnitPill {
   title: string
 }
 
-const accent = ACCENT.indigo
+const accent = ACCENT.green
 
 function readinessClass(count: number) {
   return count === CATEGORY_ORDER.length ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'

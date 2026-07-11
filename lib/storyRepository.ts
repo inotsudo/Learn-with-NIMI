@@ -126,3 +126,41 @@ export async function getStoryBySlug(slug: string): Promise<{ id: string; slug: 
     .maybeSingle();
   return data ?? null;
 }
+
+// Public, no-auth teaser list for the marketing landing page — no childId/progress
+// involved. Goes through /api/featured-stories (service-role key, server-side) since
+// the `stories` table's RLS policy requires a logged-in session for direct reads.
+export async function getFeaturedStories(limit = 6): Promise<{ id: string; slug: string; title: string; cover_url: string | null; theme_emoji: string | null; sort_order: number }[]> {
+  try {
+    const res = await fetch(`/api/featured-stories?limit=${limit}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("[getFeaturedStories]", error);
+    return [];
+  }
+}
+
+export interface PopularStory {
+  id: string;
+  slug: string;
+  title: string;
+  cover_url: string | null;
+  theme_emoji: string | null;
+  sort_order: number;
+  category: string | null;
+  completions: number;
+}
+
+// Returns up to 6 stories ordered by learner completion count.
+// Falls back to sort_order when no one has completed any story yet.
+export async function getPopularStories(): Promise<PopularStory[]> {
+  try {
+    const res = await fetch("/api/popular-stories");
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("[getPopularStories]", error);
+    return [];
+  }
+}

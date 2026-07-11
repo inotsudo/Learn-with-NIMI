@@ -101,7 +101,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder="Search posts..." value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
-                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300 w-48" />
+                className="pl-9 pr-4 py-2 bg-ds-input border border-ds-border rounded-xl text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500 w-48" />
             </div>
             <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-50">
               <Filter size={14} /> Filter
@@ -113,7 +113,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
           {TABS.map(t => (
             <button key={t.key} onClick={() => { setTab(t.key); setPage(1) }}
               className={`px-4 py-2.5 text-[12px] font-semibold border-b-2 transition flex items-center gap-1.5 ${
-                tab === t.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+                tab === t.key ? 'border-green-600 text-green-600' : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}>
               {t.label}
               {t.count !== undefined && t.count > 0 && (
@@ -198,7 +198,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
               className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 transition"><ChevronLeft size={14} /></button>
             {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
               <button key={i + 1} onClick={() => setPage(i + 1)}
-                className={`w-8 h-8 rounded-lg text-[12px] font-bold transition ${i + 1 === pageClamped ? 'bg-indigo-600 text-white' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'}`}>{i + 1}</button>
+                className={`w-8 h-8 rounded-lg text-[12px] font-bold transition ${i + 1 === pageClamped ? 'bg-green-600 text-white' : 'border border-ds-border text-gray-500 hover:bg-gray-50'}`}>{i + 1}</button>
             ))}
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={pageClamped >= totalPages}
               className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 transition"><ChevronRight size={14} /></button>

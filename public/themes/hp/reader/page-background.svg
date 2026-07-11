@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <pattern id="hatch" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="20" stroke="#92400E" stroke-width="0.8" opacity="0.5"/>
+    </pattern>
+    <pattern id="cross" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(135)">
+      <line x1="0" y1="0" x2="0" y2="20" stroke="#78350F" stroke-width="0.4" opacity="0.25"/>
+    </pattern>
+    <radialGradient id="age1" cx="15%" cy="15%" r="30%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#92400E" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#92400E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="age2" cx="85%" cy="80%" r="35%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#92400E" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#92400E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="age3" cx="50%" cy="50%" r="40%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#D97706" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#D97706" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#hatch)"/>
+  <rect width="400" height="300" fill="url(#cross)"/>
+  <rect width="400" height="300" fill="url(#age1)"/>
+  <rect width="400" height="300" fill="url(#age2)"/>
+  <rect width="400" height="300" fill="url(#age3)"/>
+  <!-- Small ink spot marks -->
+  <ellipse cx="80" cy="220" rx="6" ry="4" fill="#78350F" opacity="0.06" transform="rotate(-15 80 220)"/>
+  <ellipse cx="320" cy="70" rx="4" ry="3" fill="#92400E" opacity="0.05" transform="rotate(20 320 70)"/>
+  <ellipse cx="200" cy="150" rx="8" ry="5" fill="#D97706" opacity="0.04"/>
+</svg>

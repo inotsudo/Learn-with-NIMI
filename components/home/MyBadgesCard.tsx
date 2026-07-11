@@ -4,57 +4,76 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight, Lock } from "lucide-react";
 import type { StorySlot } from "@/lib/story-types";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 
 interface Props { slots: StorySlot[]; }
 
-const BADGES = [
-  { key: "flipflop_audio", label: "Story Explorer",  icon: "/assets/badge-explorer.svg" },
-  { key: "coloring",       label: "Kind Heart",      icon: "/assets/badge-kindheart.svg" },
-  { key: "move_explore",   label: "Healthy Hero",    icon: "/assets/badge-hero.svg" },
-  { key: "bonus_video",    label: "Adventure Star",  icon: "/assets/star-mascot.svg" },
-];
-
 export default function MyBadgesCard({ slots }: Props) {
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
+
+  const BADGES = [
+    { key: "flipflop_audio", label: "Story Explorer",  icon: assets.badgeExplorer },
+    { key: "coloring",       label: "Kind Heart",      icon: assets.badgeKindHeart },
+    { key: "move_explore",   label: "Healthy Hero",    icon: assets.badgeHero },
+    { key: "bonus_video",    label: "Adventure Star",  icon: assets.starMascot },
+  ];
+
   const earned = (key: string) => slots.find(s => s.slot_key === key)?.completed ?? false;
 
   return (
-    <div className="theme-card border-2 theme-border rounded-[20px] p-4 flex flex-col shadow-[0_8px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]">
-      <h3 className="font-baloo font-black text-white text-[20px] sm:text-[24px] text-center mb-3 uppercase tracking-wider">
-        My Badges 🌿
-      </h3>
-      <div className="grid grid-cols-2 gap-3 flex-1">
-        {BADGES.map((b, i) => {
-          const is = earned(b.key);
-          return (
-            <motion.div key={b.key}
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1, type: "spring" }}
-              className="flex flex-col items-center gap-1.5">
-              <div className="relative">
-                <motion.div
-                  animate={is ? { scale: [1, 1.08, 1], rotate: [0, 3, -3, 0] } : {}}
-                  transition={{ duration: 3, repeat: Infinity, delay: i * 0.4 }}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center border-[3px] shadow-lg ${
-                    is ? "border-yellow-400/50 theme-card-hover" : "theme-border theme-card-active"
-                  }`}>
-                  <img src={b.icon} alt={b.label}
-                    className={`w-12 h-12 ${is ? "" : "grayscale opacity-30"}`} />
-                </motion.div>
-                {!is && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Lock className="w-4 h-4 theme-text-muted/50" />
-                  </div>
-                )}
-              </div>
-              <span className={`font-nunito text-[12px] font-bold text-center leading-tight ${is ? "text-white" : "theme-text-muted/40"}`}>{b.label}</span>
-            </motion.div>
-          );
-        })}
+    <div className="relative overflow-hidden border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/40 to-white leaf p-4 flex flex-col shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
+      <img src={assets.storyCard.background} alt="" aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]" />
+      <div className="absolute inset-x-4 top-4 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
+      <div className="relative z-10 flex flex-col flex-1">
+        <div className="mb-3 flex justify-center">
+          <div className="rounded-full border border-[var(--ds-border-brand)]/20 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--ds-brand-primary)] shadow-sm">
+            Badge collection
+          </div>
+        </div>
+        <h3 className="font-baloo font-black text-ds-text text-[20px] sm:text-[24px] text-center mb-3 uppercase tracking-wider">
+          My Badges 🌿
+        </h3>
+        <div className="grid grid-cols-2 gap-3 flex-1">
+          {BADGES.map((b, i) => {
+            const is = earned(b.key);
+            return (
+              <motion.div key={b.key}
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.1, type: "spring" }}
+                className="flex flex-col items-center gap-1.5">
+                <div className="relative w-16 h-16">
+                  <motion.div
+                    animate={is ? { scale: [1, 1.08, 1], rotate: [0, 3, -3, 0] } : {}}
+                    transition={{ duration: 3, repeat: Infinity, delay: i * 0.4 }}
+                    className={`w-16 h-16 rounded-full flex items-center justify-center border-[3px] shadow-[0_10px_24px_rgba(15,23,42,0.08)] ${
+                      is ? "border-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)]" : "border-gray-200 bg-gray-50"
+                    }`}>
+                    <img src={b.icon} alt={b.label}
+                      className={`w-12 h-12 ${is ? "" : "grayscale opacity-30"}`} />
+                  </motion.div>
+                  {is && (
+                    <img src={assets.rewards.badgeFrame} alt="" aria-hidden="true"
+                      className="absolute inset-0 w-full h-full pointer-events-none opacity-75" />
+                  )}
+                  {!is && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="w-4 h-4 text-gray-300" />
+                    </div>
+                  )}
+                </div>
+                <span className={`font-nunito text-[12px] font-bold text-center leading-tight ${is ? "text-gray-800" : "text-gray-400"}`}>{b.label}</span>
+              </motion.div>
+            );
+          })}
+        </div>
+        <Link href="/treasure" className="mt-3 flex items-center justify-center gap-1 font-nunito text-[var(--ds-brand-primary)] hover:text-[var(--ds-brand-hover)] text-[13px] font-bold transition hover:bg-[var(--ds-brand-subtle)] leaf py-2.5 border border-[var(--ds-brand-primary)]/20">
+          View All Badges <ChevronRight className="w-4 h-4" />
+        </Link>
       </div>
-      <Link href="/treasure" className="mt-3 flex items-center justify-center gap-1 font-nunito theme-text hover:text-white text-[13px] font-bold transition theme-card-hover hover:theme-card-hover rounded-xl py-2.5 border theme-border">
-        View All Badges <ChevronRight className="w-4 h-4" />
-      </Link>
     </div>
   );
 }

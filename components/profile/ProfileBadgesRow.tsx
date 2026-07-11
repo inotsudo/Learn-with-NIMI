@@ -18,10 +18,10 @@ export default function ProfileBadgesRow({ completedInLevel }: Props) {
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
+    <div className="bg-white border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-black text-white">{t("myBadges")}</h3>
-        <Link href="/user-profile" className="text-sm font-bold theme-text hover:underline">
+        <h3 className="font-black text-ds-text">{t("myBadges")}</h3>
+        <Link href="/user-profile" className="text-sm font-bold text-ds-text hover:underline">
           {t("viewAll")}
         </Link>
       </div>
@@ -33,18 +33,18 @@ export default function ProfileBadgesRow({ completedInLevel }: Props) {
             <div key={badge.category} className="flex flex-col items-center gap-1.5 w-16">
               {earned ? (
                 <Link href={badge.href}
-                  className={`w-14 h-14 ${badge.bg} backdrop-blur border border-white/20 rounded-full flex items-center justify-center text-2xl shadow-md`}>
+                  className={`w-14 h-14 ${badge.bg} rounded-full flex items-center justify-center text-2xl shadow-md`}>
                   {badge.icon}
                 </Link>
               ) : (
-                <div className="w-14 h-14 bg-white/10 backdrop-blur border border-white/20 rounded-full flex items-center justify-center text-2xl opacity-40 relative">
+                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center text-2xl opacity-50 relative">
                   {badge.icon}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full">
                     <span className="text-sm">🔒</span>
                   </div>
                 </div>
               )}
-              <p className={`text-[11px] text-center font-bold leading-tight ${earned ? "theme-text" : "text-gray-300"}`}>
+              <p className={`text-[11px] text-center font-bold leading-tight ${earned ? "text-ds-text" : "text-gray-400"}`}>
                 {badge.title}
               </p>
             </div>

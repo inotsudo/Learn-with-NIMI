@@ -6,7 +6,7 @@ import StatCard from './StatCard'
 import { exportCSV } from './exportUtils'
 import type { AchievementAnalytics, SlugCount } from '@/lib/adminAnalytics'
 
-const accent = ACCENT.indigo
+const accent = ACCENT.emerald
 const MAX_BARS = 12
 
 function SlugBar({ slug, count, max, color }: { slug: string; count: number; max: number; color: string }) {
@@ -65,7 +65,7 @@ export default function AchievementAnalyticsTab({ analytics }: { analytics: Achi
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard icon={Award} label="Certificates Earned" value={certificatesEarned} accentKey="amber" />
         <StatCard icon={Medal} label="Badges Earned" value={badgesEarned} accentKey="emerald" />
-        <StatCard icon={Crown} label="Trilingual Champions" value={trilingualChampionCount} accentKey="violet" />
+        <StatCard icon={Crown} label="Trilingual Champions" value={trilingualChampionCount} accentKey="teal" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

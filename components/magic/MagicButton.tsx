@@ -2,6 +2,9 @@
 
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getComponentVariant } from "@/lib/design-system/componentVariants";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 
 interface Props {
   children: ReactNode;
@@ -13,30 +16,39 @@ interface Props {
   icon?: ReactNode;
 }
 
-const VARIANTS = {
-  primary: "bg-gradient-to-r from-sky-400 to-blue-500 text-white shadow-lg shadow-sky-500/20 hover:shadow-sky-500/30",
-  secondary: "bg-gradient-to-r from-lavender-400 to-purple-500 text-white shadow-lg shadow-purple-500/20",
-  success: "bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg shadow-green-500/20",
-  danger: "bg-gradient-to-r from-red-400 to-rose-500 text-white shadow-lg shadow-red-500/20",
-  ghost: "bg-white/10 text-white border border-white/15 hover:bg-white/15",
+const SIZES = {
+  sm: "px-4 py-2 text-xs",
+  md: "px-6 py-3 text-sm",
+  lg: "px-8 py-4 text-base",
 };
 
-const SIZES = {
-  sm: "px-4 py-2 text-[12px] rounded-xl",
-  md: "px-6 py-3 text-[14px] rounded-2xl",
-  lg: "px-8 py-4 text-[16px] rounded-2xl",
+// Semantic variants not tied to app theme
+const STATIC_VARIANTS = {
+  danger: "bg-gradient-to-r from-red-400 to-rose-500 text-white shadow-sm shadow-red-500/20",
+  ghost:  "bg-transparent text-gray-700 border border-gray-200 hover:bg-gray-50 hover:text-gray-900",
 };
 
 export default function MagicButton({
   children, onClick, variant = "primary", size = "md", disabled, className = "", icon,
 }: Props) {
+  const { themeId } = useAppTheme();
+  const cv = getComponentVariant(themeId);
+  const m = useThemeMotion();
+
+  const variantClass =
+    variant === "primary"   ? cv.buttonStyle.primary   :
+    variant === "secondary" ? cv.buttonStyle.secondary  :
+    variant === "success"   ? cv.buttonStyle.success    :
+    STATIC_VARIANTS[variant];
+
   return (
     <motion.button
-      whileHover={disabled ? {} : { scale: 1.03, y: -1 }}
-      whileTap={disabled ? {} : { scale: 0.97 }}
+      whileHover={disabled ? {} : m.buttonHover}
+      whileTap={disabled ? {} : m.buttonPress}
       onClick={onClick}
       disabled={disabled}
-      className={`font-baloo font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`font-baloo font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${variantClass} ${SIZES[size]} ${className}`}
+      style={{ borderRadius: 'var(--leaf-r-sm)' }}
     >
       {icon}
       {children}

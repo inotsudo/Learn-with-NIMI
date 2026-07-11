@@ -28,7 +28,7 @@ export default function AdventureJourney({ storySlug, slots }: Props) {
     <div className="space-y-4">
       {/* Header */}
       <div className="text-center">
-        <p className="font-black text-yellow-300 text-[14px] sm:text-[16px] uppercase tracking-wider">
+        <p className="font-black text-ds-text text-[14px] sm:text-[16px] uppercase tracking-wider">
           ⭐ Complete all 6 steps to earn your Story Certificate! ⭐
         </p>
       </div>
@@ -47,25 +47,28 @@ export default function AdventureJourney({ storySlug, slots }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
               whileHover={!isLocked ? { y: -6, scale: 1.03 } : undefined}
-              className={`relative rounded-[20px] overflow-hidden border-2 flex flex-col min-w-[140px] sm:min-w-[150px] lg:min-w-0 shadow-xl transition-all ${
+              className={`relative leaf overflow-hidden border-2 flex flex-col min-w-[140px] sm:min-w-[150px] lg:min-w-0 shadow-xl transition-all ${
                 slot.completed
-                  ? "border-green-400/40 shadow-green-500/10"
+                  ? "border-[var(--ds-border-brand)]/40 bg-white"
                   : isNext
-                    ? "border-yellow-400/40 shadow-yellow-500/15 ring-2 ring-yellow-400/15"
-                    : "border-white/[0.06] opacity-50"
+                    ? "border-yellow-400/40 bg-white ring-2 ring-yellow-400/15"
+                    : "border-ds-border bg-white opacity-50"
               }`}
             >
-              {/* Background */}
-              <div className={`absolute inset-0 bg-gradient-to-b ${
-                slot.completed ? "from-green-500/15 to-green-600/5" : isLocked ? "from-white/[0.02] to-transparent" : `${m.bg} opacity-15`
-              }`} />
+              {/* Background accent for active/next */}
+              {isNext && (
+                <div className={`absolute inset-0 bg-gradient-to-b ${m.bg} opacity-5`} />
+              )}
+              {slot.completed && (
+                <div className="absolute inset-0 bg-green-500/5" />
+              )}
 
               {/* Number badge */}
               <div className="relative z-10 p-3 pb-0 flex items-center justify-between">
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black shadow ${
-                  slot.completed ? "bg-green-500 text-white"
+                  slot.completed ? "bg-[var(--nimi-green)] text-white"
                     : isNext ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white"
-                    : "bg-white/10 text-white/30"
+                    : "bg-gray-100 text-gray-300"
                 }`}>
                   {i + 1}
                 </div>
@@ -79,11 +82,13 @@ export default function AdventureJourney({ storySlug, slots }: Props) {
 
               {/* Icon + Mascot area */}
               <div className="relative z-10 flex items-center justify-center py-3 px-2">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg border border-white/15 ${
-                  slot.completed ? "bg-green-500/20" : isLocked ? "bg-white/[0.04]" : `bg-gradient-to-br ${m.bg} bg-opacity-30`
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg border border-ds-border ${
+                  slot.completed ? "bg-[var(--ds-brand-subtle)]"
+                    : isLocked ? "bg-gray-100"
+                    : `bg-gradient-to-br ${m.bg} bg-opacity-20`
                 }`}>
-                  {slot.completed ? <CheckCircle2 className="w-8 h-8 text-green-400" /> :
-                   isLocked ? <Lock className="w-6 h-6 text-white/20" /> :
+                  {slot.completed ? <CheckCircle2 className="w-8 h-8 text-[var(--ds-brand-primary)]" /> :
+                   isLocked ? <Lock className="w-6 h-6 text-gray-300" /> :
                    <span className="drop-shadow-lg">{m.icon}</span>}
                 </div>
               </div>
@@ -91,13 +96,13 @@ export default function AdventureJourney({ storySlug, slots }: Props) {
               {/* Text */}
               <div className="relative z-10 px-3 pb-2 text-center flex-1">
                 <p className={`font-black text-[11px] leading-tight whitespace-pre-line ${
-                  slot.completed ? "text-green-300" : isNext ? "text-white" : "text-white/30"
+                  slot.completed ? "text-[var(--ds-brand-primary)]" : isNext ? "text-ds-text" : "text-gray-300"
                 }`}>
                   {m.name}
                 </p>
                 {!isLocked && (
                   <p className={`text-[8px] mt-1 leading-snug ${
-                    slot.completed ? "text-green-200/40" : "theme-text-faint"
+                    slot.completed ? "text-gray-400" : "text-gray-500"
                   }`}>
                     {m.desc}
                   </p>
@@ -107,7 +112,7 @@ export default function AdventureJourney({ storySlug, slots }: Props) {
               {/* Status button */}
               <div className="relative z-10 px-3 pb-3">
                 {slot.completed ? (
-                  <div className="bg-green-500 text-white text-[9px] font-black py-1.5 rounded-lg text-center shadow-lg">
+                  <div className="bg-[var(--nimi-green)] text-white text-[9px] font-black py-1.5 rounded-lg text-center shadow-lg">
                     ✓ COMPLETED
                   </div>
                 ) : isNext ? (
@@ -116,7 +121,7 @@ export default function AdventureJourney({ storySlug, slots }: Props) {
                     ▶ START
                   </motion.div>
                 ) : (
-                  <div className="bg-white/[0.04] text-white/15 text-[9px] font-bold py-1.5 rounded-lg text-center border border-white/[0.06]">
+                  <div className="bg-gray-100 text-gray-300 text-[9px] font-bold py-1.5 rounded-lg text-center border border-ds-border">
                     🔒 LOCKED
                   </div>
                 )}
@@ -140,7 +145,7 @@ export default function AdventureJourney({ storySlug, slots }: Props) {
           i < slots.length - 1 && (
             <div key={i} className="flex items-center">
               <div className="w-12" />
-              <ChevronRight className={`w-4 h-4 ${slot.completed ? "text-green-400/50" : "text-white/10"}`} />
+              <ChevronRight className={`w-4 h-4 ${slot.completed ? "text-green-400/50" : "text-gray-200"}`} />
               <div className="w-12" />
             </div>
           )

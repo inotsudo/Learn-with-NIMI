@@ -94,7 +94,7 @@ export default function ContentMediaManager({ title, description, missionType, m
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300 w-44" />
+                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-500 w-44" />
             </div>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function ContentMediaManager({ title, description, missionType, m
                       <input type="text" defaultValue={r.media_url ?? ''}
                         onBlur={e => handleSave(r.version_id, e.target.value)}
                         placeholder="Paste media URL..."
-                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-600 focus:outline-none focus:border-indigo-300" />
+                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-600 focus:outline-none focus:border-green-500" />
                     </td>
                     <td className="px-5 py-3">
                       {r.media_url ? (
@@ -141,7 +141,7 @@ export default function ContentMediaManager({ title, description, missionType, m
                     <td className="px-5 py-3">
                       {r.media_url && (
                         <a href={r.media_url.startsWith('http') ? r.media_url : getStorageUrl(r.media_url)} target="_blank" rel="noreferrer"
-                          className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition">
+                          className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-green-600 hover:border-green-200 transition">
                           <ExternalLink size={13} />
                         </a>
                       )}

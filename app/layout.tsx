@@ -5,18 +5,36 @@ import { NimiReaderProvider } from "@/contexts/NimiReaderContext";
 import SupabaseProviderWrapper from "@/components/SupabaseProviderWrapper";
 import { UserProvider } from "@/contexts/UserContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { KidThemeProvider } from "@/contexts/ThemeProvider";
+import { AppThemeProvider } from "@/contexts/AppThemeProvider";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 
-const baloo = Baloo_2({ subsets: ["latin"], variable: "--font-baloo", weight: ["400", "500", "600", "700", "800"] });
-const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito", weight: ["400", "600", "700", "800", "900"] });
+const baloo  = Baloo_2({ subsets: ["latin"], variable: "--font-baloo",  weight: ["400","500","600","700","800"] });
+const nunito = Nunito ({  subsets: ["latin"], variable: "--font-nunito", weight: ["400","600","700","800","900"] });
 
 export const metadata = {
-  title: "Nimipiko",
-  description: "Daily little victory",
+  title: "NIMIPIKO — Interactive Stories for Kids | English, French & Kinyarwanda",
+  description: "Give your child a magical learning adventure through interactive stories, AI companion Nimi, songs, coloring and achievement certificates — in English, French and Kinyarwanda. Ages 2–12. Now in early access.",
+  metadataBase: new URL("https://nimipiko.com"),
+  keywords: ["kids learning app", "interactive stories for children", "Kinyarwanda learning app", "educational app Rwanda", "bilingual children stories", "AI learning companion for kids", "children language app"],
   icons: {
-    icon: "/nimi-logo.png",
+    icon:     "/nimi-logo.png",
     shortcut: "/nimi-logo.png",
-    apple: "/nimi-logo.png",
+    apple:    "/nimi-logo.png",
+  },
+  openGraph: {
+    title: "NIMIPIKO — Interactive Stories for Kids",
+    description: "Interactive stories, AI companion Nimi & achievement certificates for ages 2–12. English, French & Kinyarwanda. Now in early access.",
+    url: "https://nimipiko.com",
+    siteName: "NIMIPIKO",
+    images: [{ url: "/nimipiko.png", width: 1200, height: 630, alt: "NIMIPIKO — Interactive Learning Stories for Kids" }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NIMIPIKO — Interactive Stories for Kids",
+    description: "Interactive stories, AI companion Nimi & achievement certificates for ages 2–12. English, French & Kinyarwanda.",
+    images: ["/nimipiko.png"],
   },
 };
 
@@ -24,25 +42,47 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${baloo.variable} ${nunito.variable}`} suppressHydrationWarning>
       <head>
+        {/*
+          Theme injection script — runs before first paint to avoid flash.
+          Reads the saved child theme from localStorage and writes CSS custom
+          properties onto <html> so every --theme-* consumer gets the right
+          value immediately, with no layout shift.
+
+          ── GARDEN (default) ──────────────────────────────────────────────
+          Redesigned from warm-orange to the new NIMIPIKO visual language:
+          white surface, green accent, cool-gray borders and text.
+          All other themes are preserved exactly as-is.
+        */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{
-var THEMES={galaxy:{bg:"#150b35",card:"#1c1055",darker:"#0f0830",cardHover:"#251466",cardActive:"#1a0e3e",accent:"#7c3aed",accentSoft:"rgba(139,92,246,0.15)",accentMuted:"rgba(139,92,246,0.25)",border:"rgba(139,92,246,0.15)",borderStrong:"rgba(139,92,246,0.3)",text:"#e9d5ff",textMuted:"#c4b5fd",textFaint:"rgba(196,181,253,0.4)",sidebar:"#0f0a2a"},ocean:{bg:"#0c2d4a",card:"#0f3a5e",darker:"#082240",cardHover:"#134a72",cardActive:"#0b3050",accent:"#38bdf8",accentSoft:"rgba(56,189,248,0.15)",accentMuted:"rgba(56,189,248,0.25)",border:"rgba(56,189,248,0.2)",borderStrong:"rgba(56,189,248,0.35)",text:"#bae6fd",textMuted:"#7dd3fc",textFaint:"rgba(125,211,252,0.4)",sidebar:"#0a2540"},forest:{bg:"#0a2a15",card:"#0f3a1e",darker:"#071f0d",cardHover:"#134a28",cardActive:"#0c3218",accent:"#34d399",accentSoft:"rgba(52,211,153,0.15)",accentMuted:"rgba(52,211,153,0.25)",border:"rgba(52,211,153,0.2)",borderStrong:"rgba(52,211,153,0.35)",text:"#bbf7d0",textMuted:"#86efac",textFaint:"rgba(134,239,172,0.4)",sidebar:"#082510"},sunset:{bg:"#2d1520",card:"#3a1a28",darker:"#200e18",cardHover:"#4a2035",cardActive:"#32182a",accent:"#fb923c",accentSoft:"rgba(251,146,60,0.15)",accentMuted:"rgba(251,146,60,0.25)",border:"rgba(251,146,60,0.2)",borderStrong:"rgba(251,146,60,0.35)",text:"#fed7aa",textMuted:"#fdba74",textFaint:"rgba(253,186,116,0.4)",sidebar:"#25101a"},candy:{bg:"#2a0f30",card:"#381545",darker:"#1e0a22",cardHover:"#451a55",cardActive:"#30103a",accent:"#f472b6",accentSoft:"rgba(244,114,182,0.15)",accentMuted:"rgba(244,114,182,0.25)",border:"rgba(244,114,182,0.2)",borderStrong:"rgba(244,114,182,0.35)",text:"#fbcfe8",textMuted:"#f9a8d4",textFaint:"rgba(249,168,212,0.4)",sidebar:"#220c28"},sunshine:{bg:"#2a2008",card:"#3a2c10",darker:"#1f1805",cardHover:"#4a3a15",cardActive:"#30260c",accent:"#fbbf24",accentSoft:"rgba(251,191,36,0.15)",accentMuted:"rgba(251,191,36,0.25)",border:"rgba(251,191,36,0.2)",borderStrong:"rgba(251,191,36,0.35)",text:"#fef9c3",textMuted:"#fde047",textFaint:"rgba(253,224,71,0.4)",sidebar:"#22190a"},rainbow:{bg:"#1a1030",card:"#251545",darker:"#120a22",cardHover:"#301a58",cardActive:"#1f1238",accent:"#a78bfa",accentSoft:"rgba(167,139,250,0.15)",accentMuted:"rgba(167,139,250,0.25)",border:"rgba(167,139,250,0.2)",borderStrong:"rgba(167,139,250,0.35)",text:"#ddd6fe",textMuted:"#c4b5fd",textFaint:"rgba(196,181,253,0.4)",sidebar:"#150c28"},space:{bg:"#08081a",card:"#0e0e28",darker:"#050512",cardHover:"#151535",cardActive:"#0a0a20",accent:"#818cf8",accentSoft:"rgba(129,140,248,0.15)",accentMuted:"rgba(129,140,248,0.25)",border:"rgba(129,140,248,0.15)",borderStrong:"rgba(129,140,248,0.3)",text:"#c7d2fe",textMuted:"#a5b4fc",textFaint:"rgba(165,180,252,0.4)",sidebar:"#06061a"}};
-var cid=localStorage.getItem("nimipiko_active_child");
-var tid=cid?localStorage.getItem("nimipiko_child_theme_"+cid):null;
-var t=THEMES[tid||"galaxy"]||THEMES.galaxy;
 var r=document.documentElement.style;
-r.setProperty("--theme-bg",t.bg);r.setProperty("--theme-card",t.card);r.setProperty("--theme-darker",t.darker);r.setProperty("--theme-card-hover",t.cardHover);r.setProperty("--theme-card-active",t.cardActive);r.setProperty("--theme-accent",t.accent);r.setProperty("--theme-accent-soft",t.accentSoft);r.setProperty("--theme-accent-muted",t.accentMuted);r.setProperty("--theme-border",t.border);r.setProperty("--theme-border-strong",t.borderStrong);r.setProperty("--theme-text",t.text);r.setProperty("--theme-text-muted",t.textMuted);r.setProperty("--theme-text-faint",t.textFaint);r.setProperty("--theme-sidebar",t.sidebar);
+r.setProperty("--theme-bg","#FFFFFF");
+r.setProperty("--theme-card","#FFFFFF");
+r.setProperty("--theme-darker","#F9FAFB");
+r.setProperty("--theme-card-hover","#F3F4F6");
+r.setProperty("--theme-card-active","#E5E7EB");
+r.setProperty("--theme-accent","#15803D");
+r.setProperty("--theme-accent-soft","rgba(21,128,61,0.10)");
+r.setProperty("--theme-accent-muted","rgba(21,128,61,0.18)");
+r.setProperty("--theme-border","rgba(229,231,235,1)");
+r.setProperty("--theme-border-strong","rgba(156,163,175,0.8)");
+r.setProperty("--theme-text","#111827");
+r.setProperty("--theme-text-muted","#6B7280");
+r.setProperty("--theme-text-faint","rgba(107,114,128,0.45)");
+r.setProperty("--theme-sidebar","#FFFFFF");
 }catch(e){}}())` }} />
       </head>
-      <body className="font-nunito" style={{ backgroundColor: "var(--theme-bg, #150b35)" }}>
+      <body className="font-nunito" style={{ backgroundColor: "var(--theme-bg, #FFFFFF)" }}>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
         <LanguageProvider>
           <NimiReaderProvider>
             <SupabaseProviderWrapper>
               <UserProvider>
-              <ThemeProvider>
-                <KidThemeProvider childId={null}>
-                  {children}
-                </KidThemeProvider>
-              </ThemeProvider>
+                <ThemeProvider>
+                  <AppThemeProvider>
+                    {children}
+                    <CookieConsentBanner />
+                  </AppThemeProvider>
+                </ThemeProvider>
               </UserProvider>
             </SupabaseProviderWrapper>
           </NimiReaderProvider>

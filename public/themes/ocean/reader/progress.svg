@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12">
+  <defs>
+    <linearGradient id="current" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#BAE6FD"/>
+      <stop offset="35%" stop-color="#0284C7"/>
+      <stop offset="65%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+  </defs>
+  <!-- Base flowing current bar -->
+  <rect x="0" y="3" width="400" height="6" rx="3" fill="url(#current)" opacity="0.8"/>
+  <!-- Wave ripple overlay on bar -->
+  <path d="M0,6 Q25,3 50,6 Q75,9 100,6 Q125,3 150,6 Q175,9 200,6 Q225,3 250,6 Q275,9 300,6 Q325,3 350,6 Q375,9 400,6" fill="none" stroke="#E0F9FF" stroke-width="1.5" opacity="0.55"/>
+  <!-- Pearl bubble markers -->
+  <circle cx="80" cy="6" r="3.5" fill="#BAE6FD" opacity="0.7"/>
+  <circle cx="80" cy="6" r="1.5" fill="white" opacity="0.55"/>
+  <circle cx="160" cy="6" r="3.5" fill="#7DD3FC" opacity="0.75"/>
+  <circle cx="160" cy="6" r="1.5" fill="white" opacity="0.5"/>
+  <circle cx="240" cy="6" r="3.5" fill="#BAE6FD" opacity="0.7"/>
+  <circle cx="240" cy="6" r="1.5" fill="white" opacity="0.55"/>
+  <circle cx="320" cy="6" r="3.5" fill="#7DD3FC" opacity="0.75"/>
+  <circle cx="320" cy="6" r="1.5" fill="white" opacity="0.5"/>
+</svg>

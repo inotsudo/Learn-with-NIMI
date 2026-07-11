@@ -1,0 +1,713 @@
+/* ══════════════════════════════════════════════════════════════════
+   NIMIPIKO — Homepage / Marketing Design System
+   ──────────────────────────────────────────────────────────────────
+   This file is imported at the top of app/globals.css via postcss-import.
+   It is resolved before Tailwind processes @layer, so all @layer
+   declarations here participate in Tailwind's cascade correctly.
+   ══════════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════════════
+   §1  DESIGN TOKENS  (CSS Custom Properties)
+   All values referenced in §2 and §3 are sourced from here.
+   The JS mirror of this token set lives in lib/tokens.ts.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── Primary Green ── */
+  --hp-green-50:  #F0FDF4;
+  --hp-green-100: #DCFCE7;
+  --hp-green-400: #22C55E;   /* lighter accent — Grow icon, hover glows  */
+  --hp-green-500: #16A34A;   /* brand primary — CTA buttons, green headline */
+  --hp-green-600: #15803D;   /* hover state */
+  --hp-green-700: #166534;   /* pressed / active state */
+
+  /* ── Activity Pill Colors (right-side hero overlay) ── */
+  --hp-read:    #F97316;     /* orange  — READ   */
+  --hp-create:  #EC4899;     /* pink    — CREATE */
+  --hp-explore: #10B981;     /* teal    — EXPLORE */
+  --hp-move:    #22C55E;     /* emerald — MOVE   */
+  --hp-sing:    #EAB308;     /* amber   — SING   */
+  --hp-grow:    #16A34A;     /* green   — GROW   */
+
+  /* ── Activity Icon Circle Colors (bottom row — different from pills) ── */
+  --hp-read-icon:    #F97316;  /* orange  */
+  --hp-create-icon:  #EC4899;  /* pink    */
+  --hp-explore-icon: #3B82F6;  /* blue    — distinct from pill teal */
+  --hp-move-icon:    #F59E0B;  /* amber   — distinct from pill emerald */
+  --hp-sing-icon:    #8B5CF6;  /* violet  — distinct from pill amber */
+  --hp-grow-icon:    #22C55E;  /* emerald */
+
+  /* ── Neutrals ── */
+  --hp-dark:      #111827;   /* heading text, icon fills           */
+  --hp-surface:   #FFFFFF;   /* page bg, card bg, nav bg           */
+  --hp-gray-50:   #F9FAFB;   /* hover backgrounds                  */
+  --hp-gray-100:  #F3F4F6;   /* drawer dividers                    */
+  --hp-gray-200:  #E5E7EB;   /* card borders, secondary btn border */
+  --hp-gray-400:  #9CA3AF;   /* placeholder, muted icons           */
+  --hp-gray-500:  #6B7280;   /* subtitle / body text               */
+  --hp-gray-700:  #374151;   /* nav link default                   */
+
+  /* ── Typography ── */
+  --hp-font-display: var(--font-baloo),  'Baloo 2', cursive;
+  --hp-font-body:    var(--font-nunito), 'Nunito',  sans-serif;
+
+  /* ── Shadows ── */
+  /* Each shadow is tuned for its element, not a generic size scale */
+  --hp-shadow-nav:        0 2px 8px rgba(0,0,0,0.06);
+  --hp-shadow-card:       0 4px 16px rgba(0,0,0,0.08);
+  --hp-shadow-card-hover: 0 8px 28px rgba(0,0,0,0.14);
+  --hp-shadow-cta:        0 4px 12px rgba(22,163,74,0.35);  /* green-tinted glow */
+  --hp-shadow-pill:       0 3px 10px rgba(0,0,0,0.18);
+  --hp-shadow-play:       0 2px 8px rgba(0,0,0,0.20);
+  --hp-shadow-char:       0 8px 32px rgba(0,0,0,0.12);      /* character illustrations */
+
+  /* ── Border Radius ── */
+  --hp-radius-sm:   8px;      /* drawer nav items, small chips  */
+  --hp-radius-md:   12px;     /* medium cards, tooltips         */
+  --hp-radius-card: 16px;     /* story cards                    */
+  --hp-radius-pill: 9999px;   /* all pill buttons + icon circles */
+
+  /* ── Layout ── */
+  --hp-container-max:    1280px;
+  --hp-container-pad:    2.5rem;    /* 40px — desktop container gutter */
+  --hp-container-pad-sm: 1.25rem;   /* 20px — mobile container gutter  */
+  --hp-nav-height:       72px;
+  --hp-hero-min-h:       580px;
+  --hp-section-gap:      4rem;      /* 64px — desktop section rhythm   */
+  --hp-section-gap-sm:   2.5rem;    /* 40px — mobile section rhythm    */
+  --hp-card-gap:         1.25rem;   /* 20px — story card grid gap      */
+
+  /* ── Easing + Durations ── */
+  /* Single easing curve — physical feel without bounce */
+  --hp-ease:   cubic-bezier(0.4, 0, 0.2, 1);
+  --hp-t-fast: 150ms;
+  --hp-t-base: 200ms;
+  --hp-t-slow: 300ms;
+
+  /* ── Z-Index Scale ── */
+  /* Closed set — nothing uses an arbitrary z-value */
+  --hp-z-base:    0;
+  --hp-z-card:    1;
+  --hp-z-overlay: 10;
+  --hp-z-sticky:  50;
+  --hp-z-nav:     100;
+  --hp-z-drawer:  200;    /* drawer overlay = 200, drawer panel = 201 */
+  --hp-z-modal:   300;
+  --hp-z-toast:   400;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   §2  BASE LAYER  —  global browser defaults
+   ══════════════════════════════════════════════════════════════════ */
+
+@layer base {
+
+  html {
+    /* Smooth scrolling for anchor links and JS scroll calls */
+    scroll-behavior: smooth;
+    /* Sub-pixel font rendering — prevents blurry text on retina */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Consistent box-sizing across the marketing page */
+    box-sizing: border-box;
+  }
+
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
+
+  /* Text selection: brand green tint */
+  ::selection {
+    background-color: var(--hp-green-100);
+    color: var(--hp-green-700);
+  }
+
+  /* Custom scrollbar — webkit only, degrades gracefully */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--hp-gray-100);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--hp-gray-400);
+    border-radius: var(--hp-radius-pill);
+    border: 2px solid var(--hp-gray-100);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--hp-gray-500);
+  }
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--hp-gray-400) var(--hp-gray-100);
+  }
+
+  /* Keyboard focus ring — visible only for keyboard navigation */
+  :focus-visible {
+    outline: 3px solid var(--hp-green-500);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Remove outline for mouse interactions */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   §3  COMPONENT LAYER  —  reusable utility classes
+   All classes use CSS vars from §1. They live in @layer components
+   so any Tailwind utility class (bg-*, shadow-*, etc.) on the same
+   element will override them without needing !important.
+   ══════════════════════════════════════════════════════════════════ */
+
+@layer components {
+
+  /* ────────────────────────────────────────────────────
+     LAYOUT
+  ──────────────────────────────────────────────────── */
+
+  /* Full-width → capped → auto-centered with consistent gutters */
+  .hp-container {
+    width: 100%;
+    max-width: var(--hp-container-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--hp-container-pad);
+    padding-right: var(--hp-container-pad);
+  }
+
+  @media (max-width: 640px) {
+    .hp-container {
+      padding-left: var(--hp-container-pad-sm);
+      padding-right: var(--hp-container-pad-sm);
+    }
+  }
+
+  /* Vertical rhythm for every homepage section */
+  .hp-section {
+    padding-top: var(--hp-section-gap);
+    padding-bottom: var(--hp-section-gap);
+  }
+
+  @media (max-width: 640px) {
+    .hp-section {
+      padding-top: var(--hp-section-gap-sm);
+      padding-bottom: var(--hp-section-gap-sm);
+    }
+  }
+
+  /* Hero wrapper — sets minimum height and clips the illustration */
+  .hp-hero-container {
+    position: relative;
+    overflow: hidden;
+    min-height: var(--hp-hero-min-h);
+    background-color: var(--hp-surface);
+  }
+
+
+  /* ────────────────────────────────────────────────────
+     NAVIGATION
+  ──────────────────────────────────────────────────── */
+
+  .hp-nav {
+    position: sticky;
+    top: 0;
+    height: var(--hp-nav-height);
+    background-color: var(--hp-surface);
+    box-shadow: var(--hp-shadow-nav);
+    z-index: var(--hp-z-nav);
+    display: flex;
+    align-items: center;
+  }
+
+  /* Underline-on-hover nav link */
+  .hp-nav-link {
+    position: relative;
+    font-family: var(--hp-font-body);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--hp-gray-700);
+    text-decoration: none;
+    padding: 0.25rem 0;
+    transition: color var(--hp-t-fast) var(--hp-ease);
+  }
+
+  .hp-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--hp-dark);
+    border-radius: 1px;
+    transition: width var(--hp-t-base) var(--hp-ease);
+  }
+
+  .hp-nav-link:hover {
+    color: var(--hp-dark);
+  }
+
+  .hp-nav-link:hover::after {
+    width: 100%;
+  }
+
+  .hp-nav-link[aria-current="page"] {
+    color: var(--hp-dark);
+    font-weight: 600;
+  }
+
+  .hp-nav-link[aria-current="page"]::after {
+    width: 100%;
+  }
+
+  /* Compact "Log In" button — smaller than CTA, no fill */
+  .hp-btn-login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1.25rem;
+    min-height: 40px;
+    background-color: transparent;
+    color: var(--hp-dark);
+    font-family: var(--hp-font-body);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border-radius: var(--hp-radius-pill);
+    border: 1.5px solid var(--hp-gray-200);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      border-color      var(--hp-t-fast) var(--hp-ease),
+      background-color  var(--hp-t-fast) var(--hp-ease);
+  }
+
+  .hp-btn-login:hover {
+    border-color: var(--hp-gray-400);
+    background-color: var(--hp-gray-50);
+  }
+
+
+  /* ────────────────────────────────────────────────────
+     BUTTONS
+  ──────────────────────────────────────────────────── */
+
+  /* Primary CTA — "Start Learning", "Get Started" */
+  .hp-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    min-height: 48px;                        /* WCAG 2.5.5 touch target */
+    background-color: var(--hp-green-500);
+    color: #ffffff;
+    font-family: var(--hp-font-body);
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: var(--hp-radius-pill);
+    border: none;
+    box-shadow: var(--hp-shadow-cta);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background-color  var(--hp-t-base) var(--hp-ease),
+      transform         var(--hp-t-fast) var(--hp-ease),
+      box-shadow        var(--hp-t-base) var(--hp-ease);
+  }
+
+  .hp-btn-primary:hover {
+    background-color: var(--hp-green-600);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(22,163,74,0.45);
+  }
+
+  .hp-btn-primary:active {
+    transform: translateY(0);
+    box-shadow: var(--hp-shadow-cta);
+  }
+
+  .hp-btn-primary:focus-visible {
+    outline: 3px solid var(--hp-green-400);
+    outline-offset: 3px;
+  }
+
+  /* Secondary CTA — "Watch Demo" */
+  .hp-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    min-height: 48px;
+    background-color: transparent;
+    color: var(--hp-dark);
+    font-family: var(--hp-font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: var(--hp-radius-pill);
+    border: 1.5px solid var(--hp-gray-200);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      border-color      var(--hp-t-base) var(--hp-ease),
+      background-color  var(--hp-t-base) var(--hp-ease),
+      transform         var(--hp-t-fast) var(--hp-ease);
+  }
+
+  .hp-btn-secondary:hover {
+    border-color: var(--hp-dark);
+    background-color: var(--hp-gray-50);
+    transform: translateY(-1px);
+  }
+
+  .hp-btn-secondary:active {
+    transform: translateY(0);
+  }
+
+  .hp-btn-secondary:focus-visible {
+    outline: 3px solid var(--hp-dark);
+    outline-offset: 3px;
+  }
+
+
+  /* ────────────────────────────────────────────────────
+     STORY CARDS
+  ──────────────────────────────────────────────────── */
+
+  /* Card wrapper — hover lifts card and reveals play button */
+  .hp-story-card {
+    position: relative;
+    border-radius: var(--hp-radius-card);
+    overflow: hidden;
+    background-color: var(--hp-surface);
+    border: 1px solid var(--hp-gray-200);
+    box-shadow: var(--hp-shadow-card);
+    cursor: pointer;
+    transition:
+      transform    var(--hp-t-base) var(--hp-ease),
+      box-shadow   var(--hp-t-base) var(--hp-ease);
+  }
+
+  .hp-story-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--hp-shadow-card-hover);
+  }
+
+  /* Reveal the play button when the card is hovered */
+  .hp-story-card:hover .hp-play-btn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  /* Reusable shadow helper — lift on hover — for any card-like element */
+  .hp-card-shadow {
+    box-shadow: var(--hp-shadow-card);
+    transition:
+      box-shadow var(--hp-t-base) var(--hp-ease),
+      transform  var(--hp-t-base) var(--hp-ease);
+  }
+
+  .hp-card-shadow:hover {
+    box-shadow: var(--hp-shadow-card-hover);
+    transform: translateY(-2px);
+  }
+
+  /* Story grid — 4 col desktop → 3 tablet → 2 mobile */
+  .hp-story-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--hp-card-gap);
+  }
+
+  @media (max-width: 1024px) {
+    .hp-story-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .hp-story-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 480px) {
+    .hp-story-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+  }
+
+
+  /* ────────────────────────────────────────────────────
+     PLAY BUTTON OVERLAY
+  ──────────────────────────────────────────────────── */
+
+  /* Hidden by default; revealed by .hp-story-card:hover above */
+  .hp-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--hp-radius-pill);
+    background-color: rgba(255,255,255,0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--hp-shadow-play);
+    opacity: 0;
+    pointer-events: none;
+    z-index: var(--hp-z-overlay);
+    transition:
+      opacity   var(--hp-t-base) var(--hp-ease),
+      transform var(--hp-t-base) var(--hp-ease);
+  }
+
+
+  /* ────────────────────────────────────────────────────
+     ACTIVITY PILLS  (right-side hero overlay)
+  ──────────────────────────────────────────────────── */
+
+  .hp-activity-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--hp-radius-pill);
+    box-shadow: var(--hp-shadow-pill);
+    font-family: var(--hp-font-body);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #ffffff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      transform var(--hp-t-fast) var(--hp-ease),
+      filter    var(--hp-t-fast) var(--hp-ease);
+  }
+
+  .hp-activity-pill:hover {
+    transform: scale(1.04) translateX(-2px);
+    filter: brightness(1.08);
+  }
+
+  .hp-activity-pill:active {
+    transform: scale(0.97);
+  }
+
+  /* Color variants — one class per activity */
+  .hp-pill-read    { background-color: var(--hp-read);    }
+  .hp-pill-create  { background-color: var(--hp-create);  }
+  .hp-pill-explore { background-color: var(--hp-explore); }
+  .hp-pill-move    { background-color: var(--hp-move);    }
+  .hp-pill-sing    { background-color: var(--hp-sing);    }
+  .hp-pill-grow    { background-color: var(--hp-grow);    }
+
+
+  /* ────────────────────────────────────────────────────
+     ACTIVITY CIRCLES  (icon row below hero text)
+  ──────────────────────────────────────────────────── */
+
+  .hp-activity-circle {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--hp-radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition:
+      transform var(--hp-t-fast) var(--hp-ease),
+      filter    var(--hp-t-fast) var(--hp-ease);
+  }
+
+  .hp-activity-circle:hover {
+    transform: scale(1.12);
+    filter: brightness(1.06);
+  }
+
+  .hp-activity-circle:active {
+    transform: scale(0.95);
+  }
+
+  /* Color variants — different from pill colors (see §1 comment) */
+  .hp-circle-read    { background-color: var(--hp-read-icon);    }
+  .hp-circle-create  { background-color: var(--hp-create-icon);  }
+  .hp-circle-explore { background-color: var(--hp-explore-icon); }
+  .hp-circle-move    { background-color: var(--hp-move-icon);    }
+  .hp-circle-sing    { background-color: var(--hp-sing-icon);    }
+  .hp-circle-grow    { background-color: var(--hp-grow-icon);    }
+
+
+  /* ────────────────────────────────────────────────────
+     SECTION HEADER  ("Featured Stories" + "View all")
+  ──────────────────────────────────────────────────── */
+
+  .hp-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .hp-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--hp-font-display);
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--hp-dark);
+  }
+
+  .hp-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: var(--hp-font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--hp-green-500);
+    text-decoration: none;
+    transition:
+      color var(--hp-t-fast) var(--hp-ease),
+      gap   var(--hp-t-fast) var(--hp-ease);
+  }
+
+  .hp-view-all:hover {
+    color: var(--hp-green-600);
+    gap: 0.5rem;
+  }
+
+
+  /* ────────────────────────────────────────────────────
+     TYPOGRAPHY UTILITIES
+  ──────────────────────────────────────────────────── */
+
+  /* Large hero headline — dark line */
+  .hp-text-display {
+    font-family: var(--hp-font-display);
+    font-size: clamp(40px, 4.5vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--hp-dark);
+  }
+
+  /* Large hero headline — green line */
+  .hp-text-display-green {
+    font-family: var(--hp-font-display);
+    font-size: clamp(40px, 4.5vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--hp-green-500);
+  }
+
+  /* Section-level headings */
+  .hp-text-heading {
+    font-family: var(--hp-font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--hp-dark);
+  }
+
+  /* Body / subtitle text */
+  .hp-text-body {
+    font-family: var(--hp-font-body);
+    font-size: 1.125rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--hp-gray-500);
+  }
+
+  /* Small labels (card titles, activity row labels) */
+  .hp-text-sm {
+    font-family: var(--hp-font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--hp-gray-500);
+  }
+
+
+  /* ────────────────────────────────────────────────────
+     MOBILE DRAWER
+  ──────────────────────────────────────────────────── */
+
+  /* Full-screen dimming overlay behind the drawer */
+  .hp-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0,0,0,0.4);
+    z-index: var(--hp-z-drawer);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--hp-t-slow) var(--hp-ease);
+  }
+
+  .hp-drawer-overlay[data-open="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Slide-in drawer panel — sits one z-level above its overlay */
+  .hp-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(320px, 90vw);
+    background-color: var(--hp-surface);
+    z-index: calc(var(--hp-z-drawer) + 1);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform var(--hp-t-slow) var(--hp-ease);
+  }
+
+  .hp-drawer[data-open="true"] {
+    transform: translateX(0);
+  }
+
+  /* Individual nav item inside the drawer */
+  .hp-drawer-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 0.75rem;
+    min-height: 52px;                        /* generous touch target */
+    font-family: var(--hp-font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--hp-dark);
+    text-decoration: none;
+    border-bottom: 1px solid var(--hp-gray-100);
+    border-radius: var(--hp-radius-sm);
+    transition:
+      color            var(--hp-t-fast) var(--hp-ease),
+      background-color var(--hp-t-fast) var(--hp-ease);
+  }
+
+  .hp-drawer-nav-item:hover {
+    color: var(--hp-green-500);
+    background-color: var(--hp-green-50);
+  }
+
+} /* end @layer components */

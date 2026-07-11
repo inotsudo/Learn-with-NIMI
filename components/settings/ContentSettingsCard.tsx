@@ -40,20 +40,21 @@ export default function ContentSettingsCard() {
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
-      <h3 className="font-black text-white mb-2">{t("contentSettingsTitle")}</h3>
+    <div className="relative overflow-hidden leaf border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/35 to-white p-4 shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
+      <div className="absolute inset-x-3 top-3 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
+      <h3 className="font-black text-ds-text mb-3">{t("contentSettingsTitle")}</h3>
 
-      <div className="relative flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm theme-text">{t("languageLabel")}</span>
+      <div className="relative flex items-center justify-between py-3 border-b border-ds-border/70">
+        <span className="font-bold text-sm text-ds-text">{t("languageLabel")}</span>
         <button
           onClick={() => setShowLangDropdown(v => !v)}
-          className="flex items-center gap-1.5 text-sm font-bold theme-text-muted hover:theme-text transition"
+          className="flex items-center gap-1.5 rounded-full border border-[var(--ds-border-brand)]/20 bg-white/80 px-2.5 py-1 text-sm font-bold text-gray-500 hover:text-[var(--ds-brand-primary)] transition shadow-sm"
         >
           <span>{currentLabel}</span>
           <ChevronDown className="w-4 h-4" />
         </button>
         {showLangDropdown && (
-          <div className="absolute right-0 top-full mt-1 theme-darker backdrop-blur-md border-2 border-white/15 rounded-xl shadow-xl overflow-hidden z-50 w-40">
+          <div className="absolute right-0 top-full mt-1 border border-[var(--ds-border-brand)]/20 bg-white/95 shadow-[0_12px_28px_rgba(15,23,42,0.10)] rounded-xl overflow-hidden z-50 w-40">
             {LANGS.map(lang => (
               <button
                 key={lang.code}
@@ -61,27 +62,27 @@ export default function ContentSettingsCard() {
                   setShowLangDropdown(false);
                   if (lang.code !== language) setPendingLanguage(lang.code);
                 }}
-                className="flex items-center gap-2 px-3 py-2.5 w-full hover:bg-white/10 transition text-sm"
+                className="flex items-center gap-2 px-3 py-2.5 w-full hover:bg-[var(--ds-brand-soft)] transition text-sm"
               >
                 <span>{lang.flag}</span>
-                <span className="font-medium theme-text">{lang.label}</span>
+                <span className="font-medium text-ds-text">{lang.label}</span>
               </button>
             ))}
           </div>
         )}
       </div>
 
-      <div className="flex items-center justify-between py-3 border-b border-white/15">
-        <span className="font-bold text-sm theme-text">{t("readingLevelLabel")}</span>
-        <div className="flex items-center gap-1.5 text-sm font-bold theme-text-muted">
+      <div className="flex items-center justify-between py-3 border-b border-ds-border/70">
+        <span className="font-bold text-sm text-ds-text">{t("readingLevelLabel")}</span>
+        <div className="flex items-center gap-1.5 text-sm font-bold text-gray-500">
           <span>{t("readingLevelValue")}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>
       </div>
 
       <div className="flex items-center justify-between py-3 last:border-0">
-        <span className="font-bold text-sm theme-text">{t("contentFilterLabel")}</span>
-        <div className="flex items-center gap-1.5 text-sm font-bold theme-text-muted">
+        <span className="font-bold text-sm text-ds-text">{t("contentFilterLabel")}</span>
+        <div className="flex items-center gap-1.5 text-sm font-bold text-gray-500">
           <span>{t("contentFilterValue")}</span>
           <ChevronRight className="w-4 h-4 text-gray-300" />
         </div>

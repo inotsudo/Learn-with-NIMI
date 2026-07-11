@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
+import { sendPaymentReceipt } from "@/lib/email";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -120,7 +121,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
 
     if (data.status === "SUCCESSFUL") {
-      const { data: order } = await supabase.from("orders").select("*, products(tier, story_id)").eq("id", orderId).single();
+      const { data: order } = await supabase.from("orders").select("*, products(tier, story_id, billing_interval)").eq("id", orderId).single();
       if (order && order.payment_status !== "completed") {
         await supabase.from("orders").update({
           payment_status: "completed",
@@ -146,8 +147,13 @@ export async function GET(req: NextRequest) {
               is_default: true,
             }).select().single();
 
+            const billingInterval = (product.billing_interval ?? "month") as "month" | "year";
             const periodEnd = new Date();
-            periodEnd.setMonth(periodEnd.getMonth() + 1);
+            if (billingInterval === "year") {
+              periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+            } else {
+              periodEnd.setMonth(periodEnd.getMonth() + 1);
+            }
 
             const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
               parent_id: order.parent_id,
@@ -155,7 +161,7 @@ export async function GET(req: NextRequest) {
               status: "active",
               currency: order.currency,
               amount: order.amount,
-              billing_interval: "month",
+              billing_interval: billingInterval,
               current_period_start: new Date().toISOString(),
               current_period_end: periodEnd.toISOString(),
               payment_provider: "mtn_momo",
@@ -169,6 +175,39 @@ export async function GET(req: NextRequest) {
               order_id: orderId,
               subscription_id: sub?.id ?? null,
             });
+
+            // Fire referral reward (best-effort)
+            void fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com"}/api/referral/reward`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-cron-secret": process.env.CRON_SECRET ?? "" },
+              body: JSON.stringify({ referred_id: order.parent_id }),
+            }).catch(() => {});
+
+            // Track discount code redemption
+            const discountCodeId = (order.personalization_data as any)?.discount_code_id;
+            if (discountCodeId) {
+              void Promise.all([
+                supabase.from("discount_redemptions").insert({
+                  code_id: discountCodeId,
+                  parent_id: order.parent_id,
+                  order_id: orderId,
+                }),
+                supabase.rpc("increment_discount_uses", { code_id_param: discountCodeId }),
+              ]);
+            }
+
+            // Send receipt email (best-effort)
+            const { data: parent } = await supabase.from("parents").select("email, name").eq("id", order.parent_id).maybeSingle();
+            if (parent?.email && sub) {
+              void sendPaymentReceipt({
+                to: parent.email,
+                parentName: parent.name ?? "there",
+                amount: String(order.amount),
+                currency: order.currency,
+                provider: "mtn_momo",
+                periodEnd: sub.current_period_end,
+              });
+            }
           } else {
             await supabase.from("content_access").insert({
               parent_id: order.parent_id,

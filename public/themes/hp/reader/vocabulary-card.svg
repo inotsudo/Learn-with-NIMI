@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160">
+  <!-- Outer parchment border -->
+  <rect x="2" y="2" width="296" height="156" rx="8" fill="none" stroke="#D4A017" stroke-width="2" opacity="0.8"/>
+  <!-- Inner border rule -->
+  <rect x="7" y="7" width="286" height="146" rx="5" fill="none" stroke="#D4A017" stroke-width="0.7" opacity="0.35"/>
+  <!-- Corner L-bracket ornaments (TL) -->
+  <path d="M2,22 L2,2 L22,2" fill="none" stroke="#D4A017" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="6" cy="6" r="3.5" fill="#D4A017" opacity="0.75"/>
+  <!-- Corner L-bracket ornaments (TR) -->
+  <path d="M298,22 L298,2 L278,2" fill="none" stroke="#D4A017" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="294" cy="6" r="3.5" fill="#D4A017" opacity="0.75"/>
+  <!-- Corner L-bracket ornaments (BL) -->
+  <path d="M2,138 L2,158 L22,158" fill="none" stroke="#D4A017" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="6" cy="154" r="3.5" fill="#D4A017" opacity="0.75"/>
+  <!-- Corner L-bracket ornaments (BR) -->
+  <path d="M298,138 L298,158 L278,158" fill="none" stroke="#D4A017" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="294" cy="154" r="3.5" fill="#D4A017" opacity="0.75"/>
+  <!-- Top label banner -->
+  <text x="150" y="16" text-anchor="middle" font-family="serif" font-size="10" fill="#D4A017" opacity="0.65" letter-spacing="3">✦ SPELL CARD ✦</text>
+  <!-- Mid side flourish marks -->
+  <line x1="2" y1="55" x2="22" y2="55" stroke="#D4A017" stroke-width="1" opacity="0.3"/>
+  <line x1="278" y1="55" x2="298" y2="55" stroke="#D4A017" stroke-width="1" opacity="0.3"/>
+  <line x1="2" y1="105" x2="22" y2="105" stroke="#D4A017" stroke-width="1" opacity="0.3"/>
+  <line x1="278" y1="105" x2="298" y2="105" stroke="#D4A017" stroke-width="1" opacity="0.3"/>
+  <!-- Bottom divider rule -->
+  <line x1="30" y1="135" x2="270" y2="135" stroke="#D4A017" stroke-width="0.8" opacity="0.3"/>
+  <polygon points="150,130 153,135 150,140 147,135" fill="#D4A017" opacity="0.35"/>
+</svg>

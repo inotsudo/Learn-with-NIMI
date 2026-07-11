@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCheck } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import { getComponentVariant } from "@/lib/design-system/componentVariants";
+import { useMotion } from "@/hooks/useMotion";
 
 interface Notification {
   id: string;
@@ -32,6 +36,10 @@ interface Props {
 export default function NotificationPanel({ isOpen, onClose, onCountChange }: Props) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
+  const cv = getComponentVariant(themeId);
+  const m = useMotion();
 
   const load = async () => {
     const { data } = await supabase
@@ -84,53 +92,78 @@ export default function NotificationPanel({ isOpen, onClose, onCountChange }: Pr
         <>
           <div className="fixed inset-0 z-40" onClick={onClose} />
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-[320px] sm:w-[360px] theme-card border theme-border rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.6)] z-50 overflow-hidden"
+            {...m.drawerAnimation}
+            className={`
+              fixed inset-x-0 top-16 max-h-[80vh] rounded-none
+              sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[360px] sm:max-h-none
+              ${cv.panelStyle.background} ${cv.panelStyle.border} ${cv.panelStyle.shadow}
+              z-50 overflow-hidden
+            `}
+            style={{ borderRadius: 'var(--leaf-r)' }}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b theme-border">
-              <h3 className="font-baloo font-black text-white text-[18px]">Notifications</h3>
-              <div className="flex items-center gap-2">
-                <button onClick={markAllRead} className="theme-text-muted hover:text-white text-[11px] font-nunito font-bold flex items-center gap-1 transition">
-                  <CheckCheck className="w-3.5 h-3.5" /> Mark all read
-                </button>
-                <button onClick={onClose} className="w-7 h-7 rounded-full theme-card-active hover:theme-accent/50 flex items-center justify-center theme-text-muted transition">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            {/* World panel texture */}
+            <img src={assets.storyCard.background} alt="" aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]" />
 
-            {/* List */}
-            <div className="max-h-[400px] overflow-y-auto">
-              {loading ? (
-                <div className="p-8 text-center">
-                  <div className="w-6 h-6 border-2 theme-border-strong border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="relative z-10">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-ds-border">
+                <div>
+                  <p className="rounded-full border border-[var(--ds-border-brand)]/20 bg-white/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--ds-brand-primary)] shadow-sm inline-block">
+                    Updates
+                  </p>
+                  <h3 className="font-baloo font-black text-gray-800 text-[18px] mt-1">Notifications</h3>
                 </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <span className="text-3xl">🔔</span>
-                  <p className="font-nunito theme-text-muted text-[14px] font-bold mt-2">No notifications yet</p>
-                  <p className="font-nunito theme-text-muted text-[12px] mt-1">We&apos;ll let you know when something happens!</p>
-                </div>
-              ) : (
-                notifications.map(n => (
-                  <button key={n.id} onClick={() => markRead(n.id)}
-                    className={`w-full text-left px-4 py-3 flex gap-3 transition border-b theme-border ${
-                      n.read ? "opacity-60" : "theme-accent/5 hover:theme-accent/10"
-                    }`}>
-                    <span className="text-[20px] shrink-0 mt-0.5">{TYPE_ICONS[n.type] ?? "💜"}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-nunito text-[13px] font-bold leading-tight ${n.read ? "theme-text-muted" : "text-white"}`}>{n.title}</p>
-                      <p className="font-nunito theme-text-muted text-[12px] mt-0.5 leading-snug">{n.body}</p>
-                      <p className="font-nunito theme-text-muted text-[10px] mt-1">{timeAgo(n.created_at)}</p>
-                    </div>
-                    {!n.read && <div className="w-2.5 h-2.5 bg-blue-400 rounded-full shrink-0 mt-1.5" />}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={markAllRead}
+                    className="rounded-full border border-[var(--ds-border-brand)]/20 bg-white/80 px-2.5 py-1 text-gray-500 hover:text-[var(--ds-brand-primary)] text-[11px] font-nunito font-bold flex items-center gap-1 transition shadow-sm"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" /> Mark all read
                   </button>
-                ))
-              )}
+                  <button
+                    onClick={onClose}
+                    className="w-7 h-7 rounded-full border border-[var(--ds-border-brand)]/20 bg-white/80 hover:bg-[var(--ds-brand-soft)] flex items-center justify-center text-gray-500 transition shadow-sm"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* List */}
+              <div className="max-h-[calc(80vh-56px)] sm:max-h-[400px] overflow-y-auto">
+                {loading ? (
+                  <div className="p-8 text-center">
+                    <div className="w-6 h-6 border-2 border-[var(--ds-progress-fill)] border-t-transparent rounded-full animate-spin mx-auto" />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <span className="text-3xl">🔔</span>
+                    <p className="font-nunito text-gray-500 text-[14px] font-bold mt-2">No notifications yet</p>
+                    <p className="font-nunito text-gray-500 text-[12px] mt-1">We&apos;ll let you know when something happens!</p>
+                  </div>
+                ) : (
+                  notifications.map(n => (
+                    <button
+                      key={n.id}
+                      onClick={() => markRead(n.id)}
+                      className={`w-full text-left px-4 py-3 flex gap-3 transition border-b border-ds-border ${
+                        n.read ? "opacity-60" : "hover:bg-[var(--ds-brand-subtle)]"
+                      }`}
+                    >
+                      <span className="text-[20px] shrink-0 mt-0.5">{TYPE_ICONS[n.type] ?? "💜"}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-nunito text-[13px] font-bold leading-tight ${n.read ? "text-gray-400" : "text-gray-800"}`}>
+                          {n.title}
+                        </p>
+                        <p className="font-nunito text-gray-500 text-[12px] mt-0.5 leading-snug">{n.body}</p>
+                        <p className="font-nunito text-gray-400 text-[10px] mt-1">{timeAgo(n.created_at)}</p>
+                      </div>
+                      {!n.read && <div className="w-2.5 h-2.5 bg-[var(--ds-brand-primary)] rounded-full shrink-0 mt-1.5" />}
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           </motion.div>
         </>

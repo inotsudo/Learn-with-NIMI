@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 56">
+  <defs>
+    <linearGradient id="parch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#FEF9EC"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%"   stop-color="#F59E0B" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="56" fill="url(#parch)"/>
+  <rect width="1200" height="56" fill="url(#glow)"/>
+  <!-- Horizontal parchment lines -->
+  <line x1="0" y1="18" x2="1200" y2="18" stroke="#92400E" stroke-width="0.3" opacity="0.08"/>
+  <line x1="0" y1="36" x2="1200" y2="36" stroke="#92400E" stroke-width="0.3" opacity="0.06"/>
+  <!-- Bottom brass edge -->
+  <line x1="0" y1="53" x2="1200" y2="53" stroke="#D4A017" stroke-width="1.5" opacity="0.28"/>
+  <line x1="0" y1="55" x2="1200" y2="55" stroke="#D4A017" stroke-width="0.5" opacity="0.12"/>
+</svg>

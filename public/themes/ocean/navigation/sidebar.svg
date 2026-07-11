@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 800">
+  <defs>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#E0F7FA"/>
+      <stop offset="45%"  stop-color="#B3E5FC"/>
+      <stop offset="100%" stop-color="#E0F7FA"/>
+    </linearGradient>
+    <radialGradient id="sr" cx="85%" cy="8%" r="55%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="800" fill="url(#water)"/>
+  <rect width="200" height="800" fill="url(#sr)"/>
+  <!-- Right edge sea-glass border -->
+  <rect x="196" y="0" width="4" height="800" fill="#0ea5e9" opacity="0.15"/>
+  <rect x="195" y="0" width="1" height="800" fill="#7dd3fc" opacity="0.08"/>
+  <!-- Subtle water current lines -->
+  <path d="M0,200 Q60,196 120,202 Q160,206 200,200" fill="none" stroke="#0ea5e9" stroke-width="0.5" opacity="0.15"/>
+  <path d="M0,420 Q60,416 120,424 Q160,428 200,420" fill="none" stroke="#0ea5e9" stroke-width="0.5" opacity="0.13"/>
+  <path d="M0,620 Q60,616 120,624 Q160,628 200,620" fill="none" stroke="#0ea5e9" stroke-width="0.5" opacity="0.12"/>
+  <!-- Tiny bubbles -->
+  <circle cx="28"  cy="150" r="3.5" fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.20"/>
+  <circle cx="160" cy="300" r="4"   fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.18"/>
+  <circle cx="75"  cy="490" r="2.5" fill="none" stroke="#0ea5e9" stroke-width="0.7" opacity="0.22"/>
+  <circle cx="140" cy="660" r="3"   fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.18"/>
+</svg>

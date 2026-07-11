@@ -1,49 +1,70 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Maximize } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Maximize, Type } from "lucide-react";
 import { motion } from "framer-motion";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { useStoryBook } from "./StoryBookContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
 
 interface Props {
   onPrev: () => void;
   onNext: () => void;
   bookRef?: React.RefObject<HTMLDivElement | null>;
+  showText?: boolean;
+  onToggleText?: () => void;
+  hasText?: boolean;
 }
 
-export default function BookControls({ onPrev, onNext, bookRef }: Props) {
+export default function BookControls({ onPrev, onNext, bookRef, showText, onToggleText, hasText }: Props) {
   const { currentPage, totalPages, isPlaying, play, pause, replay } = useStoryBook();
+  const m = useThemeMotion();
+  useAppTheme(); // subscribe so CSS vars are live for themed buttons
   const isFirst = currentPage <= 0;
   const isLast = currentPage >= totalPages - 1;
 
   return (
-    <div className="flex items-center justify-center gap-3 sm:gap-4 py-3">
-      <motion.button whileTap={{ scale: 0.85 }} onClick={onPrev} disabled={isFirst}
-        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/10 backdrop-blur border border-white/15 flex items-center justify-center text-white disabled:opacity-20 transition shadow-lg">
+    <div className="mt-3 flex items-center justify-center gap-3 sm:gap-4 leaf border border-emerald-100 bg-white/80 px-3 py-3 shadow-sm">
+      <motion.button whileTap={m.buttonPress} onClick={onPrev} disabled={isFirst}
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white border border-ds-border flex items-center justify-center text-gray-700 disabled:opacity-20 transition shadow-sm hover:border-[var(--ds-brand-primary)]/30">
         <ChevronLeft size={22} />
       </motion.button>
 
-      <motion.button whileTap={{ scale: 0.85 }} onClick={replay}
-        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur border border-white/15 flex items-center justify-center text-white/60 transition shadow">
+      <motion.button whileTap={m.buttonPress} onClick={replay}
+        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border border-ds-border flex items-center justify-center text-gray-500 transition shadow-sm hover:border-[var(--ds-brand-primary)]/30">
         <RotateCcw size={16} />
       </motion.button>
 
-      <motion.button whileTap={{ scale: 0.85 }} onClick={isPlaying ? pause : play}
+      {/* Play/Pause — world-themed idle state */}
+      <motion.button whileTap={m.buttonPress} onClick={isPlaying ? pause : play}
         className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all ${
           isPlaying
-            ? "bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/30 ring-4 ring-green-400/20"
-            : "bg-gradient-to-br from-yellow-400 to-orange-500 shadow-orange-500/30"
+            ? "bg-[image:linear-gradient(to_bottom_right,var(--ds-brand-primary),var(--ds-brand-hover))] shadow-ds-cta ring-4 ring-[var(--ds-brand-primary)]/20"
+            : "bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] shadow-[var(--ds-brand-primary)]/30 ring-4 ring-[var(--ds-brand-primary)]/20"
         }`}>
         {isPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white ml-1" />}
       </motion.button>
 
-      <motion.button whileTap={{ scale: 0.85 }}
+      {/* Text toggle */}
+      {hasText && onToggleText && (
+        <motion.button whileTap={m.buttonPress} onClick={onToggleText}
+          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center transition shadow ${
+            showText
+              ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-brand-primary)]/30 text-[var(--ds-brand-primary)]"
+              : "bg-gray-100 border-gray-200 text-gray-400"
+          }`}
+          title={showText ? "Hide text" : "Show text"}>
+          <Type size={16} />
+        </motion.button>
+      )}
+
+      <motion.button whileTap={m.buttonPress}
         onClick={() => { try { (bookRef?.current ?? document.documentElement).requestFullscreen?.(); } catch {} }}
-        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur border border-white/15 flex items-center justify-center text-white/60 transition shadow">
+        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border border-ds-border flex items-center justify-center text-gray-500 transition shadow-sm hover:border-[var(--ds-brand-primary)]/30">
         <Maximize size={16} />
       </motion.button>
 
-      <motion.button whileTap={{ scale: 0.85 }} onClick={onNext} disabled={isLast}
-        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/10 backdrop-blur border border-white/15 flex items-center justify-center text-white disabled:opacity-20 transition shadow-lg">
+      <motion.button whileTap={m.buttonPress} onClick={onNext} disabled={isLast}
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white border border-ds-border flex items-center justify-center text-gray-700 disabled:opacity-20 transition shadow-sm hover:border-[var(--ds-brand-primary)]/30">
         <ChevronRight size={22} />
       </motion.button>
     </div>

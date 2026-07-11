@@ -12,6 +12,11 @@ export interface ChatMessage {
 interface UseNimiChatOptions {
   childName: string;
   onExchangeComplete?: () => void;
+  storyTitle?: string | null;
+  storyEmoji?: string | null;
+  storyProgress?: number;
+  slotsDone?: number;
+  slotsTotal?: number;
 }
 
 function lastNimiText(messages: ChatMessage[]): string {
@@ -21,7 +26,7 @@ function lastNimiText(messages: ChatMessage[]): string {
   return "";
 }
 
-export function useNimiChat(initialMessages: ChatMessage[], { childName, onExchangeComplete }: UseNimiChatOptions) {
+export function useNimiChat(initialMessages: ChatMessage[], { childName, onExchangeComplete, storyTitle, storyEmoji, storyProgress, slotsDone, slotsTotal }: UseNimiChatOptions) {
   const { language, t } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isTyping, setIsTyping] = useState(false);
@@ -75,6 +80,11 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
           })),
           language,
           childName,
+          storyTitle: storyTitle ?? null,
+          storyEmoji: storyEmoji ?? null,
+          storyProgress: storyProgress ?? 0,
+          slotsDone: slotsDone ?? 0,
+          slotsTotal: slotsTotal ?? 0,
         }),
       });
 

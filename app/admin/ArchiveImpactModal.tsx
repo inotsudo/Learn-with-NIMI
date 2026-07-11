@@ -18,11 +18,11 @@ interface ArchiveImpactModalProps {
 export default function ArchiveImpactModal({ missionLabel, usages, onCancel, onArchiveAnyway, onReplaceLesson }: ArchiveImpactModalProps) {
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl border border-gray-100 max-w-md w-full p-6"
+        className="bg-white rounded-2xl shadow-ds-card border border-ds-border max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
@@ -52,10 +52,10 @@ export default function ArchiveImpactModal({ missionLabel, usages, onCancel, onA
           <button onClick={onCancel} className="px-4 py-2 rounded-full text-sm font-bold text-gray-600 hover:bg-gray-100 transition">
             Cancel
           </button>
-          <button onClick={onReplaceLesson} className="px-4 py-2 rounded-full text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition">
+          <button onClick={onReplaceLesson} className="px-4 py-2 rounded-full text-sm font-bold text-green-700 bg-green-50 hover:bg-green-100 transition">
             Replace Lesson
           </button>
-          <button onClick={onArchiveAnyway} className="px-4 py-2 rounded-full text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition">
+          <button onClick={onArchiveAnyway} className="px-4 py-2 rounded-full text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition">
             Archive Anyway
           </button>
         </div>

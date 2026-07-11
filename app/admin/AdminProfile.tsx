@@ -131,14 +131,14 @@ export default function AdminProfile() {
       {/* Profile card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+          <div className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
             {initial}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-lg font-bold text-gray-800 truncate">{profile.name || 'Admin'}</p>
             <p className="text-gray-500 text-sm truncate">{profile.email}</p>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wide flex-shrink-0">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold uppercase tracking-wide flex-shrink-0">
             <ShieldCheck className="w-3.5 h-3.5" /> {profile.role}
           </span>
         </div>
@@ -151,7 +151,7 @@ export default function AdminProfile() {
                 type="text"
                 value={formData.name || ''}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
               />
             </div>
             <div>
@@ -160,13 +160,13 @@ export default function AdminProfile() {
                 type="email"
                 value={formData.email || ''}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                className="w-full bg-ds-input border border-ds-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
               />
             </div>
             <div className="flex gap-2">
               <button
                 onClick={handleSaveProfile}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+                className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
               >
                 Save Changes
               </button>
@@ -200,7 +200,7 @@ export default function AdminProfile() {
               placeholder="New password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg pl-10 pr-10 py-2 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+              className="w-full bg-ds-input border border-ds-border rounded-lg pl-10 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition"
             />
             <button
               type="button"
@@ -212,7 +212,7 @@ export default function AdminProfile() {
           </div>
           <button
             onClick={handleChangePassword}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+            className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
           >
             Update Password
           </button>

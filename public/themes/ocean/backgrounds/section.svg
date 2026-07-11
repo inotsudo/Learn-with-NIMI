@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 20">
+  <path d="M0,10 Q55,6 110,12 Q165,18 200,10 Q235,2 290,8 Q345,14 400,10"
+        fill="none" stroke="#7dd3fc" stroke-width="0.9" opacity="0.28"/>
+  <!-- Pearl ornament center -->
+  <circle cx="200" cy="10" r="4" fill="#0ea5e9" opacity="0.18"/>
+  <circle cx="200" cy="10" r="6" fill="none" stroke="#7dd3fc" stroke-width="0.6" opacity="0.20"/>
+  <!-- Flanking bubbles -->
+  <circle cx="178" cy="10" r="2.5" fill="none" stroke="#7dd3fc" stroke-width="0.6" opacity="0.15"/>
+  <circle cx="222" cy="10" r="2.5" fill="none" stroke="#7dd3fc" stroke-width="0.6" opacity="0.15"/>
+</svg>

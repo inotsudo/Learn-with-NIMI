@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyCybersourceTransaction } from "@/lib/cybersource/verify";
+import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
     // Get order from DB
     const { data: order } = await supabase
       .from("orders")
-      .select("*, products(tier, story_id)")
+      .select("*, products(tier, story_id, billing_interval)")
       .eq("id", orderId)
       .single();
 
@@ -88,8 +89,13 @@ export async function POST(req: Request) {
             is_default: true,
           }).select().single();
 
+          const billingInterval = (product.billing_interval ?? "month") as "month" | "year";
           const periodEnd = new Date();
-          periodEnd.setMonth(periodEnd.getMonth() + 1);
+          if (billingInterval === "year") {
+            periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+          } else {
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+          }
 
           const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
             parent_id: order.parent_id,
@@ -97,7 +103,7 @@ export async function POST(req: Request) {
             status: "active",
             currency: order.currency,
             amount: order.amount,
-            billing_interval: "month",
+            billing_interval: billingInterval,
             current_period_start: new Date().toISOString(),
             current_period_end: periodEnd.toISOString(),
             payment_provider: "cybersource",
@@ -111,6 +117,72 @@ export async function POST(req: Request) {
             order_id: orderId,
             subscription_id: sub?.id ?? null,
           });
+
+          // Fire referral reward (best-effort, non-blocking)
+          void fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com"}/api/referral/reward`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-cron-secret": process.env.CRON_SECRET ?? "" },
+            body: JSON.stringify({ referred_id: order.parent_id }),
+          }).catch(() => {});
+
+          // Track discount code redemption if one was applied
+          const discountCodeId = (order.personalization_data as any)?.discount_code_id;
+          if (discountCodeId) {
+            await Promise.all([
+              supabase.from("discount_redemptions").insert({
+                code_id: discountCodeId,
+                parent_id: order.parent_id,
+                order_id: orderId,
+              }).then(() => {}),
+              supabase.rpc("increment_discount_uses", { code_id_param: discountCodeId }).then(() => {}),
+            ]);
+          }
+
+          // Send emails (best-effort)
+          const { data: parent } = await supabase
+            .from("parents")
+            .select("email, name")
+            .eq("id", order.parent_id)
+            .maybeSingle();
+
+          const isGift = (order.personalization_data as any)?.gift === true;
+          if (isGift) {
+            // Send gift notification to recipient + confirmation to giver
+            const pd = order.personalization_data as any;
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
+            const { data: giftRecord } = await supabase
+              .from("gift_subscriptions")
+              .select("redemption_code, recipient_email, recipient_name, message")
+              .eq("order_id", orderId)
+              .maybeSingle();
+            if (giftRecord) {
+              void sendGiftNotification({
+                to: giftRecord.recipient_email,
+                recipientName: giftRecord.recipient_name ?? null,
+                giverName: parent?.name ?? "Someone special",
+                productName: (product as any).name ?? "Nimipiko Club",
+                message: giftRecord.message ?? null,
+                redeemUrl: `${siteUrl}/gift/redeem?code=${giftRecord.redemption_code}`,
+              });
+              if (parent?.email) {
+                void sendGiftConfirmation({
+                  to: parent.email,
+                  giverName: parent.name ?? "there",
+                  recipientEmail: giftRecord.recipient_email,
+                  productName: (product as any).name ?? "Nimipiko Club",
+                });
+              }
+            }
+          } else if (parent?.email) {
+            void sendPaymentReceipt({
+              to: parent.email,
+              parentName: parent.name ?? "there",
+              amount: String(order.amount),
+              currency: order.currency,
+              provider: "cybersource",
+              periodEnd: periodEnd.toISOString(),
+            });
+          }
         } else {
           await supabase.from("content_access").insert({
             parent_id: order.parent_id,

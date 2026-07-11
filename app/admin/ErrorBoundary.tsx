@@ -22,7 +22,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             <p className="text-[12px] text-gray-400 mb-1">{this.props.name ?? 'This section'} encountered an error.</p>
             <p className="text-[11px] text-red-400 font-mono mb-4 break-all">{this.state.error?.message}</p>
             <button onClick={() => this.setState({ hasError: false, error: undefined })}
-              className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[12px] rounded-lg px-4 py-2 transition">
+              className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold text-[12px] rounded-lg px-4 py-2 transition">
               <RefreshCw size={13} /> Try Again
             </button>
           </div>

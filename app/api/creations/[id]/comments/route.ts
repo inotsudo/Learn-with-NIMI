@@ -1,60 +1,61 @@
 // app/api/creations/[id]/comments/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import { createClient } from "@supabase/supabase-js";
 
-// Comment interface
-interface Comment {
-  id: string;
-  creationId: string;
-  author: string;
-  content: string;
-  createdAt: string;
-}
+// Service-role client — bypasses RLS so comments are always readable
+// even before the migration's RLS policy propagates.
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-// In-memory storage for free-tier / dev
-if (!(global as any).comments) {
-  console.warn(
-    "⚠️ Comments are in-memory and will reset on deploy/restart!"
-  );
-  (global as any).comments = [] as Comment[];
-}
-const comments: Comment[] = (global as any).comments;
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
 
-// GET all comments for a creation
-export async function GET(request: NextRequest, context: any) {
-  const { id } = context.params;
+  const { data, error } = await supabase
+    .from("creation_comments")
+    .select("id, author, content, created_at")
+    .eq("creation_id", id)
+    .order("created_at", { ascending: false });
 
-  const creationComments = comments
-    .filter((c) => c.creationId === id)
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
-  return NextResponse.json(creationComments);
-}
-
-// POST a new comment
-export async function POST(request: NextRequest, context: any) {
-  const { id } = context.params;
-  const { content } = await request.json();
-
-  if (!content || typeof content !== "string") {
-    return NextResponse.json(
-      { error: "Content must be a non-empty string." },
-      { status: 400 }
-    );
+  if (error) {
+    console.error("Comments GET error:", error);
+    return NextResponse.json({ error: "Failed to load comments" }, { status: 500 });
   }
 
-  const newComment: Comment = {
-    id: uuidv4(),
-    creationId: id,
-    author: "User",
-    content,
-    createdAt: new Date().toISOString(),
-  };
+  return NextResponse.json(data ?? []);
+}
 
-  comments.push(newComment);
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
 
-  return NextResponse.json(newComment, { status: 201 });
+  let body: { content?: string; author?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const content = typeof body.content === "string" ? body.content.trim() : "";
+  if (!content) {
+    return NextResponse.json({ error: "Content must be a non-empty string." }, { status: 400 });
+  }
+  if (content.length > 500) {
+    return NextResponse.json({ error: "Comment too long (max 500 chars)." }, { status: 400 });
+  }
+
+  const author = typeof body.author === "string" && body.author.trim() ? body.author.trim() : "Friend";
+
+  const { data, error } = await supabase
+    .from("creation_comments")
+    .insert({ creation_id: id, author, content })
+    .select("id, author, content, created_at")
+    .single();
+
+  if (error) {
+    console.error("Comments POST error:", error);
+    return NextResponse.json({ error: "Failed to save comment" }, { status: 500 });
+  }
+
+  return NextResponse.json(data, { status: 201 });
 }

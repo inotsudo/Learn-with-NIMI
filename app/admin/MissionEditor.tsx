@@ -6,7 +6,7 @@ import { smartUpload } from '@/lib/uploadWithProgress'
 import {
   Music, X, Play, Pause, Image as ImageIcon, Plus, Trash2, Copy as CopyIcon,
   Info, Upload, Settings2, FileText, Eye, CheckCircle2, AlertCircle, Lightbulb,
-  History, Rocket, GitBranch, RotateCcw, BookOpen,
+  History, Rocket, GitBranch, RotateCcw, BookOpen, HelpCircle, Volume2,
 } from 'lucide-react'
 import {
   ACCENT, LANGUAGES, LANGUAGE_META, MISSION_TYPES, TYPE_META, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META,
@@ -79,6 +79,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
   const [error, setError] = useState('')
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [uploadingVocabAudio, setUploadingVocabAudio] = useState<Record<number, boolean>>({})
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -560,6 +561,29 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
   const updatePrompts = (next: VisualPrompt[]) => updateContentJson('prompts', next)
   const coverUrl = vf.content_json.cover_image_url as string | undefined
 
+  interface QuestionItem { text: string; options: string[]; correct: number; emoji?: string }
+  interface VocabItem { word: string; meaning: string; emoji?: string; audio_url?: string | null }
+  const questions = (vf.content_json.questions as QuestionItem[]) ?? []
+  const vocabulary = (vf.content_json.vocabulary as VocabItem[]) ?? []
+  const updateQuestions = (next: QuestionItem[]) => updateContentJson('questions', next)
+  const updateVocabulary = (next: VocabItem[]) => updateContentJson('vocabulary', next)
+
+  const handleVocabAudioUpload = async (idx: number, file: File) => {
+    setUploadingVocabAudio(p => ({ ...p, [idx]: true }))
+    setError('')
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `vocab/${mission.id}-${activeLang}-${idx}-${Date.now()}.${ext}`
+      const { error: uploadErr, storagePath } = await smartUpload('storyBook', path, file)
+      if (uploadErr) throw uploadErr
+      updateVocabulary(vocabulary.map((v, i) => i === idx ? { ...v, audio_url: storagePath } : v))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Audio upload failed.')
+    } finally {
+      setUploadingVocabAudio(p => ({ ...p, [idx]: false }))
+    }
+  }
+
   return (
     <div className="p-5 sm:p-7 max-w-5xl mx-auto space-y-5">
       {/* Toasts */}
@@ -840,7 +864,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
                                   <button onClick={() => update(field, undefined)} className="text-red-400 hover:text-red-600 font-bold">✕</button>
                                 </div>
                               ) : (
-                                <label className="flex items-center justify-center gap-1 border border-dashed border-gray-200 rounded-lg py-1.5 text-[10px] text-gray-400 hover:text-indigo-500 hover:border-indigo-300 cursor-pointer transition">
+                                <label className="flex items-center justify-center gap-1 border border-dashed border-gray-200 rounded-lg py-1.5 text-[10px] text-gray-400 hover:text-green-500 hover:border-green-300 cursor-pointer transition">
                                   {labels[field]}
                                   <input type="file" accept={accepts[field]} className="hidden" disabled={locked}
                                     onChange={e => { const f = e.target.files?.[0]; if (f) handlePromptMedia(field, f) }} />
@@ -948,6 +972,192 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
           </div>
         </section>
       </div>
+
+      {/* Comprehension & Vocabulary */}
+      <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-6">
+        <div className="flex items-center gap-2">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${accent.tile}`}>
+            <HelpCircle size={15} />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-gray-800">Comprehension &amp; Vocabulary</h3>
+            <p className="text-[11px] text-gray-400">Shown after the child completes this mission · {LANGUAGE_META[activeLang].label}</p>
+          </div>
+        </div>
+
+        {/* Questions */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+              Questions <span className="font-normal normal-case text-gray-300">({questions.length})</span>
+            </label>
+            <button
+              onClick={() => updateQuestions([...questions, { text: '', options: ['', '', ''], correct: 0 }])}
+              disabled={locked}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold transition disabled:opacity-40 ${accent.soft} ${accent.text}`}
+            >
+              <Plus size={12} /> Add Question
+            </button>
+          </div>
+          <div className="space-y-4">
+            {questions.map((q, qi) => (
+              <div key={qi} className="rounded-2xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={q.emoji ?? ''}
+                    onChange={e => updateQuestions(questions.map((x, i) => i === qi ? { ...x, emoji: e.target.value } : x))}
+                    placeholder="🧠"
+                    disabled={locked}
+                    className="w-10 h-9 text-center text-lg bg-white border border-gray-200 rounded-lg shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={q.text}
+                    onChange={e => updateQuestions(questions.map((x, i) => i === qi ? { ...x, text: e.target.value } : x))}
+                    placeholder="What happened in the story?"
+                    disabled={locked}
+                    className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-medium text-gray-700"
+                  />
+                  <button
+                    onClick={() => updateQuestions(questions.filter((_, i) => i !== qi))}
+                    disabled={locked}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition shrink-0 disabled:opacity-40"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                <div className="space-y-2 pl-1">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Options · click circle = correct answer</p>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi} className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateQuestions(questions.map((x, i) => i === qi ? { ...x, correct: oi } : x))}
+                        disabled={locked}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition ${
+                          q.correct === oi ? 'border-emerald-400 bg-emerald-400' : 'border-gray-300 hover:border-emerald-300'
+                        }`}
+                      >
+                        {q.correct === oi && <span className="w-2 h-2 rounded-full bg-white block" />}
+                      </button>
+                      <span className="w-4 text-[11px] font-bold text-gray-400 shrink-0">{String.fromCharCode(65 + oi)}</span>
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={e => {
+                          const newOpts = [...q.options]; newOpts[oi] = e.target.value
+                          updateQuestions(questions.map((x, i) => i === qi ? { ...x, options: newOpts } : x))
+                        }}
+                        placeholder={`Option ${String.fromCharCode(65 + oi)}`}
+                        disabled={locked}
+                        className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-700"
+                      />
+                      {q.options.length > 2 && (
+                        <button
+                          onClick={() => {
+                            const newOpts = q.options.filter((_, idx) => idx !== oi)
+                            const newCorrect = q.correct >= newOpts.length ? 0 : q.correct === oi ? 0 : q.correct > oi ? q.correct - 1 : q.correct
+                            updateQuestions(questions.map((x, i) => i === qi ? { ...x, options: newOpts, correct: newCorrect } : x))
+                          }}
+                          disabled={locked}
+                          className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 transition shrink-0"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {q.options.length < 4 && (
+                    <button
+                      onClick={() => updateQuestions(questions.map((x, i) => i === qi ? { ...x, options: [...x.options, ''] } : x))}
+                      disabled={locked}
+                      className="text-[11px] font-bold text-gray-400 hover:text-gray-600 transition disabled:opacity-40 flex items-center gap-1 pl-8"
+                    >
+                      <Plus size={11} /> Add option
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {questions.length === 0 && (
+              <p className="text-[12px] text-gray-400 text-center py-4 border-2 border-dashed border-gray-100 rounded-2xl">No questions yet — click &quot;Add Question&quot; above</p>
+            )}
+          </div>
+        </div>
+
+        {/* Vocabulary */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+              Vocabulary Words <span className="font-normal normal-case text-gray-300">({vocabulary.length})</span>
+            </label>
+            <button
+              onClick={() => updateVocabulary([...vocabulary, { word: '', meaning: '' }])}
+              disabled={locked}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold transition disabled:opacity-40 ${accent.soft} ${accent.text}`}
+            >
+              <Plus size={12} /> Add Word
+            </button>
+          </div>
+          <div className="space-y-3">
+            {vocabulary.map((v, vi) => (
+              <div key={vi} className="flex items-center gap-2 bg-gray-50 rounded-2xl border border-gray-100 p-3 flex-wrap sm:flex-nowrap">
+                <input
+                  type="text"
+                  value={v.emoji ?? ''}
+                  onChange={e => updateVocabulary(vocabulary.map((x, i) => i === vi ? { ...x, emoji: e.target.value } : x))}
+                  placeholder="📖"
+                  disabled={locked}
+                  className="w-10 h-9 text-center text-lg bg-white border border-gray-200 rounded-lg shrink-0"
+                />
+                <input
+                  type="text"
+                  value={v.word}
+                  onChange={e => updateVocabulary(vocabulary.map((x, i) => i === vi ? { ...x, word: e.target.value } : x))}
+                  placeholder="Word"
+                  disabled={locked}
+                  className="w-28 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold text-gray-700 shrink-0"
+                />
+                <input
+                  type="text"
+                  value={v.meaning}
+                  onChange={e => updateVocabulary(vocabulary.map((x, i) => i === vi ? { ...x, meaning: e.target.value } : x))}
+                  placeholder="Meaning / definition"
+                  disabled={locked}
+                  className="flex-1 min-w-0 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700"
+                />
+                {v.audio_url ? (
+                  <div className="flex items-center gap-1 bg-teal-50 rounded-lg px-2 py-1.5 text-[10px] shrink-0">
+                    <Volume2 size={11} className="text-teal-500" />
+                    <span className="font-bold text-teal-600">Audio ✓</span>
+                    {!locked && (
+                      <button onClick={() => updateVocabulary(vocabulary.map((x, i) => i === vi ? { ...x, audio_url: null } : x))} className="text-red-400 hover:text-red-600 ml-1">✕</button>
+                    )}
+                  </div>
+                ) : (
+                  <label className={`flex items-center gap-1 border border-dashed border-gray-200 rounded-lg px-2 py-1.5 text-[10px] text-gray-400 hover:text-teal-500 hover:border-teal-300 cursor-pointer transition shrink-0 ${locked || uploadingVocabAudio[vi] ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <Volume2 size={11} />
+                    {uploadingVocabAudio[vi] ? 'Uploading…' : 'Audio'}
+                    <input type="file" accept="audio/*" className="hidden" disabled={locked || uploadingVocabAudio[vi]}
+                      onChange={e => e.target.files?.[0] && handleVocabAudioUpload(vi, e.target.files[0])} />
+                  </label>
+                )}
+                <button
+                  onClick={() => updateVocabulary(vocabulary.filter((_, i) => i !== vi))}
+                  disabled={locked}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition shrink-0 disabled:opacity-40"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            {vocabulary.length === 0 && (
+              <p className="text-[12px] text-gray-400 text-center py-4 border-2 border-dashed border-gray-100 rounded-2xl">No vocabulary words yet — click &quot;Add Word&quot; above</p>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* FlipFlop Story Pages */}
       {mission.category_slug === 'flipflop' && (() => {
@@ -1194,7 +1404,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
               onClick={handleCreateRevision}
               disabled={creatingRevision || vf.status !== 'published'}
               title={vf.status !== 'published' ? 'Publish this version first to create a new revision' : undefined}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 shadow-sm transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-green-600 hover:bg-green-700 shadow-sm transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <GitBranch size={13} /> {creatingRevision ? 'Creating…' : 'Create Revision'}
             </button>
@@ -1210,7 +1420,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 bg-emerald-50 text-emerald-600">🟢 Live</span>
                 )}
                 {rev.is_current && !rev.published && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 bg-indigo-50 text-indigo-500">Editing</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 bg-green-50 text-green-600">Editing</span>
                 )}
                 <span className="flex-1 min-w-[80px] text-sm text-gray-500 truncate">{rev.title || 'Untitled'}</span>
                 <span className="text-xs text-gray-400 flex-shrink-0">{rev.created_at ? new Date(rev.created_at).toLocaleString() : ''}</span>

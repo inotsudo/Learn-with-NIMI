@@ -1,9 +1,18 @@
 // NIMIPIKO — service worker: web push + offline media/static caching
 
-const MEDIA_CACHE = "nimi-media-v1";
+const MEDIA_CACHE  = "nimi-media-v1";
 const STATIC_CACHE = "nimi-static-v5";
-const PAGE_CACHE = "nimi-pages-v5";
+const PAGE_CACHE   = "nimi-pages-v5";
 const CURRENT_CACHES = [MEDIA_CACHE, STATIC_CACHE, PAGE_CACHE];
+const OFFLINE_PAGE = "/offline.html";
+
+// Pre-cache the offline fallback on install
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(PAGE_CACHE).then((cache) => cache.add(OFFLINE_PAGE))
+  );
+  self.skipWaiting();
+});
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -33,10 +42,12 @@ self.addEventListener("fetch", (event) => {
           const res = await fetch(event.request);
           if (res.ok) cache.put(event.request, res.clone());
           return res;
-        } catch (err) {
+        } catch {
           const cached = await cache.match(event.request);
           if (cached) return cached;
-          throw err;
+          // Last resort: serve the offline placeholder page
+          const offline = await caches.match(OFFLINE_PAGE);
+          return offline ?? Response.error();
         }
       })
     );

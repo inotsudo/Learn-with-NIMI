@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64">
+  <defs>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#92400E"/>
+      <stop offset="30%" stop-color="#D4A017"/>
+      <stop offset="60%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#D4A017"/>
+    </linearGradient>
+  </defs>
+  <!-- Bookmark body -->
+  <rect x="4" y="0" width="32" height="52" rx="3" fill="url(#ribbon)" opacity="0.9"/>
+  <!-- V-notch bottom cut (crimson backing) -->
+  <polygon points="4,52 20,44 36,52 36,64 4,64" fill="#7C1F1F" opacity="0.85"/>
+  <!-- Gold border lines -->
+  <rect x="4" y="0" width="32" height="52" rx="3" fill="none" stroke="#FCD34D" stroke-width="0.8" opacity="0.5"/>
+  <!-- Horizontal trim lines -->
+  <line x1="7" y1="6" x2="33" y2="6" stroke="#FCD34D" stroke-width="0.6" opacity="0.5"/>
+  <line x1="7" y1="46" x2="33" y2="46" stroke="#FCD34D" stroke-width="0.6" opacity="0.5"/>
+  <!-- Central star ornament -->
+  <text x="20" y="32" text-anchor="middle" font-family="serif" font-size="14" fill="#7C1F1F" opacity="0.8">✦</text>
+  <!-- Small dot accents -->
+  <circle cx="20" cy="14" r="2.5" fill="#FCD34D" opacity="0.5"/>
+</svg>

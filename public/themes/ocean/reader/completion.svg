@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+  <!-- Concentric ripple rings centered on chest -->
+  <circle cx="150" cy="120" r="85" fill="none" stroke="#0EA5E9" stroke-width="2" opacity="0.14"/>
+  <circle cx="150" cy="120" r="65" fill="none" stroke="#0284C7" stroke-width="1.5" opacity="0.18"/>
+  <circle cx="150" cy="120" r="44" fill="none" stroke="#0EA5E9" stroke-width="1.2" opacity="0.22"/>
+  <circle cx="150" cy="120" r="24" fill="#BAE6FD" opacity="0.18"/>
+  <!-- Treasure chest lid -->
+  <rect x="108" y="92" width="84" height="26" rx="5" fill="#0284C7" opacity="0.38"/>
+  <path d="M108,92 Q150,76 192,92" fill="#0EA5E9" opacity="0.28"/>
+  <!-- Chest bands -->
+  <line x1="108" y1="100" x2="192" y2="100" stroke="#BAE6FD" stroke-width="0.8" opacity="0.3"/>
+  <!-- Chest body -->
+  <rect x="108" y="118" width="84" height="38" rx="3" fill="#0C4A6E" opacity="0.38"/>
+  <!-- Chest body bands -->
+  <line x1="108" y1="130" x2="192" y2="130" stroke="#0284C7" stroke-width="0.8" opacity="0.3"/>
+  <!-- Lock -->
+  <circle cx="150" cy="135" r="7" fill="#BAE6FD" opacity="0.5"/>
+  <circle cx="150" cy="135" r="3.5" fill="#E0F9FF" opacity="0.55"/>
+  <!-- Rising bubbles from chest -->
+  <circle cx="130" cy="72" r="6" fill="none" stroke="#7DD3FC" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="150" cy="58" r="9" fill="none" stroke="#BAE6FD" stroke-width="1.5" opacity="0.42"/>
+  <circle cx="170" cy="66" r="5" fill="none" stroke="#7DD3FC" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="115" cy="48" r="4" fill="none" stroke="#0EA5E9" stroke-width="1" opacity="0.3"/>
+  <circle cx="186" cy="52" r="4" fill="none" stroke="#0EA5E9" stroke-width="1" opacity="0.3"/>
+  <circle cx="150" cy="34" r="7" fill="none" stroke="#BAE6FD" stroke-width="1.2" opacity="0.3"/>
+  <!-- Scattered ambient bubbles -->
+  <circle cx="28" cy="30" r="9" fill="none" stroke="#0284C7" stroke-width="1" opacity="0.18"/>
+  <circle cx="16" cy="55" r="5" fill="none" stroke="#0EA5E9" stroke-width="0.8" opacity="0.18"/>
+  <circle cx="272" cy="38" r="7" fill="none" stroke="#0284C7" stroke-width="1" opacity="0.18"/>
+  <circle cx="260" cy="170" r="11" fill="none" stroke="#0EA5E9" stroke-width="1" opacity="0.18"/>
+  <circle cx="38" cy="165" r="6" fill="none" stroke="#7DD3FC" stroke-width="0.8" opacity="0.15"/>
+</svg>

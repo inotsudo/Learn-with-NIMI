@@ -25,7 +25,7 @@ interface UnitPill {
   title: string
 }
 
-const accent = ACCENT.indigo
+const accent = ACCENT.green
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'

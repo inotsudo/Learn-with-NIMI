@@ -34,8 +34,8 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
-      <h3 className="font-black theme-text text-[12px] uppercase mb-3 flex items-center gap-1.5 tracking-wide">
+    <div className="bg-white border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>
+      <h3 className="font-black text-ds-text text-[12px] uppercase mb-3 flex items-center gap-1.5 tracking-wide">
         {t("languageBadgesTitle")}
       </h3>
 
@@ -49,14 +49,14 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
                 key={badge.code}
                 type="button"
                 onClick={() => { if (badge.code !== language) setPendingLanguage(badge.code) }}
-                className={`flex flex-col items-center bg-white border-[3px] ${earned ? badge.border : "border-white/20"} rounded-[50%] shadow-md overflow-hidden hover:scale-105 transition-transform cursor-pointer ${badge.code === language ? "ring-2 ring-purple-300" : ""}`}
+                className={`flex flex-col items-center bg-white border-[3px] ${earned ? badge.border : "border-gray-200"} rounded-[50%] shadow-md overflow-hidden hover:scale-105 transition-transform cursor-pointer ${badge.code === language ? "ring-2 ring-[var(--nimi-green)]" : ""}`}
                 style={{ width: 68, height: 92 }}>
                 <div className="w-full flex-1 overflow-hidden">
                   <img src={badge.flag} alt={badge.line1} className="w-full h-full object-cover" />
                 </div>
                 <div className="pb-1 pt-0.5 text-center leading-none">
-                  <p className={`text-[7px] font-black uppercase ${earned ? "theme-text-muted" : "text-gray-400"}`}>{badge.line1}</p>
-                  <p className={`text-[7px] font-black uppercase ${earned ? "theme-text-muted" : "text-gray-400"}`}>{badge.line2}</p>
+                  <p className={`text-[7px] font-black uppercase ${earned ? "text-gray-500" : "text-gray-400"}`}>{badge.line1}</p>
+                  <p className={`text-[7px] font-black uppercase ${earned ? "text-gray-500" : "text-gray-400"}`}>{badge.line2}</p>
                   <span className="text-[11px] leading-none">⭐</span>
                 </div>
               </button>
@@ -65,14 +65,14 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
         </div>
 
         {/* Description */}
-        <div className="bg-white/10 backdrop-blur rounded-xl p-2.5 xl:flex-1 xl:min-w-0">
-          <p className="text-[9.5px] font-bold theme-text leading-relaxed">
+        <div className="bg-gray-50 leaf p-2.5 xl:flex-1 xl:min-w-0">
+          <p className="text-[9.5px] font-bold text-ds-text leading-relaxed">
             {t("languageBadgesDesc")}
           </p>
-          <p className="text-[9px] theme-text-muted leading-relaxed mt-1">
+          <p className="text-[9px] text-gray-500 leading-relaxed mt-1">
             {t("languageBadgesHint")}
           </p>
-          <p className="mt-1.5 text-[9px] font-black theme-text">
+          <p className="mt-1.5 text-[9px] font-black text-ds-text">
             {t("languageBadgesTapHint")}
           </p>
         </div>

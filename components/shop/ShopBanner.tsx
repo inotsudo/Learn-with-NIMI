@@ -30,7 +30,7 @@ export default function ShopBanner({ balance, ownedIds }: Props) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl shadow-md p-5 text-white text-center">
+    <div className="bg-ds-action shadow-md p-5 text-white text-center" style={{ borderRadius: 'var(--leaf-r)' }}>
       <p className="font-black text-sm sm:text-base">{message}</p>
     </div>
   );

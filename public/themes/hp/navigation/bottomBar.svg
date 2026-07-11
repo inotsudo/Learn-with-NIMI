@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 375 60">
+  <defs>
+    <linearGradient id="sb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#FEF9EC"/>
+      <stop offset="100%" stop-color="#FEF3C7"/>
+    </linearGradient>
+  </defs>
+  <rect width="375" height="60" fill="url(#sb)"/>
+  <!-- Spell-book page lines -->
+  <line x1="0" y1="20" x2="375" y2="20" stroke="#92400E" stroke-width="0.4" opacity="0.10"/>
+  <line x1="0" y1="40" x2="375" y2="40" stroke="#92400E" stroke-width="0.4" opacity="0.10"/>
+  <!-- Top brass rule -->
+  <line x1="0" y1="1"  x2="375" y2="1"  stroke="#D4A017" stroke-width="1.2" opacity="0.28"/>
+  <line x1="0" y1="2.5" x2="375" y2="2.5" stroke="#D4A017" stroke-width="0.4" opacity="0.12"/>
+  <!-- Corner ornament hints -->
+  <rect x="0"   y="0" width="6" height="60" fill="#D4A017" opacity="0.06"/>
+  <rect x="369" y="0" width="6" height="60" fill="#D4A017" opacity="0.06"/>
+</svg>

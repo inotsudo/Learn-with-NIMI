@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import FlipFlopImporter from './FlipFlopImporter'
 import ColoringImporter from './ColoringImporter'
+import PersonalizationEditor from './PersonalizationEditor'
 import { useToast } from './Toast'
 import { computeReadiness } from '@/lib/storyReadiness'
 import ReadinessRing from '@/components/admin/story-readiness/ReadinessRing'
@@ -77,7 +78,7 @@ function AutoSaveInput({ label, value, onSave }: { label: string; value: string;
         {saved && <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5"><CheckCircle2 size={10} /> Saved</span>}
       </div>
       <input type="text" value={val} onChange={e => handleChange(e.target.value)}
-        className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-[13px] sm:text-[14px] font-medium text-gray-800 focus:outline-none focus:border-indigo-400 transition" />
+        className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-[13px] sm:text-[14px] font-medium text-gray-800 focus:outline-none focus:border-green-400 transition" />
     </div>
   )
 }
@@ -118,20 +119,20 @@ function FileUploader({ label, url, accept, bucket, pathPrefix, dbSave, onDone }
   return (
     <div>
       {uploading || (progress && progress.status.startsWith('Failed')) ? (
-        <div className={`rounded-xl px-3 sm:px-4 py-3 ${progress?.status.startsWith('Failed') ? 'bg-red-50 border border-red-200' : 'bg-indigo-50 border border-indigo-200'}`}>
+        <div className={`rounded-xl px-3 sm:px-4 py-3 ${progress?.status.startsWith('Failed') ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
           <div className="flex items-center gap-2.5 mb-2">
             {progress?.status.startsWith('Failed') ? (
               <AlertCircle size={16} className="text-red-500 shrink-0" />
             ) : (
-              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shrink-0" />
+              <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin shrink-0" />
             )}
-            <span className={`text-[12px] sm:text-[13px] font-bold ${progress?.status.startsWith('Failed') ? 'text-red-600' : 'text-indigo-700'}`}>
+            <span className={`text-[12px] sm:text-[13px] font-bold ${progress?.status.startsWith('Failed') ? 'text-red-600' : 'text-green-700'}`}>
               {progress?.status}
             </span>
           </div>
           {!progress?.status.startsWith('Failed') && (
-            <div className="w-full bg-indigo-100 rounded-full h-2.5 sm:h-2">
-              <div className="h-full bg-indigo-500 rounded-full transition-all duration-300" style={{ width: `${progress?.percent ?? 0}%` }} />
+            <div className="w-full bg-green-100 rounded-full h-2.5 sm:h-2">
+              <div className="h-full bg-green-500 rounded-full transition-all duration-300" style={{ width: `${progress?.percent ?? 0}%` }} />
             </div>
           )}
         </div>
@@ -146,14 +147,14 @@ function FileUploader({ label, url, accept, bucket, pathPrefix, dbSave, onDone }
           <span className="text-[11px] sm:text-[12px] text-emerald-700 font-medium truncate flex-1 min-w-0" title={fileName}>{fileName}</span>
           <div className="flex gap-1.5">
             <button onClick={() => ref.current?.click()}
-              className="text-[11px] font-bold text-indigo-600 bg-white border border-indigo-200 hover:bg-indigo-50 rounded-lg px-3 py-2 transition">Replace</button>
+              className="text-[11px] font-bold text-green-600 bg-white border border-green-200 hover:bg-green-50 rounded-lg px-3 py-2 transition">Replace</button>
             <button onClick={handleRemove}
               className="text-[11px] font-bold text-red-500 bg-white border border-red-200 hover:bg-red-50 rounded-lg px-3 py-2 transition">Remove</button>
           </div>
         </div>
       ) : (
         <button onClick={() => ref.current?.click()}
-          className="w-full border-2 border-dashed border-gray-200 rounded-xl py-5 sm:py-6 flex flex-col items-center gap-1.5 text-gray-400 hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50/30 transition min-h-[56px]">
+          className="w-full border-2 border-dashed border-gray-200 rounded-xl py-5 sm:py-6 flex flex-col items-center gap-1.5 text-gray-400 hover:border-green-300 hover:text-green-500 hover:bg-green-50/30 transition min-h-[56px]">
           <Upload size={22} />
           <span className="text-[12px] sm:text-[13px] font-bold">Upload {label}</span>
         </button>
@@ -222,6 +223,11 @@ export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
 
   const saveField = async (field: string, value: string) => {
     await supabase.from('stories').update({ [field]: value || null }).eq('id', story.id)
+    onSaved()
+  }
+
+  const toggleIsFree = async () => {
+    await supabase.from('stories').update({ is_free: !story.is_free }).eq('id', story.id)
     onSaved()
   }
 
@@ -297,7 +303,7 @@ export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
             return (
               <button key={lang} onClick={() => setActiveLang(lang)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-[13px] font-semibold transition border-b-2 ${
-                  activeLang === lang ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+                  activeLang === lang ? 'border-green-600 text-green-600 bg-green-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
                 }`}>
                 <span>{meta.flag}</span>
                 <span className="hidden sm:inline">{meta.label}</span>
@@ -315,7 +321,7 @@ export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
             <h2 className="text-[15px] sm:text-[16px] font-extrabold text-gray-800 truncate">{story.title} — {LANGUAGE_META[activeLang].label}</h2>
             <p className="text-[12px] text-gray-500">{langReadiness.done}/{langReadiness.total} items for this language</p>
             <div className="mt-1.5 w-full bg-gray-100 rounded-full h-2">
-              <div className={`h-full rounded-full transition-all ${langReadiness.pct === 100 ? 'bg-emerald-500' : langReadiness.pct >= 50 ? 'bg-indigo-500' : 'bg-amber-400'}`}
+              <div className={`h-full rounded-full transition-all ${langReadiness.pct === 100 ? 'bg-emerald-500' : langReadiness.pct >= 50 ? 'bg-green-500' : 'bg-amber-400'}`}
                 style={{ width: `${langReadiness.pct}%` }} />
             </div>
           </div>
@@ -336,6 +342,24 @@ export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
               <div className="grid grid-cols-2 gap-3">
                 <AutoSaveInput label="Age Min" value={String(story.age_min ?? '')} onSave={v => saveField('age_min', v)} />
                 <AutoSaveInput label="Age Max" value={String(story.age_max ?? '')} onSave={v => saveField('age_max', v)} />
+              </div>
+              {/* Free / Premium toggle */}
+              <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <div>
+                  <p className="text-[13px] font-bold text-gray-700">
+                    {story.is_free ? '🆓 Free story' : '👑 Premium story'}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {story.is_free ? 'Accessible without a subscription' : 'Requires active NIMIPIKO Club subscription'}
+                  </p>
+                </div>
+                <button
+                  onClick={toggleIsFree}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${story.is_free ? 'bg-emerald-400' : 'bg-gray-300'}`}
+                  aria-label="Toggle free / premium"
+                >
+                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${story.is_free ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
               </div>
             </div>
             <div className="order-1 sm:order-2">
@@ -393,7 +417,7 @@ export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
               ))}
             </div>
             <button onClick={() => setShowFlipflopImporter(true)}
-              className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl px-4 py-2.5 transition">
+              className="flex items-center gap-1.5 text-[12px] font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl px-4 py-2.5 transition">
               <Plus size={14} /> Bulk Import Pages
             </button>
           </div>
@@ -402,7 +426,7 @@ export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
             <BookOpen size={32} className="mx-auto text-gray-300 mb-2" />
             <p className="text-[13px] text-gray-500 mb-3">No pages yet. Import your story pages and audio.</p>
             <button onClick={() => setShowFlipflopImporter(true)}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] rounded-xl px-6 py-3 transition">
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-xl px-6 py-3 transition">
               <FileArchive size={16} /> Import Pages & Audio
             </button>
           </div>
@@ -498,6 +522,9 @@ export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
           onClose={() => setShowColoringImporter(false)} />
       )}
 
+      {/* Masterpiece personalization */}
+      <PersonalizationEditor story={story} onSaved={onSaved} />
+
       {/* Publish */}
       {/* Publish — per language */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
@@ -545,7 +572,7 @@ function Section({ number, title, subtitle, done, badge, children }: {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 flex items-center gap-2.5 sm:gap-3">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shrink-0 ${
-          done ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'
+          done ? 'bg-emerald-100 text-emerald-600' : 'bg-green-100 text-green-600'
         }`}>
           {done ? <CheckCircle2 size={16} /> : number}
         </div>
@@ -615,7 +642,7 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
       {/* Image area */}
       <div className="aspect-[3/4] bg-gray-100 relative cursor-pointer" onClick={() => imgRef.current?.click()}>
         {busy === 'image' ? (
-          <div className="w-full h-full flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="w-full h-full flex items-center justify-center"><div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" /></div>
         ) : page.image_url ? (
           <>
             <img src={getStorageUrl(page.image_url)} alt={`Page ${page.page_number}`} className="w-full h-full object-cover" />
@@ -624,7 +651,7 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
             </div>
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 hover:text-indigo-400 transition">
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 hover:text-green-400 transition">
             <ImageIcon size={28} />
             <span className="text-[11px] font-bold mt-1">Upload Image</span>
           </div>
@@ -638,20 +665,20 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
       <div className="p-2.5 space-y-2">
         {/* Audio */}
         {busy === 'audio' ? (
-          <div className="flex items-center gap-2 bg-indigo-50 rounded-lg px-2.5 py-2">
-            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shrink-0" />
-            <span className="text-[11px] text-indigo-600 font-medium">Uploading...</span>
+          <div className="flex items-center gap-2 bg-green-50 rounded-lg px-2.5 py-2">
+            <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin shrink-0" />
+            <span className="text-[11px] text-green-600 font-medium">Uploading...</span>
           </div>
         ) : hasAudio ? (
           <div className="flex items-center gap-1.5 bg-emerald-50 rounded-lg px-2.5 py-2">
             <Music size={12} className="text-emerald-500 shrink-0" />
             <span className="text-[10px] text-emerald-700 font-medium truncate flex-1">{langVer?.audio_url?.split('/').pop()}</span>
-            <button onClick={() => audioRef.current?.click()} className="text-[10px] font-bold text-indigo-600 hover:underline shrink-0">Replace</button>
+            <button onClick={() => audioRef.current?.click()} className="text-[10px] font-bold text-green-600 hover:underline shrink-0">Replace</button>
             <button onClick={removeAudio} className="text-[10px] font-bold text-red-500 hover:underline shrink-0">Remove</button>
           </div>
         ) : (
           <button onClick={() => audioRef.current?.click()}
-            className="w-full flex items-center justify-center gap-1.5 border border-dashed border-gray-200 rounded-lg py-2.5 text-gray-400 hover:text-indigo-500 hover:border-indigo-300 transition min-h-[36px]">
+            className="w-full flex items-center justify-center gap-1.5 border border-dashed border-gray-200 rounded-lg py-2.5 text-gray-400 hover:text-green-500 hover:border-green-300 transition min-h-[36px]">
             <Music size={12} />
             <span className="text-[11px] font-bold">Add Audio</span>
           </button>

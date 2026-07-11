@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" preserveAspectRatio="none">
+  <!-- Border lines -->
+  <line x1="40" y1="6" x2="360" y2="6" stroke="#D4A017" stroke-width="2" opacity="0.7"/>
+  <line x1="40" y1="10" x2="360" y2="10" stroke="#D4A017" stroke-width="0.5" opacity="0.4"/>
+  <line x1="40" y1="274" x2="360" y2="274" stroke="#D4A017" stroke-width="2" opacity="0.7"/>
+  <line x1="40" y1="270" x2="360" y2="270" stroke="#D4A017" stroke-width="0.5" opacity="0.4"/>
+  <line x1="6" y1="40" x2="6" y2="240" stroke="#D4A017" stroke-width="2" opacity="0.7"/>
+  <line x1="394" y1="40" x2="394" y2="240" stroke="#D4A017" stroke-width="2" opacity="0.7"/>
+  <!-- Corner TL -->
+  <path d="M6,6 L40,6 L40,10 L10,10 L10,40 L6,40 Z" fill="#D4A017" opacity="0.7"/>
+  <path d="M14,14 L34,14 L34,18 L18,18 L18,34 L14,34 Z" fill="#FCD34D" opacity="0.35"/>
+  <!-- Corner TR -->
+  <path d="M394,6 L360,6 L360,10 L390,10 L390,40 L394,40 Z" fill="#D4A017" opacity="0.7"/>
+  <path d="M386,14 L366,14 L366,18 L382,18 L382,34 L386,34 Z" fill="#FCD34D" opacity="0.35"/>
+  <!-- Corner BL -->
+  <path d="M6,274 L40,274 L40,270 L10,270 L10,240 L6,240 Z" fill="#D4A017" opacity="0.7"/>
+  <path d="M14,266 L34,266 L34,262 L18,262 L18,246 L14,246 Z" fill="#FCD34D" opacity="0.35"/>
+  <!-- Corner BR -->
+  <path d="M394,274 L360,274 L360,270 L390,270 L390,240 L394,240 Z" fill="#D4A017" opacity="0.7"/>
+  <path d="M386,266 L366,266 L366,262 L382,262 L382,246 L386,246 Z" fill="#FCD34D" opacity="0.35"/>
+  <!-- Center ornaments -->
+  <text x="200" y="20" font-family="serif" font-size="16" fill="#D4A017" opacity="0.6" text-anchor="middle">✦</text>
+  <text x="200" y="276" font-family="serif" font-size="16" fill="#D4A017" opacity="0.6" text-anchor="middle">✦</text>
+  <text x="20" y="144" font-family="serif" font-size="12" fill="#D4A017" opacity="0.4" text-anchor="middle">✦</text>
+  <text x="380" y="144" font-family="serif" font-size="12" fill="#D4A017" opacity="0.4" text-anchor="middle">✦</text>
+</svg>

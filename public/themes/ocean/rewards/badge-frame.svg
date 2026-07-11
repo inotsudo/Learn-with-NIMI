@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <defs>
+    <radialGradient id="pg" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#0EA5E9" stop-opacity="0"/>
+      <stop offset="76%" stop-color="#7DD3FC" stop-opacity="0.8"/>
+      <stop offset="88%" stop-color="#0284C7" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0C4A6E" stop-opacity="0.5"/>
+    </radialGradient>
+    <radialGradient id="pglow" cx="50%" cy="50%" r="50%">
+      <stop offset="55%" stop-color="#BAE6FD" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#7DD3FC" stop-opacity="0.2"/>
+    </radialGradient>
+  </defs>
+  <circle cx="40" cy="40" r="40" fill="url(#pglow)"/>
+  <circle cx="40" cy="40" r="40" fill="url(#pg)"/>
+  <circle cx="40" cy="3.5" r="2.5" fill="#7DD3FC" opacity="0.9"/>
+  <circle cx="40" cy="76.5" r="2" fill="#7DD3FC" opacity="0.7"/>
+  <circle cx="3.5" cy="40" r="2" fill="#7DD3FC" opacity="0.7"/>
+  <circle cx="76.5" cy="40" r="2" fill="#7DD3FC" opacity="0.7"/>
+  <circle cx="10" cy="10" r="1.5" fill="#BAE6FD" opacity="0.6"/>
+  <circle cx="70" cy="10" r="1.5" fill="#BAE6FD" opacity="0.6"/>
+  <circle cx="10" cy="70" r="1.5" fill="#BAE6FD" opacity="0.5"/>
+  <circle cx="70" cy="70" r="1.5" fill="#BAE6FD" opacity="0.5"/>
+</svg>

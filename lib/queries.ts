@@ -396,15 +396,35 @@ export async function getWeekStreak(childId: string, language: "en" | "fr" | "rw
 }
 
 // Sum of `stars` across ALL completed missions (all-time) in the given
-// language's journey. 0 if no progress yet.
+// language's journey, plus any challenge bonus stars. 0 if no progress yet.
 export async function getTotalStars(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  const [progressRes, bonusRes] = await Promise.all([
+    supabase.from("child_progress").select("mission_id, missions(stars)").eq("child_id", childId).eq("language", language),
+    supabase.from("challenge_bonus_stars").select("stars").eq("child_id", childId).eq("language", language),
+  ]);
+  const missionStars = (progressRes.data ?? []).reduce((sum: number, row: any) => sum + (row.missions?.stars ?? 10), 0);
+  const bonusStars   = (bonusRes.data   ?? []).reduce((sum: number, row: any) => sum + row.stars, 0);
+  return missionStars + bonusStars;
+}
+
+// Returns set of challenge_slug strings already claimed for this child+language.
+export async function getClaimedChallenges(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
   const { data } = await supabase
-    .from("child_progress")
-    .select("mission_id, missions(stars)")
+    .from("challenge_bonus_stars")
+    .select("challenge_slug")
     .eq("child_id", childId)
     .eq("language", language);
-  if (!data) return 0;
-  return data.reduce((sum: number, row: any) => sum + (row.missions?.stars ?? 10), 0);
+  return new Set((data ?? []).map((r: any) => r.challenge_slug));
+}
+
+// Claims a challenge reward — inserts a row; no-ops if already claimed (unique conflict).
+export async function claimChallengeReward(
+  childId: string, language: "en" | "fr" | "rw", challengeSlug: string, stars: number
+): Promise<boolean> {
+  const { error } = await supabase.from("challenge_bonus_stars").insert({
+    child_id: childId, language, challenge_slug: challengeSlug, stars,
+  });
+  return !error || error.code === "23505"; // 23505 = unique violation (already claimed)
 }
 
 // All-time set of "YYYY-MM-DD" (local-date) strings with >=1 completion in
@@ -563,6 +583,39 @@ export async function awardBadge(
     .upsert({ child_id: childId, badge_slug: badgeSlug });
 }
 
+// Calls the DB function that checks story-count and star-count milestones
+// and inserts any newly earned milestone badges. Returns newly-awarded slugs.
+export async function awardMilestoneBadges(
+  childId: string,
+  language: string
+): Promise<string[]> {
+  const { data, error } = await supabase.rpc("_sa_award_milestone_badges", {
+    p_child_id: childId,
+    p_language: language,
+  });
+  if (error) {
+    console.error("[awardMilestoneBadges]", error.message);
+    return [];
+  }
+  return (data as string[]) ?? [];
+}
+
+// ── In-app notifications ─────────────────────────────────────
+
+export async function createNotification(
+  parentId: string,
+  notification: { title: string; body: string; type: string; url?: string | null }
+): Promise<void> {
+  await supabase.from("notifications").insert({
+    parent_id: parentId,
+    title: notification.title,
+    body: notification.body,
+    type: notification.type,
+    url: notification.url ?? null,
+    read: false,
+  });
+}
+
 // ── Achievements queries ─────────────────────────────────────
 
 // All badges/certificates ever earned by this child, across all 3
@@ -606,6 +659,78 @@ export async function purchaseShopItem(childId: string, itemId: string, price: n
     return null;
   }
   return data as ShopPurchase;
+}
+
+// ── Child Cosmetics (equippable shop items) ──────────────────
+
+export interface ChildCosmetics {
+  nimi_outfit: string | null;
+  piko_outfit: string | null;
+  frame: string | null;
+  title_badge: string | null;
+}
+
+const EMPTY_COSMETICS: ChildCosmetics = {
+  nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null,
+};
+
+export async function getChildCosmetics(childId: string): Promise<ChildCosmetics> {
+  const { data } = await supabase
+    .from("child_cosmetics")
+    .select("nimi_outfit, piko_outfit, frame, title_badge")
+    .eq("child_id", childId)
+    .maybeSingle();
+  return data ? (data as ChildCosmetics) : { ...EMPTY_COSMETICS };
+}
+
+export async function equipItem(
+  childId: string,
+  slot: "nimi_outfit" | "piko_outfit" | "frame" | "title_badge",
+  itemId: string | null,
+): Promise<boolean> {
+  const { error } = await supabase.from("child_cosmetics").upsert(
+    { child_id: childId, [slot]: itemId, updated_at: new Date().toISOString() },
+    { onConflict: "child_id" }
+  );
+  return !error;
+}
+
+// ── Streak Shield helpers ─────────────────────────────────────
+
+// Returns total shield purchases for this child (each purchase = 1 shield).
+export async function getStreakShieldsPurchased(childId: string): Promise<number> {
+  const { data } = await supabase
+    .from("shop_purchases")
+    .select("id")
+    .eq("child_id", childId)
+    .eq("item_id", "streakShield");
+  return (data ?? []).length;
+}
+
+// Returns the set of YYYY-MM-DD dates where a shield was activated.
+export async function getUsedShieldDates(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
+  const { data } = await supabase
+    .from("child_achievements")
+    .select("slug")
+    .eq("child_id", childId)
+    .eq("language", language)
+    .eq("type", "badge")
+    .like("slug", "streak-shield-used-%");
+  const set = new Set<string>();
+  for (const row of data ?? []) {
+    const dateStr = row.slug.replace("streak-shield-used-", "");
+    set.add(dateStr);
+  }
+  return set;
+}
+
+// Marks a shield as used for the given YYYY-MM-DD date string.
+export async function activateStreakShield(childId: string, language: "en" | "fr" | "rw", dateStr: string): Promise<boolean> {
+  const { error } = await supabase.from("child_achievements").insert({
+    child_id: childId, language, type: "badge",
+    slug: `streak-shield-used-${dateStr}`,
+  });
+  return !error || error.code === "23505";
 }
 
 // Highest level number defined in the curriculum (currently 3). Drives how
@@ -685,7 +810,92 @@ export async function getCurrentLevel(childId: string, language: "en" | "fr" | "
   return (data ?? 1) as number;
 }
 
+// ── Consecutive streak ───────────────────────────────────────
+
+// Number of consecutive days (ending today or yesterday) with ≥1 completion
+// in the given language's journey. If the child hasn't done anything today
+// but did yesterday, the streak is still alive. Returns 0 if no history.
+export async function getConsecutiveStreak(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  const dates = await getActivityDates(childId, language);
+  if (dates.size === 0) return 0;
+
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const today = new Date();
+  const todayKey = fmt(today);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  const yesterdayKey = fmt(yesterday);
+
+  // Start from today if active, else from yesterday (streak still alive)
+  const startOffset = dates.has(todayKey) ? 0 : dates.has(yesterdayKey) ? 1 : -1;
+  if (startOffset === -1) return 0;
+
+  let streak = 0;
+  for (let i = startOffset; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    if (dates.has(fmt(d))) streak++;
+    else break;
+  }
+  return streak;
+}
+
 // ── Parental settings ────────────────────────────────────────
+
+// Daily claim helpers — stored as a badge slug 'daily-claim-YYYY-MM-DD'.
+// No migration needed; uses the existing child_achievements table.
+function todayClaimSlug(): string {
+  const d = new Date();
+  return `daily-claim-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export async function hasDailyClaimedToday(childId: string, language: "en" | "fr" | "rw"): Promise<boolean> {
+  const { data } = await supabase
+    .from("child_achievements")
+    .select("id")
+    .eq("child_id", childId)
+    .eq("language", language)
+    .eq("type", "badge")
+    .eq("slug", todayClaimSlug())
+    .maybeSingle();
+  return data !== null;
+}
+
+export async function claimDailyBonus(childId: string, language: "en" | "fr" | "rw"): Promise<boolean> {
+  const slug = todayClaimSlug();
+  const { error } = await supabase.from("child_achievements").insert({
+    child_id: childId, language, type: "badge", slug,
+  });
+  return !error || error.code === "23505";
+}
+
+// Per-task daily claim — slug: 'daily-task-{category}-YYYY-MM-DD'
+export async function getClaimedTasksToday(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
+  const dateStr = todayClaimSlug().replace("daily-claim-", "");
+  const { data } = await supabase
+    .from("child_achievements")
+    .select("slug")
+    .eq("child_id", childId)
+    .eq("language", language)
+    .eq("type", "badge")
+    .like("slug", `daily-task-%-${dateStr}`);
+  const set = new Set<string>();
+  for (const row of data ?? []) {
+    const cat = row.slug.replace(`daily-task-`, "").replace(`-${dateStr}`, "");
+    set.add(cat);
+  }
+  return set;
+}
+
+export async function claimTaskReward(childId: string, language: "en" | "fr" | "rw", category: string): Promise<boolean> {
+  const dateStr = todayClaimSlug().replace("daily-claim-", "");
+  const { error } = await supabase.from("child_achievements").insert({
+    child_id: childId, language, type: "badge",
+    slug: `daily-task-${category}-${dateStr}`,
+  });
+  return !error || error.code === "23505";
+}
 
 export async function getParentalSettings(
   childId: string

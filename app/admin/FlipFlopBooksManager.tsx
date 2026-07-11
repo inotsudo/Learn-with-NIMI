@@ -112,7 +112,7 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
             <div key={story.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-2 border-b border-gray-50 bg-gray-50/30">
                 <button onClick={() => setImportingStory({ id: story.id, title: story.title })}
-                  className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg px-3 py-1.5 transition">
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg px-3 py-1.5 transition">
                   <FileArchive size={12} /> Bulk Import
                 </button>
               </div>
@@ -135,7 +135,7 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                       {story.pages.map(page => (
-                        <div key={page.id} className={`rounded-xl border p-3 ${editingPage === page.id ? 'border-indigo-300 bg-indigo-50/30' : 'border-gray-100'}`}>
+                        <div key={page.id} className={`rounded-xl border p-3 ${editingPage === page.id ? 'border-green-300 bg-green-50/30' : 'border-gray-100'}`}>
                           {/* Image */}
                           <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 mb-2">
                             {page.image_url ? (
@@ -174,7 +174,7 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
                           {/* Actions */}
                           <div className="flex gap-1">
                             <button onClick={() => setEditingPage(editingPage === page.id ? null : page.id)}
-                              className="flex-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg py-1.5 transition">
+                              className="flex-1 text-[10px] font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg py-1.5 transition">
                               {editingPage === page.id ? 'Close' : 'Edit'}
                             </button>
                             <button onClick={() => handleDeletePage(page.id)}
@@ -195,12 +195,12 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
                                     <textarea defaultValue={ver.text ?? ''} rows={2}
                                       onBlur={e => handleVersionSave(ver.id, 'text', e.target.value)}
                                       placeholder="Page text..."
-                                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-[11px] text-gray-700 focus:outline-none focus:border-indigo-300 resize-none" />
+                                      className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-[11px] text-gray-700 focus:outline-none focus:border-green-300 resize-none" />
                                     {ver.audio_url ? (
                                       <div className="flex items-center gap-1 bg-emerald-50 rounded-lg px-2 py-1.5">
                                         <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />
                                         <span className="text-[9px] text-emerald-700 truncate flex-1">{ver.audio_url.split('/').pop()}</span>
-                                        <label className="text-[8px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded px-1.5 py-0.5 cursor-pointer">
+                                        <label className="text-[8px] font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded px-1.5 py-0.5 cursor-pointer">
                                           Change
                                           <input type="file" accept="audio/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload(ver.id, page.id, f) }} />
                                         </label>
@@ -208,7 +208,7 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
                                           className="text-[8px] font-bold text-red-500 bg-red-50 hover:bg-red-100 rounded px-1.5 py-0.5">Remove</button>
                                       </div>
                                     ) : (
-                                      <label className="flex items-center gap-1.5 border border-dashed border-gray-200 rounded-lg px-2 py-1.5 text-gray-400 hover:border-indigo-300 hover:text-indigo-500 cursor-pointer transition">
+                                      <label className="flex items-center gap-1.5 border border-dashed border-gray-200 rounded-lg px-2 py-1.5 text-gray-400 hover:border-green-300 hover:text-green-500 cursor-pointer transition">
                                         <Upload size={10} />
                                         <span className="text-[9px] font-bold">Upload Audio</span>
                                         <input type="file" accept="audio/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload(ver.id, page.id, f) }} />
@@ -224,7 +224,7 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
                     </div>
                   )}
                   <button onClick={() => handleAddPage(story.id, story.pages.length)}
-                    className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl px-4 py-2 transition">
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl px-4 py-2 transition">
                     <Plus size={14} /> Add Page
                   </button>
                 </div>

@@ -1,44 +1,35 @@
 "use client";
 
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeEffects } from "@/lib/design-system/themeEffects";
+
+const POSITIONS = [
+  { cls: "top-20 left-10",      delay: "0s",   si: 0, ci: 0, size: "text-2xl" },
+  { cls: "top-40 right-20",     delay: "1s",   si: 1, ci: 1, size: "text-2xl" },
+  { cls: "bottom-40 left-20",   delay: "2s",   si: 2, ci: 2, size: "text-2xl" },
+  { cls: "bottom-20 right-10",  delay: "0.5s", si: 3, ci: 3, size: "text-2xl" },
+  { cls: "top-60 left-1/4",     delay: "1.5s", si: 4, ci: 0, size: "text-xl"  },
+  { cls: "bottom-60 right-1/4", delay: "2.5s", si: 0, ci: 1, size: "text-xl"  },
+];
+
 export default function FloatingStickers() {
+  const { themeId } = useAppTheme();
+  const { particles } = getThemeEffects(themeId);
+
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      <div
-        className="absolute top-20 left-10 text-yellow-300 animate-bounce text-2xl"
-        style={{ animationDelay: "0s" }}
-      >
-        ⭐
-      </div>
-      <div
-        className="absolute top-40 right-20 text-pink-300 animate-bounce text-2xl"
-        style={{ animationDelay: "1s" }}
-      >
-        🌟
-      </div>
-      <div
-        className="absolute bottom-40 left-20 text-blue-300 animate-bounce text-2xl"
-        style={{ animationDelay: "2s" }}
-      >
-        ✨
-      </div>
-      <div
-        className="absolute bottom-20 right-10 text-green-300 animate-bounce text-2xl"
-        style={{ animationDelay: "0.5s" }}
-      >
-        🎈
-      </div>
-      <div
-        className="absolute top-60 left-1/4 theme-text-muted animate-bounce text-xl"
-        style={{ animationDelay: "1.5s" }}
-      >
-        💫
-      </div>
-      <div
-        className="absolute bottom-60 right-1/4 text-orange-300 animate-bounce text-xl"
-        style={{ animationDelay: "2.5s" }}
-      >
-        🌈
-      </div>
+      {POSITIONS.map((p, i) => (
+        <div
+          key={i}
+          className={`absolute ${p.cls} animate-bounce ${p.size}`}
+          style={{
+            animationDelay: p.delay,
+            color: particles.colors[p.ci % particles.colors.length],
+          }}
+        >
+          {particles.shapes[p.si % particles.shapes.length]}
+        </div>
+      ))}
     </div>
   );
 }

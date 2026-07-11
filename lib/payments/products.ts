@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabaseClient";
-import type { Product, Order, Currency } from "./types";
+import type { Product, Order, Subscription, Currency } from "./types";
 
 export async function getProducts(): Promise<Product[]> {
   const { data, error } = await supabase
@@ -95,4 +95,16 @@ export async function getParentOrders(parentId: string): Promise<Order[]> {
     .eq("parent_id", parentId)
     .order("created_at", { ascending: false });
   return data ?? [];
+}
+
+export async function getActiveSubscription(parentId: string): Promise<Subscription | null> {
+  const { data } = await supabase
+    .from("nimipiko_subscriptions")
+    .select("*")
+    .eq("parent_id", parentId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data ?? null;
 }

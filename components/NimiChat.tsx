@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Mic, SendHorizontal, X } from "lucide-react";
 import { motion } from "framer-motion";
+import { DURATION } from "@/lib/design-system/motion";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
 
 export default function NimiChat({
   open,
@@ -19,6 +21,7 @@ export default function NimiChat({
   avatar?: React.ReactNode;
   voiceEnabled?: boolean;
 }) {
+  const { theme } = useAppTheme();
   const [chatLog, setChatLog] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [isTalking, setIsTalking] = useState(false);
@@ -94,7 +97,7 @@ export default function NimiChat({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-yellow-100 to-pink-100 p-4 flex flex-col items-center justify-center text-center">
+    <div className={`fixed inset-0 z-50 bg-gradient-to-br ${theme.gradients.chatBg} p-4 flex flex-col items-center justify-center text-center`}>
       <div className="absolute top-4 right-4">
         <button onClick={onClose} className="text-xl rounded-full bg-red-400 text-white p-2">
           <X />
@@ -104,7 +107,7 @@ export default function NimiChat({
       {/* Nimi Avatar */}
       <motion.div
         animate={{ scale: isTalking ? [1, 1.2, 1] : 1 }}
-        transition={{ duration: 1, repeat: Infinity }}
+        transition={{ duration: DURATION.loopSpark, repeat: Infinity }}
         className="mb-4"
       >
         {avatar || <div className="text-6xl animate-bounce">🧚‍♀️</div>}
@@ -113,7 +116,7 @@ export default function NimiChat({
       {/* Chat Log */}
       <div
         ref={chatRef}
-        className="w-full max-w-xl h-64 overflow-y-auto p-4 bg-white rounded-xl shadow-inner text-lg font-semibold space-y-2"
+        className="w-full max-w-xl h-64 overflow-y-auto p-4 bg-white leaf shadow-inner text-lg font-semibold space-y-2"
       >
         {chatLog.map((line, i) => (
           <div key={i} className="whitespace-pre-wrap">{line}</div>
@@ -130,13 +133,13 @@ export default function NimiChat({
         />
         <button
           onClick={() => sendToAI(input)}
-          className="bg-blue-500 text-white p-2 rounded-full"
+          className="p-2 rounded-full text-white" style={{ backgroundColor: 'var(--nimi-green)' }}
         >
           <SendHorizontal />
         </button>
         <button
           onClick={handleVoiceInput}
-          className={`p-2 rounded-full ${isListening ? "bg-green-500" : "bg-gray-300"}`}
+          className={`p-2 rounded-full ${isListening ? "bg-[var(--nimi-green)]" : "bg-gray-300"}`}
         >
           <Mic />
         </button>

@@ -4,11 +4,13 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "NIMIPIKO",
     short_name: "NIMIPIKO",
-    description: "Daily little victory",
-    start_url: "/",
+    description: "Interactive stories & AI learning companion for kids ages 2–12 in English, French & Kinyarwanda",
+    start_url: "/home",
     display: "standalone",
-    background_color: "#1c0f3d",
-    theme_color: "#7c3aed",
+    orientation: "portrait",
+    categories: ["education", "kids"],
+    background_color: "#ffffff",
+    theme_color: "#15803d",
     icons: [
       {
         src: "/icons/icon-192.png",

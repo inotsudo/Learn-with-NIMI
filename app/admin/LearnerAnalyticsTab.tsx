@@ -6,7 +6,7 @@ import StatCard from './StatCard'
 import { exportCSV } from './exportUtils'
 import type { LearnerAnalytics } from '@/lib/adminAnalytics'
 
-const accent = ACCENT.indigo
+const accent = ACCENT.emerald
 
 export default function LearnerAnalyticsTab({ analytics }: { analytics: LearnerAnalytics }) {
   const { totalLearners, activeLearners, dailyActiveLearners, weeklyActiveLearners } = analytics
@@ -36,10 +36,10 @@ export default function LearnerAnalyticsTab({ analytics }: { analytics: LearnerA
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard icon={Users} label="Total Learners" value={totalLearners} accentKey="indigo" />
+        <StatCard icon={Users} label="Total Learners" value={totalLearners} accentKey="emerald" />
         <StatCard icon={UserCheck} label="Active Learners" value={activeLearners} accentKey="emerald" />
         <StatCard icon={Sun} label="Daily Active" value={dailyActiveLearners} accentKey="amber" />
-        <StatCard icon={CalendarDays} label="Weekly Active" value={weeklyActiveLearners} accentKey="violet" />
+        <StatCard icon={CalendarDays} label="Weekly Active" value={weeklyActiveLearners} accentKey="teal" />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-sm text-gray-500 space-y-1.5">

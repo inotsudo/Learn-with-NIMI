@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Play, Pause, Maximize, Volume2, VolumeX } from "lucide-react";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
+import { Play, Pause, Maximize, Volume2, VolumeX, Sparkles } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
 
 interface Props {
@@ -17,13 +18,16 @@ export default function StoryVideoPlayer({ url, title, poster, onEnded }: Props)
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const m = useThemeMotion();
 
   if (!url) {
     return (
-      <div className="rounded-[20px] bg-white/[0.04] border border-white/[0.08] aspect-video flex flex-col items-center justify-center gap-2">
-        <span className="text-4xl">🎬</span>
-        <p className="text-white/30 text-sm font-bold">Coming Soon</p>
-        {title && <p className="theme-text-faint text-[10px]">{title}</p>}
+      <div className="leaf border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/70 to-amber-50/60 aspect-video flex flex-col items-center justify-center gap-2 shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
+        <div className="rounded-full bg-white p-3 shadow-sm">
+          <Sparkles className="h-6 w-6 text-emerald-600" />
+        </div>
+        <p className="text-gray-700 text-sm font-black">Coming Soon</p>
+        {title && <p className="text-gray-500 text-[10px]">{title}</p>}
       </div>
     );
   }
@@ -47,7 +51,7 @@ export default function StoryVideoPlayer({ url, title, poster, onEnded }: Props)
   };
 
   return (
-    <div className="rounded-[20px] overflow-hidden bg-black/40 border border-white/[0.08] shadow-xl relative group">
+    <div className="overflow-hidden leaf border border-emerald-100 bg-black/40 shadow-[0_16px_34px_rgba(15,23,42,0.12)] relative group">
       <video
         ref={ref}
         src={src}
@@ -67,8 +71,8 @@ export default function StoryVideoPlayer({ url, title, poster, onEnded }: Props)
 
       {/* Overlay controls */}
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={toggle}
-          className="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white shadow-xl">
+        <motion.button whileTap={m.dangerPress} onClick={toggle}
+          className="w-16 h-16 bg-white/25 backdrop-blur rounded-full flex items-center justify-center text-white shadow-xl border border-white/20">
           {playing ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
         </motion.button>
       </div>
@@ -76,9 +80,9 @@ export default function StoryVideoPlayer({ url, title, poster, onEnded }: Props)
       {/* Big play button when not playing */}
       {!playing && progress < 1 && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.button whileTap={{ scale: 0.9 }} onClick={toggle}
-            animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 2, repeat: Infinity }}
-            className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-purple-500/30 border-2 border-white/20">
+          <motion.button whileTap={m.dangerPress} onClick={toggle}
+            animate={m.scalePulse.animate} transition={m.scalePulse.transition}
+            className="w-20 h-20 bg-[image:linear-gradient(to_bottom_right,var(--ds-brand-primary),var(--ds-brand-hover))] rounded-full flex items-center justify-center text-white shadow-2xl shadow-ds-cta border-2 border-white/20">
             <Play className="w-9 h-9 ml-1" />
           </motion.button>
         </div>
@@ -86,17 +90,17 @@ export default function StoryVideoPlayer({ url, title, poster, onEnded }: Props)
 
       {/* Bottom bar */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-8 flex items-center gap-3">
-        <button onClick={toggle} className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0">
+        <button onClick={toggle} className="w-10 h-10 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0">
           {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
         </button>
         <div className="flex-1 bg-white/15 rounded-full h-[6px] overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-400 to-indigo-500 h-full rounded-full transition-all duration-200"
+          <div className="bg-cta-gradient h-full rounded-full transition-all duration-200"
             style={{ width: `${progress}%` }} />
         </div>
-        <button onClick={toggleMute} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 shrink-0">
+        <button onClick={toggleMute} className="w-8 h-8 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white/60 shrink-0">
           {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
-        <button onClick={toggleFullscreen} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 shrink-0">
+        <button onClick={toggleFullscreen} className="w-8 h-8 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white/60 shrink-0">
           <Maximize className="w-3.5 h-3.5" />
         </button>
       </div>

@@ -488,7 +488,7 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
                           </span>
                         )}
                         {levelUsage[m.id] && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-600">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
                             Used in {levelUsage[m.id].length === 1 ? `Level ${levelUsage[m.id][0]}` : `Levels ${levelUsage[m.id].join(', ')}`}
                           </span>
                         )}

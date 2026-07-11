@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#1a0840"/>
+      <stop offset="50%" stop-color="#2d1570"/>
+      <stop offset="100%" stop-color="#0d0530"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="75%" cy="18%" r="20%">
+      <stop offset="0%" stop-color="#FFF8E7" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#FFF8E7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="castleGlow" cx="50%" cy="100%" r="40%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1200" height="600" fill="url(#sky)"/>
+
+  <!-- Moon glow halo -->
+  <ellipse cx="900" cy="108" rx="140" ry="110" fill="url(#moonGlow)"/>
+  <!-- Moon -->
+  <circle cx="900" cy="100" r="56" fill="#FFF8E7" opacity="0.88"/>
+  <!-- Moon shadow (crescent effect) -->
+  <circle cx="932" cy="88" r="52" fill="#2d1570" opacity="0.95"/>
+
+  <!-- Stars (deterministic positions) -->
+  <circle cx="48"  cy="55"  r="2"   fill="white" opacity="0.80"/>
+  <circle cx="140" cy="28"  r="1.5" fill="white" opacity="0.60"/>
+  <circle cx="220" cy="88"  r="2"   fill="white" opacity="0.70"/>
+  <circle cx="310" cy="44"  r="1"   fill="white" opacity="0.50"/>
+  <circle cx="430" cy="18"  r="1.5" fill="white" opacity="0.65"/>
+  <circle cx="550" cy="70"  r="1"   fill="white" opacity="0.45"/>
+  <circle cx="680" cy="32"  r="2"   fill="white" opacity="0.55"/>
+  <circle cx="760" cy="90"  r="1.5" fill="white" opacity="0.40"/>
+  <circle cx="1050" cy="38" r="2"   fill="white" opacity="0.80"/>
+  <circle cx="1130" cy="80" r="1.5" fill="white" opacity="0.60"/>
+  <circle cx="1080" cy="160" r="1"  fill="white" opacity="0.50"/>
+  <circle cx="178"  cy="160" r="1.5" fill="white" opacity="0.70"/>
+  <circle cx="80"   cy="200" r="1"  fill="white" opacity="0.40"/>
+  <circle cx="370"  cy="130" r="1"  fill="white" opacity="0.55"/>
+  <circle cx="630"  cy="150" r="1.5" fill="white" opacity="0.45"/>
+
+  <!-- Castle base -->
+  <rect x="350" y="200" width="500" height="400" fill="#0a0018" opacity="0.92"/>
+
+  <!-- Main central tower -->
+  <rect x="545" y="120" width="110" height="480" fill="#080014" opacity="0.95"/>
+  <!-- Central tower spire -->
+  <polygon points="545,120 600,40 655,120" fill="#080014" opacity="0.95"/>
+
+  <!-- Left main tower -->
+  <rect x="390" y="220" width="75" height="380" fill="#0a0018" opacity="0.90"/>
+  <polygon points="390,220 427,148 465,220" fill="#0a0018" opacity="0.90"/>
+
+  <!-- Right main tower -->
+  <rect x="735" y="220" width="75" height="380" fill="#0a0018" opacity="0.90"/>
+  <polygon points="735,220 772,148 810,220" fill="#0a0018" opacity="0.90"/>
+
+  <!-- Far left turret -->
+  <rect x="230" y="300" width="48" height="300" fill="#0c001e" opacity="0.85"/>
+  <polygon points="230,300 254,238 278,300" fill="#0c001e" opacity="0.85"/>
+
+  <!-- Far right turret -->
+  <rect x="922" y="300" width="48" height="300" fill="#0c001e" opacity="0.85"/>
+  <polygon points="922,300 946,238 970,300" fill="#0c001e" opacity="0.85"/>
+
+  <!-- Castle windows (warm candlelight) -->
+  <rect x="578" y="200" width="14" height="22" fill="#F59E0B" opacity="0.75" rx="7"/>
+  <rect x="608" y="200" width="14" height="22" fill="#F59E0B" opacity="0.65" rx="7"/>
+  <rect x="578" y="268" width="14" height="22" fill="#F59E0B" opacity="0.60" rx="7"/>
+  <rect x="608" y="268" width="14" height="22" fill="#F59E0B" opacity="0.55" rx="7"/>
+  <rect x="578" y="336" width="14" height="22" fill="#F59E0B" opacity="0.50" rx="7"/>
+  <rect x="432" y="290" width="12" height="18" fill="#F59E0B" opacity="0.55" rx="6"/>
+  <rect x="756" y="290" width="12" height="18" fill="#F59E0B" opacity="0.55" rx="6"/>
+  <rect x="252" y="340" width="10" height="16" fill="#F59E0B" opacity="0.45" rx="5"/>
+  <rect x="938" y="340" width="10" height="16" fill="#F59E0B" opacity="0.45" rx="5"/>
+
+  <!-- Castle glow from base -->
+  <ellipse cx="600" cy="600" rx="360" ry="110" fill="url(#castleGlow)"/>
+
+  <!-- Ground mist -->
+  <rect x="0" y="520" width="1200" height="80" fill="#1a0840" opacity="0.55"/>
+  <ellipse cx="600" cy="560" rx="700" ry="60" fill="#1a0840" opacity="0.40"/>
+</svg>

@@ -5,11 +5,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import type { Creation } from "./types";
 
 const AVATAR_COLORS = [
-  "from-purple-500 to-pink-500",
+  "from-green-500 to-emerald-600",
   "from-blue-500 to-cyan-500",
   "from-orange-400 to-pink-400",
   "from-green-500 to-teal-500",
-  "from-indigo-500 to-purple-500",
+  "from-green-500 to-emerald-600",
 ];
 
 function avatarColorFor(name: string) {
@@ -28,8 +28,8 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
   const title = creation.description?.trim() || t("myCreationFallback").replace("{name}", creation.childName);
 
   return (
-    <div className="bg-white/10 backdrop-blur rounded-2xl border-2 border-white/15 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative aspect-square bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center overflow-hidden">
+    <div className="bg-white border border-ds-border shadow-ds-card overflow-hidden hover:shadow-md transition-shadow" style={{ borderRadius: 'var(--leaf-r)' }}>
+      <div className="relative aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
         {creation.imageUrl ? (
           <img
             src={creation.imageUrl}
@@ -44,7 +44,7 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
           <span className="absolute top-2 right-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[9px] font-black rounded-full px-2 py-0.5 shadow">🏆 Challenge</span>
         )}
         {creation.type === "certificate" && (
-          <span className="absolute top-2 right-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-[9px] font-black rounded-full px-2 py-0.5 shadow">📜 Certificate</span>
+          <span className="absolute top-2 right-2 text-white text-[9px] font-black px-2 py-0.5 shadow" style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}>📜 Certificate</span>
         )}
         {creation.type === "sticker" && (
           <span className="absolute top-2 right-2 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white text-[9px] font-black rounded-full px-2 py-0.5 shadow">⭐ Sticker</span>
@@ -63,18 +63,18 @@ export default function GalleryCard({ creation, onLike, isLoadingLike = false }:
 
       <div className="p-3">
         <div className="flex items-center gap-1.5 mb-1">
-          <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${avatarColorFor(creation.childName)} flex items-center justify-center text-[14px] shrink-0 border border-white/20 shadow-sm`}>
+          <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${avatarColorFor(creation.childName)} flex items-center justify-center text-[14px] shrink-0 border border-gray-200 shadow-sm`}>
             {creation.childAvatar || creation.childName?.[0]?.toUpperCase() || "?"}
           </div>
-          <p className="text-xs font-bold theme-text-muted truncate">{creation.childName}</p>
+          <p className="text-xs font-bold text-gray-500 truncate">{creation.childName}</p>
         </div>
 
-        <p className="text-sm font-black text-white truncate">{title}</p>
+        <p className="text-sm font-black text-ds-text truncate">{title}</p>
 
         <button
           onClick={() => onLike(creation.id)}
           disabled={isLoadingLike}
-          className="flex items-center gap-1 mt-2 text-sm font-bold theme-text-muted hover:text-pink-500 transition-colors"
+          className="flex items-center gap-1 mt-2 text-sm font-bold text-gray-500 hover:text-pink-500 transition-colors"
         >
           {isLoadingLike ? (
             <Loader2 className="w-4 h-4 animate-spin" />

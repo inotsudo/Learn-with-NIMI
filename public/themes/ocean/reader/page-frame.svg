@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="tl" cx="0" cy="0" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0C4A6E" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#0C4A6E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="br" cx="400" cy="300" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0C4A6E" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#0C4A6E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tr" cx="400" cy="0" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0369A1" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#0369A1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bl" cx="0" cy="300" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0369A1" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#0369A1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#tl)"/>
+  <rect width="400" height="300" fill="url(#br)"/>
+  <rect width="400" height="300" fill="url(#tr)"/>
+  <rect width="400" height="300" fill="url(#bl)"/>
+  <!-- Wave border — top -->
+  <path d="M0,7 Q20,1 40,7 Q60,13 80,7 Q100,1 120,7 Q140,13 160,7 Q180,1 200,7 Q220,13 240,7 Q260,1 280,7 Q300,13 320,7 Q340,1 360,7 Q380,13 400,7" fill="none" stroke="#0284C7" stroke-width="2" opacity="0.45"/>
+  <!-- Wave border — bottom -->
+  <path d="M0,293 Q20,287 40,293 Q60,299 80,293 Q100,287 120,293 Q140,299 160,293 Q180,287 200,293 Q220,299 240,293 Q260,287 280,293 Q300,299 320,293 Q340,287 360,293 Q380,299 400,293" fill="none" stroke="#0284C7" stroke-width="2" opacity="0.45"/>
+  <!-- Coral corner TL -->
+  <path d="M0,0 Q8,18 2,32 Q16,10 28,16 Q10,2 0,0Z" fill="#0EA5E9" opacity="0.18"/>
+  <!-- Coral corner BR -->
+  <path d="M400,300 Q392,282 398,268 Q384,290 372,284 Q390,298 400,300Z" fill="#0EA5E9" opacity="0.18"/>
+  <!-- Bubble accents at corners -->
+  <circle cx="12" cy="12" r="5" fill="none" stroke="#7DD3FC" stroke-width="1" opacity="0.3"/>
+  <circle cx="388" cy="288" r="5" fill="none" stroke="#7DD3FC" stroke-width="1" opacity="0.3"/>
+</svg>

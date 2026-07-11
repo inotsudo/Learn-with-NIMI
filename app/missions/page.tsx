@@ -10,13 +10,18 @@ import AppShell from "@/components/layout/AppShell";
 import DailyAdventureBanner from "@/components/missions/DailyAdventureBanner";
 import DailyAdventureGrid, { DailyChampionCTA } from "@/components/missions/DailyAdventureGrid";
 import DailyAdventureSidebar from "@/components/missions/DailyAdventureSidebar";
-import MagicBackground from "@/components/magic/MagicBackground";
+import { PageSurface } from "@/components/layout/primitives";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 export default function MissionsPage() {
   const [mounted, setMounted] = useState(false);
   const [hasChildren, setHasChildren] = useState(true);
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
   const [theme, setTheme] = useState(FALLBACK_THEME);
   const [level, setLevel] = useState(1);
   const [completedInLevel, setCompletedInLevel] = useState<Set<ActivityCategory>>(new Set());
@@ -56,22 +61,29 @@ export default function MissionsPage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
-          <MagicBackground variant="forest" />
-          <p className="relative z-10 theme-text font-semibold">Set up a learner profile to start your Daily Adventure!</p>
-          <Link href="/" className="relative z-10 theme-accent text-white font-black rounded-full px-6 py-2.5 shadow hover:theme-accent transition">
-            Go Home
-          </Link>
-        </div>
+        <PageSurface className="items-center justify-center px-4">
+          <div className="flex flex-col items-center text-center max-w-xs gap-4 py-12">
+            <div className="relative">
+              <img src={assets.nimiCircle} alt="NIMI" className="w-28 h-28 rounded-full object-cover border-4 border-yellow-400 shadow-xl" />
+              <span className="absolute -bottom-1 -right-1 text-3xl">⭐</span>
+            </div>
+            <div className="bg-white border border-ds-border rounded-2xl rounded-tl-none px-5 py-3 shadow-ds-card">
+              <p className="font-baloo font-black text-ds-text text-[16px] leading-snug">Add a learner first to unlock your Daily Adventure!</p>
+            </div>
+            <p className="text-gray-500 text-sm">Create a learner profile so your child can start earning stars and badges.</p>
+            <Link href="/home" className="text-white font-baloo font-black px-8 py-3 shadow-md transition hover:-translate-y-0.5 active:scale-95" style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r)' }}>
+              🏠 Go to Home
+            </Link>
+          </div>
+        </PageSurface>
       </AppShell>
     );
   }
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
-        <MagicBackground variant="forest" />
-        <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+      <PageSurface>
+        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full page-shell p-4 sm:p-5 lg:p-6">
           <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
             <div className="space-y-4">
               <DailyAdventureBanner themeTitle={theme.title} themeEmoji={theme.emoji} level={level} />
@@ -88,7 +100,7 @@ export default function MissionsPage() {
             </div>
           </div>
         </main>
-      </div>
+      </PageSurface>
     </AppShell>
   );
 }

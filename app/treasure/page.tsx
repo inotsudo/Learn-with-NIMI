@@ -1,35 +1,263 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Lock, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { ArrowLeft, Check, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
-import MagicBackground from "@/components/magic/MagicBackground";
 import MagicLoader from "@/components/magic/MagicLoader";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { getChildren, getChildAchievements } from "@/lib/queries";
-import type { ChildAchievement } from "@/lib/queries";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import {
+  getChildren, getTotalStars, getActivityDates, getWeekStreak,
+  getWeekActivityCounts, getClaimedChallenges, claimChallengeReward,
+} from "@/lib/queries";
 import { getStoryLibrary } from "@/lib/storyRepository";
-import type { StoryLibraryItem } from "@/lib/story-types";
+import { computeStreaks } from "@/lib/parentInsights";
+import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import {
+  WEEKLY_CHALLENGES, DAILY_CHALLENGES,
+  getWeekPeriod, getDayPeriod, todayWeekIndex,
+  type Challenge, type ChallengeStats,
+} from "@/components/challenges/_challengeData";
+import type { Language } from "@/contexts/LanguageContext";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
-const BADGES = [
-  { slug: "story-explorer", icon: "/assets/badge-explorer.svg", tKey: "badgeExplorer", bg: "from-yellow-400 to-amber-500" },
-  { slug: "kind-heart", icon: "/assets/badge-kindheart.svg", tKey: "badgeKindHeart", bg: "from-pink-400 to-fuchsia-500" },
-  { slug: "healthy-hero", icon: "/assets/badge-hero.svg", tKey: "badgeHealthy", bg: "from-blue-400 to-cyan-500" },
-  { slug: "rainbow-star", icon: "/assets/star-mascot.svg", tKey: "badgeRainbow", bg: "from-green-400 to-emerald-500" },
-  { slug: "music-master", icon: "/assets/icon-sing.svg", tKey: "badgeMusic", bg: "from-purple-400 to-violet-500" },
-  { slug: "super-champion", icon: "/assets/trophy.svg", tKey: "badgeChampion", bg: "from-orange-400 to-red-500" },
-];
+// ── Animated star counter ──────────────────────────────────────
+function StarCount({ target }: { target: number }) {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, v => Math.round(v));
+  const [display, setDisplay] = useState(0);
 
-export default function TreasurePage() {
-  const { t } = useLanguage();
-  const [childName, setChildName] = useState("Explorer");
-  const [achievements, setAchievements] = useState<ChildAchievement[]>([]);
-  const [stories, setStories] = useState<StoryLibraryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const unsub = rounded.on("change", v => setDisplay(v));
+    const ctrl = animate(count, target, { duration: 1.2, ease: "easeOut" });
+    return () => { ctrl.stop(); unsub(); };
+  }, [target, count, rounded]);
+
+  return <span>{display}</span>;
+}
+
+// ── Confetti ───────────────────────────────────────────────────
+const CONFETTI_COLORS = ["#22c55e","#f59e0b","#3b82f6","#a855f7","#ec4899","#f97316"];
+function Confetti({ onDone }: { onDone: () => void }) {
+  useEffect(() => { const t = setTimeout(onDone, 2600); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
+      {Array.from({ length: 32 }).map((_, i) => (
+        <motion.div key={i}
+          className="absolute rounded-[2px]"
+          style={{
+            width: 8 + (i % 4) * 3, height: 8 + (i % 3) * 3,
+            background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+            left: `${10 + (i * 73 % 80)}%`, top: -20,
+          }}
+          animate={{ y: ["0vh","115vh"], x: [0, (i%2===0?1:-1)*(30 + i*43%70)], rotate: [0, 360*(i%2===0?1:-1)], opacity:[1,1,0.3,0] }}
+          transition={{ duration: 1.9 + (i%5)*0.18, ease:"easeIn", delay: i*0.032 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <motion.div
+      initial={{ opacity:0, y:52, scale:0.88 }}
+      animate={{ opacity:1, y:0,  scale:1 }}
+      exit={{   opacity:0, y:24, scale:0.95 }}
+      transition={{ type:"spring", stiffness:380, damping:26 }}
+      className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-2xl font-black text-sm text-white whitespace-nowrap"
+      style={{ background:"var(--nimi-green)" }}
+    >
+      <span className="text-lg">⭐</span>{message}
+    </motion.div>
+  );
+}
+
+// ── Section-cleared banner ─────────────────────────────────────
+function SectionCleared({ label }: { label: string }) {
+  return (
+    <motion.div
+      initial={{ opacity:0, scale:0.92, y:6 }}
+      animate={{ opacity:1, scale:1,   y:0 }}
+      className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-[var(--nimi-green)]/10 border border-[var(--nimi-green)]/30 text-[13px] font-black"
+      style={{ color:"var(--nimi-green)" }}
+    >
+      <motion.span animate={{ rotate:[0,15,-10,0] }} transition={{ duration:0.6, delay:0.2 }}>🎉</motion.span>
+      {label} — all complete!
+      <motion.span animate={{ rotate:[0,-15,10,0] }} transition={{ duration:0.6, delay:0.3 }}>🎉</motion.span>
+    </motion.div>
+  );
+}
+
+// ── Challenge card ─────────────────────────────────────────────
+function ChallengeCard({
+  challenge, stats, claimed, claiming, onClaim, index, premium,
+}: {
+  challenge: Challenge;
+  stats: ChallengeStats;
+  claimed: boolean;
+  claiming: boolean;
+  onClaim: (c: Challenge) => void;
+  index: number;
+  premium?: boolean;
+}) {
+  const complete = challenge.isComplete(stats);
+  const pct      = challenge.progress(stats);
+  const label    = challenge.progressLabel(stats);
+  const state: "locked"|"ready"|"claimed" = claimed ? "claimed" : complete ? "ready" : "locked";
+
+  return (
+    <motion.div
+      initial={{ opacity:0, y:28, scale:0.95 }}
+      animate={{ opacity:1, y:0,  scale:1 }}
+      transition={{ type:"spring", stiffness:280, damping:26, delay: index * 0.065 }}
+      whileHover={state !== "locked" ? { y:-2, scale:1.01 } : {}}
+      className={`relative overflow-hidden flex items-center gap-4 p-4 rounded-2xl border transition-colors duration-300 ${
+        state === "claimed"
+          ? "border-ds-border bg-ds-surface/50 opacity-60"
+          : state === "ready"
+          ? "border-[var(--nimi-green)] bg-ds-surface shadow-[0_0_0_3px_rgba(34,197,94,0.10),0_8px_28px_rgba(0,0,0,0.09)]"
+          : premium
+          ? "border-amber-300/60 bg-gradient-to-br from-amber-50/40 to-ds-surface shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+          : "border-ds-border bg-ds-surface shadow-[0_2px_12px_rgba(0,0,0,0.05)]"
+      }`}
+    >
+      {/* Left accent stripe */}
+      <div className={`absolute left-0 inset-y-0 w-1 rounded-l-2xl bg-gradient-to-b ${challenge.bg} ${state === "locked" ? "opacity-30" : "opacity-100"}`} />
+
+      {/* Emoji circle */}
+      <div className={`shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br ${challenge.bg} shadow-md ${
+        premium ? "w-16 h-16 text-4xl" : "w-14 h-14 text-3xl"
+      } ${state === "locked" ? "opacity-40 grayscale" : ""}`}>
+        <motion.span
+          animate={state==="ready" ? { scale:[1,1.14,1], rotate:[0,8,-6,0] } : {}}
+          transition={{ duration:1.6, repeat:Infinity, ease:"easeInOut" }}
+        >
+          {state === "claimed" ? "✅" : challenge.emoji}
+        </motion.span>
+      </div>
+
+      {/* Middle */}
+      <div className="flex-1 min-w-0 pl-1">
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className={`font-black leading-tight ${
+            premium ? "text-[15px]" : "text-[13px]"
+          } ${state === "locked" ? "text-ds-muted" : "text-ds-text"}`}>
+            {challenge.title}
+          </p>
+
+          {/* READY badge */}
+          {state === "ready" && (
+            <motion.span
+              initial={{ scale:0, opacity:0 }}
+              animate={{ scale:1, opacity:1 }}
+              className="text-[9px] font-black px-2 py-0.5 rounded-full text-white shrink-0"
+              style={{ background:"var(--nimi-green)",
+                boxShadow:"0 0 0 3px rgba(34,197,94,0.25)" }}
+            >
+              READY!
+            </motion.span>
+          )}
+
+          {/* Premium crown */}
+          {premium && state === "locked" && (
+            <span className="text-[11px] shrink-0">👑</span>
+          )}
+        </div>
+
+        <p className={`text-[11px] leading-snug mb-2 ${state === "locked" ? "text-ds-muted/60" : "text-ds-muted"}`}>
+          {challenge.desc}
+        </p>
+
+        {/* Progress bar */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full bg-ds-border overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full bg-gradient-to-r ${challenge.bg}`}
+              initial={{ width:0 }}
+              animate={{ width:`${pct * 100}%` }}
+              transition={{ duration:0.9, ease:"easeOut", delay: index * 0.065 + 0.25 }}
+            />
+          </div>
+          <span className={`text-[10px] font-bold shrink-0 tabular-nums ${state === "locked" ? "text-ds-muted/60" : "text-ds-text"}`}>
+            {label}
+          </span>
+        </div>
+      </div>
+
+      {/* Right: star amount + action */}
+      <div className="shrink-0 flex flex-col items-center gap-1.5 min-w-[60px]">
+        <span className={`text-[12px] font-black ${state === "locked" ? "text-ds-muted/50" : "text-amber-500"}`}>
+          {state === "claimed" ? `+${challenge.stars}⭐` : `⭐ +${challenge.stars}`}
+        </span>
+
+        <AnimatePresence mode="wait">
+          {state === "claimed" ? (
+            <motion.div key="done"
+              initial={{ scale:0 }} animate={{ scale:1 }}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background:"var(--nimi-green)" }}
+            >
+              <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
+            </motion.div>
+          ) : state === "ready" ? (
+            <motion.button key="claim"
+              initial={{ scale:0.8, opacity:0 }}
+              animate={{ scale:1, opacity:1 }}
+              whileHover={{ scale:1.07 }}
+              whileTap={{ scale:0.93 }}
+              onClick={() => onClaim(challenge)}
+              disabled={claiming}
+              className="text-[11px] font-black px-3 py-1.5 rounded-xl text-white shadow-md disabled:opacity-60 transition-opacity"
+              style={{ background:"var(--nimi-green)" }}
+            >
+              {claiming ? "…" : "Claim!"}
+            </motion.button>
+          ) : (
+            <motion.div key="lock"
+              initial={{ opacity:0 }} animate={{ opacity:1 }}
+              className="w-8 h-8 rounded-full bg-ds-border/50 flex items-center justify-center"
+            >
+              <Lock className="w-3.5 h-3.5 text-ds-muted" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Animated glow ring when ready */}
+      {state === "ready" && (
+        <motion.div
+          className="absolute inset-0 rounded-2xl pointer-events-none"
+          animate={{ boxShadow:["0 0 0 0px rgba(34,197,94,0)", "0 0 0 5px rgba(34,197,94,0.18)", "0 0 0 0px rgba(34,197,94,0)"] }}
+          transition={{ duration:2.2, repeat:Infinity }}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+// ── Main page ──────────────────────────────────────────────────
+export default function ChallengesPage() {
+  const router = useRouter();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
+
+  const [childId, setChildId]           = useState<string | null>(null);
+  const [childName, setChildName]       = useState("Explorer");
+  const [language, setLanguage]         = useState<Language>("en");
+  const [stats, setStats]               = useState<ChallengeStats | null>(null);
+  const [totalStars, setTotalStars]     = useState(0);
+  const [claimed, setClaimed]           = useState<Set<string>>(new Set());
+  const [claimingId, setClaimingId]     = useState<string | null>(null);
+  const [loading, setLoading]           = useState(true);
+  const [toast, setToast]               = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const toastKey = useRef(0);
 
   useEffect(() => {
     void (async () => {
@@ -37,183 +265,247 @@ export default function TreasurePage() {
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0];
       if (!child) { setLoading(false); return; }
+
+      setChildId(child.id);
       setChildName(child.name);
-      const [achs, lib] = await Promise.all([
-        getChildAchievements(child.id),
+      setLanguage(child.language);
+
+      const [activityDates, weekStreak, weekCounts, stories, stars, claimedSet] = await Promise.all([
+        getActivityDates(child.id, child.language),
+        getWeekStreak(child.id, child.language),
+        getWeekActivityCounts(child.id, child.language),
         getStoryLibrary(child.id, child.language),
+        getTotalStars(child.id, child.language),
+        getClaimedChallenges(child.id, child.language),
       ]);
-      setAchievements(achs);
-      setStories(lib);
+
+      const todayIdx = todayWeekIndex();
+      setStats({
+        currentStreak:    computeStreaks(activityDates).current,
+        weekActive:       weekStreak.filter(Boolean).length,
+        weekTotal:        weekCounts.reduce((a, b) => a + b, 0),
+        weekMaxDay:       Math.max(...weekCounts, 0),
+        completedStories: stories.filter(s => s.complete).length,
+        todayCount:       weekCounts[todayIdx] ?? 0,
+      });
+      setTotalStars(stars);
+      setClaimed(claimedSet);
       setLoading(false);
     })();
   }, []);
 
-  const earned = achievements.filter(a => a.type === "badge" && a.slug.startsWith("story-") && a.slug.includes("-complete-")).length;
-  const totalStars = earned * 50;
-  const completedStories = stories.filter(s => s.complete).length;
+  const handleClaim = useCallback(async (challenge: Challenge) => {
+    if (!childId || claimingId) return;
+    const period = challenge.period === "weekly" ? getWeekPeriod() : getDayPeriod();
+    const slug   = `${challenge.period}-${challenge.id}-${period}`;
+    if (claimed.has(slug)) return;
 
-  if (loading) {
-    return (
-      <AppShell>
-        <MagicLoader variant="treasure" />
-      </AppShell>
-    );
-  }
+    setClaimingId(challenge.id);
+    const ok = await claimChallengeReward(childId, language, slug, challenge.stars);
+    setClaimingId(null);
+    if (!ok) return;
+
+    setClaimed(prev => new Set([...prev, slug]));
+    setTotalStars(prev => prev + challenge.stars);
+    setShowConfetti(true);
+    toastKey.current++;
+    setToast(`+${challenge.stars} stars earned! Keep it up 🔥`);
+  }, [childId, language, claimed, claimingId]);
+
+  const weekPeriod = getWeekPeriod();
+  const dayPeriod  = getDayPeriod();
+  const isClaimed = (c: Challenge) => claimed.has(`${c.period}-${c.id}-${c.period === "weekly" ? weekPeriod : dayPeriod}`);
+
+  const weeklyDone  = WEEKLY_CHALLENGES.filter(isClaimed).length;
+  const dailyDone   = DAILY_CHALLENGES.filter(isClaimed).length;
+  const allWeekDone = stats ? WEEKLY_CHALLENGES.every(c => isClaimed(c)) : false;
+  const allDayDone  = stats ? DAILY_CHALLENGES.every(c => isClaimed(c)) : false;
+
+  const allChallenges = [...WEEKLY_CHALLENGES, ...DAILY_CHALLENGES];
+  const totalDone   = weeklyDone + dailyDone;
+  const totalCount  = allChallenges.length;
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
-        <MagicBackground variant="castle" />
-        {/* Sparkle background */}
-        <div className="absolute inset-0 pointer-events-none">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <motion.div key={i} className="absolute w-1.5 h-1.5 bg-yellow-400/30 rounded-full"
-              style={{ top: `${8 + (i * 41) % 80}%`, left: `${5 + (i * 57) % 85}%` }}
-              animate={{ opacity: [0.15, 0.6, 0.15], scale: [1, 1.5, 1] }}
-              transition={{ duration: 2.5 + (i % 3), repeat: Infinity, delay: i * 0.3 }} />
-          ))}
-        </div>
+      <PageSurface>
+        <AnimatePresence>
+          {showConfetti && <Confetti key="confetti" onDone={() => setShowConfetti(false)} />}
+          {toast && (
+            <Toast key={`toast-${toastKey.current}`} message={toast} onDone={() => setToast(null)} />
+          )}
+        </AnimatePresence>
 
-        <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 flex-1 w-full">
+        <main className="max-w-2xl mx-auto px-4 sm:px-5 py-4 sm:py-6 pb-28 flex-1 w-full">
+          {loading ? (
+            <div className="py-20"><MagicLoader variant="treasure" fullPage={false} /></div>
+          ) : (
+            <motion.div
+              initial={{ opacity:0 }} animate={{ opacity:1 }}
+              transition={{ duration:0.3 }}
+              className="space-y-6"
+            >
 
-          {/* ═══ BIG TREASURE HEADER ═══ */}
-          <div className="text-center mb-10">
-            <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-              className="flex items-center justify-center gap-4 mb-4">
-              <motion.img src="/nimi-logo-circle.png" alt="NIMI"
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-yellow-400/50 shadow-xl"
-                animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }} />
-              <motion.img src="/assets/trophy.svg" alt="Trophy"
-                className="w-20 h-20 sm:w-28 sm:h-28 drop-shadow-[0_4px_24px_rgba(245,158,11,0.4)]"
-                animate={{ y: [0, -8, 0], rotate: [0, 3, -3, 0] }} transition={{ duration: 3.5, repeat: Infinity }} />
-              <motion.img src="/piko-logo-circle.png.png" alt="PIKO"
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-blue-400/50 shadow-xl"
-                animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }} />
-            </motion.div>
-            <h1 className="font-baloo font-black text-[32px] sm:text-[42px] text-yellow-300 leading-tight">
-              {childName}&apos;s Treasure! ✨
-            </h1>
-
-            {/* Big star count */}
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3, type: "spring" }}
-              className="inline-flex items-center gap-3 mt-4 bg-gradient-to-r from-yellow-500/20 to-amber-500/10 border-2 border-yellow-400/25 rounded-full px-6 py-3">
-              <img src="/assets/star-mascot.svg" alt="" className="w-10 h-10" />
-              <span className="font-baloo font-black text-yellow-300 text-[32px]">{totalStars}</span>
-              <span className="font-nunito text-yellow-200/60 text-[14px] font-bold">Stars</span>
-            </motion.div>
-          </div>
-
-          {/* ═══ MY BADGES — the main attraction ═══ */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 mb-10">
-            {BADGES.map((badge, i) => {
-              const isEarned = earned > i;
-              return (
-                <motion.div key={badge.slug}
-                  initial={{ opacity: 0, scale: 0.5, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.1, type: "spring", stiffness: 300 }}
-                  className={`relative rounded-[24px] p-4 sm:p-5 flex flex-col items-center text-center border-[3px] ${
-                    isEarned
-                      ? `bg-gradient-to-br ${badge.bg} border-white/30 shadow-[0_8px_30px_rgba(0,0,0,0.3)]`
-                      : "theme-card theme-border"
-                  }`}
+              {/* ── HERO ─────────────────────────────────── */}
+              <HeroBanner zone="achievement">
+                {/* Back button */}
+                <button
+                  onClick={() => router.back()}
+                  className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-[13px] font-bold transition-colors"
                 >
-                  {/* Badge icon — BIG */}
-                  <motion.div
-                    animate={isEarned ? { scale: [1, 1.06, 1], rotate: [0, 3, -3, 0] } : {}}
-                    transition={{ duration: 3, repeat: Infinity, delay: i * 0.3 }}
-                    className="mb-3">
-                    <img src={badge.icon} alt={t(badge.tKey)}
-                      className={`w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg ${isEarned ? "" : "grayscale opacity-20"}`} />
-                  </motion.div>
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
 
-                  {/* Label */}
-                  <p className={`font-baloo font-black text-[15px] sm:text-[17px] leading-tight ${
-                    isEarned ? "text-white drop-shadow" : "theme-text-muted/30"
-                  }`}>
-                    {t(badge.tKey)}
-                  </p>
+                <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-white/10 pointer-events-none" />
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
 
-                  {/* Status */}
-                  {isEarned ? (
-                    <span className="mt-2 bg-white/20 text-white text-[11px] font-nunito font-bold rounded-full px-3 py-1">
-                      ✅ Earned!
-                    </span>
-                  ) : (
-                    <span className="mt-2 flex items-center gap-1 theme-text-muted/40 text-[11px] font-nunito font-bold">
-                      <Lock className="w-3 h-3" /> Locked
-                    </span>
-                  )}
+                {[{t:"12%",l:"5%",d:0},{t:"70%",l:"7%",d:0.55},{t:"18%",r:"5%",d:0.3},{t:"66%",r:"8%",d:0.9}].map((s,i) => (
+                  <motion.span key={i}
+                    className="absolute text-xl pointer-events-none select-none"
+                    style={{ top:s.t, left:(s as any).l, right:(s as any).r }}
+                    animate={{ opacity:[0.3,0.9,0.3], y:[0,-7,0], scale:[0.8,1.25,0.8] }}
+                    transition={{ duration:2.5, repeat:Infinity, delay:s.d }}
+                    aria-hidden
+                  >⭐</motion.span>
+                ))}
 
-                  {/* Earned glow */}
-                  {isEarned && (
-                    <motion.div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg border-2 border-white/50"
-                      initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4 + i * 0.1, type: "spring" }}>
-                      <span className="text-[14px]">⭐</span>
-                    </motion.div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* ═══ STORY PROGRESS — simple visual ═══ */}
-          <div className="theme-card border-2 theme-border rounded-[24px] p-5 sm:p-6 shadow-xl mb-8">
-            <h2 className="font-baloo font-black text-white text-[22px] sm:text-[26px] text-center mb-5">
-              📚 My Stories
-            </h2>
-            <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
-              {stories.map((story, i) => (
-                <motion.div key={story.sid}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 + i * 0.1, type: "spring" }}>
-                  <Link href={story.unlocked ? `/stories/${story.slug}` : "#"}
-                    className={story.unlocked ? "" : "pointer-events-none"}>
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-[24px] sm:text-[28px] font-black border-[3px] shadow-lg transition ${
-                      story.complete
-                        ? "bg-green-500 border-green-300/50 text-white shadow-green-500/20"
-                        : story.unlocked
-                          ? "bg-yellow-500 border-yellow-300/50 text-white shadow-yellow-500/20"
-                          : "theme-card-active theme-border theme-text-muted"
-                    }`}>
-                      {story.complete ? "✅" : story.unlocked ? story.sort_order : <Lock className="w-5 h-5" />}
+                <div className="relative z-10 px-5 pt-12 pb-5 sm:px-7 sm:pb-6">
+                  <div className="flex items-center gap-4">
+                    <motion.img src={assets.nimiCircle} alt="NIMI"
+                      className="w-14 h-14 rounded-full border-2 border-white/40 shadow-xl shrink-0"
+                      animate={{ y:[0,-5,0] }} transition={{ duration:2.8, repeat:Infinity }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.14em] mb-0.5">
+                        Challenge Arena
+                      </p>
+                      <h1 className="font-baloo font-black text-white text-[22px] sm:text-[28px] leading-tight drop-shadow-md">
+                        {childName}&apos;s Challenges! 🏆
+                      </h1>
                     </div>
-                  </Link>
-                  <p className={`font-nunito text-[10px] sm:text-[11px] font-bold text-center mt-1.5 max-w-[80px] leading-tight ${
-                    story.complete ? "text-green-300" : story.unlocked ? "text-yellow-300" : "theme-text-muted/30"
-                  }`}>
-                    {story.title}
-                  </p>
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="flex gap-2.5 mt-4 flex-wrap">
+                    <div className="flex items-center gap-2 bg-white/20 border border-white/30 rounded-full px-4 py-2 backdrop-blur-sm">
+                      <span className="text-[18px]">⭐</span>
+                      <span className="font-baloo font-black text-white text-[18px]">
+                        <StarCount target={totalStars} />
+                      </span>
+                      <span className="text-white/70 text-[11px] font-bold">Total Stars</span>
+                    </div>
+
+                    {/* Progress chip */}
+                    <div className="flex items-center gap-2 bg-white/20 border border-white/30 rounded-full px-4 py-2 backdrop-blur-sm">
+                      <span className="text-[18px]">🏅</span>
+                      <span className="font-baloo font-black text-white text-[18px]">{totalDone}</span>
+                      <span className="text-white/70 text-[11px] font-bold">/ {totalCount} done</span>
+                    </div>
+                  </div>
+
+                  {/* Overall progress bar */}
+                  <div className="mt-3 h-1.5 rounded-full bg-white/20 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-white"
+                      initial={{ width:0 }}
+                      animate={{ width: `${(totalDone/totalCount)*100}%` }}
+                      transition={{ duration:1, ease:"easeOut", delay:0.3 }}
+                    />
+                  </div>
+                </div>
+              </HeroBanner>
+
+              {/* ── WEEKLY ───────────────────────────────── */}
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="font-black text-ds-text text-[16px]">📅 This Week</h2>
+                    <p className="text-ds-muted text-[11px]">Resets every Monday</p>
+                  </div>
+                  <span className="text-[11px] font-black text-ds-muted bg-ds-surface border border-ds-border px-2.5 py-1 rounded-full">
+                    {weeklyDone}/{WEEKLY_CHALLENGES.length}
+                  </span>
+                </div>
+
+                <AnimatePresence>
+                  {allWeekDone && <SectionCleared key="wc" label="This week" />}
+                </AnimatePresence>
+
+                {stats && (
+                  <div className={`space-y-2.5 ${allWeekDone ? "mt-3" : ""}`}>
+                    {WEEKLY_CHALLENGES.map((c, i) => (
+                      <ChallengeCard
+                        key={c.id}
+                        challenge={c}
+                        stats={stats}
+                        claimed={isClaimed(c)}
+                        claiming={claimingId === c.id}
+                        onClaim={handleClaim}
+                        index={i}
+                        premium={c.id === "streak7"}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* ── DAILY ────────────────────────────────── */}
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="font-black text-ds-text text-[16px]">☀️ Today</h2>
+                    <p className="text-ds-muted text-[11px]">Resets at midnight</p>
+                  </div>
+                  <span className="text-[11px] font-black text-ds-muted bg-ds-surface border border-ds-border px-2.5 py-1 rounded-full">
+                    {dailyDone}/{DAILY_CHALLENGES.length}
+                  </span>
+                </div>
+
+                <AnimatePresence>
+                  {allDayDone && <SectionCleared key="dc" label="Today" />}
+                </AnimatePresence>
+
+                {stats && (
+                  <div className={`space-y-2.5 ${allDayDone ? "mt-3" : ""}`}>
+                    {DAILY_CHALLENGES.map((c, i) => (
+                      <ChallengeCard
+                        key={c.id}
+                        challenge={c}
+                        stats={stats}
+                        claimed={isClaimed(c)}
+                        claiming={claimingId === c.id}
+                        onClaim={handleClaim}
+                        index={WEEKLY_CHALLENGES.length + i}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* ── FOOTER ───────────────────────────────── */}
+              <motion.div
+                initial={{ opacity:0, y:12 }}
+                animate={{ opacity:1, y:0 }}
+                transition={{ delay:0.7 }}
+                className="text-center py-2"
+              >
+                <motion.div
+                  animate={{ y:[0,-6,0], scale:[1,1.08,1] }}
+                  transition={{ duration:2.4, repeat:Infinity }}
+                  className="text-4xl mb-2"
+                >
+                  {totalDone === totalCount ? "🎊" : "🌟"}
                 </motion.div>
-              ))}
-            </div>
-            <p className="font-nunito text-center theme-text-muted text-[14px] font-bold mt-5">
-              {completedStories}/{stories.length} stories completed!
-            </p>
-          </div>
+                <p className="font-black text-ds-text text-[15px]">
+                  {totalDone === totalCount
+                    ? "Outstanding! All challenges complete!"
+                    : `${totalCount - totalDone} challenge${totalCount - totalDone === 1 ? "" : "s"} left — you've got this!`}
+                </p>
+                <p className="text-ds-muted text-[11px] mt-1">New weekly challenges every Monday</p>
+              </motion.div>
 
-          {/* ═══ BOTTOM CTA ═══ */}
-          <div className="text-center">
-            <motion.div className="flex items-center justify-center gap-2 mb-4"
-              animate={{ y: [0, -4, 0] }} transition={{ duration: 2.5, repeat: Infinity }}>
-              <img src="/assets/star-mascot.svg" alt="" className="w-10 h-10" />
-              <img src="/assets/star-mascot.svg" alt="" className="w-8 h-8 opacity-60" />
-              <img src="/assets/star-mascot.svg" alt="" className="w-10 h-10" />
             </motion.div>
-            <p className="font-baloo font-black text-yellow-300 text-[20px] sm:text-[24px]">
-              Keep playing to fill your treasure!
-            </p>
-            <Link href="/">
-              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                className="mt-4 font-baloo font-black bg-gradient-to-r from-green-500 to-emerald-600 text-white text-[18px] rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(34,197,94,0.3)] inline-flex items-center gap-2">
-                🏠 Back to Home
-              </motion.button>
-            </Link>
-          </div>
-
+          )}
         </main>
-      </div>
+      </PageSurface>
     </AppShell>
   );
 }

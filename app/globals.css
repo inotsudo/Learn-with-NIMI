@@ -1,92 +1,324 @@
+/* homepage.css must be imported BEFORE @tailwind so postcss-import inlines it
+   first and Tailwind's @layer machinery processes everything together. */
+@import '../styles/homepage.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* body {
-  font-family: Arial, Helvetica, sans-serif;
-} */
 
-/* Mobile rubber-band/overscroll bounce reveals the <html> background, not
-   <body>'s (which /admin's light theme still needs unset) — set this dark
-   so bouncing past page bounds shows the app's theme, not a white flash. */
-html {
-  background-color: var(--theme-bg, #150b35);
+/* ═══════════════════════════════════════════════════════════════════
+   HTML / ROOT DEFAULTS
+   background-color inherits the active --theme-bg so the rubber-band
+   overscroll area always matches the theme (no white flash on iOS).
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --app-world-bg-image: none;
+  --app-world-page-image: none;
+  --app-world-decoration-image: none;
 }
 
-/* ── Theme backgrounds ── */
-.theme-bg { background-color: var(--theme-bg, #150b35); }
-.theme-card { background-color: var(--theme-card, #1c1055); }
-.theme-darker { background-color: var(--theme-darker, #0f0830); }
-.theme-card-hover { background-color: var(--theme-card-hover, #251466); }
-.theme-card-active { background-color: var(--theme-card-active, #1a0e3e); }
-.hover\:theme-card-hover:hover { background-color: var(--theme-card-hover, #251466); }
-
-/* ── Theme accent backgrounds ── */
-.theme-accent { background-color: var(--theme-accent, #7c3aed); }
-.theme-accent-soft { background-color: var(--theme-accent-soft, rgba(139, 92, 246, 0.15)); }
-.theme-accent-muted { background-color: var(--theme-accent-muted, rgba(139, 92, 246, 0.25)); }
-.hover\:theme-accent:hover { background-color: var(--theme-accent, #7c3aed); }
-
-/* ── Theme borders ── */
-.theme-border { border-color: var(--theme-border, rgba(139, 92, 246, 0.15)); }
-.theme-border-strong { border-color: var(--theme-border-strong, rgba(139, 92, 246, 0.3)); }
-
-/* ── Theme text ── */
-.theme-text { color: var(--theme-text, #e9d5ff); }
-.theme-text-muted { color: var(--theme-text-muted, #c4b5fd); }
-.theme-text-faint { color: var(--theme-text-faint, rgba(196, 181, 253, 0.4)); }
-.theme-text-accent { color: var(--theme-accent, #7c3aed); }
-.hover\:theme-text:hover { color: var(--theme-text, #e9d5ff); }
-.hover\:theme-text-muted:hover { color: var(--theme-text-muted, #c4b5fd); }
+html {
+  background-color: var(--theme-bg, #FFFFFF);
+  /* Sub-pixel rendering on retina — eliminates blurry text */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Smooth jump for anchor links and JS scroll() calls */
+  scroll-behavior: smooth;
+  /* Prevent horizontal overflow stretching on any viewport width */
+  overflow-x: hidden;
+  width: 100%;
+}
 
 body {
-  font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+  min-height: 100vh;
+  background-color: var(--theme-bg, #FFFFFF);
+  background-image: var(--app-world-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
-@layer base {
-  :root {
-    --background: 260 70% 14%;
-    --foreground: 260 20% 90%;
-    --card: 263 60% 18%;
-    --card-foreground: 260 20% 90%;
-    --popover: 263 60% 18%;
-    --popover-foreground: 260 20% 90%;
-    --primary: 263 70% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 263 50% 22%;
-    --secondary-foreground: 260 20% 90%;
-    --muted: 263 40% 20%;
-    --muted-foreground: 260 20% 65%;
-    --accent: 263 50% 25%;
-    --accent-foreground: 260 20% 90%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 263 40% 25%;
-    --input: 263 40% 25%;
-    --ring: 263 70% 50%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 260 70% 10%;
-    --sidebar-foreground: 260 20% 80%;
-    --sidebar-primary: 263 70% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 263 50% 20%;
-    --sidebar-accent-foreground: 260 20% 90%;
-    --sidebar-border: 263 40% 25%;
-    --sidebar-ring: 263 70% 50%;
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image: var(--app-world-page-image, none);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.35;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  right: clamp(1rem, 3vw, 2rem);
+  top: clamp(3rem, 10vh, 6rem);
+  width: clamp(6rem, 12vw, 10rem);
+  height: clamp(6rem, 12vw, 10rem);
+  pointer-events: none;
+  z-index: -1;
+  background-image: var(--app-world-decoration-image, none);
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.45;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME UTILITY CLASSES
+   These are the bridge between the runtime CSS variables (set by the
+   inline script in layout.tsx) and component classNames. The fallback
+   values match the garden theme — the new default visual language.
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Backgrounds ── */
+.theme-bg           { background-color: var(--theme-bg,          #FFFFFF); }
+.theme-card         { background-color: var(--theme-card,         #FFFFFF); }
+.theme-darker       { background-color: var(--theme-darker,       #F9FAFB); }
+.theme-card-hover   { background-color: var(--theme-card-hover,   #F3F4F6); }
+.theme-card-active  { background-color: var(--theme-card-active,  #E5E7EB); }
+.hover\:theme-card-hover:hover { background-color: var(--theme-card-hover, #F3F4F6); }
+
+/* ── Accent ── */
+.theme-accent       { background-color: var(--theme-accent,       #15803D); }
+.theme-accent-soft  { background-color: var(--theme-accent-soft,  rgba(21,128,61,0.10)); }
+.theme-accent-muted { background-color: var(--theme-accent-muted, rgba(21,128,61,0.18)); }
+.hover\:theme-accent:hover { background-color: var(--theme-accent, #15803D); }
+
+/* ── Borders ── */
+.theme-border        { border-color: var(--theme-border,        rgba(229,231,235,1)); }
+.theme-border-strong { border-color: var(--theme-border-strong, rgba(156,163,175,0.8)); }
+
+/* ── Text ── */
+.theme-text        { color: var(--theme-text,       #111827); }
+.theme-text-muted  { color: var(--theme-text-muted, #6B7280); }
+.theme-text-faint  { color: var(--theme-text-faint, rgba(107,114,128,0.45)); }
+.theme-text-accent { color: var(--theme-accent,     #15803D); }
+.hover\:theme-text:hover       { color: var(--theme-text,       #111827); }
+.hover\:theme-text-muted:hover { color: var(--theme-text-muted, #6B7280); }
+
+/* ── Shared page consistency utilities ── */
+@layer utilities {
+  .page-shell {
+    border-radius: var(--leaf-r-lg);
+    border: 1px solid var(--ds-border-primary);
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 18px 42px rgba(15,23,42,0.08);
+    backdrop-filter: blur(10px);
   }
 
+  .page-card {
+    border-radius: var(--leaf-r);
+    border: 1px solid var(--ds-border-primary);
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 14px 32px rgba(15,23,42,0.06);
+  }
+
+  .leaf-lg {
+    border-radius: var(--leaf-r-lg);
+  }
+
+  .leaf {
+    border-radius: var(--leaf-r);
+  }
+
+  .bg-cta-gradient {
+    background: linear-gradient(to right, var(--ds-brand-primary), var(--ds-brand-hover));
+  }
+
+  .page-section-title {
+    font-family: var(--font-baloo), "Trebuchet MS", sans-serif;
+    font-weight: 900;
+    font-size: clamp(1rem, 1.2vw, 1.3rem);
+    color: var(--ds-text-primary);
+    letter-spacing: 0.01em;
+  }
+
+  .page-section-subtitle {
+    font-family: var(--font-nunito), sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ds-text-secondary);
+  }
+
+  .page-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid rgba(21,128,61,0.2);
+    background: rgba(22,163,74,0.1);
+    padding: 0.35rem 0.7rem;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ds-brand-primary);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHADCN / UI SYSTEM TOKENS
+   These variables power every component in components/ui/*.
+   Values are set in HSL (hue sat% light%) format as required by the
+   shadcn color system. The tokens below define the new NIMIPIKO
+   visual language: white surfaces, green primary, cool-gray neutrals.
+═══════════════════════════════════════════════════════════════════ */
+@layer base {
+  :root {
+    /* ── Surfaces ─────────────────────────────────── */
+    --background:         0 0% 100%;      /* #FFFFFF                */
+    --foreground:         222 47% 11%;    /* #111827  near-black     */
+    --card:               0 0% 100%;      /* #FFFFFF                */
+    --card-foreground:    222 47% 11%;    /* #111827                */
+    --popover:            0 0% 100%;      /* #FFFFFF                */
+    --popover-foreground: 222 47% 11%;    /* #111827                */
+
+    /* ── Brand primary — green ────────────────────── */
+    --primary:            142 72% 29%;    /* #15803D  green-600     */
+    --primary-foreground: 0 0% 100%;      /* #FFFFFF                */
+
+    /* ── Supporting surfaces ─────────────────────── */
+    --secondary:             220 14% 96%; /* #F3F4F6  gray-100      */
+    --secondary-foreground:  222 47% 11%; /* #111827                */
+    --muted:                 220 14% 96%; /* #F3F4F6                */
+    --muted-foreground:      220 9%  46%; /* #6B7280  gray-500      */
+
+    /* ── Hover / active tint ─────────────────────── */
+    --accent:             142 76% 97%;    /* #F0FDF4  green-50      */
+    --accent-foreground:  142 72% 29%;    /* #15803D                */
+
+    /* ── Destructive ─────────────────────────────── */
+    --destructive:            0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Structural ──────────────────────────────── */
+    --border: 220 13% 91%;               /* #E5E7EB  gray-200      */
+    --input:  220 13% 91%;               /* #E5E7EB                */
+    --ring:   142 72% 29%;               /* #15803D  focus ring     */
+
+    /* ── Charts (unchanged) ──────────────────────── */
+    --chart-1: 12  76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43  74% 66%;
+    --chart-5: 27  87% 67%;
+
+    /* ── Global radius ───────────────────────────── */
+    /* 1rem = 16px. Tailwind's rounded-lg/md/sm in tailwind.config.ts
+       are wired to this value so all shadcn components get the right
+       shape without touching any component file. */
+    --radius: 1rem;
+
+    /* ── World Bible palette tokens (§07) ──────────────────────
+       Named colors with semantic meaning — never reference hex directly.
+       Primary text on page: Bark (#1c1410). Never backgrounds.      */
+    --nimi-green:  #15803d;
+    --story-gold:  #e89b2a;
+    --campus-sky:  #3db8ea;
+    --parchment:   #fdf3e0;
+    --zilo-coral:  #f46058;
+    --bark:        #1c1410;
+    --branch:      #4a3726;
+
+    /* ── Leaf-turn signature shape (World Bible §09) ─────────────
+       Three rounded corners, one tight curl at bottom-left.
+       The curl points toward the card's visual root.              */
+    --leaf-r:    20px 20px 20px 5px;
+    --leaf-r-sm: 14px 14px 14px 4px;
+    --leaf-r-lg: 28px 28px 28px 7px;
+
+    /* ── Sidebar ─────────────────────────────────── */
+    --sidebar-background:          0 0% 100%;
+    --sidebar-foreground:          222 47% 11%;
+    --sidebar-primary:             142 72% 29%;
+    --sidebar-primary-foreground:  0 0% 100%;
+    --sidebar-accent:              142 76% 97%;
+    --sidebar-accent-foreground:   142 72% 29%;
+    --sidebar-border:              220 13% 91%;
+    --sidebar-ring:                142 72% 29%;
+
+    /* ── Design System semantic tokens (Phase 2) ─────────────── */
+    /* Default values match the HP design language exactly.       */
+    /* KidThemeProvider overrides these at runtime per theme.     */
+    /* Components consume these in Phase 3+.                      */
+
+    /* Surfaces */
+    --ds-surface-page:        #F9FAFB;
+    --ds-surface-card:        #FFFFFF;
+    --ds-surface-card-hover:  #F9FAFB;
+    --ds-surface-card-active: #F3F4F6;
+    --ds-surface-input:       #F9FAFB;
+    --ds-surface-nav:         #FFFFFF;
+    --ds-surface-overlay:     rgba(0,0,0,0.50);
+    --ds-surface-tooltip:     #111827;
+
+    /* Text */
+    --ds-text-primary:   #111827;
+    --ds-text-secondary: #6B7280;
+    --ds-text-tertiary:  rgba(107,114,128,0.45);
+    --ds-text-inverse:   #FFFFFF;
+    --ds-text-brand:     #15803D;
+
+    /* Borders */
+    --ds-border-primary: #E5E7EB;
+    --ds-border-strong:  rgba(156,163,175,0.80);
+    --ds-border-brand:   #15803D;
+
+    /* Brand */
+    --ds-brand-primary: #15803D;
+    --ds-brand-hover:   #166534;
+    --ds-brand-pressed: #14532D;
+    --ds-brand-soft:    rgba(21,128,61,0.10);
+    --ds-brand-subtle:  #F0FDF4;
+
+    /* Navigation */
+    --ds-nav-bg:            #FFFFFF;
+    --ds-nav-active-bg:     #F0FDF4;
+    --ds-nav-active-text:   #15803D;
+    --ds-nav-inactive-text: #374151;
+    --ds-nav-inactive-icon: #6B7280;
+    --ds-nav-border:        #E5E7EB;
+
+    /* Shadows */
+    --ds-shadow-card:  0 4px 16px rgba(0,0,0,0.08);
+    --ds-shadow-nav:   0 2px 8px rgba(0,0,0,0.06);
+    --ds-shadow-hover: 0 8px 28px rgba(0,0,0,0.14);
+    --ds-shadow-cta:   0 4px 12px rgba(21,128,61,0.35);
+
+    /* Progress */
+    --ds-progress-track: #E5E7EB;
+    --ds-progress-fill:  #15803D;
+
+    /* State */
+    --ds-state-success: #15803D;
+    --ds-state-error:   #DC2626;
+    --ds-state-warning: #D97706;
+    --ds-state-focus:   #15803D;
+  }
+
+  /* Every element's default border color uses the token.
+     Previously hardcoded to hsl(263 40% 25%) — dark purple.
+     This single line was the cause of purple borders on form elements
+     and cards across the entire app. */
   * {
-    border-color: hsl(263 40% 25%);
+    @apply border-border;
   }
 
   body {
-    @apply text-foreground;
-    background-color: var(--theme-bg, #150b35);
+    @apply bg-background text-foreground;
+    /* bg-background resolves to hsl(var(--background)) = white,
+       but --theme-bg wins at runtime for themed routes because it's
+       set inline-style on <body> from layout.tsx. */
+    background-color: var(--theme-bg, #FFFFFF);
     font-family: var(--font-nunito), 'Nunito', sans-serif;
   }
 
@@ -95,35 +327,209 @@ body {
   }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   WORLD BIBLE UTILITY CLASSES (§07 — named colors)
+   Use these instead of gray-500 / green-600 in World-Bible contexts.
+═══════════════════════════════════════════════════════════════════ */
+
+.text-nimi-green  { color: var(--nimi-green);  }
+.bg-nimi-green    { background-color: var(--nimi-green);  }
+.text-story-gold  { color: var(--story-gold);  }
+.bg-story-gold    { background-color: var(--story-gold);  }
+.text-campus-sky  { color: var(--campus-sky);  }
+.bg-campus-sky    { background-color: var(--campus-sky);  }
+.text-zilo-coral  { color: var(--zilo-coral);  }
+.bg-zilo-coral    { background-color: var(--zilo-coral);  }
+.text-bark        { color: var(--bark);        }
+.bg-parchment     { background-color: var(--parchment);   }
+
+/* Eyebrow label — World Bible §08: zone identifier pill
+   9px Nunito, uppercase, 0.12em letter-spacing, inline-block  */
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-nunito, 'Nunito', sans-serif);
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL SELECTION, SCROLLBAR, FOCUS
+═══════════════════════════════════════════════════════════════════ */
+
+/* Brand-green selection tint */
+::selection {
+  background-color: rgba(22, 163, 74, 0.15);
+  color: #111827;
+}
+
+/* Slim, on-brand scrollbar for Webkit browsers */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.7);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156,163,175,0.5) transparent;
+}
+
+/* Keyboard-only focus ring — WCAG 2.2 §2.4.11 compliant */
+:focus-visible {
+  outline: 3px solid var(--nimi-green, #15803d);
+  outline-offset: 3px;
+  border-radius: inherit;
+  transition: outline-offset 0.12s ease;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :focus-visible { transition: none; }
+}
+
+/* Skip-to-content link — keyboard accessible */
+.skip-link {
+  position: fixed;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--nimi-green, #15803d);
+  color: #fff;
+  padding: 0.625rem 1.5rem;
+  border-radius: 100px;
+  font-weight: 800;
+  font-size: 14px;
+  z-index: 9999;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: top 0.18s ease;
+}
+.skip-link:focus-visible {
+  top: 1rem;
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skip-link { transition: none; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   TAILWIND UTILITIES
+═══════════════════════════════════════════════════════════════════ */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-
   .border-border {
     border-color: hsl(var(--border));
   }
+
+  /* ─────────────────────────────────────────────────────────────
+     Phase 2 Semantic Token Utilities
+     All values resolve through --ds-* CSS custom properties set by
+     KidThemeProvider. HP defaults are declared in @layer base :root.
+     Components consume these instead of hp-* classes.
+  ───────────────────────────────────────────────────────────── */
+
+  /* Text */
+  .text-ds-text              { color: var(--ds-text-primary); }
+  .text-ds-muted             { color: var(--ds-text-secondary); }
+  .text-ds-faint             { color: var(--ds-text-tertiary); }
+  .text-ds-brand             { color: var(--ds-text-brand); }
+  .text-ds-inverse           { color: var(--ds-text-inverse); }
+
+  /* Text state variants */
+  .hover\:text-ds-text:hover { color: var(--ds-text-primary); }
+
+  /* Backgrounds — surfaces */
+  .bg-ds-card  { background-color: var(--ds-surface-card); }
+  .bg-ds-page  { background-color: var(--ds-surface-page); }
+  .bg-ds-nav   { background-color: var(--ds-surface-nav); }
+  .bg-ds-input { background-color: var(--ds-surface-input); }
+
+  /* Backgrounds — brand / action */
+  .bg-ds-action         { background-color: var(--ds-brand-primary); }
+  .bg-ds-action-soft    { background-color: var(--ds-brand-soft); }
+  .bg-ds-action-subtle  { background-color: var(--ds-brand-subtle); }
+  .bg-ds-nav-active     { background-color: var(--ds-nav-active-bg); }
+  .bg-ds-progress-track { background-color: var(--ds-progress-track); }
+  .bg-ds-progress-fill  { background-color: var(--ds-progress-fill); }
+
+  /* Borders */
+  .border-ds-border        { border-color: var(--ds-border-primary); }
+  .border-t-ds-border      { border-top-color: var(--ds-border-primary); }
+  .border-ds-border-strong { border-color: var(--ds-border-strong); }
+  .border-ds-border-brand  { border-color: var(--ds-border-brand); }
+
+  /* Border state variants */
+  .hover\:border-ds-border:hover { border-color: var(--ds-border-primary); }
+  .focus\:border-ds-border:focus { border-color: var(--ds-border-primary); }
+
+  /* Responsive border (handles the one sm:border-hp-border occurrence) */
+  @media (min-width: 640px) {
+    .sm\:border-ds-border { border-color: var(--ds-border-primary); }
+  }
+
+  /* Shadows */
+  .shadow-ds-card  { box-shadow: var(--ds-shadow-card); }
+  .shadow-ds-nav   { box-shadow: var(--ds-shadow-nav); }
+  .shadow-ds-hover { box-shadow: var(--ds-shadow-hover); }
+  .shadow-ds-cta   { box-shadow: var(--ds-shadow-cta); }
+
+  /* Shadow state variants */
+  .hover\:shadow-ds-hover:hover { box-shadow: var(--ds-shadow-hover); }
+
+  /* Brand action hover */
+  .bg-ds-action-hover         { background-color: var(--ds-brand-hover); }
+  .hover\:bg-ds-action:hover  { background-color: var(--ds-brand-primary); }
+  .hover\:opacity-90:hover    { opacity: 0.9; }
+
+  /* Sub-12px text size (below Tailwind's text-xs=12px) */
+  .text-2xs { font-size: 0.625rem; line-height: 1rem; }
+
+  /* Kid-scale tap response — satisfying press-down on any interactive element */
+  .kid-tap { transition: transform 75ms ease-out; }
+  .kid-tap:active { transform: scale(0.92); }
+
+  /* Colored glow shadows — for gamification moments */
+  .shadow-glow-green { box-shadow: 0 0 20px rgba(26,168,106,0.45);  }
+  .shadow-glow-gold  { box-shadow: 0 0 20px rgba(232,155,42,0.55);  }
+  .shadow-glow-coral { box-shadow: 0 0 20px rgba(244,96,88,0.45);   }
+  .shadow-glow-sky   { box-shadow: 0 0 20px rgba(61,184,234,0.45);  }
 }
 
 
-
+/* ═══════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   Keyframes here are consumed by Framer Motion variants and legacy
+   CSS animation classes. Do not remove — referenced by many components.
+═══════════════════════════════════════════════════════════════════ */
 @keyframes wiggle {
   0%, 100% { transform: rotate(0deg); }
-  20% { transform: rotate(14deg); }
-  40% { transform: rotate(-10deg); }
-  60% { transform: rotate(8deg); }
-  80% { transform: rotate(-4deg); }
+  20%      { transform: rotate(14deg); }
+  40%      { transform: rotate(-10deg); }
+  60%      { transform: rotate(8deg); }
+  80%      { transform: rotate(-4deg); }
 }
 
 @keyframes floating {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-20px); }
   100% { transform: translateY(0px); }
 }
 
-.animate-floating {
-  animation: floating 4s ease-in-out infinite;
-}
+.animate-floating { animation: floating 4s ease-in-out infinite; }
 
 @keyframes fadeIn {
   to { opacity: 1; }
@@ -131,7 +537,63 @@ body {
 
 .animate-fadeIn { animation: fadeIn 0.5s forwards; }
 
-/* Improved responsive design for missions component */
+@keyframes bounce-kid {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30%       { transform: translateY(-16px) scale(1.07); }
+  50%       { transform: translateY(-6px) scale(1.03); }
+  70%       { transform: translateY(-12px) scale(1.05); }
+}
+
+@keyframes star-pop {
+  0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+  60%  { transform: scale(1.3) rotate(5deg);  opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);    opacity: 1; }
+}
+
+@keyframes slide-up-fade {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0    rgba(26,168,106,0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(26,168,106,0);    }
+  100% { box-shadow: 0 0 0 0    rgba(26,168,106,0);    }
+}
+
+@keyframes celebrate {
+  0%   { transform: scale(1)    rotate(0deg);  }
+  20%  { transform: scale(1.25) rotate(-8deg); }
+  40%  { transform: scale(1.12) rotate(6deg);  }
+  60%  { transform: scale(1.18) rotate(-4deg); }
+  80%  { transform: scale(1.06) rotate(2deg);  }
+  100% { transform: scale(1)    rotate(0deg);  }
+}
+
+@keyframes float-bob {
+  0%, 100% { transform: translateY(0px)   rotate(0deg);  }
+  33%       { transform: translateY(-10px) rotate(2deg);  }
+  66%       { transform: translateY(-5px)  rotate(-1deg); }
+}
+
+@keyframes streak-glow {
+  0%, 100% { box-shadow: 0 0 6px  rgba(249,115,22,0.40); }
+  50%       { box-shadow: 0 0 18px rgba(249,115,22,0.85), 0 0 28px rgba(234,88,12,0.30); }
+}
+
+.animate-bounce-kid  { animation: bounce-kid    1.8s cubic-bezier(0.36,0.07,0.19,0.97) infinite; }
+.animate-star-pop    { animation: star-pop      0.4s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+.animate-slide-up    { animation: slide-up-fade 0.35s ease-out forwards; }
+.animate-pulse-ring  { animation: pulse-ring    2s cubic-bezier(0.455,0.03,0.515,0.955) infinite; }
+.animate-celebrate   { animation: celebrate     0.6s ease-in-out; }
+.animate-float-bob   { animation: float-bob     3.2s ease-in-out infinite; }
+.animate-streak-glow { animation: streak-glow   2s ease-in-out infinite; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   MISSION LAYOUT GRID
+   Custom responsive grid for the daily adventure mission view.
+═══════════════════════════════════════════════════════════════════ */
 .mission-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -152,7 +614,6 @@ body {
   min-width: 90px;
 }
 
-/* Responsive book cards */
 .book-card-container {
   width: 100%;
   max-width: 280px;
@@ -160,38 +621,23 @@ body {
 }
 
 @media (max-width: 640px) {
-  .book-card-container {
-    max-width: 250px;
-    height: 280px;
-  }
-  
-  .mission-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .day-button {
-    min-width: 80px;
-  }
+  .book-card-container { max-width: 250px; height: 280px; }
+  .mission-grid        { grid-template-columns: 1fr; gap: 1rem; }
+  .day-button          { min-width: 80px; }
 }
 
-/* Medium screens */
 @media (min-width: 641px) and (max-width: 1024px) {
-  .mission-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .mission-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* Large screens */
 @media (min-width: 1025px) {
-  .mission-grid {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 1000px;
-    margin: 0 auto;
-  }
+  .mission-grid { grid-template-columns: repeat(2, 1fr); max-width: 1000px; margin: 0 auto; }
 }
 
-/* Slide modal responsiveness */
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL / VIDEO SIZING
+═══════════════════════════════════════════════════════════════════ */
 .slide-modal-content {
   width: 95vw;
   height: 80vh;
@@ -199,13 +645,9 @@ body {
 }
 
 @media (max-width: 768px) {
-  .slide-modal-content {
-    width: 98vw;
-    height: 85vh;
-  }
+  .slide-modal-content { width: 98vw; height: 85vh; }
 }
 
-/* Video modal responsiveness */
 .video-modal-container {
   width: 95vw;
   max-width: 1000px;
@@ -213,57 +655,45 @@ body {
 }
 
 @media (max-width: 768px) {
-  .video-modal-container {
-    width: 98vw;
-  }
+  .video-modal-container { width: 98vw; }
 }
 
-/* Ensure full height on mobile */
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE UTILITIES
+═══════════════════════════════════════════════════════════════════ */
+
+/* Dynamic viewport — avoids iOS browser-chrome overlap on scroll */
 @supports (height: 100dvh) {
-  .h-mobile-full {
-    height: 100dvh;
-  }
+  .h-mobile-full { height: 100dvh; }
 }
 
-/* Enhanced touch targets for mobile */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* Improved mobile scrolling */
-.mobile-scroll {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* Ensure full height on all devices */
-html, body, #root, #root > div {
-  height: 100% !important;
-}
-
-/* Mobile-first full height utility classes */
 .h-mobile-full {
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  height: 100dvh;
 }
 
-/* Enhanced touch targets for mobile */
+/* 44px touch targets per WCAG 2.5.5 / Apple HIG */
 .touch-target {
   min-height: 44px;
-  min-width: 44px;
+  min-width:  44px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Improved mobile scrolling */
+/* Momentum scrolling on iOS */
 .mobile-scroll {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
-/* Prevent image dragging */
+/* Full-height reset for the PWA / app shell */
+html, body, #root, #root > div {
+  height: 100% !important;
+}
+
+/* Prevent image dragging on iOS */
 img {
   -webkit-user-drag: none;
   -khtml-user-drag: none;
@@ -272,14 +702,42 @@ img {
   user-drag: none;
 }
 
-/* Mobile optimization for controls */
 @media (max-width: 768px) {
-  .mobile-controls {
-    padding: 0.5rem;
+  .mobile-controls        { padding: 0.5rem; }
+  .mobile-controls button { font-size: 0.875rem; padding: 0.5rem 0.75rem; }
+}
+
+/* ── Print styles — hide everything except the certificate ── */
+@media print {
+  /* Hide all chrome */
+  header, nav, footer,
+  [data-sidebar], aside,
+  .bottom-nav, .app-shell-nav,
+  button, [role="button"],
+  .no-print {
+    display: none !important;
   }
-  
-  .mobile-controls button {
-    font-size: 0.875rem;
-    padding: 0.5rem 0.75rem;
+
+  /* Reset page */
+  html, body {
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Scale certificate to fit page */
+  .certificate-print-root {
+    display: block !important;
+    transform: none !important;
+    width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Force page margins */
+  @page {
+    margin: 0.5in;
+    size: A4 landscape;
   }
 }

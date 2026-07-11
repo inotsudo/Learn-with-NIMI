@@ -27,22 +27,22 @@ export default function AchievementCenterCard({ achievements, maxLevel, childNam
   ];
 
   return (
-    <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-md p-4">
-      <p className="font-black text-white mb-3">{t("achievementCenterTitle")}</p>
+    <div className="bg-white border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>
+      <p className="font-black text-ds-text mb-3">{t("achievementCenterTitle")}</p>
 
       <div className="grid grid-cols-3 gap-2 mb-3">
         {tiles.map(tile => (
-          <div key={tile.labelKey} className="bg-white/5 rounded-xl p-3 text-center">
+          <div key={tile.labelKey} className="bg-gray-50 leaf p-3 text-center">
             <p className="text-2xl">{tile.emoji}</p>
-            <p className="font-black text-white text-sm mt-1">{earnedCount(tile.items)}/{tile.items.length}</p>
-            <p className="theme-text-muted text-xs mt-0.5 leading-tight">{t(tile.labelKey)}</p>
+            <p className="font-black text-ds-text text-sm mt-1">{earnedCount(tile.items)}/{tile.items.length}</p>
+            <p className="text-gray-500 text-xs mt-0.5 leading-tight">{t(tile.labelKey)}</p>
           </div>
         ))}
       </div>
 
       <TrilingualChampionBanner status={trilingual} childName={childName} />
 
-      <Link href="/certificates" className="block text-center theme-text font-black text-sm hover:underline">
+      <Link href="/certificates" className="block text-center text-nimi-green font-black text-sm hover:underline">
         {t("viewFullAchievementDashboard")}
       </Link>
     </div>

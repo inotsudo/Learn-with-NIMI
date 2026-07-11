@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import MagicBackground from "@/components/magic/MagicBackground";
 
 export default function Error({
   error,
@@ -11,26 +10,27 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center px-4 text-center">
-      <MagicBackground variant="workshop" />
-      <div className="relative z-10 theme-card rounded-3xl shadow-lg p-8 max-w-md w-full">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 text-center">
+      <div className="bg-white border border-ds-border shadow-ds-card p-8 max-w-md w-full" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
         <p className="text-5xl mb-4">🙈</p>
-        <h1 className="text-xl font-bold text-white mb-2">
+        <h1 className="text-xl font-bold text-ds-text mb-2">
           Oops! Something went wrong
         </h1>
-        <p className="text-sm theme-text-muted mb-6">
+        <p className="text-sm text-gray-500 mb-6">
           Don&apos;t worry, it&apos;s not your fault. Let&apos;s try that again!
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => reset()}
-            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl px-6 py-3 shadow-md hover:opacity-90 transition"
+            className="text-white font-bold px-6 py-3 shadow-md transition"
+            style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r)' }}
           >
             Try Again
           </button>
           <Link
-            href="/"
-            className="bg-white/10 theme-text font-bold rounded-2xl px-6 py-3 hover:bg-white/20 transition"
+            href="/home"
+            className="bg-white border border-ds-border text-ds-text font-bold px-6 py-3 hover:bg-gray-50 transition"
+            style={{ borderRadius: 'var(--leaf-r)' }}
           >
             Go Home
           </Link>

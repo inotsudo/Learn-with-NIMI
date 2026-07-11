@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="tl" cx="0" cy="0" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1C0A00" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#1C0A00" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tr" cx="400" cy="0" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1C0A00" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#1C0A00" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bl" cx="0" cy="300" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1C0A00" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#1C0A00" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="br" cx="400" cy="300" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1C0A00" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#1C0A00" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#tl)"/>
+  <rect width="400" height="300" fill="url(#tr)"/>
+  <rect width="400" height="300" fill="url(#bl)"/>
+  <rect width="400" height="300" fill="url(#br)"/>
+  <!-- Irregular burned edge char marks -->
+  <path d="M0,0 Q9,14 4,32 Q14,18 9,40 Q0,52 14,62" stroke="#2C1000" stroke-width="3" fill="none" opacity="0.45"/>
+  <path d="M400,0 Q391,11 395,26 Q386,16 390,33 Q400,44 386,56" stroke="#2C1000" stroke-width="3" fill="none" opacity="0.4"/>
+  <path d="M0,300 Q9,286 4,268 Q16,282 11,262 Q0,250 15,238" stroke="#2C1000" stroke-width="2.5" fill="none" opacity="0.4"/>
+  <path d="M400,300 Q391,286 396,270 Q385,283 389,263 Q400,252 385,242" stroke="#2C1000" stroke-width="2.5" fill="none" opacity="0.4"/>
+</svg>

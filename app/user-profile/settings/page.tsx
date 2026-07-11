@@ -10,7 +10,10 @@ import {
 import type { Child } from "@/lib/queries";
 import { ACTIVITIES, type ActivityCategory } from "@/app/_activityData";
 import AppShell from "@/components/layout/AppShell";
+import { PageSurface } from "@/components/layout/primitives";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import ProfileCard from "@/components/profile/ProfileCard";
 import ProfileStatsGrid from "@/components/profile/ProfileStatsGrid";
 import ProfileBadgesRow from "@/components/profile/ProfileBadgesRow";
@@ -18,13 +21,14 @@ import AccountSettingsCard from "@/components/profile/AccountSettingsCard";
 import AppPreferencesCard from "@/components/profile/AppPreferencesCard";
 import EditChildModal from "@/components/profile/EditChildModal";
 import type { Language } from "@/contexts/LanguageContext";
-import MagicBackground from "@/components/magic/MagicBackground";
 import ThemePicker from "@/components/settings/ThemePicker";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 export default function MyProfilePage() {
   const { t } = useLanguage();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
   const [mounted, setMounted] = useState(false);
   const [hasChildren, setHasChildren] = useState(true);
   const [activeChild, setActiveChild] = useState<Child | null>(null);
@@ -69,30 +73,36 @@ export default function MyProfilePage() {
   if (!hasChildren) {
     return (
       <AppShell>
-        <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col items-center justify-center gap-4 text-center px-4">
-          <MagicBackground variant="meadow" />
-          <p className="relative z-10 theme-text font-semibold">{t("noChildrenYet")}</p>
-          <Link href="/" className="relative z-10 theme-accent text-white font-black rounded-full px-6 py-2.5 shadow hover:theme-accent transition">
-            {t("goHomeBtn")}
-          </Link>
-        </div>
+        <PageSurface className="items-center justify-center px-4">
+          <div className="flex flex-col items-center text-center max-w-xs gap-4 py-12">
+            <div className="relative">
+              <img src={assets.nimiCircle} alt="NIMI" className="w-28 h-28 rounded-full object-cover border-4 border-yellow-400 shadow-xl" />
+              <span className="absolute -bottom-1 -right-1 text-3xl">🌟</span>
+            </div>
+            <div className="bg-white border border-ds-border rounded-2xl rounded-tl-none px-5 py-3 shadow-ds-card">
+              <p className="font-baloo font-black text-ds-text text-[16px] leading-snug">{t("noChildrenYet")}</p>
+            </div>
+            <Link href="/home" className="text-white font-baloo font-black px-8 py-3 shadow-md transition hover:-translate-y-0.5 active:scale-95" style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r)' }}>
+              🏠 {t("goHomeBtn")}
+            </Link>
+          </div>
+        </PageSurface>
       </AppShell>
     );
   }
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
-        <MagicBackground variant="meadow" />
-        <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+      <PageSurface>
+        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
           <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="font-black text-2xl sm:text-3xl text-white">{t("myProfileTitle")}</h1>
-              <p className="theme-text text-sm mt-1">{t("myProfileSubtitle")}</p>
+              <h1 className="font-black text-2xl sm:text-3xl text-ds-text">{t("myProfileTitle")}</h1>
+              <p className="text-gray-500 text-sm mt-1">{t("myProfileSubtitle")}</p>
             </div>
             <button
               onClick={() => setShowEditModal(true)}
-              className="border-2 border-white/20 theme-text theme-card font-black rounded-full px-5 py-2.5 text-sm hover:bg-white/20 transition flex items-center gap-2"
+              className="border border-ds-border bg-white text-ds-text font-black rounded-full px-5 py-2.5 text-sm hover:bg-gray-50 shadow-ds-card transition flex items-center gap-2"
             >
               <Edit className="w-4 h-4" /> {t("editProfile")}
             </button>
@@ -119,7 +129,7 @@ export default function MyProfilePage() {
           </div>
 
           {/* Theme Picker */}
-          <div className="mt-4 theme-card rounded-[24px] border theme-border p-5">
+          <div className="mt-4 bg-white border border-ds-border shadow-ds-card p-5" style={{ borderRadius: 'var(--leaf-r)' }}>
             <ThemePicker />
           </div>
 
@@ -150,7 +160,7 @@ export default function MyProfilePage() {
             onClose={() => setShowEditModal(false)}
           />
         )}
-      </div>
+      </PageSurface>
     </AppShell>
   );
 }

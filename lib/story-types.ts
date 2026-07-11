@@ -20,6 +20,7 @@ export interface StoryLibraryItem {
   unlocked: boolean;
   complete: boolean;
   progress: number;
+  is_free: boolean;
 }
 
 export interface StoryDetails {
@@ -116,8 +117,7 @@ export type SlotKey =
 export type IntroKey =
   | "intro_video"
   | "theme_song"
-  | "meet_characters"
-  | "story_intro";
+  | "meet_characters";
 
 export const SLOT_KEYS: SlotKey[] = [
   "flipflop_audio",
@@ -132,7 +132,6 @@ export const INTRO_KEYS: IntroKey[] = [
   "intro_video",
   "theme_song",
   "meet_characters",
-  "story_intro",
 ];
 
 export const TOTAL_STORY_MISSIONS = 6;

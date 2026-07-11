@@ -97,39 +97,35 @@ export default function AdminLoginPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4c1d95] text-indigo-200 text-sm font-semibold">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500 text-sm font-semibold">
         Checking session...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4c1d95] flex items-center justify-center px-4 py-10">
-      {/* Decorative glow */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative z-10 w-full max-w-md">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md">
         {/* Brand header */}
         <div className="text-center mb-6">
           <img
             src="/nimi-logo-circle.png"
             alt="NIMIPIKO"
-            className="w-16 h-16 rounded-full object-cover mx-auto mb-3 ring-2 ring-white/20 shadow-lg"
+            className="w-16 h-16 rounded-full object-cover mx-auto mb-3 shadow-md"
           />
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">NIMIPIKO</h1>
-          <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-indigo-200 text-xs font-semibold uppercase tracking-wider">
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">NIMIPIKO</h1>
+          <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-semibold uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5" /> Admin Console
           </div>
         </div>
 
         {/* Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 space-y-5">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 space-y-5">
           <div className="text-center">
-            <h2 className="text-lg font-bold text-white">
+            <h2 className="text-lg font-bold text-gray-900">
               {mode === "login" ? "Sign in to your account" : "Reset your password"}
             </h2>
-            <p className="text-indigo-200/70 text-sm mt-1">
+            <p className="text-gray-500 text-sm mt-1">
               {mode === "login"
                 ? "Enter your credentials to access the admin console"
                 : "Enter your email to receive a reset link"}
@@ -137,23 +133,23 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <div className="rounded-xl p-2.5 text-center text-sm font-semibold bg-red-500/10 text-red-300 border border-red-500/20">
+            <div className="rounded-xl p-2.5 text-center text-sm font-semibold bg-red-50 text-red-600 border border-red-200">
               {error}
             </div>
           )}
 
           {message && (
-            <div className="rounded-xl p-2.5 text-center text-sm font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+            <div className="rounded-xl p-2.5 text-center text-sm font-semibold bg-green-50 text-green-700 border border-green-200">
               {message}
             </div>
           )}
 
           <div>
-            <label className="block font-semibold text-indigo-100/80 text-xs uppercase tracking-wide mb-1.5">
+            <label className="block font-semibold text-gray-700 text-xs uppercase tracking-wide mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-300/60" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="email"
                 value={email}
@@ -161,7 +157,7 @@ export default function AdminLoginPage() {
                 onKeyDown={e => e.key === "Enter" && (mode === "login" ? login() : sendResetLink())}
                 disabled={loading}
                 placeholder="you@nimipiko.com"
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-3 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition"
+                className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-10 pr-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition"
               />
             </div>
           </div>
@@ -170,19 +166,19 @@ export default function AdminLoginPage() {
             <>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="font-semibold text-indigo-100/80 text-xs uppercase tracking-wide">
+                  <label className="font-semibold text-gray-700 text-xs uppercase tracking-wide">
                     Password
                   </label>
                   <button
                     type="button"
                     onClick={() => { setMode("forgot"); setError(""); setMessage(""); }}
-                    className="text-xs font-semibold text-indigo-300 hover:text-white transition"
+                    className="text-xs font-semibold text-green-600 hover:text-green-700 transition"
                   >
                     Forgot password?
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-300/60" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
@@ -190,12 +186,12 @@ export default function AdminLoginPage() {
                     onKeyDown={e => e.key === "Enter" && login()}
                     disabled={loading}
                     placeholder="••••••••"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition"
+                    className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-10 pr-10 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(p => !p)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-indigo-300/60 hover:text-white transition"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -205,7 +201,7 @@ export default function AdminLoginPage() {
               <button
                 onClick={login}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold rounded-xl py-3 shadow-lg shadow-purple-900/40 transition disabled:opacity-50"
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl py-3 shadow-sm transition disabled:opacity-50"
               >
                 {loading ? "Signing in..." : "Sign In"}
               </button>
@@ -217,7 +213,7 @@ export default function AdminLoginPage() {
               <button
                 onClick={sendResetLink}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold rounded-xl py-3 shadow-lg shadow-purple-900/40 transition disabled:opacity-50"
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl py-3 shadow-sm transition disabled:opacity-50"
               >
                 {loading ? "Sending..." : "Send Reset Link"}
               </button>
@@ -225,7 +221,7 @@ export default function AdminLoginPage() {
               <button
                 type="button"
                 onClick={() => { setMode("login"); setError(""); setMessage(""); }}
-                className="w-full text-center text-sm font-semibold text-indigo-200/70 hover:text-white transition"
+                className="w-full text-center text-sm font-semibold text-gray-500 hover:text-gray-700 transition"
               >
                 Back to Sign In
               </button>
@@ -233,7 +229,7 @@ export default function AdminLoginPage() {
           )}
         </div>
 
-        <p className="text-center text-white/30 text-xs mt-6">
+        <p className="text-center text-gray-400 text-xs mt-6">
           Authorized personnel only · NIMIPIKO © {new Date().getFullYear()}
         </p>
       </div>

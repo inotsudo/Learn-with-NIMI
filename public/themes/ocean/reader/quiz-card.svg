@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+  <!-- Treasure map border — dashed outer -->
+  <rect x="3" y="3" width="294" height="194" rx="6" fill="none" stroke="#0284C7" stroke-width="2" stroke-dasharray="9 4" opacity="0.5"/>
+  <!-- Inner solid border -->
+  <rect x="10" y="10" width="280" height="180" rx="4" fill="none" stroke="#BAE6FD" stroke-width="0.8" opacity="0.3"/>
+  <!-- Header wave divider -->
+  <path d="M18,38 Q30,32 42,38 Q54,44 66,38 Q78,32 90,38 Q102,44 114,38 Q126,32 138,38 Q150,44 162,38 Q174,32 186,38 Q198,44 210,38 Q222,32 234,38 Q246,44 258,38 Q270,32 282,38" fill="none" stroke="#0EA5E9" stroke-width="1.2" opacity="0.4"/>
+  <!-- X marks the spot (treasure) — BR corner -->
+  <line x1="255" y1="158" x2="287" y2="190" stroke="#0284C7" stroke-width="2.5" opacity="0.55"/>
+  <line x1="287" y1="158" x2="255" y2="190" stroke="#0284C7" stroke-width="2.5" opacity="0.55"/>
+  <circle cx="271" cy="174" r="13" fill="none" stroke="#0EA5E9" stroke-width="1.8" opacity="0.45"/>
+  <!-- Compass rose — TL corner -->
+  <circle cx="32" cy="32" r="13" fill="none" stroke="#0284C7" stroke-width="1" opacity="0.4"/>
+  <line x1="32" y1="19" x2="32" y2="45" stroke="#0284C7" stroke-width="1.2" opacity="0.4"/>
+  <line x1="19" y1="32" x2="45" y2="32" stroke="#0284C7" stroke-width="1.2" opacity="0.4"/>
+  <polygon points="32,20 30,27 32,25 34,27" fill="#0284C7" opacity="0.45"/>
+  <!-- Map path lines -->
+  <path d="M55,65 Q90,58 120,70 Q155,82 185,72 Q210,64 235,74" fill="none" stroke="#0EA5E9" stroke-width="0.8" opacity="0.2"/>
+  <path d="M55,95 Q85,88 120,98 Q155,108 200,96 Q230,88 260,100" fill="none" stroke="#0EA5E9" stroke-width="0.8" opacity="0.2"/>
+  <path d="M55,125 Q90,118 130,126 Q165,134 200,122" fill="none" stroke="#0EA5E9" stroke-width="0.8" opacity="0.18"/>
+  <!-- Wave bottom rule -->
+  <path d="M18,170 Q30,164 42,170 Q54,176 66,170 Q78,164 90,170 Q102,176 114,170 Q126,164 138,170 Q150,176 162,170" fill="none" stroke="#0284C7" stroke-width="1" opacity="0.3"/>
+  <!-- Top label -->
+  <text x="150" y="24" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#0284C7" opacity="0.55" letter-spacing="2">TREASURE HUNT</text>
+</svg>

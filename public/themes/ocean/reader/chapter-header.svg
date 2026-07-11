@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 60">
+  <!-- Left wave arm -->
+  <path d="M20,30 Q35,22 50,30 Q65,38 80,30 Q95,22 110,30 Q125,38 140,30 Q155,22 168,30" fill="none" stroke="#0284C7" stroke-width="1.8" opacity="0.65"/>
+  <!-- Right wave arm -->
+  <path d="M232,30 Q245,22 258,30 Q271,38 284,30 Q297,22 310,30 Q323,38 336,30 Q349,22 362,30 Q375,38 380,30" fill="none" stroke="#0284C7" stroke-width="1.8" opacity="0.65"/>
+  <!-- Second thinner wave lines -->
+  <path d="M20,35 Q35,29 50,35 Q65,41 80,35 Q95,29 110,35 Q125,41 145,35" fill="none" stroke="#0EA5E9" stroke-width="0.6" opacity="0.3"/>
+  <path d="M255,35 Q268,29 281,35 Q294,41 307,35 Q320,29 333,35 Q346,41 380,35" fill="none" stroke="#0EA5E9" stroke-width="0.6" opacity="0.3"/>
+  <!-- Central shell ornament -->
+  <ellipse cx="200" cy="30" rx="14" ry="16" fill="#0EA5E9" opacity="0.45"/>
+  <ellipse cx="200" cy="30" rx="9" ry="11" fill="none" stroke="#BAE6FD" stroke-width="1.2" opacity="0.65"/>
+  <!-- Shell ridges -->
+  <line x1="200" y1="14" x2="200" y2="46" stroke="#BAE6FD" stroke-width="0.7" opacity="0.45"/>
+  <line x1="191" y1="18" x2="209" y2="42" stroke="#BAE6FD" stroke-width="0.5" opacity="0.3"/>
+  <line x1="209" y1="18" x2="191" y2="42" stroke="#BAE6FD" stroke-width="0.5" opacity="0.3"/>
+  <!-- Pearl flanking dots -->
+  <circle cx="178" cy="30" r="3.5" fill="#BAE6FD" opacity="0.65"/>
+  <circle cx="178" cy="30" r="1.5" fill="white" opacity="0.5"/>
+  <circle cx="222" cy="30" r="3.5" fill="#BAE6FD" opacity="0.65"/>
+  <circle cx="222" cy="30" r="1.5" fill="white" opacity="0.5"/>
+  <!-- Bubble accent dots on lines -->
+  <circle cx="58" cy="30" r="2" fill="#0284C7" opacity="0.3"/>
+  <circle cx="100" cy="30" r="2" fill="#0EA5E9" opacity="0.35"/>
+  <circle cx="300" cy="30" r="2" fill="#0284C7" opacity="0.3"/>
+  <circle cx="342" cy="30" r="2" fill="#0EA5E9" opacity="0.35"/>
+</svg>

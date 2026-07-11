@@ -72,7 +72,7 @@ export default function StoryOrderingManager({ onNavigate, onOpenSidebar }: Prop
             </div>
           </div>
           <button onClick={handleSave} disabled={saving}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] rounded-xl px-5 py-2.5 shadow-sm transition disabled:opacity-50">
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-xl px-5 py-2.5 shadow-sm transition disabled:opacity-50">
             {saved ? <><CheckCircle2 size={16} /> Saved!</> : saving ? 'Saving...' : <><Save size={16} /> Save Order</>}
           </button>
         </div>
@@ -91,7 +91,7 @@ export default function StoryOrderingManager({ onNavigate, onOpenSidebar }: Prop
               <span>Move</span>
             </div>
             {stories.map((s, i) => (
-              <div key={s.id} className="px-5 py-3.5 grid grid-cols-[40px_1fr_100px_100px_80px] gap-4 items-center border-b border-gray-50 hover:bg-indigo-50/20 transition">
+              <div key={s.id} className="px-5 py-3.5 grid grid-cols-[40px_1fr_100px_100px_80px] gap-4 items-center border-b border-gray-50 hover:bg-gray-50 transition">
                 <div className="flex items-center gap-1.5">
                   <GripVertical size={14} className="text-gray-300" />
                   <span className="text-[14px] font-extrabold text-gray-800">{s.sort_order}</span>

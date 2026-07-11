@@ -16,7 +16,7 @@ interface CurriculumManagerProps {
   onOpenSidebar?: () => void
 }
 
-const accent = ACCENT.indigo
+const accent = ACCENT.green
 
 const TABS = [
   { key: 'levels', label: 'Levels', icon: Layers },

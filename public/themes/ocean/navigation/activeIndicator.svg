@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <defs>
+    <radialGradient id="pearl" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#0ea5e9" stop-opacity="0.50"/>
+      <stop offset="55%"  stop-color="#0ea5e9" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="20" cy="20" r="20" fill="url(#pearl)"/>
+  <!-- Bubble ring -->
+  <circle cx="20" cy="20" r="14" fill="none" stroke="#7dd3fc" stroke-width="0.6" opacity="0.28"/>
+  <circle cx="20" cy="20" r="10" fill="none" stroke="#7dd3fc" stroke-width="0.4" opacity="0.18"/>
+</svg>

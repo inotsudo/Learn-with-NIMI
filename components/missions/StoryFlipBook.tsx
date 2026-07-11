@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { BookOpen, X } from "lucide-react";
 import HTMLFlipBook from "react-pageflip";
 import { getStorageUrl } from "@/lib/queries";
 import { isSoundEffectsEnabled } from "@/lib/soundEffects";
 import type { Page } from "./types";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
 
 interface StoryFlipBookProps {
   pages: Page[];
@@ -15,6 +17,8 @@ interface StoryFlipBookProps {
 }
 
 export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps) {
+  const { theme } = useAppTheme();
+  const m = useThemeMotion();
   const [processedPages, setProcessedPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -95,7 +99,7 @@ export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps)
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-purple-950 via-gray-900 to-pink-950">
+      <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-gradient-to-br ${theme.gradients.storyReader}`}>
         <div className="w-14 h-14 border-4 theme-border-strong border-t-transparent rounded-full animate-spin" />
         <p className="text-white/80 font-medium text-sm">{t("loadingStory")}</p>
       </div>
@@ -104,7 +108,7 @@ export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps)
 
   if (processedPages.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-purple-950 via-gray-900 to-pink-950">
+      <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-gradient-to-br ${theme.gradients.storyReader}`}>
         <div className="text-5xl">📚</div>
         <p className="text-white text-lg font-semibold">{t("noPagesTitle")}</p>
         <p className="text-gray-400 text-sm">{t("noPagesHint")}</p>
@@ -123,17 +127,17 @@ export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps)
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-purple-950 via-gray-900 to-gray-950"
+      className={`fixed inset-0 z-50 flex flex-col bg-gradient-to-br ${theme.gradients.storyReader}`}
     >
       {/* Header */}
-      <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-purple-900/70 via-gray-900/60 to-pink-900/70 backdrop-blur-md border-b border-white/10 z-40">
+      <div className={`flex justify-between items-center px-4 py-3 bg-gradient-to-r ${theme.gradients.storyReaderHeader} backdrop-blur-md border-b border-white/10 z-40`}>
         <h2 className="flex items-center gap-2 text-white text-lg font-semibold">
           <BookOpen className="h-5 w-5 text-pink-300" />
           {t("storyTime")}
         </h2>
         <motion.button
           whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.94 }}
+          whileTap={m.buttonPress}
           onClick={onClose}
           className="flex items-center justify-center text-white bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm rounded-full p-2.5 transition-colors touch-target"
         >

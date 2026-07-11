@@ -56,6 +56,21 @@ export function getPrice(product: Product, currency: Currency): PricingDisplay {
   return { amount: val, currency, symbol, formatted };
 }
 
+export interface Subscription {
+  id: string;
+  parent_id: string;
+  product_id: string;
+  status: "active" | "cancelled" | "expired" | "past_due";
+  currency: Currency;
+  amount: number;
+  billing_interval: string;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  payment_provider: PaymentProvider;
+  created_at: string;
+}
+
 export function getProviderForCurrency(currency: Currency): PaymentProvider {
   return currency === "RWF" ? "mtn_momo" : "cybersource";
 }

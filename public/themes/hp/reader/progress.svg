@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 12">
+  <defs>
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="40%" stop-color="#D4A017"/>
+      <stop offset="70%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <!-- Base spell trail bar -->
+  <rect x="0" y="3" width="400" height="6" rx="3" fill="url(#trail)" opacity="0.85"/>
+  <!-- Sparkle diamonds along the trail -->
+  <polygon points="50,0 52,4 50,8 48,4" fill="#FCD34D" opacity="0.7"/>
+  <polygon points="100,0 102,4 100,8 98,4" fill="#FCD34D" opacity="0.8"/>
+  <polygon points="150,0 152,4 150,8 148,4" fill="#FCD34D" opacity="0.6"/>
+  <polygon points="200,0 202,4 200,8 198,4" fill="#FCD34D" opacity="0.9"/>
+  <polygon points="250,0 252,4 250,8 248,4" fill="#FCD34D" opacity="0.65"/>
+  <polygon points="300,0 302,4 300,8 298,4" fill="#FCD34D" opacity="0.75"/>
+  <polygon points="350,0 352,4 350,8 348,4" fill="#FCD34D" opacity="0.6"/>
+  <!-- Tiny glow circles at spell points -->
+  <circle cx="50" cy="4" r="3" fill="#FCD34D" opacity="0.3"/>
+  <circle cx="200" cy="4" r="4" fill="#FCD34D" opacity="0.25"/>
+  <circle cx="350" cy="4" r="3" fill="#FCD34D" opacity="0.3"/>
+</svg>

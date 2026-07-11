@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 import type { Child } from "@/lib/queries";
+import ChildAvatar from "@/components/avatar/ChildAvatar";
 
 interface Props {
   children: Child[];
@@ -10,9 +12,10 @@ interface Props {
 }
 
 export default function ChildSelector({ children, activeChild, onSelect }: Props) {
+  const m = useThemeMotion();
   return (
-    <div className="flex items-center gap-2 mb-4 theme-card/80 backdrop-blur rounded-2xl px-3 py-2 border theme-border overflow-x-auto">
-      <span className="text-[11px] font-bold theme-text-muted uppercase tracking-wide flex-shrink-0">
+    <div className="flex items-center gap-2 mb-4 bg-white px-3 py-2 border border-ds-border overflow-x-auto shadow-sm" style={{ borderRadius: 'var(--leaf-r)' }}>
+      <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide flex-shrink-0">
         Playing as:
       </span>
       <div className="flex items-center gap-2 flex-1">
@@ -20,22 +23,20 @@ export default function ChildSelector({ children, activeChild, onSelect }: Props
           <motion.button
             key={child.id}
             onClick={() => onSelect(child)}
-            whileTap={{ scale: 0.93 }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all flex-shrink-0 ${
+            whileTap={m.buttonPress}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-bold transition-all flex-shrink-0 ${
               child.id === activeChild.id
-                ? "theme-accent text-white shadow-lg border theme-border-strong/30"
-                : "theme-darker theme-text hover:theme-card-active border theme-border"
+                ? "text-white shadow-sm border border-transparent"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-ds-border"
             }`}
+            style={child.id === activeChild.id
+              ? { backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }
+              : { borderRadius: 'var(--leaf-r-sm)' }
+            }
           >
-            {child.avatar_url && child.avatar_url.startsWith("http") ? (
-              <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full object-cover" />
-            ) : child.avatar_url ? (
-              <span className="text-base leading-none">{child.avatar_url}</span>
-            ) : (
-              <span className="w-5 h-5 rounded-full theme-accent-muted flex items-center justify-center text-[10px] font-black theme-text">
-                {child.name[0].toUpperCase()}
-              </span>
-            )}
+            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0">
+              <ChildAvatar avatarUrl={child.avatar_url} name={child.name} size={20} />
+            </div>
             {child.name}
           </motion.button>
         ))}

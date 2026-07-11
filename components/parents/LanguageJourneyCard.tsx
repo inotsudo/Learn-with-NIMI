@@ -17,39 +17,39 @@ export default function LanguageJourneyCard({ journey, maxLevel, isActive }: Pro
   const levelPct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <div className={`bg-white/10 backdrop-blur rounded-2xl shadow-md p-4 border-2 ${isActive ? "theme-border-strong" : "border-white/15"}`}>
+    <div className={`bg-white shadow-ds-card p-4 border-2 ${isActive ? "border-ds-border-brand" : "border-ds-border"}`} style={{ borderRadius: 'var(--leaf-r)' }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{meta.flag}</span>
-          <p className="font-black text-white">{meta.label}</p>
+          <p className="font-black text-ds-text">{meta.label}</p>
         </div>
         {isActive && (
-          <span className="px-2 py-0.5 rounded-full theme-accent-muted backdrop-blur theme-text text-xs font-black shrink-0">
+          <span className="px-2 py-0.5 rounded-full bg-ds-action-subtle text-ds-brand text-xs font-black shrink-0">
             {t("activeLanguageBadge")}
           </span>
         )}
       </div>
 
-      <p className="font-bold theme-text text-sm">
+      <p className="font-bold text-ds-text text-sm">
         {fillTemplate(t("levelOfMaxLabel"), { level: String(journey.currentLevel), max: String(maxLevel) })}
       </p>
 
       <div className="mt-2">
-        <p className="text-xs theme-text-muted font-bold mb-1">
+        <p className="text-xs text-gray-500 font-bold mb-1">
           {fillTemplate(t("missionsProgressLabel"), { done: String(done), total: String(total) })}
         </p>
-        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-full theme-accent rounded-full" style={{ width: `${levelPct}%` }} />
+        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-full bg-ds-progress-fill rounded-full" style={{ width: `${levelPct}%` }} />
         </div>
       </div>
 
       <div className="flex items-center justify-between mt-3 text-sm">
-        <span className="theme-text font-bold">🔥 {journey.streak} {t("dayStreakLabel")}</span>
+        <span className="text-ds-text font-bold">🔥 {journey.streak} {t("dayStreakLabel")}</span>
       </div>
 
       <div className="flex items-center justify-between mt-1">
-        <span className="theme-text-muted text-xs font-bold">{t("lastActivityLabel")}</span>
-        <span className="theme-text text-xs font-bold">
+        <span className="text-gray-500 text-xs font-bold">{t("lastActivityLabel")}</span>
+        <span className="text-ds-text text-xs font-bold">
           {journey.lastActivityDate
             ? new Date(`${journey.lastActivityDate}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })
             : t("journeyNotStartedYet")}
@@ -57,12 +57,12 @@ export default function LanguageJourneyCard({ journey, maxLevel, isActive }: Pro
       </div>
 
       <div className="mt-2">
-        <div className="flex justify-between text-xs theme-text-muted font-bold mb-1">
+        <div className="flex justify-between text-xs text-gray-500 font-bold mb-1">
           <span>{t("completionLabel")}</span>
           <span>{journey.completionPct}%</span>
         </div>
-        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-full bg-green-500 rounded-full" style={{ width: `${journey.completionPct}%` }} />
+        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-full bg-ds-progress-fill rounded-full" style={{ width: `${journey.completionPct}%` }} />
         </div>
       </div>
     </div>

@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <defs>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#0c4a6e"/>
+      <stop offset="35%"  stop-color="#0369a1"/>
+      <stop offset="70%"  stop-color="#0e7490"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+    <radialGradient id="sunRays" cx="78%" cy="0%" r="70%">
+      <stop offset="0%"   stop-color="#7dd3fc" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="coralLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#134e4a"/>
+    </linearGradient>
+    <linearGradient id="coralRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#134e4a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ocean water body -->
+  <rect width="1200" height="600" fill="url(#water)"/>
+
+  <!-- Surface shimmer / radial sun glow -->
+  <ellipse cx="940" cy="0" rx="480" ry="380" fill="url(#sunRays)"/>
+
+  <!-- Light ray beams from surface -->
+  <polygon points="820,0 840,600 870,600 850,0"   fill="#bae6fd" opacity="0.045"/>
+  <polygon points="870,0 890,600 920,600 900,0"   fill="#bae6fd" opacity="0.060"/>
+  <polygon points="920,0 940,600 975,600 955,0"   fill="#bae6fd" opacity="0.035"/>
+  <polygon points="975,0 1000,600 1030,600 1005,0" fill="#bae6fd" opacity="0.050"/>
+  <polygon points="1030,0 1055,600 1085,600 1060,0" fill="#bae6fd" opacity="0.040"/>
+
+  <!-- Floating bubbles (various sizes) -->
+  <circle cx="180" cy="420" r="10"  fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.30"/>
+  <circle cx="210" cy="300" r="6"   fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.40"/>
+  <circle cx="330" cy="180" r="4"   fill="none" stroke="#bae6fd" stroke-width="1"   opacity="0.50"/>
+  <circle cx="480" cy="110" r="7"   fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.35"/>
+  <circle cx="700" cy="90"  r="5"   fill="none" stroke="#bae6fd" stroke-width="1"   opacity="0.45"/>
+  <circle cx="790" cy="360" r="12"  fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.25"/>
+  <circle cx="950" cy="220" r="8"   fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.30"/>
+  <circle cx="1050" cy="140" r="5"  fill="none" stroke="#bae6fd" stroke-width="1"   opacity="0.40"/>
+  <circle cx="1120" cy="320" r="9"  fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.28"/>
+  <circle cx="580" cy="260" r="4"   fill="none" stroke="#bae6fd" stroke-width="1"   opacity="0.45"/>
+  <circle cx="140" cy="180" r="6"   fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.35"/>
+
+  <!-- Coral reef — left cluster -->
+  <ellipse cx="80"  cy="600" rx="100" ry="75" fill="url(#coralLeft)" opacity="0.85"/>
+  <ellipse cx="170" cy="600" rx="75"  ry="58" fill="url(#coralLeft)" opacity="0.80"/>
+  <ellipse cx="40"  cy="600" rx="60"  ry="50" fill="#134e4a" opacity="0.70"/>
+  <!-- Coral stems left -->
+  <rect x="85"  y="520" width="12" height="80" fill="#f97316" opacity="0.55" rx="6"/>
+  <rect x="105" y="510" width="9"  height="90" fill="#f97316" opacity="0.45" rx="5"/>
+  <rect x="155" y="530" width="10" height="70" fill="#ef4444" opacity="0.40" rx="5"/>
+  <rect x="60"  y="540" width="8"  height="60" fill="#f97316" opacity="0.50" rx="4"/>
+  <!-- Coral fan left -->
+  <ellipse cx="91"  cy="520" rx="18" ry="12" fill="#f97316" opacity="0.40"/>
+  <ellipse cx="114" cy="510" rx="14" ry="9"  fill="#fb923c" opacity="0.35"/>
+
+  <!-- Coral reef — right cluster -->
+  <ellipse cx="1120" cy="600" rx="100" ry="80" fill="url(#coralRight)" opacity="0.85"/>
+  <ellipse cx="1040" cy="600" rx="80"  ry="62" fill="url(#coralRight)" opacity="0.80"/>
+  <ellipse cx="1165" cy="600" rx="65"  ry="52" fill="#134e4a" opacity="0.70"/>
+  <!-- Coral stems right -->
+  <rect x="1105" y="518" width="12" height="82" fill="#f97316" opacity="0.55" rx="6"/>
+  <rect x="1128" y="508" width="9"  height="92" fill="#f97316" opacity="0.45" rx="5"/>
+  <rect x="1075" y="528" width="10" height="72" fill="#ef4444" opacity="0.40" rx="5"/>
+  <rect x="1148" y="538" width="8"  height="62" fill="#f97316" opacity="0.50" rx="4"/>
+  <!-- Coral fan right -->
+  <ellipse cx="1111" cy="518" rx="18" ry="12" fill="#f97316" opacity="0.40"/>
+  <ellipse cx="1137" cy="508" rx="14" ry="9"  fill="#fb923c" opacity="0.35"/>
+
+  <!-- Seaweed / kelp -->
+  <path d="M 280 600 Q 270 540 285 480 Q 295 420 280 360" stroke="#14532d" stroke-width="6" fill="none" opacity="0.55"/>
+  <path d="M 300 600 Q 315 535 298 475 Q 285 415 302 355" stroke="#166534" stroke-width="4" fill="none" opacity="0.45"/>
+  <path d="M 920 600 Q 908 538 925 478 Q 938 418 920 358" stroke="#14532d" stroke-width="6" fill="none" opacity="0.50"/>
+  <path d="M 940 600 Q 955 532 938 472 Q 925 412 942 352" stroke="#166534" stroke-width="4" fill="none" opacity="0.40"/>
+
+  <!-- Sandy / dark ocean floor -->
+  <ellipse cx="600" cy="620" rx="900" ry="80" fill="#134e4a" opacity="0.55"/>
+</svg>

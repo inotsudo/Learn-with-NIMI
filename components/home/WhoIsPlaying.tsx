@@ -1,13 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
+import { SPRING, DURATION } from "@/lib/design-system/motion";
 import { Settings, Plus, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Child } from "@/lib/queries";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import ChildAvatar from "@/components/avatar/ChildAvatar";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import { getThemeEffects } from "@/lib/design-system/themeEffects";
 
 const AVATAR_COLORS = [
   "from-pink-400 to-rose-500",
-  "from-purple-400 to-indigo-500",
+  "from-green-500 to-emerald-600",
   "from-yellow-400 to-orange-500",
   "from-green-400 to-teal-500",
   "from-blue-400 to-cyan-500",
@@ -22,17 +28,26 @@ interface Props {
 
 export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) {
   const router = useRouter();
+  const { themeId, theme } = useAppTheme();
+  const assets = getThemeAssets(themeId);
+  const effects = getThemeEffects(themeId);
+  const m = useThemeMotion();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#2a1660] via-[#33186e] to-[#1c0f3d] flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
+    <div className={`min-h-screen bg-gradient-to-b ${theme.gradients.pageBg} flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden`}>
 
       {/* Background sparkles */}
       {[...Array(20)].map((_, i) => (
         <motion.div key={i}
-          className="absolute w-1.5 h-1.5 rounded-full bg-white/20"
-          style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+          className="absolute w-1.5 h-1.5 rounded-full"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            backgroundColor: effects.particles.colors[i % effects.particles.colors.length],
+            opacity: 0.4,
+          }}
           animate={{ opacity: [0.1, 0.6, 0.1], scale: [0.8, 1.4, 0.8] }}
-          transition={{ duration: 2 + Math.random() * 2, repeat: Infinity, delay: Math.random() * 2 }}
+          transition={{ duration: DURATION.loopBase + Math.random() * DURATION.loopBase, repeat: Infinity, delay: Math.random() * 2 }}
         />
       ))}
 
@@ -40,20 +55,20 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
       <motion.div
         initial={{ y: -30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: DURATION.slow }}
         className="flex items-center gap-3 mb-2"
       >
-        <img src="/nimi-logo-circle.png" alt="NIMI"
+        <img src={assets.nimiCircle} alt="NIMI"
           className="w-14 h-14 rounded-full border-3 border-yellow-300 shadow-xl" />
         <div>
           <p className="font-black text-3xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-yellow-200 to-cyan-300">
             NIMIPIKO
           </p>
-          <p className="theme-text-muted text-[11px] font-semibold tracking-widest uppercase">
+          <p className="text-gray-500 text-[11px] font-semibold tracking-widest uppercase">
             Where Stories Come to Life
           </p>
         </div>
-        <img src="/piko-logo-circle.png.png" alt="PIKO"
+        <img src={assets.pikoCircle} alt="PIKO"
           className="w-14 h-14 rounded-full border-3 border-blue-300 shadow-xl" />
       </motion.div>
 
@@ -61,8 +76,8 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
       <motion.p
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="text-white text-2xl sm:text-3xl font-black mb-8 mt-4 tracking-wide drop-shadow-lg text-center"
+        transition={{ duration: DURATION.base, delay: 0.2 }}
+        className="text-gray-900 text-2xl sm:text-3xl font-black mb-8 mt-4 tracking-wide text-center"
       >
         Who&apos;s playing today? 🌟
       </motion.p>
@@ -80,28 +95,19 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
             onClick={() => onSelect(child)}
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 * idx + 0.3, type: "spring", stiffness: 260, damping: 20 }}
-            whileHover={{ scale: 1.06, y: -4 }}
-            whileTap={{ scale: 0.94 }}
+            transition={{ ...SPRING.gentle, delay: 0.1 * idx + 0.3 }}
+            whileHover={m.cardHover}
+            whileTap={m.dangerPress}
             className="flex flex-col items-center gap-3 group"
           >
             {/* Avatar circle */}
-            <div className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br ${AVATAR_COLORS[idx % AVATAR_COLORS.length]} flex items-center justify-center shadow-2xl border-4 border-white/30 group-hover:border-white/60 transition-all`}>
-              {child.avatar_url && child.avatar_url.startsWith("http") ? (
-                <img src={child.avatar_url} alt={child.name}
-                  className="w-full h-full rounded-full object-cover" />
-              ) : child.avatar_url ? (
-                <span className="text-5xl sm:text-6xl select-none">{child.avatar_url}</span>
-              ) : (
-                <span className="text-5xl sm:text-6xl select-none">
-                  {["🦁","🐧","🦊","🐬","🦋","🐸"][idx % 6]}
-                </span>
-              )}
+            <div className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br ${AVATAR_COLORS[idx % AVATAR_COLORS.length]} flex items-center justify-center shadow-2xl border-4 border-white/50 group-hover:border-white transition-all overflow-hidden`}>
+              <ChildAvatar avatarUrl={child.avatar_url} name={child.name} size={128} />
             </div>
 
             {/* Name badge */}
-            <div className="bg-white/15 backdrop-blur px-5 py-1.5 rounded-full border border-white/20">
-              <p className="text-white font-black text-base sm:text-lg tracking-wide">
+            <div className="bg-white shadow-sm px-5 py-1.5 rounded-full border border-ds-border">
+              <p className="text-gray-900 font-black text-base sm:text-lg tracking-wide">
                 {child.name}
               </p>
             </div>
@@ -120,16 +126,16 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
           onClick={onAddChild}
           initial={{ opacity: 0, scale: 0.7 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 * children.length + 0.3, type: "spring" }}
-          whileHover={{ scale: 1.06, y: -4 }}
-          whileTap={{ scale: 0.94 }}
+          transition={{ ...SPRING.bounce, delay: 0.1 * children.length + 0.3 }}
+          whileHover={m.cardHover}
+          whileTap={m.dangerPress}
           className="flex flex-col items-center gap-3 group"
         >
-          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white/10 border-4 border-dashed border-white/30 group-hover:border-white/60 flex items-center justify-center transition-all">
-            <Plus className="w-10 h-10 text-white/60 group-hover:text-white transition-colors" />
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gray-50 border-4 border-dashed border-gray-300 group-hover:border-gray-400 flex items-center justify-center transition-all">
+            <Plus className="w-10 h-10 text-gray-400 group-hover:text-gray-600 transition-colors" />
           </div>
-          <div className="bg-white/10 backdrop-blur px-5 py-1.5 rounded-full border border-white/20">
-            <p className="text-white/70 font-bold text-base group-hover:text-white transition-colors">
+          <div className="bg-white shadow-sm px-5 py-1.5 rounded-full border border-ds-border">
+            <p className="text-gray-500 font-bold text-base group-hover:text-gray-700 transition-colors">
               Add child
             </p>
           </div>
@@ -140,9 +146,9 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
       <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
+        transition={{ duration: DURATION.base, delay: 0.8 }}
         onClick={() => router.push("/parents")}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white/60 hover:text-white text-xs font-semibold transition-all"
+        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-gray-50 border border-ds-border text-gray-500 hover:text-gray-700 text-xs font-semibold transition-all shadow-sm"
       >
         <Settings className="w-3.5 h-3.5" />
         Parent Zone

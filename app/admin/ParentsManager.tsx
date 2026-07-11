@@ -182,7 +182,7 @@ export default function ParentsManager({ initialParentId, onNavigate, onOpenSide
         <p className="text-xs text-gray-400 mt-1 max-w-sm">{loadError}</p>
         <button
           onClick={fetchParents}
-          className={`mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition ${accent.button}`}
+          className="mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition bg-green-600 hover:bg-green-700"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Try again
         </button>
@@ -193,7 +193,7 @@ export default function ParentsManager({ initialParentId, onNavigate, onOpenSide
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 flex-shrink-0 z-30 ${accent.soft}`}>
+      <header className="bg-white border-b border-ds-border px-4 sm:px-6 py-5 flex-shrink-0 z-30">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3.5 min-w-0">
             <button
@@ -202,7 +202,7 @@ export default function ParentsManager({ initialParentId, onNavigate, onOpenSide
             >
               <Menu size={17} />
             </button>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-green-50 text-green-600">
               <Users className="w-6 h-6" />
             </div>
             <div className="min-w-0">
@@ -213,14 +213,14 @@ export default function ParentsManager({ initialParentId, onNavigate, onOpenSide
                 Browse parent accounts, their children &amp; settings
               </p>
               <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
+                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-green-600">Dashboard</button>
                 <span className="mx-1.5 text-gray-300">/</span>
                 <span className="font-bold text-gray-500">Parents</span>
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`inline-flex items-center gap-1.5 bg-white border border-gray-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm ${accent.text}`}>
+            <span className="inline-flex items-center gap-1.5 bg-white border border-ds-border px-3.5 py-2 rounded-full text-sm font-bold shadow-sm text-green-600">
               <Users className="w-3.5 h-3.5" /> {parents.length}
             </span>
             <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
@@ -263,7 +263,7 @@ export default function ParentsManager({ initialParentId, onNavigate, onOpenSide
                   key={p.id}
                   onClick={() => setSelectedId(p.id)}
                   className={`relative rounded-2xl border p-3 cursor-pointer transition flex items-center gap-3 ${
-                    isSelected ? `${accent.soft} ${accent.border} shadow-sm` : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
+                    isSelected ? 'bg-green-50 border-green-200 shadow-sm' : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
                   }`}
                 >
                   <ParentAvatar name={p.name ?? 'Parent'} size="sm" />
@@ -281,7 +281,7 @@ export default function ParentsManager({ initialParentId, onNavigate, onOpenSide
         </div>
 
         {/* Profile panel */}
-        <div className="flex-1 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-gray-50 to-white">
+        <div className="flex-1 lg:overflow-y-auto lg:min-h-0 bg-gray-50">
           {!selected ? (
             <div className="h-full flex items-center justify-center text-center p-8">
               <div>

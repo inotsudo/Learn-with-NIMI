@@ -1,24 +1,36 @@
 "use client";
 
 import AppShell from "@/components/layout/AppShell";
+import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import { motion } from "framer-motion";
+import { DURATION, EASE } from "@/lib/design-system/motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import HelpActionCards from "@/components/help/HelpActionCards";
 import PopularQuestionsCard from "@/components/help/PopularQuestionsCard";
 import SupportBanner from "@/components/help/SupportBanner";
-import MagicBackground from "@/components/magic/MagicBackground";
-
 export default function HelpSupportPage() {
   const { t } = useLanguage();
+  const { themeId } = useAppTheme();
+  const assets = getThemeAssets(themeId);
 
   return (
     <AppShell>
-      <div className="min-h-screen relative overflow-hidden theme-bg flex flex-col">
-        <MagicBackground variant="workshop" />
-        <main className="relative z-10 max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
-          <div>
-            <h1 className="font-black text-2xl sm:text-3xl text-white">{t("helpSupportTitle")}</h1>
-            <p className="theme-text text-sm mt-1">{t("helpSupportSubtitle")}</p>
-          </div>
+      <PageSurface>
+        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+          {/* Hero */}
+          <HeroBanner zone="communitySquare" className="mb-4">
+            <div className="relative z-10 p-5 flex items-center gap-4">
+              <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: DURATION.loopFloat, repeat: Infinity, ease: EASE.standard }}>
+                <img src={assets.nimiCircle} alt="NIMI" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white/50 shadow-lg" />
+              </motion.div>
+              <div className="flex-1">
+                <h1 className="font-baloo font-black text-white text-[24px] sm:text-[30px] leading-tight">{t("helpSupportTitle")}</h1>
+                <p className="text-white/80 text-sm mt-1">{t("helpSupportSubtitle")}</p>
+              </div>
+            </div>
+          </HeroBanner>
 
           <div className="mt-4">
             <HelpActionCards />
@@ -32,7 +44,7 @@ export default function HelpSupportPage() {
             <SupportBanner />
           </div>
         </main>
-      </div>
+      </PageSurface>
     </AppShell>
   );
 }

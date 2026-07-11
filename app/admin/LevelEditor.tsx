@@ -28,7 +28,7 @@ interface LevelFramework {
 
 const EMPTY_FRAMEWORK: LevelFramework = { ageRangeLabel: '', frameworkName: '', primaryFocus: '' }
 
-const accent = ACCENT.indigo
+const accent = ACCENT.green
 
 export default function LevelEditor() {
   const [loading, setLoading] = useState(true)
@@ -261,7 +261,7 @@ export default function LevelEditor() {
               const fw = frameworks[level] ?? EMPTY_FRAMEWORK
               return (
               <React.Fragment key={level}>
-                <tr className="bg-indigo-50/60">
+                <tr className="bg-green-50/60">
                   <td colSpan={CATEGORY_ORDER.length + 1} className="py-1.5 px-3">
                     <div className="flex flex-wrap items-center gap-1.5 text-xs">
                       <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-extrabold text-white flex-shrink-0 ${accent.badge}`}>{level}</span>
@@ -271,7 +271,7 @@ export default function LevelEditor() {
                         onBlur={() => handleFrameworkBlur(level)}
                         disabled={busy}
                         placeholder="Framework name (e.g. Toddler Framework)"
-                        className="font-bold text-gray-700 border border-transparent hover:border-gray-200 focus:border-indigo-300 rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition min-w-[200px]"
+                        className="font-bold text-gray-700 border border-transparent hover:border-gray-200 focus:border-green-500 rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-2 focus:ring-green-200 transition min-w-[200px]"
                       />
                       <span className="text-gray-400">·</span>
                       <input
@@ -280,7 +280,7 @@ export default function LevelEditor() {
                         onBlur={() => handleFrameworkBlur(level)}
                         disabled={busy}
                         placeholder="Age range (e.g. Ages 1–2)"
-                        className="text-gray-600 border border-transparent hover:border-gray-200 focus:border-indigo-300 rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition min-w-[140px]"
+                        className="text-gray-600 border border-transparent hover:border-gray-200 focus:border-green-500 rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-2 focus:ring-green-200 transition min-w-[140px]"
                       />
                       <span className="text-gray-400">·</span>
                       <input
@@ -289,7 +289,7 @@ export default function LevelEditor() {
                         onBlur={() => handleFrameworkBlur(level)}
                         disabled={busy}
                         placeholder="Primary focus (e.g. Sensory & Motor Development)"
-                        className="text-gray-600 border border-transparent hover:border-gray-200 focus:border-indigo-300 rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition flex-1 min-w-[220px]"
+                        className="text-gray-600 border border-transparent hover:border-gray-200 focus:border-green-500 rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-2 focus:ring-green-200 transition flex-1 min-w-[220px]"
                       />
                     </div>
                   </td>
@@ -306,7 +306,7 @@ export default function LevelEditor() {
                           value={cell?.missionId ?? ''}
                           onChange={e => handleCellChange(level, slug, e.target.value)}
                           disabled={busy}
-                          className="w-full border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 transition disabled:opacity-50"
+                          className="w-full border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-500 transition disabled:opacity-50"
                         >
                           {!cell && <option value="">— none —</option>}
                           {optionsByCategory[slug]?.map(opt => (

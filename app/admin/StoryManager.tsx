@@ -84,7 +84,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
     try {
       const { data, error } = await supabase
         .from('stories')
-        .select('id, slug, title, cover_url, sort_order, is_active, status, age_min, age_max, published_at, theme_title, theme_emoji, story_pages(id, page_number, image_url, story_page_versions(id, language, text, audio_url, published)), story_versions(id, story_id, language, title, cover_url, intro_video_url, theme_song_url, meet_characters_url, story_intro_url, status, published), story_slots(story_id, slot_key, mission_id, sort_order)')
+        .select('id, slug, title, cover_url, sort_order, is_active, is_free, status, age_min, age_max, published_at, theme_title, theme_emoji, is_personalizable, personalization_config, story_pages(id, story_id, page_number, image_url, story_page_versions(id, language, text, audio_url, published)), story_versions(id, story_id, language, title, cover_url, intro_video_url, theme_song_url, meet_characters_url, story_intro_url, status, published), story_slots(story_id, slot_key, mission_id, sort_order)')
         .order('sort_order')
       if (error) throw error
       setStories((data ?? []) as unknown as StoryRow[])
@@ -262,7 +262,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
           <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
           <p className="font-bold text-gray-700">Couldn&apos;t load stories</p>
           <p className="text-xs text-gray-400 mt-1">{loadError}</p>
-          <button onClick={fetchStories} className="mt-4 bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-full">
+          <button onClick={fetchStories} className="mt-4 bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-full">
             <RefreshCw className="w-3.5 h-3.5 inline mr-1" /> Try again
           </button>
         </div>
@@ -313,13 +313,13 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder="Search stories..." value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
-                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300 w-48" />
+                className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-300 w-48" />
             </div>
             <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition">
               <Filter size={14} /> Filter
             </button>
             <button onClick={handleCreate} disabled={creating}
-              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] rounded-xl px-4 py-2 shadow-sm transition disabled:opacity-50">
+              className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-xl px-4 py-2 shadow-sm transition disabled:opacity-50">
               <Plus size={16} /> New Story
             </button>
           </div>
@@ -330,7 +330,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
           {TABS.map(t => (
             <button key={t.key} onClick={() => { setTab(t.key); setPage(1) }}
               className={`px-4 py-2.5 text-[12px] font-semibold border-b-2 transition ${
-                tab === t.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+                tab === t.key ? 'border-green-600 text-green-600' : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}>
               {t.label}
             </button>
@@ -348,8 +348,8 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
 
         {/* Bulk action bar */}
         {checkedIds.size > 0 && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5 mb-3 flex items-center gap-3 text-[12px]">
-            <span className="font-bold text-indigo-700">{checkedIds.size} selected</span>
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 mb-3 flex items-center gap-3 text-[12px]">
+            <span className="font-bold text-green-700">{checkedIds.size} selected</span>
             <button onClick={handleBulkPublish} disabled={bulkActing}
               className="font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg px-3 py-1.5 transition disabled:opacity-50">
               Publish
@@ -378,7 +378,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
                   <button onClick={e => { e.stopPropagation(); toggleSelect(s.id) }}
                     className="w-8 h-8 flex items-center justify-center shrink-0">
                     <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition ${
-                      checkedIds.has(s.id) ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
+                      checkedIds.has(s.id) ? 'bg-green-600 border-green-600' : 'border-gray-300'
                     }`}>
                       {checkedIds.has(s.id) && <CheckCircle2 size={10} className="text-white" />}
                     </div>
@@ -389,7 +389,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
                   {s.cover_url ? (
                     <img src={getStorageUrl(s.cover_url)} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100 flex-shrink-0" />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-[13px] flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600 font-bold text-[13px] flex-shrink-0">
                       {s.sort_order}
                     </div>
                   )}
@@ -403,6 +403,9 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
                       <div className={`h-full rounded-full ${readiness.score === 100 ? 'bg-emerald-500' : 'bg-amber-400'}`} style={{ width: `${readiness.score}%` }} />
                     </div>
                   </div>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md flex-shrink-0 ${s.is_free ? 'bg-emerald-50 text-emerald-600' : 'bg-violet-50 text-violet-600'}`}>
+                    {s.is_free ? '🆓' : '👑'}
+                  </span>
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
                   <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
                     <button onClick={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}
@@ -467,7 +470,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
               const n = i + 1
               return (
                 <button key={n} onClick={() => setPage(n)}
-                  className={`w-7 h-7 rounded-md text-[11px] font-bold transition ${n === pageClamped ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  className={`w-7 h-7 rounded-md text-[11px] font-bold transition ${n === pageClamped ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
                   {n}
                 </button>
               )

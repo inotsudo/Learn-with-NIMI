@@ -28,14 +28,14 @@ export default function PublishingFilters({ filter, onFilterChange, search, onSe
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Search stories..." value={search} onChange={e => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-indigo-300" />
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-500" />
         </div>
       </div>
       <div className="flex gap-1 flex-wrap">
         {TABS.map(t => (
           <button key={t.key} onClick={() => onFilterChange(t.key)}
             className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition ${
-              filter === t.key ? 'bg-indigo-100 text-indigo-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+              filter === t.key ? 'bg-green-50 text-green-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
             }`}>
             {t.label}
           </button>

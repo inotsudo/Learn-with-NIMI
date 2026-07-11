@@ -3,7 +3,7 @@ import {
   Compass, type LucideIcon,
 } from 'lucide-react'
 
-export type AccentKey = 'violet' | 'pink' | 'orange' | 'amber' | 'emerald' | 'teal' | 'blue' | 'rose' | 'indigo' | 'sky'
+export type AccentKey = 'violet' | 'pink' | 'orange' | 'amber' | 'emerald' | 'teal' | 'blue' | 'rose' | 'indigo' | 'sky' | 'green'
 
 export interface AccentPalette {
   tile: string      // icon tile: soft bg + accent text
@@ -26,6 +26,7 @@ export const ACCENT: Record<AccentKey, AccentPalette> = {
   blue:    { tile: 'bg-blue-100 text-blue-600',       badge: 'bg-blue-500',   button: 'bg-blue-500 hover:bg-blue-600',     soft: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-200',    ring: 'focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300',      gradient: 'bg-gradient-to-br from-blue-400 to-blue-600' },
   rose:    { tile: 'bg-rose-100 text-rose-600',       badge: 'bg-rose-500',   button: 'bg-rose-500 hover:bg-rose-600',     soft: 'bg-rose-50',    text: 'text-rose-600',    border: 'border-rose-200',    ring: 'focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300',      gradient: 'bg-gradient-to-br from-rose-400 to-rose-600' },
   indigo:  { tile: 'bg-indigo-100 text-indigo-600',   badge: 'bg-indigo-500', button: 'bg-indigo-500 hover:bg-indigo-600', soft: 'bg-indigo-50',  text: 'text-indigo-600',  border: 'border-indigo-200',  ring: 'focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300',  gradient: 'bg-gradient-to-br from-indigo-400 to-indigo-600' },
+  green:   { tile: 'bg-green-100 text-green-700',     badge: 'bg-green-600',  button: 'bg-green-600 hover:bg-green-700',   soft: 'bg-green-50',   text: 'text-green-700',   border: 'border-green-200',   ring: 'focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-500',    gradient: 'bg-gradient-to-br from-green-500 to-green-700' },
   sky:     { tile: 'bg-sky-100 text-sky-600',         badge: 'bg-sky-500',    button: 'bg-sky-500 hover:bg-sky-600',       soft: 'bg-sky-50',     text: 'text-sky-600',     border: 'border-sky-200',     ring: 'focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300',        gradient: 'bg-gradient-to-br from-sky-400 to-sky-600' },
 }
 
@@ -157,6 +158,16 @@ export interface StoryPageRow {
   story_page_versions: StoryPageVersionRow[]
 }
 
+export interface PagePhotoConfig {
+  x: number     // PDF points from left edge
+  y: number     // PDF points from bottom edge (PDF coordinate system)
+  size: number  // diameter in PDF points
+}
+
+export interface PersonalizationConfig {
+  pages: Record<string, PagePhotoConfig>  // keyed by page_number as string
+}
+
 export interface StoryRow {
   id: string
   slug: string
@@ -164,12 +175,15 @@ export interface StoryRow {
   cover_url: string | null
   sort_order: number
   is_active: boolean
+  is_free: boolean
   status: 'draft' | 'review' | 'published' | 'retired'
   age_min: number | null
   age_max: number | null
   published_at: string | null
   theme_title: string | null
   theme_emoji: string | null
+  is_personalizable?: boolean
+  personalization_config?: PersonalizationConfig
   story_pages: StoryPageRow[]
   story_versions?: StoryVersionRow[]
   story_slots?: StorySlotRow[]

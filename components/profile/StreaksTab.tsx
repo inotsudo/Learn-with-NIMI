@@ -1,20 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { computeStreaks } from "@/lib/parentInsights";
+import {
+  getStreakShieldsPurchased, getUsedShieldDates, activateStreakShield,
+} from "@/lib/queries";
 import WeekStreakCard from "./WeekStreakCard";
 
 interface Props {
   activityDates: Set<string>;
   weekStreak: boolean[];
+  childId: string;
+  language: "en" | "fr" | "rw";
 }
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function buildCalendar(dates: Set<string>): { active: boolean; future: boolean; today: boolean }[][] {
+function buildCalendar(
+  dates: Set<string>,
+  shielded: Set<string>
+): { active: boolean; shielded: boolean; future: boolean; today: boolean }[][] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStr = localDateStr(today);
@@ -23,14 +33,19 @@ function buildCalendar(dates: Set<string>): { active: boolean; future: boolean; 
   const start = new Date(monday);
   start.setDate(monday.getDate() - 28);
 
-  const weeks: { active: boolean; future: boolean; today: boolean }[][] = [];
+  const weeks: { active: boolean; shielded: boolean; future: boolean; today: boolean }[][] = [];
   for (let w = 0; w < 5; w++) {
-    const week: { active: boolean; future: boolean; today: boolean }[] = [];
+    const week: { active: boolean; shielded: boolean; future: boolean; today: boolean }[] = [];
     for (let d = 0; d < 7; d++) {
       const day = new Date(start);
       day.setDate(start.getDate() + w * 7 + d);
       const str = localDateStr(day);
-      week.push({ active: dates.has(str), future: day.getTime() > today.getTime(), today: str === todayStr });
+      week.push({
+        active: dates.has(str),
+        shielded: shielded.has(str) && !dates.has(str),
+        future: day.getTime() > today.getTime(),
+        today: str === todayStr,
+      });
     }
     weeks.push(week);
   }
@@ -43,42 +58,129 @@ const MILESTONES = [
   { days: 30, emoji: "👑", key: "streakMilestone30" },
 ] as const;
 
-export default function StreaksTab({ activityDates, weekStreak }: Props) {
+export default function StreaksTab({ activityDates, weekStreak, childId, language }: Props) {
   const { t } = useLanguage();
-  const { current, longest } = computeStreaks(activityDates);
-  const weeks = buildCalendar(activityDates);
+  useAppTheme();
+
+  const [shieldsPurchased, setShieldsPurchased] = useState(0);
+  const [usedShieldDates, setUsedShieldDates] = useState<Set<string>>(new Set());
+  const [shieldJustActivated, setShieldJustActivated] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      const [purchased, used] = await Promise.all([
+        getStreakShieldsPurchased(childId),
+        getUsedShieldDates(childId, language),
+      ]);
+      setShieldsPurchased(purchased);
+
+      // Auto-activate: scan backwards from yesterday for a 1-day gap that a shield can fill.
+      // We do this before setting state so the activation is reflected immediately.
+      let available = purchased - used.size;
+      if (available <= 0) {
+        setUsedShieldDates(used);
+        return;
+      }
+
+      // Build effective dates to detect gaps properly.
+      const effective = new Set([...activityDates, ...used]);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Walk backwards from yesterday looking for gap days within a streak window.
+      const newlyUsed = new Set(used);
+      let activated = false;
+      const cursor = new Date(today);
+      cursor.setDate(cursor.getDate() - 1); // start at yesterday
+
+      // Only scan back as far as there's an active streak worth protecting (max 60 days).
+      for (let i = 0; i < 60 && available > 0; i++) {
+        const curStr = localDateStr(cursor);
+        cursor.setDate(cursor.getDate() - 1);
+        const prevStr = localDateStr(cursor);
+
+        if (!effective.has(curStr) && !newlyUsed.has(curStr)) {
+          // This day is a gap. Check if there's activity on the day before.
+          if (effective.has(prevStr) || newlyUsed.has(prevStr)) {
+            // There's continuity behind the gap — a shield can bridge it.
+            await activateStreakShield(childId, language, curStr);
+            newlyUsed.add(curStr);
+            effective.add(curStr);
+            available--;
+            activated = true;
+          } else {
+            // Two consecutive misses with no activity behind — streak broken, stop scanning.
+            break;
+          }
+        }
+      }
+
+      setUsedShieldDates(newlyUsed);
+      if (activated) setShieldJustActivated(true);
+    })();
+  // activityDates identity changes on each render, use size as proxy dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [childId, language, activityDates.size]);
+
+  const shieldsAvailable = shieldsPurchased - usedShieldDates.size;
+  const { current, longest } = computeStreaks(activityDates, new Date(), usedShieldDates);
+  const weeks = buildCalendar(activityDates, usedShieldDates);
   const dayKeys = ["dayMon", "dayTue", "dayWed", "dayThu", "dayFri", "daySat", "daySun"] as const;
 
   return (
     <div className="space-y-4 mt-4">
       <div>
-        <p className="font-black text-white text-lg">{t("streaksPageTitle")}</p>
-        <p className="theme-text-muted text-sm">{t("streaksPageSubtitle")}</p>
+        <p className="font-black text-ds-text text-lg">{t("streaksPageTitle")}</p>
+        <p className="text-gray-500 text-sm">{t("streaksPageSubtitle")}</p>
       </div>
+
+      {/* Shield status */}
+      {shieldsPurchased > 0 && (
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-indigo-200 bg-indigo-50"
+        >
+          <span className="text-2xl">🛡️</span>
+          <div className="flex-1">
+            {shieldJustActivated ? (
+              <p className="font-black text-indigo-700 text-sm">{t("streakShieldActivated")}</p>
+            ) : (
+              <p className="font-black text-indigo-700 text-sm">
+                {t("shieldsAvailableLabel").replace("{n}", String(Math.max(0, shieldsAvailable)))}
+              </p>
+            )}
+            <p className="text-indigo-500 text-xs">{t("rewardStreakShieldDesc")}</p>
+          </div>
+          {shieldsAvailable > 0 && (
+            <span className="font-black text-indigo-600 text-xl">{shieldsAvailable}</span>
+          )}
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4 text-center"
+          className="bg-white border border-ds-border shadow-ds-card p-4 text-center" style={{ borderRadius: 'var(--leaf-r)' }}
         >
           <p className="font-black text-4xl">
             <span className={`${current > 0 ? "drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]" : ""}`}>🔥</span>
-            <span className="text-orange-400 ml-1">{current}</span>
+            <span className="text-orange-500 ml-1">{current}</span>
           </p>
-          <p className="theme-text-muted text-xs font-bold mt-1">{t("currentStreakLabel")}</p>
+          <p className="text-gray-500 text-xs font-bold mt-1">{t("currentStreakLabel")}</p>
         </motion.div>
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4 text-center"
+          className="bg-white border border-ds-border shadow-ds-card p-4 text-center" style={{ borderRadius: 'var(--leaf-r)' }}
         >
           <p className="font-black text-4xl">
             <span>🏆</span>
-            <span className="theme-text ml-1">{longest}</span>
+            <span className="text-ds-text ml-1">{longest}</span>
           </p>
-          <p className="theme-text-muted text-xs font-bold mt-1">{t("longestStreakLabel")}</p>
+          <p className="text-gray-500 text-xs font-bold mt-1">{t("longestStreakLabel")}</p>
         </motion.div>
       </div>
 
@@ -94,8 +196,8 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
               transition={{ delay: 0.2 }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 transition ${
                 earned
-                  ? "bg-yellow-400/20 border-yellow-300/40 text-yellow-200"
-                  : "bg-white/5 border-white/10 theme-text-muted"
+                  ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-brand-primary)]/30 text-[var(--ds-brand-primary)]"
+                  : "bg-gray-50 border-gray-200 text-gray-400"
               }`}
             >
               <span className={earned ? "" : "grayscale opacity-50"}>{m.emoji}</span>
@@ -108,11 +210,11 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
       <WeekStreakCard weekStreak={weekStreak} activityDates={activityDates} />
 
       {/* Activity calendar */}
-      <div className="bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-sm p-4">
-        <p className="font-black text-white mb-3">{t("activityCalendarTitle")}</p>
+      <div className="bg-white border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>
+        <p className="font-black text-ds-text mb-3">{t("activityCalendarTitle")}</p>
         <div className="grid grid-cols-7 gap-1.5 mb-1.5">
           {dayKeys.map((key, i) => (
-            <span key={i} className="text-[10px] font-bold theme-text-muted text-center">{t(key)}</span>
+            <span key={i} className="text-[10px] font-bold text-gray-500 text-center">{t(key)}</span>
           ))}
         </div>
         <div className="space-y-1.5">
@@ -121,33 +223,53 @@ export default function StreaksTab({ activityDates, weekStreak }: Props) {
               {week.map((day, di) => (
                 <div
                   key={di}
-                  className={`aspect-square rounded-md relative ${
+                  className={`aspect-square rounded-md relative flex items-center justify-center ${
                     day.future
-                      ? "bg-white/5"
+                      ? "bg-gray-50"
                       : day.active
-                        ? "bg-gradient-to-br from-green-400 to-green-600 shadow-[0_0_6px_rgba(34,197,94,0.3)]"
-                        : "bg-white/10"
-                  } ${day.today ? "ring-2 ring-yellow-400 ring-offset-1 ring-offset-transparent" : ""}`}
-                />
+                        ? "bg-[var(--ds-brand-primary)]"
+                        : day.shielded
+                          ? "bg-indigo-300"
+                          : "bg-gray-100"
+                  } ${day.today ? "ring-2 ring-[var(--ds-brand-primary)] ring-offset-1" : ""}`}
+                >
+                  {day.shielded && (
+                    <span className="text-[9px] leading-none">🛡️</span>
+                  )}
+                </div>
               ))}
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-4 mt-3 justify-center">
+        <div className="flex items-center gap-4 mt-3 justify-center flex-wrap">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-gradient-to-br from-green-400 to-green-600" />
-            <span className="text-[10px] theme-text-muted font-semibold">{t("streakKeepItUp")}</span>
+            <div className="w-3 h-3 rounded-sm bg-[var(--ds-brand-primary)]" />
+            <span className="text-[10px] text-gray-500 font-semibold">{t("streakKeepItUp")}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-white/10" />
-            <span className="text-[10px] theme-text-muted font-semibold">—</span>
+            <div className="w-3 h-3 rounded-sm bg-indigo-300 flex items-center justify-center text-[7px]">🛡️</div>
+            <span className="text-[10px] text-gray-500 font-semibold">{t("streakShieldedDay")}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm ring-2 ring-yellow-400" />
-            <span className="text-[10px] theme-text-muted font-semibold">{t("todayLabel")}</span>
+            <div className="w-3 h-3 rounded-sm ring-2 ring-[var(--ds-brand-primary)]" />
+            <span className="text-[10px] text-gray-500 font-semibold">{t("todayLabel")}</span>
           </div>
         </div>
       </div>
+
+      {/* Get shields CTA if none owned */}
+      {shieldsPurchased === 0 && (
+        <motion.a
+          href="/shop"
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="block border-2 border-dashed border-indigo-200 rounded-2xl p-4 text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition"
+        >
+          <p className="text-2xl mb-1">🛡️</p>
+          <p className="font-black text-indigo-700 text-sm">{t("getStreakShieldCTA")}</p>
+          <p className="text-indigo-500 text-xs mt-0.5">{t("rewardStreakShieldDesc")}</p>
+        </motion.a>
+      )}
     </div>
   );
 }

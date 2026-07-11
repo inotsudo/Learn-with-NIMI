@@ -81,34 +81,34 @@ export default function InstallPrompt() {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 bg-white/10 backdrop-blur border-2 border-white/15 rounded-2xl shadow-2xl p-4 flex flex-col gap-2">
+    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 bg-white border border-ds-border shadow-ds-card p-4 flex flex-col gap-2" style={{ borderRadius: 'var(--leaf-r)' }}>
       <button
         onClick={dismiss}
         aria-label="Dismiss"
-        className="absolute top-2 right-2 theme-text-muted hover:text-white transition"
+        className="absolute top-2 right-2 text-gray-400 hover:text-ds-text transition"
       >
         <X className="w-4 h-4" />
       </button>
       <div className="flex items-center gap-2">
-        <Download className="w-5 h-5 theme-text" />
-        <p className="font-black text-white text-sm">{t("installPromptTitle")}</p>
+        <Download className="w-5 h-5 text-[var(--ds-brand-primary)]" />
+        <p className="font-black text-ds-text text-sm">{t("installPromptTitle")}</p>
       </div>
-      <p className="theme-text text-xs leading-relaxed">{t("installPromptBody")}</p>
+      <p className="text-gray-500 text-xs leading-relaxed">{t("installPromptBody")}</p>
       {ios ? (
-        <p className="theme-text text-xs font-semibold bg-white/10 rounded-lg px-3 py-2 mt-1">
+        <p className="text-ds-text text-xs font-semibold bg-gray-100 rounded-lg px-3 py-2 mt-1">
           {t("iosInstallInstructions")}
         </p>
       ) : (
         <div className="flex items-center gap-2 mt-1">
           <button
             onClick={install}
-            className="flex-1 theme-accent hover:theme-accent text-white font-black text-xs rounded-full py-2 shadow transition"
+            className="flex-1 bg-[var(--nimi-green)] hover:bg-[var(--ds-brand-hover)] text-white font-black text-xs rounded-full py-2 shadow transition"
           >
             {t("installBtn")}
           </button>
           <button
             onClick={dismiss}
-            className="theme-text-muted hover:text-white text-xs font-semibold px-2"
+            className="text-gray-400 hover:text-ds-text text-xs font-semibold px-2"
           >
             {t("installLaterBtn")}
           </button>

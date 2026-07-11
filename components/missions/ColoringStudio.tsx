@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // @ts-ignore
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
+import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { Palette, X, Brush, Eraser, Undo, Redo, Trash2, Save } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
+import { playColorPick, playStamp, playPop, playSuccess } from "@/lib/sounds";
 import supabase from "@/lib/supabaseClient";
 import type { Page } from "./types";
 
@@ -47,26 +49,24 @@ function floodFill(
   }
 }
 
-const PALETTE_COLORS = [
-  // Reds
-  "#FF0000","#FF4444","#FF8888","#FFBBBB","#FFDDDD",
-  // Oranges
-  "#FF6600","#FF8C00","#FFA040","#FFCC88","#FFE4C4",
-  // Yellows
-  "#FFD700","#FFEE00","#FFFF66","#FFFFAA","#FFFFF0",
-  // Greens
-  "#00AA00","#22CC22","#55EE55","#99EE99","#CCFFCC",
-  // Teals
-  "#00BBBB","#11DDDD","#55EEEE","#AAFFFF","#DFFFFF",
-  // Blues
-  "#0044FF","#3377FF","#66AAFF","#99CCFF","#CCE5FF",
-  // Purples
-  "#8800CC","#AA33DD","#CC88EE","#DDAAFF","#EDD5FF",
-  // Pinks
-  "#FF0066","#FF4499","#FF88BB","#FFAAD5","#FFD5EC",
-  // Browns / earth
-  "#553300","#885522","#BB8855","#DDAA88","#F5DEB3",
-  // Grays + Black + White
+// Kid-friendly primary palette — 12 big bright colors
+const KID_COLORS = [
+  "#FF0000", "#FF6600", "#FFD700", "#00CC00",
+  "#00BBFF", "#0044FF", "#8800CC", "#FF0088",
+  "#885522", "#FF88BB", "#000000", "#FFFFFF",
+];
+
+// Full advanced palette for older kids
+const ADVANCED_COLORS = [
+  "#FF0000","#FF4444","#FF8888","#FFBBBB",
+  "#FF6600","#FF8C00","#FFA040","#FFCC88",
+  "#FFD700","#FFEE00","#FFFF66","#FFFFAA",
+  "#00AA00","#22CC22","#55EE55","#99EE99",
+  "#00BBBB","#11DDDD","#55EEEE","#AAFFFF",
+  "#0044FF","#3377FF","#66AAFF","#99CCFF",
+  "#8800CC","#AA33DD","#CC88EE","#DDAAFF",
+  "#FF0066","#FF4499","#FF88BB","#FFAAD5",
+  "#553300","#885522","#BB8855","#DDAA88",
   "#000000","#444444","#888888","#CCCCCC","#FFFFFF",
 ];
 
@@ -78,6 +78,7 @@ interface ColoringStudioProps {
 }
 
 export default function ColoringStudio({ pages, childId, onClose, t }: ColoringStudioProps) {
+  const themeM = useThemeMotion();
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing    = useRef(false);
@@ -99,6 +100,7 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
   const [brushType,  setBrushType]  = useState<'pencil'|'marker'|'spray'>('pencil');
   const [activeSticker, setActiveSticker] = useState("⭐");
   const [showSaved, setShowSaved] = useState(false);
+  const [showAdvancedPalette, setShowAdvancedPalette] = useState(false);
   const [, setHistVer] = useState(0);
 
   const STICKERS = ["⭐", "🌈", "🦋", "🌸", "❤️", "🌟", "🎀", "🐸", "🦁", "🎵", "✨", "🌺"];
@@ -446,6 +448,7 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(activeSticker, pos.x, pos.y);
+        playStamp();
         saveSnap();
       } catch {}
       return;
@@ -526,43 +529,52 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
 
       {/* ── Desktop sidebar ───────────────────────────────────── */}
       {!isMobile && (
-        <div className="w-[240px] flex-shrink-0 theme-card border-r theme-border flex flex-col overflow-hidden">
+        <div className="w-[240px] flex-shrink-0 bg-white border-r border-ds-border flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-500 flex-shrink-0">
+          <div className="flex items-center gap-2 px-4 py-3 bg-[var(--nimi-green)] flex-shrink-0">
             <span className="text-[18px]">🎨</span>
             <span className="text-white font-baloo font-bold text-[14px] flex-1">Coloring Studio</span>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => { saveToDb(pageIdx); onClose(); }}
+            <motion.button whileTap={themeM.buttonPress} onClick={() => { saveToDb(pageIdx); onClose(); }}
               className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition">
               <X className="h-4 w-4" />
             </motion.button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {/* Palette — big grid */}
-            <div className="grid grid-cols-5 gap-1.5">
-              {PALETTE_COLORS.map(c => (
-                <button key={c} onClick={() => { setColor(c); setTool('brush'); }}
-                  className={`aspect-square rounded-xl transition-all hover:scale-110 border-2 ${
-                    color === c && tool !== 'eraser' ? 'border-white scale-110 shadow-lg' : 'border-transparent'
+            {/* Kid-friendly color palette — big chunky circles */}
+            <div className={`grid gap-2 ${showAdvancedPalette ? 'grid-cols-5' : 'grid-cols-4'}`}>
+              {(showAdvancedPalette ? ADVANCED_COLORS : KID_COLORS).map(c => (
+                <button key={c} onClick={() => { setColor(c); setTool('brush'); playColorPick(); }}
+                  className={`rounded-full transition-all hover:scale-110 border-3 ${
+                    color === c && tool !== 'eraser' ? 'border-white scale-110 shadow-lg ring-2 ring-yellow-400' : 'border-transparent'
                   }`}
-                  style={{ backgroundColor: c, boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 1px rgba(255,255,255,0.3)' : undefined }}
+                  style={{
+                    backgroundColor: c,
+                    width: showAdvancedPalette ? 32 : 44,
+                    height: showAdvancedPalette ? 32 : 44,
+                    boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 2px rgba(0,0,0,0.15)' : undefined,
+                  }}
                 />
               ))}
             </div>
+            <button onClick={() => setShowAdvancedPalette(v => !v)}
+              className="w-full text-[11px] font-bold text-gray-400 hover:text-gray-700 py-1 transition">
+              {showAdvancedPalette ? '◀ Simple colors' : '▶ More colors'}
+            </button>
 
-            {/* Tools */}
-            <div className="grid grid-cols-4 gap-1.5">
+            {/* Tools — big chunky buttons */}
+            <div className="grid grid-cols-4 gap-2">
               {([
-                { id: 'brush' as const,   icon: <Brush className="h-4 w-4" /> },
-                { id: 'fill' as const,    icon: <span className="text-lg">🪣</span> },
-                { id: 'eraser' as const,  icon: <Eraser className="h-4 w-4" /> },
-                { id: 'sticker' as const, icon: <span className="text-lg">⭐</span> },
+                { id: 'brush' as const,   icon: <Brush className="h-5 w-5" />, label: '✏️' },
+                { id: 'fill' as const,    icon: <span className="text-xl">🪣</span>, label: '🪣' },
+                { id: 'eraser' as const,  icon: <Eraser className="h-5 w-5" />, label: '🧹' },
+                { id: 'sticker' as const, icon: <span className="text-xl">⭐</span>, label: '⭐' },
               ]).map(({ id, icon }) => (
                 <button key={id} onClick={() => setTool(id)}
-                  className={`flex items-center justify-center py-2.5 rounded-xl border-2 transition-all ${
+                  className={`flex items-center justify-center py-3 rounded-2xl border-2 transition-all ${
                     tool === id
-                      ? 'border-yellow-400 bg-yellow-400/10 text-white'
-                      : 'theme-border theme-text-faint hover:theme-border-strong/30'
+                      ? 'border-yellow-400 bg-yellow-400/15 text-gray-800 shadow-lg'
+                      : 'border-ds-border text-gray-400 hover:border-[var(--ds-border-brand)]'
                   }`}>
                   {icon}
                 </button>
@@ -571,11 +583,11 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
 
             {/* Sticker picker */}
             {tool === 'sticker' && (
-              <div className="grid grid-cols-6 gap-1.5">
+              <div className="grid grid-cols-4 gap-2">
                 {STICKERS.map(s => (
                   <button key={s} onClick={() => setActiveSticker(s)}
-                    className={`text-xl py-1.5 rounded-xl border-2 transition-all hover:scale-110 ${
-                      activeSticker === s ? 'border-yellow-400 bg-yellow-400/10 scale-110' : 'theme-border'
+                    className={`text-2xl py-2 rounded-2xl border-2 transition-all hover:scale-110 ${
+                      activeSticker === s ? 'border-yellow-400 bg-yellow-400/10 scale-110' : 'border-ds-border'
                     }`}>
                     {s}
                   </button>
@@ -583,53 +595,55 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
               </div>
             )}
 
-            {/* Brush size */}
-            <div>
-              <input type="range" min={2} max={50} value={brushSize}
-                onChange={e => setBrushSize(Number(e.target.value))}
-                className="w-full accent-purple-400" />
-              <div className="flex justify-between mt-1.5">
-                {[4, 12, 24, 40].map(s => (
-                  <button key={s} onClick={() => setBrushSize(s)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
-                      brushSize === s ? 'border-yellow-400 bg-yellow-400/10' : 'theme-border hover:theme-border-strong/30'
-                    }`}>
-                    <div className="rounded-full bg-white" style={{ width: s / 4 + 1, height: s / 4 + 1 }} />
-                  </button>
-                ))}
-              </div>
+            {/* Brush size — 3 big chunky options instead of slider */}
+            <div className="flex gap-2 justify-center">
+              {[
+                { size: 4,  label: 'S',  w: 20 },
+                { size: 14, label: 'M',  w: 28 },
+                { size: 28, label: 'L',  w: 36 },
+                { size: 44, label: 'XL', w: 44 },
+              ].map(({ size, label, w }) => (
+                <button key={size} onClick={() => setBrushSize(size)}
+                  className={`rounded-2xl flex flex-col items-center justify-center gap-1 border-2 transition-all ${
+                    brushSize === size ? 'border-yellow-400 bg-yellow-400/10' : 'border-ds-border hover:border-[var(--ds-border-brand)]'
+                  }`}
+                  style={{ width: w + 12, height: w + 12 }}>
+                  <div className="rounded-full bg-white" style={{ width: Math.max(3, size / 3), height: Math.max(3, size / 3) }} />
+                  <span className="text-[9px] font-bold text-gray-400">{label}</span>
+                </button>
+              ))}
             </div>
 
             {/* Actions */}
-            <div className="grid grid-cols-2 gap-1.5 pt-2 border-t theme-border">
+            <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-ds-border">
               <button onClick={undo} disabled={!canUndo}
-                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/5 text-white/60 text-[12px] font-bold disabled:opacity-20 hover:bg-white/10 transition">
+                className="flex items-center justify-center gap-1.5 py-2.5 leaf bg-gray-100 text-gray-500 text-[12px] font-bold disabled:opacity-20 hover:bg-gray-200 transition">
                 <Undo className="h-4 w-4" /> Undo
               </button>
               <button onClick={redo} disabled={!canRedo}
-                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/5 text-white/60 text-[12px] font-bold disabled:opacity-20 hover:bg-white/10 transition">
+                className="flex items-center justify-center gap-1.5 py-2.5 leaf bg-gray-100 text-gray-500 text-[12px] font-bold disabled:opacity-20 hover:bg-gray-200 transition">
                 <Redo className="h-4 w-4" /> Redo
               </button>
               <button onClick={clearPage}
-                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-500/10 text-red-400 text-[12px] font-bold hover:bg-red-500/20 transition">
+                className="flex items-center justify-center gap-1.5 py-2.5 leaf bg-red-500/10 text-red-400 text-[12px] font-bold hover:bg-red-500/20 transition">
                 <Trash2 className="h-4 w-4" /> Clear
               </button>
-              <button onClick={savePage}
-                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-green-500/10 text-green-400 text-[12px] font-bold hover:bg-green-500/20 transition">
+              <button onClick={() => { savePage(); playSuccess(); }}
+                className="flex items-center justify-center gap-1.5 py-2.5 leaf bg-green-500/10 text-green-400 text-[12px] font-bold hover:bg-green-500/20 transition">
                 <Save className="h-4 w-4" /> Save
               </button>
             </div>
 
             {/* Share to Nimi */}
             <button onClick={shareToNimi}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-pink-500/15 to-purple-500/15 border border-pink-400/15 text-pink-300 text-[12px] font-bold hover:from-pink-500/25 hover:to-purple-500/25 transition">
-              🎨 Share to Nimi Community
+              className="w-full flex items-center justify-center gap-2 py-3 leaf bg-pink-50 border border-pink-200 text-pink-600 text-[12px] font-bold hover:bg-pink-100 transition">
+              {t("storyColorShare")}
             </button>
 
             {/* Saved feedback */}
             {showSaved && (
-              <div className="text-center py-2 rounded-xl bg-green-500/15 border border-green-400/20 text-green-300 text-[12px] font-bold">
-                ✅ Saved!
+              <div className="text-center py-2 leaf bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/20 text-[var(--ds-brand-primary)] text-[12px] font-bold">
+                {t("storyColorSaved")}
               </div>
             )}
           </div>
@@ -640,27 +654,27 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Top bar */}
-        <div className="flex items-center gap-3 px-4 py-2.5 theme-card border-b theme-border flex-shrink-0">
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-white border-b border-ds-border flex-shrink-0">
           {isMobile && (
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => { saveToDb(pageIdx); onClose(); }}
-              className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/15 transition flex-shrink-0">
+            <motion.button whileTap={themeM.buttonPress} onClick={() => { saveToDb(pageIdx); onClose(); }}
+              className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition flex-shrink-0">
               <X className="h-4 w-4" />
             </motion.button>
           )}
-          <span className="hidden md:block text-[13px] font-baloo font-bold text-white flex-shrink-0">🎨 {t("coloringBookTitle")}</span>
+          <span className="hidden md:block text-[13px] font-baloo font-bold text-ds-text flex-shrink-0">🎨 {t("coloringBookTitle")}</span>
           <div className="flex items-center gap-2 mx-auto">
-            <motion.button whileTap={{ scale: 0.9 }}
+            <motion.button whileTap={themeM.buttonPress}
               onClick={() => pageIdx > 0 && goTo(pageIdx - 1)} disabled={pageIdx === 0}
-              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center text-white disabled:opacity-20 transition flex-shrink-0">◀</motion.button>
-            <span className="text-[13px] font-baloo font-bold text-white whitespace-nowrap">
+              className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-20 transition flex-shrink-0">◀</motion.button>
+            <span className="text-[13px] font-baloo font-bold text-ds-text whitespace-nowrap">
               {pageIdx + 1} / {processed.length}
             </span>
-            <motion.button whileTap={{ scale: 0.9 }}
+            <motion.button whileTap={themeM.buttonPress}
               onClick={() => pageIdx < processed.length - 1 && goTo(pageIdx + 1)} disabled={pageIdx >= processed.length - 1}
-              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-center text-white disabled:opacity-20 transition flex-shrink-0">▶</motion.button>
+              className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-20 transition flex-shrink-0">▶</motion.button>
           </div>
           {isMobile && (
-            <button onClick={savePage} className="w-9 h-9 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 flex items-center justify-center flex-shrink-0">
+            <button onClick={() => { savePage(); playSuccess(); }} className="w-9 h-9 rounded-xl bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] hover:opacity-80 flex items-center justify-center flex-shrink-0">
               <Save className="h-4 w-4" />
             </button>
           )}
@@ -671,7 +685,7 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
           style={{ background: '#0f0830' }}>
           {/* Canvas is always mounted so canvasRef is available before the first image loads */}
           {loadError && !loading && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium max-w-md text-center">
+            <div className="flex items-center gap-2 px-3 py-2 leaf bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium max-w-md text-center">
               ⚠️ {t('coloringLoadError')}
             </div>
           )}
@@ -685,36 +699,44 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
               <motion.span className="text-4xl" animate={{ rotate: [0, 360] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>🎨</motion.span>
-              <p className="theme-text-muted font-nunito font-bold text-sm">Preparing your canvas...</p>
+              <p className="text-gray-500 font-nunito font-bold text-sm">{t("storyColorPreparing")}</p>
             </div>
           )}
         </div>
 
-        {/* Mobile toolbar */}
+        {/* Mobile toolbar — kid-friendly chunky buttons */}
         {isMobile && (
-          <div className="theme-card border-t theme-border flex-shrink-0">
-            {/* Color swatches row */}
-            <div className="flex gap-1.5 overflow-x-auto px-3 pt-2.5 pb-1" style={{ scrollbarWidth: 'none' }}>
-              {PALETTE_COLORS.map(c => (
-                <button key={c} onClick={() => { setColor(c); setTool('brush'); }}
-                  className={`flex-shrink-0 w-9 h-9 rounded-full transition-all border-2 ${
-                    color === c && tool === 'brush' ? 'border-white scale-110 shadow-lg' : 'border-transparent'
+          <div className="bg-white border-t border-ds-border flex-shrink-0 pb-safe">
+            {/* Color swatches — big circles, horizontally scrollable */}
+            <div className="flex gap-2 overflow-x-auto px-3 pt-3 pb-1.5" style={{ scrollbarWidth: 'none' }}>
+              {KID_COLORS.map(c => (
+                <button key={c} onClick={() => { setColor(c); setTool('brush'); playColorPick(); }}
+                  className={`flex-shrink-0 rounded-full transition-all border-3 ${
+                    color === c && tool !== 'eraser' ? 'border-white scale-110 shadow-lg ring-2 ring-yellow-400' : 'border-transparent'
                   }`}
-                  style={{ backgroundColor: c }}
+                  style={{ backgroundColor: c, width: 40, height: 40, boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 2px rgba(0,0,0,0.15)' : undefined }}
                 />
               ))}
             </div>
-            {/* Tools row */}
-            <div className="flex items-center gap-1.5 px-3 pb-3 pt-1.5">
-              <button onClick={() => setTool('brush')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all flex-shrink-0 ${tool === 'brush' ? 'border-yellow-400 bg-yellow-400/10 text-white' : 'theme-border theme-text-faint'}`}><Brush className="h-4 w-4" /></button>
-              <button onClick={() => setTool('fill')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 text-lg transition-all flex-shrink-0 ${tool === 'fill' ? 'border-yellow-400 bg-yellow-400/10' : 'theme-border'}`}>🪣</button>
-              <button onClick={() => setTool('sticker')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 text-lg transition-all flex-shrink-0 ${tool === 'sticker' ? 'border-yellow-400 bg-yellow-400/10' : 'theme-border'}`}>⭐</button>
-              <button onClick={() => setTool('eraser')} className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all flex-shrink-0 ${tool === 'eraser' ? 'border-red-400 bg-red-500/10 text-red-400' : 'theme-border theme-text-faint'}`}><Eraser className="h-4 w-4" /></button>
-              <div className="flex-1 mx-1">
-                <input type="range" min={2} max={50} value={brushSize} onChange={e => setBrushSize(Number(e.target.value))} className="w-full accent-purple-400" />
-              </div>
-              <button onClick={undo} disabled={!canUndo} className="w-10 h-10 rounded-xl bg-white/5 text-white/50 flex items-center justify-center disabled:opacity-20 flex-shrink-0"><Undo className="h-4 w-4" /></button>
-              <button onClick={clearPage} className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center flex-shrink-0"><Trash2 className="h-4 w-4" /></button>
+            {/* Tools + size row — chunky */}
+            <div className="flex items-center justify-center gap-2 px-3 pb-3 pt-1.5">
+              <button onClick={() => setTool('brush')} className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 text-xl transition-all ${tool === 'brush' ? 'border-yellow-400 bg-yellow-400/15 shadow-lg' : 'border-ds-border'}`}>✏️</button>
+              <button onClick={() => setTool('fill')} className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 text-xl transition-all ${tool === 'fill' ? 'border-yellow-400 bg-yellow-400/15 shadow-lg' : 'border-ds-border'}`}>🪣</button>
+              <button onClick={() => setTool('sticker')} className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 text-xl transition-all ${tool === 'sticker' ? 'border-yellow-400 bg-yellow-400/15 shadow-lg' : 'border-ds-border'}`}>⭐</button>
+              <button onClick={() => setTool('eraser')} className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 text-xl transition-all ${tool === 'eraser' ? 'border-red-400 bg-red-500/15 shadow-lg' : 'border-ds-border'}`}>🧹</button>
+              {/* Size buttons instead of slider */}
+              <div className="w-px h-8 bg-gray-200 mx-1" />
+              {[{ s: 6, l: 'S' }, { s: 16, l: 'M' }, { s: 32, l: 'L' }].map(({ s, l }) => (
+                <button key={s} onClick={() => setBrushSize(s)}
+                  className={`w-10 h-12 rounded-2xl flex flex-col items-center justify-center border-2 transition-all ${
+                    brushSize === s ? 'border-sky-400 bg-sky-400/10' : 'border-ds-border'
+                  }`}>
+                  <div className="rounded-full bg-gray-600" style={{ width: Math.max(4, s / 3), height: Math.max(4, s / 3) }} />
+                  <span className="text-[8px] font-bold text-gray-400 mt-0.5">{l}</span>
+                </button>
+              ))}
+              <div className="w-px h-8 bg-gray-200 mx-1" />
+              <button onClick={undo} disabled={!canUndo} className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center disabled:opacity-20"><Undo className="h-5 w-5 text-gray-400" /></button>
             </div>
           </div>
         )}

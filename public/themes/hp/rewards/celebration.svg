@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Radiating spokes -->
+  <g stroke="#FCD34D" stroke-opacity="0.5" stroke-width="1.5">
+    <line x1="100" y1="100" x2="100" y2="10"/>
+    <line x1="100" y1="100" x2="100" y2="190"/>
+    <line x1="100" y1="100" x2="10" y2="100"/>
+    <line x1="100" y1="100" x2="190" y2="100"/>
+    <line x1="100" y1="100" x2="43" y2="43"/>
+    <line x1="100" y1="100" x2="157" y2="43"/>
+    <line x1="100" y1="100" x2="43" y2="157"/>
+    <line x1="100" y1="100" x2="157" y2="157"/>
+  </g>
+  <!-- Stars at spoke ends -->
+  <circle cx="100" cy="15" r="4" fill="#FCD34D" opacity="0.7"/>
+  <circle cx="100" cy="185" r="3" fill="#FCD34D" opacity="0.5"/>
+  <circle cx="15" cy="100" r="3" fill="#FCD34D" opacity="0.5"/>
+  <circle cx="185" cy="100" r="3" fill="#FCD34D" opacity="0.5"/>
+  <circle cx="48" cy="48" r="3.5" fill="#FCD34D" opacity="0.6"/>
+  <circle cx="152" cy="48" r="3.5" fill="#FCD34D" opacity="0.6"/>
+  <circle cx="48" cy="152" r="3" fill="#FCD34D" opacity="0.5"/>
+  <circle cx="152" cy="152" r="3" fill="#FCD34D" opacity="0.5"/>
+  <!-- Central star polygon -->
+  <polygon points="100,80 105.9,96.2 123,96.2 109.5,106.2 115.4,122.4 100,112.4 84.6,122.4 90.5,106.2 77,96.2 94.1,96.2" fill="#FCD34D" opacity="0.6"/>
+  <!-- Scattered small glints -->
+  <circle cx="60" cy="35" r="2.5" fill="#FCD34D" opacity="0.45"/>
+  <circle cx="140" cy="30" r="2" fill="#FCD34D" opacity="0.4"/>
+  <circle cx="170" cy="65" r="2" fill="#FCD34D" opacity="0.4"/>
+  <circle cx="30" cy="140" r="2.5" fill="#FCD34D" opacity="0.4"/>
+  <circle cx="170" cy="140" r="2" fill="#FCD34D" opacity="0.35"/>
+</svg>

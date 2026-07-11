@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGE_META, LANGUAGES, type TrilingualStatus } from "@/app/_achievementData";
 
-// Same confetti recipe as components/home/CertificatePanel.tsx's "all complete" state.
 const CONFETTI = [
   { color: "#FFD700", top: "18%", left: "5%"  },
   { color: "#FF6B6B", top: "55%", left: "3%"  },
@@ -29,8 +28,8 @@ export default function TrilingualChampionBanner({ status, childName }: Props) {
   if (status.earned) {
     return (
       <div
-        className="relative overflow-hidden rounded-3xl shadow-2xl border-4 border-yellow-300 text-center py-6 px-4 mb-5"
-        style={{ background: "linear-gradient(180deg, #5b21b6 0%, #4c1d95 100%)" }}
+        className="relative overflow-hidden shadow-lg border-4 border-yellow-300 text-center py-6 px-4 mb-5 bg-gradient-to-b from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)]"
+        style={{ borderRadius: 'var(--leaf-r-lg)' }}
       >
         {CONFETTI.map((c, i) => (
           <motion.div
@@ -44,7 +43,7 @@ export default function TrilingualChampionBanner({ status, childName }: Props) {
         <span className="relative z-10 text-5xl drop-shadow-lg">🌍🏆</span>
         <motion.p
           className="relative z-10 font-black text-yellow-300 tracking-widest uppercase mt-2"
-          style={{ fontSize: "clamp(1.1rem, 3vw, 1.5rem)", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}
+          style={{ fontSize: "clamp(1.1rem, 3vw, 1.5rem)", textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}
           animate={{ scale: [1, 1.03, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
@@ -53,7 +52,7 @@ export default function TrilingualChampionBanner({ status, childName }: Props) {
         <p className="relative z-10 text-white font-bold text-sm mt-1">
           {t("awardedTo").replace("{name}", childName.toUpperCase())}
         </p>
-        <p className="relative z-10 theme-text text-xs mt-1 px-4">{t("trilingualChampionDesc")}</p>
+        <p className="relative z-10 text-white/80 text-xs mt-1 px-4">{t("trilingualChampionDesc")}</p>
         <div className="relative z-10 flex justify-center gap-2 mt-3">
           {LANGUAGES.map(lang => (
             <span key={lang} className="text-2xl">{LANGUAGE_META[lang].flag}</span>
@@ -64,24 +63,24 @@ export default function TrilingualChampionBanner({ status, childName }: Props) {
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur border-4 border-dashed border-white/20 rounded-3xl shadow-sm p-5 text-center mb-5">
+    <div className="bg-white border-4 border-dashed border-gray-200 shadow-ds-card p-5 text-center mb-5" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
       <span className="text-4xl">🌍</span>
-      <p className="font-black text-white text-sm uppercase tracking-wide mt-2">{t("trilingualChampionTitle")}</p>
-      <p className="theme-text-muted text-xs mt-1 px-2">{t("trilingualChampionDesc")}</p>
+      <p className="font-black text-ds-text text-sm uppercase tracking-wide mt-2">{t("trilingualChampionTitle")}</p>
+      <p className="text-gray-500 text-xs mt-1 px-2">{t("trilingualChampionDesc")}</p>
       <div className="flex justify-center gap-4 mt-3">
         {LANGUAGES.map(lang => (
           <div key={lang} className={`flex flex-col items-center gap-1 ${status.languages[lang] ? "" : "opacity-40 grayscale"}`}>
             <span className="text-2xl">{LANGUAGE_META[lang].flag}</span>
-            <span className={`text-xs ${status.languages[lang] ? "text-green-400" : "theme-text-muted"}`}>
+            <span className={`text-xs ${status.languages[lang] ? "text-[var(--ds-brand-primary)]" : "text-gray-400"}`}>
               {status.languages[lang] ? "✓" : "—"}
             </span>
           </div>
         ))}
       </div>
-      <p className="theme-text font-bold text-xs mt-2">
+      <p className="text-ds-text font-bold text-xs mt-2">
         {t("trilingualChampionProgress").replace("{progress}", String(status.progress))}
       </p>
-      <p className="theme-text-muted font-bold text-sm mt-0.5">{childName}</p>
+      <p className="text-gray-500 font-bold text-sm mt-0.5">{childName}</p>
     </div>
   );
 }

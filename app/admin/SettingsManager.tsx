@@ -104,7 +104,7 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
             {TABS.map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
                 className={`whitespace-nowrap text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-[12px] sm:text-[13px] font-semibold transition ${
-                  tab === t.key ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500 hover:bg-gray-100'
+                  tab === t.key ? 'bg-green-50 text-green-700' : 'text-gray-500 hover:bg-gray-100'
                 }`}>
                 {t.label}
               </button>
@@ -130,12 +130,12 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                       value={String(settings[f.key] ?? '')}
                       onChange={e => set(f.key, e.target.value)}
                       placeholder={f.placeholder}
-                      className="w-full border border-gray-200 rounded-lg px-3 sm:px-4 py-2.5 text-[13px] sm:text-[14px] font-medium text-gray-800 focus:outline-none focus:border-indigo-400 transition" />
+                      className="w-full bg-ds-input border border-ds-border rounded-lg px-3 sm:px-4 py-2.5 text-[13px] sm:text-[14px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500 transition" />
                   </div>
                 ))}
                 <div className="flex justify-end pt-2">
                   <button onClick={handleSave} disabled={saving}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] rounded-lg px-5 py-2.5 transition disabled:opacity-50">
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-lg px-5 py-2.5 transition disabled:opacity-50">
                     {saving ? 'Saving...' : <><Save size={15} /> Save Changes</>}
                   </button>
                 </div>
@@ -161,7 +161,7 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                       <Toggle settingKey={s.key} />
                     ) : (
                       <input type="text" value={String(settings[s.key] ?? '')} onChange={e => set(s.key, e.target.value)}
-                        className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-[13px] font-bold text-gray-800 focus:outline-none focus:border-indigo-400" />
+                        className="w-16 text-center bg-ds-input border border-ds-border rounded-lg px-2 py-1.5 text-[13px] font-bold text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500" />
                     )}
                   </div>
                 ))}
