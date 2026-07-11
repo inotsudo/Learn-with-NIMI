@@ -234,25 +234,29 @@ export default function AppShell({ children }: AppShellProps) {
 
         {/* ── Top bar ─────────────────────────────────────────────────────── */}
         {activeChild && (
-          <div
-            className={`sticky top-0 z-20 relative overflow-hidden ${variants.navigationStyle.background} border-b border-gray-100/80 shadow-[0_10px_32px_rgba(15,23,42,0.06)]`}
-            style={{
-              backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88)), url('${assets.navigation.topbar}')`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backdropFilter: "blur(6px)",
-            }}
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.65),transparent_42%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white/35 to-transparent" />
+          <div className="sticky top-0 z-20">
+            {/* Background layer — overflow-hidden so ornaments don't bleed, sits behind content */}
             <div
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-20 h-20 opacity-60"
+              className={`absolute inset-0 overflow-hidden ${variants.navigationStyle.background} border-b border-gray-100/80 shadow-[0_10px_32px_rgba(15,23,42,0.06)]`}
               style={{
-                backgroundImage: `url('${assets.navigation.ornaments}')`,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat",
+                backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88)), url('${assets.navigation.topbar}')`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backdropFilter: "blur(6px)",
               }}
-            />
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.65),transparent_42%)]" />
+              <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white/35 to-transparent" />
+              <div
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-20 h-20 opacity-60"
+                style={{
+                  backgroundImage: `url('${assets.navigation.ornaments}')`,
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            </div>
+            {/* Content layer — overflow-visible so dropdowns can escape */}
             <div className="relative flex items-center h-16 px-4 lg:px-6 max-w-[1800px] mx-auto">
 
               {/* Mobile only: hamburger + logo */}
@@ -302,42 +306,48 @@ export default function AppShell({ children }: AppShellProps) {
                 </div>
               </form>
 
-              {/* Right cluster — ml-auto pushes to the right edge */}
-              <div className="ml-auto flex items-center gap-5 pl-4">
+              {/* Right cluster */}
+              <div className="ml-auto flex items-center gap-2.5 pl-3">
 
-                {/* Stats: desktop only */}
-                <div className="hidden md:flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <Flame className="w-7 h-7 shrink-0" fill="#f97316" strokeWidth={0} />
+                {/* Stats pill — desktop only */}
+                <div className="hidden md:flex items-center bg-white/90 border border-gray-200/70 rounded-full shadow-sm px-1 py-1 gap-0">
+                  {/* Streak */}
+                  <div className="flex items-center gap-1.5 px-3 py-0.5">
+                    <Flame className="w-[18px] h-[18px] shrink-0" fill="#f97316" strokeWidth={0} />
                     <div className="leading-none">
-                      <p className="font-baloo font-black text-gray-900 text-[18px] leading-none">{streakCount}</p>
-                      <p className="font-nunito text-gray-500 text-[11px] mt-0.5">Day Streak</p>
+                      <p className="font-baloo font-black text-gray-900 text-[15px] leading-none">{streakCount}</p>
+                      <p className="font-nunito text-gray-400 text-[10px] mt-0.5">streak</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <svg viewBox="0 0 32 32" className="w-7 h-7 shrink-0" fill="none">
+                  <div className="w-px h-5 bg-gray-200 rounded-full" />
+                  {/* XP */}
+                  <div className="flex items-center gap-1.5 px-3 py-0.5">
+                    <svg viewBox="0 0 32 32" className="w-[18px] h-[18px] shrink-0" fill="none">
                       <path d="M16 3L28 13L16 29L4 13Z" fill="#F59E0B" />
                       <path d="M16 3L28 13H4L16 3Z" fill="#FCD34D" />
                       <path d="M4 13L16 29L8 13H4Z" fill="#D97706" />
                       <path d="M28 13L16 29L24 13H28Z" fill="#D97706" />
                     </svg>
                     <div className="leading-none">
-                      <p className="font-baloo font-black text-gray-900 text-[18px] leading-none">{totalStars * 10}</p>
-                      <p className="font-nunito text-gray-500 text-[11px] mt-0.5">XP Points</p>
+                      <p className="font-baloo font-black text-gray-900 text-[15px] leading-none">{totalStars * 10}</p>
+                      <p className="font-nunito text-gray-400 text-[10px] mt-0.5">XP</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Bell — always visible */}
+                {/* Thin divider — desktop only */}
+                <div className="hidden md:block w-px h-6 bg-gray-200/80 rounded-full mx-0.5" />
+
+                {/* Bell */}
                 <div className="relative">
                   <button
                     onClick={() => { setShowNotifications(p => !p); setShowLangPicker(false); setShowProfileMenu(false); }}
-                    className="group relative p-1.5 leaf border border-gray-100/80 bg-white/80 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--ds-brand-soft)] hover:text-[var(--ds-brand-primary)]"
+                    className="relative w-9 h-9 flex items-center justify-center rounded-full border border-gray-200/80 bg-white/90 shadow-sm transition-all hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 active:scale-95"
                     aria-label="Notifications"
                   >
-                    <Bell className="w-[22px] h-[22px] text-gray-500" strokeWidth={1.8} />
+                    <Bell className="w-[17px] h-[17px] text-gray-500" strokeWidth={1.8} />
                     {unreadCount > 0 && (
-                      <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center text-[9px] font-black text-white border-[1.5px] border-white px-0.5">
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] bg-red-500 rounded-full flex items-center justify-center text-[8px] font-black text-white border-[1.5px] border-white px-0.5">
                         {unreadCount}
                       </span>
                     )}
@@ -349,28 +359,23 @@ export default function AppShell({ children }: AppShellProps) {
                   />
                 </div>
 
-                {/* Heart — desktop only */}
-                <Link
-                  href="/user-profile"
-                  className="hidden md:flex p-1.5 leaf border border-gray-100/80 bg-white/80 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:text-rose-500"
-                  aria-label="Favourites"
-                >
-                  <Heart className="w-[22px] h-[22px] text-rose-400" strokeWidth={1.8} />
-                </Link>
-
                 {/* Language — desktop only */}
                 <div className="relative hidden md:block">
                   <button
                     onClick={() => setShowLangPicker(p => !p)}
-                    className="p-1.5 leaf border border-gray-100/80 bg-white/80 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--ds-brand-soft)]"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-gray-200/80 bg-white/90 shadow-sm transition-all hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 active:scale-95"
                     aria-label="Language"
                   >
-                    <Flag lang={language} className="w-7 h-[18px]" />
+                    <Flag lang={language} className="w-6 h-4 rounded-sm flex-shrink-0" />
+                    <span className="text-[11px] font-black text-gray-500 uppercase tracking-wide">{language}</span>
+                    <svg className="w-3 h-3 text-gray-400" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </button>
                   {showLangPicker && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowLangPicker(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                      <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-gray-200/80 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5">
                         {([
                           { code: "en" as Language, label: "English" },
                           { code: "fr" as Language, label: "Français" },
@@ -379,10 +384,11 @@ export default function AppShell({ children }: AppShellProps) {
                           <button
                             key={l.code}
                             onClick={() => { setShowLangPicker(false); setPendingLanguage(l.code); }}
-                            className="flex items-center gap-2.5 px-3 py-2.5 w-full hover:bg-gray-50 transition font-nunito text-[13px]"
+                            className={`flex items-center gap-2.5 px-3.5 py-2.5 w-full transition font-nunito text-[13px] ${l.code === language ? "bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)]" : "hover:bg-gray-50 text-gray-700"}`}
                           >
-                            <Flag lang={l.code} className="w-6 h-4" />
-                            <span className="font-bold text-gray-700">{l.label}</span>
+                            <Flag lang={l.code} className="w-6 h-4 rounded-sm flex-shrink-0" />
+                            <span className="font-bold">{l.label}</span>
+                            {l.code === language && <span className="ml-auto text-[10px] font-black">✓</span>}
                           </button>
                         ))}
                       </div>
@@ -390,43 +396,48 @@ export default function AppShell({ children }: AppShellProps) {
                   )}
                 </div>
 
-                {/* Profile */}
+                {/* Profile chip */}
                 <div className="relative">
                   <button
                     onClick={() => { setShowProfileMenu(p => !p); setShowLangPicker(false); setShowNotifications(false); }}
-                    className="flex items-center gap-2 leaf border border-gray-100/80 bg-white/85 px-1.5 py-1 shadow-[0_8px_20px_rgba(15,23,42,0.05)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--ds-brand-soft)]"
+                    className="flex items-center gap-2 rounded-full border border-gray-200/80 bg-white/90 pl-1 pr-2.5 py-1 shadow-sm transition-all hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 active:scale-95"
                   >
-                    <div className="w-9 h-9 rounded-full border-2 border-gray-200 overflow-hidden shrink-0">
-                      <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={36} />
+                    <div className="w-8 h-8 rounded-full border-2 overflow-hidden shrink-0" style={{ borderColor: 'var(--nimi-green)' }}>
+                      <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={32} />
                     </div>
                     <div className="hidden md:block text-left leading-none">
-                      <p className="font-baloo font-black text-gray-800 text-[14px]">Hi, {activeChild.name}!</p>
+                      <p className="font-baloo font-black text-gray-800 text-[13px] leading-none">Hi, {activeChild.name}!</p>
                       {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] ? (
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full mt-0.5 ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-gray-100 text-gray-600"}`}>
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-full mt-0.5 ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-gray-100 text-gray-600"}`}>
                           {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
                         </span>
                       ) : (
-                        <p className="font-nunito text-gray-500 text-[11px] mt-0.5">{getLevelLabel(level)} Level {level}</p>
+                        <p className="font-nunito text-gray-400 text-[10px] mt-0.5">{getLevelLabel(level)} Level {level}</p>
                       )}
                     </div>
-                    <svg className="hidden md:block w-4 h-4 text-gray-400 shrink-0" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <svg className="hidden md:block w-3.5 h-3.5 text-gray-400 shrink-0 ml-0.5" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
 
                   {showProfileMenu && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1">
-                        <div className="px-4 py-3 border-b border-gray-100">
-                          <p className="font-baloo font-black text-gray-800 text-[15px]">{activeChild.name}</p>
-                          {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] ? (
-                            <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full mt-1 ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-gray-100 text-gray-600"}`}>
-                              {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
-                            </span>
-                          ) : (
-                            <p className="font-nunito text-gray-500 text-[11px] mt-0.5">{getLevelLabel(level)} · Level {level}</p>
-                          )}
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200/80 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5">
+                        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full border-2 overflow-hidden shrink-0" style={{ borderColor: 'var(--nimi-green)' }}>
+                            <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={40} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-baloo font-black text-gray-800 text-[15px] truncate">{activeChild.name}</p>
+                            {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] ? (
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full mt-0.5 ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-gray-100 text-gray-600"}`}>
+                                {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
+                              </span>
+                            ) : (
+                              <p className="font-nunito text-gray-400 text-[11px] mt-0.5">{getLevelLabel(level)} · Level {level}</p>
+                            )}
+                          </div>
                         </div>
                         {([
                           { Icon: User,     label: "My Profile",    href: "/user-profile",         color: "text-blue-500"   },

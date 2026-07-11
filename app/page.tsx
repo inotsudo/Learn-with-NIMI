@@ -1092,31 +1092,28 @@ export default function LandingPage() {
         <img loading="eager" fetchPriority="high" src="/themes/default/hero/hero-background.png" alt="" aria-hidden
           className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
           style={{willChange:"transform",transform:"translateZ(0)"}} />
-        <div className="absolute inset-x-0 top-0 h-[60%] pointer-events-none"
-          style={{background:"linear-gradient(to bottom,rgba(255,255,255,0.88) 0%,rgba(255,255,255,0.6) 60%,transparent 100%)"}} />
+        <div className="absolute inset-x-0 top-0 h-[45%] pointer-events-none"
+          style={{background:"linear-gradient(to bottom,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.85) 55%,transparent 100%)"}} />
         <FloatCloud className="top-20 -left-6" w={110} delay={0} opacity={0.55} speed={8} />
 
-        <div className="absolute top-0 left-0 w-full z-10 flex flex-col items-center text-center px-6" style={{paddingTop:"clamp(90px,18dvh,130px)"}}>
-          <span className="inline-flex items-center gap-1.5 font-nunito font-bold text-[10px] tracking-wide text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full mb-3 shadow-sm">
+        <div className="absolute top-0 left-0 w-full z-10 flex flex-col items-center text-center px-6" style={{paddingTop:"clamp(92px,14dvh,112px)"}}>
+          <span className="inline-flex items-center gap-1.5 font-nunito font-bold text-[10px] tracking-wide text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full mb-2 shadow-sm">
             🇷🇼 Kinyarwanda · 🇫🇷 Français · 🇬🇧 English
           </span>
-          <h1 className="font-baloo font-black leading-tight mb-2" style={{fontSize:"clamp(1.9rem,9vw,2.5rem)"}}>
+          <h1 className="font-baloo font-black leading-tight mb-1.5" style={{fontSize:"clamp(1.65rem,7.5vw,2.1rem)"}}>
             <span className="text-gray-900 block">The first app that speaks</span>
             <span className="text-[var(--ds-brand-primary)] block">your child&rsquo;s language.</span>
           </h1>
-          <p className="font-nunito font-semibold text-gray-700 leading-relaxed mb-1" style={{fontSize:"clamp(0.8rem,3.5vw,0.9rem)",maxWidth:"26ch"}}>
+          <p className="font-nunito font-semibold text-gray-600 leading-snug mb-0" style={{fontSize:"clamp(0.72rem,3vw,0.82rem)",maxWidth:"30ch"}}>
             Stories, missions and printable certificates — crafted for Rwandan families and curious children worldwide.
           </p>
-          <div className="flex justify-center -mt-3">
+          <div className="flex justify-center mt-1.5">
             <motion.div whileHover={{scale:1.06}} whileTap={{scale:0.93}} transition={{type:"spring",stiffness:420,damping:22}}>
               <Link href={authed ? "/home" : "/signuppage"}>
                 <img loading="lazy" src="/themes/default/navs/start-learning.png" alt="Start Learning" draggable={false}
-                  className="h-auto object-contain drop-shadow-lg select-none" style={{width:"clamp(130px,40vw,170px)"}} />
+                  className="h-auto object-contain drop-shadow-lg select-none" style={{width:"clamp(118px,34vw,150px)"}} />
               </Link>
             </motion.div>
-          </div>
-          <div className="flex justify-center mt-3">
-            <EarlyAccessPill />
           </div>
         </div>
         <div className="absolute bottom-0 left-0 w-full z-10 pointer-events-none">
@@ -1125,6 +1122,10 @@ export default function LandingPage() {
           </svg>
         </div>
       </section>
+      {/* EarlyAccessPill — sits below the hero on mobile */}
+      <div className="sm:hidden flex justify-center bg-white pb-4 -mt-1">
+        <EarlyAccessPill />
+      </div>
 
       {/* ══ HERO TABLET ══════════════════════════════════════════════ */}
       <section className="hidden sm:block xl:hidden relative overflow-hidden" style={{minHeight:"100svh"}}>
