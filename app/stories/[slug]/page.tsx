@@ -9,7 +9,7 @@ import { ArrowLeft, CheckCircle2, Lock, Play, Star, Volume2 } from "lucide-react
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, EASE, SPRING } from "@/lib/design-system/motion";
 import AppShell from "@/components/layout/AppShell";
-import MagicLoader from "@/components/magic/MagicLoader";
+import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getChildren, getStorageUrl, getConsecutiveStreak, awardMilestoneBadges, createNotification } from "@/lib/queries";
 import { getMilestoneBadgeMeta } from "@/lib/milestoneBadges";
@@ -291,7 +291,12 @@ export default function StoryDetailPage() {
   if (loading) {
     return (
       <AppShell>
-        <MagicLoader variant="stories" />
+        <div className="max-w-lg mx-auto w-full px-4 py-6 pb-24 space-y-4">
+          <Bone className="h-8 w-48" />
+          <Bone className="leaf-lg" style={{ height: 300 }} />
+          <Bone className="h-24 leaf-lg" />
+          <Bone className="h-12 leaf-lg" />
+        </div>
       </AppShell>
     );
   }

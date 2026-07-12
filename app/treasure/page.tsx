@@ -5,8 +5,8 @@ import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "
 import { ArrowLeft, Check, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
-import MagicLoader from "@/components/magic/MagicLoader";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import {
@@ -373,7 +373,9 @@ export default function ChallengesPage() {
 
         <main className="max-w-2xl mx-auto px-4 sm:px-5 py-4 sm:py-6 pb-28 flex-1 w-full">
           {loading ? (
-            <div className="py-20"><MagicLoader variant="treasure" fullPage={false} /></div>
+            <div className="space-y-3 py-2">
+              {Array.from({ length: 4 }).map((_, i) => <Bone key={i} className="h-28 leaf-lg" />)}
+            </div>
           ) : (
             <motion.div
               initial={{ opacity:0 }} animate={{ opacity:1 }}

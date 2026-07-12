@@ -1,24 +1,9 @@
 import AppShell from "@/components/layout/AppShell";
-
-function Bone({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <div
-      className={`rounded-2xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] ${className ?? ""}`}
-      style={{ animation: "shimmer 1.5s infinite linear", ...style }}
-    />
-  );
-}
+import { Bone } from "@/components/ui/Bone";
 
 export default function StoriesLoading() {
   return (
     <AppShell>
-      <style>{`
-        @keyframes shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-6">
         {/* Hero banner skeleton */}
         <Bone className="h-48 leaf-lg" />

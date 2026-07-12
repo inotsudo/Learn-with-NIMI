@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Gift, CheckCircle, AlertCircle } from "lucide-react";
-import MagicLoader from "@/components/magic/MagicLoader";
+import { Bone } from "@/components/ui/Bone";
 import supabase from "@/lib/supabaseClient";
 
 type GiftPreview = {
@@ -62,14 +62,18 @@ function RedeemContent() {
 
   if (step === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <MagicLoader variant="shop" />
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-4">
+          <Bone className="h-32 leaf-lg" />
+          <Bone className="h-14 leaf-lg" />
+          <Bone className="h-14 leaf-lg" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center p-6 content-enter">
       <div className="w-full max-w-md">
 
         {step === "preview" && preview && (
@@ -171,8 +175,12 @@ function RedeemContent() {
 export default function GiftRedeemPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <MagicLoader variant="shop" />
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-4">
+          <Bone className="h-32 leaf-lg" />
+          <Bone className="h-14 leaf-lg" />
+          <Bone className="h-14 leaf-lg" />
+        </div>
       </div>
     }>
       <RedeemContent />

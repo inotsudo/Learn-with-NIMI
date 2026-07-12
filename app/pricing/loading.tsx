@@ -1,14 +1,9 @@
-function Bone({ className }: { className?: string }) {
-  return (
-    <div className={`rounded-2xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] ${className ?? ""}`}
-      style={{ animation: "shimmer 1.5s infinite linear" }} />
-  );
-}
+import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 
 export default function PricingLoading() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+    <AppShell>
       <div className="max-w-4xl mx-auto px-4 py-16 space-y-8">
         <div className="text-center space-y-4">
           <Bone className="h-12 w-48 mx-auto" />
@@ -28,6 +23,6 @@ export default function PricingLoading() {
           ))}
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

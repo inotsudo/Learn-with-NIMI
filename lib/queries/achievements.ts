@@ -1,4 +1,5 @@
 import supabase from "@/lib/supabaseClient";
+import { qcached, qinvalidate } from "@/lib/queryCache";
 import type { ChildBadge, ChildAchievement } from "./types";
 
 export async function getChildBadges(childId: string): Promise<ChildBadge[]> {
@@ -17,6 +18,7 @@ export async function awardBadge(
   await supabase
     .from("child_badges")
     .upsert({ child_id: childId, badge_slug: badgeSlug });
+  qinvalidate(`childAchievements:${childId}`);
 }
 
 // Calls the DB function that checks story-count and star-count milestones
@@ -33,21 +35,24 @@ export async function awardMilestoneBadges(
     console.error("[awardMilestoneBadges]", error.message);
     return [];
   }
+  qinvalidate(`childAchievements:${childId}`);
   return (data as string[]) ?? [];
 }
 
 // All badges/certificates ever earned by this child, across all 3
 // language journeys (the Achievement Dashboard needs all of them at once).
-export async function getChildAchievements(childId: string): Promise<ChildAchievement[]> {
-  const { data, error } = await supabase
-    .from("child_achievements")
-    .select("*")
-    .eq("child_id", childId);
-  if (error) {
-    console.error("[getChildAchievements]", error.message);
-    return [];
-  }
-  return (data ?? []) as ChildAchievement[];
+export function getChildAchievements(childId: string): Promise<ChildAchievement[]> {
+  return qcached(`childAchievements:${childId}`, async () => {
+    const { data, error } = await supabase
+      .from("child_achievements")
+      .select("*")
+      .eq("child_id", childId);
+    if (error) {
+      console.error("[getChildAchievements]", error.message);
+      return [];
+    }
+    return (data ?? []) as ChildAchievement[];
+  });
 }
 
 // Returns set of challenge_slug strings already claimed for this child+language.

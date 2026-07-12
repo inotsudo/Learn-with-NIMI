@@ -6,8 +6,8 @@ import { Check, Crown, Sparkles, Shield, CreditCard, Phone, Star, CheckCircle2, 
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
-import MagicLoader from "@/components/magic/MagicLoader";
 import supabase from "@/lib/supabaseClient";
 import { getProducts, getActiveSubscription } from "@/lib/payments/products";
 import { getPrice, getProviderForCurrency } from "@/lib/payments/types";
@@ -120,7 +120,17 @@ export default function PricingPage() {
     setShowPayment({ product, effectiveAmount, discountCodeId });
   }, []);
 
-  if (loading) return <AppShell><MagicLoader variant="shop" /></AppShell>;
+  if (loading) return (
+    <AppShell>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-28 space-y-4">
+        <Bone className="h-44 leaf-lg" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Bone className="h-80 leaf-lg" />
+          <Bone className="h-80 leaf-lg" />
+        </div>
+      </div>
+    </AppShell>
+  );
 
   const clubMonthly = products.find(p => p.slug === "nimipiko-club");
   const clubAnnual  = products.find(p => p.slug === "nimipiko-club-annual");
@@ -131,7 +141,7 @@ export default function PricingPage() {
   return (
     <AppShell>
       <PageSurface>
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-28 w-full">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-28 w-full content-enter">
 
           {/* Header */}
           <HeroBanner zone="familyHub" className="mb-8 overflow-hidden">

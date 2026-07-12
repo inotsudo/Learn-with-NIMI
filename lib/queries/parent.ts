@@ -1,5 +1,9 @@
 import supabase from "@/lib/supabaseClient";
+import { qcached, qinvalidate } from "@/lib/queryCache";
 import type { Parent, Child } from "./types";
+
+// Skip the upsert if we've already ensured a parent row this browser session.
+const ensuredForUser = new Set<string>();
 
 export async function getParent(): Promise<Parent | null> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -14,14 +18,17 @@ export async function getParent(): Promise<Parent | null> {
 
 // Ensures a parent row exists for the signed-in user.
 // Handles accounts created before the new schema migration.
+// Skips the upsert if already confirmed this browser session (module-level guard).
 export async function ensureParentRow(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) { console.warn("[ensureParentRow] no session"); return false; }
+  if (ensuredForUser.has(user.id)) return true;
   const { error } = await supabase.from("parents").upsert(
     { id: user.id, email: user.email ?? "", name: user.user_metadata?.name ?? "Parent" },
     { onConflict: "id" }
   );
   if (error) console.error("[ensureParentRow] error:", error.message, error.code);
+  else ensuredForUser.add(user.id);
   return !error;
 }
 
@@ -34,13 +41,15 @@ export async function updateParent(name: string): Promise<void> {
 export async function getChildren(): Promise<Child[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) { console.warn("[getChildren] no session"); return []; }
-  const { data, error } = await supabase
-    .from("children")
-    .select("*")
-    .eq("parent_id", user.id)
-    .order("created_at");
-  if (error) console.error("[getChildren] error:", error.message, error.code);
-  return (data ?? []) as Child[];
+  return qcached(`children:${user.id}`, async () => {
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .eq("parent_id", user.id)
+      .order("created_at");
+    if (error) console.error("[getChildren] error:", error.message, error.code);
+    return (data ?? []) as Child[];
+  });
 }
 
 export async function createChild(
@@ -56,6 +65,7 @@ export async function createChild(
     .select()
     .single();
   if (error) console.error("[createChild]", error);
+  else qinvalidate(`children:${user.id}`);
   return { data: (data ?? null) as Child | null, error: error?.message ?? null };
 }
 

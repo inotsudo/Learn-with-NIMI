@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getChildren, getChildAchievements, getMaxCurriculumLevel, type ChildAchievement } from "@/lib/queries";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import { PageSurface } from "@/components/layout/primitives";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -19,7 +20,7 @@ export default function CertificatesPage() {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [hasChildren, setHasChildren] = useState(true);
   const [childName, setChildName] = useState("Explorer");
   const [childLanguage, setChildLanguage] = useState<Lang>("en");
@@ -29,7 +30,6 @@ export default function CertificatesPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
     void loadProgress();
   }, [reloadKey]);
 
@@ -39,6 +39,7 @@ export default function CertificatesPage() {
       const list = await getChildren();
       if (list.length === 0) {
         setHasChildren(false);
+        setLoading(false);
         return;
       }
       setHasChildren(true);
@@ -54,13 +55,27 @@ export default function CertificatesPage() {
       ]);
       setAchievements(achievementRows);
       setMaxLevel(level);
+      setLoading(false);
     } catch (err) {
       console.error("[CertificatesPage]", err);
       setLoadError(true);
+      setLoading(false);
     }
   };
 
-  if (!mounted) return null;
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="max-w-3xl mx-auto px-4 py-6 pb-24 space-y-4">
+          <Bone className="h-28 leaf-lg" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-36 leaf-lg" />)}
+          </div>
+          <Bone className="h-48 leaf-lg" />
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!hasChildren) {
     return (
@@ -113,7 +128,7 @@ export default function CertificatesPage() {
   return (
     <AppShell>
       <PageSurface>
-        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full content-enter">
           <CertificatesHeader />
           <AchievementDashboard
             childName={childName}

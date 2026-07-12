@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries";
 import { FALLBACK_THEME, type ActivityCategory } from "@/app/_activityData";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import DailyAdventureBanner from "@/components/missions/DailyAdventureBanner";
 import DailyAdventureGrid, { DailyChampionCTA } from "@/components/missions/DailyAdventureGrid";
 import DailyAdventureSidebar from "@/components/missions/DailyAdventureSidebar";
@@ -19,7 +20,7 @@ import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 export default function MissionsPage() {
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [hasChildren, setHasChildren] = useState(true);
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -28,7 +29,6 @@ export default function MissionsPage() {
   const [completedInLevel, setCompletedInLevel] = useState<Set<ActivityCategory>>(new Set());
 
   useEffect(() => {
-    setMounted(true);
     void loadProgress();
   }, []);
 
@@ -36,6 +36,7 @@ export default function MissionsPage() {
     const list = await getChildren();
     if (list.length === 0) {
       setHasChildren(false);
+      setLoading(false);
       return;
     }
 
@@ -55,9 +56,30 @@ export default function MissionsPage() {
     setCompletedInLevel(new Set(
       curriculumMissions.filter(m => m.completed).map(m => m.category)
     ));
+    setLoading(false);
   };
 
-  if (!mounted) return null;
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-6 pb-24">
+          <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6">
+            <div className="space-y-4">
+              <Bone className="h-36 leaf-lg" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-36 leaf" />)}
+              </div>
+              <Bone className="h-20 leaf" />
+            </div>
+            <div className="hidden lg:block space-y-4 mt-0">
+              <Bone className="h-64 leaf-lg" />
+              <Bone className="h-40 leaf-lg" />
+            </div>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!hasChildren) {
     return (
@@ -84,7 +106,7 @@ export default function MissionsPage() {
   return (
     <AppShell>
       <PageSurface>
-        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full page-shell p-4 sm:p-5 lg:p-6">
+        <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full page-shell p-4 sm:p-5 lg:p-6 content-enter">
           <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6 lg:items-start">
             <div className="space-y-4">
               <DailyAdventureBanner themeTitle={theme.title} themeEmoji={theme.emoji} level={level} />

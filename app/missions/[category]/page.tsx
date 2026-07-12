@@ -10,6 +10,7 @@ import type { CurriculumMission, ColoringPage, StoryPage } from "@/lib/queries";
 import { ACTIVITIES } from "@/app/_activityData";
 import { useLanguage } from "@/contexts/LanguageContext";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import MissionShell from "@/components/missions/MissionShell";
 import SingAlongContent from "@/components/missions/SingAlongContent";
 import MoveGrooveContent from "@/components/missions/MoveGrooveContent";
@@ -18,7 +19,6 @@ import ReadContent from "@/components/missions/ReadContent";
 import ColoringContent from "@/components/missions/ColoringContent";
 import StoryContent from "@/components/missions/StoryContent";
 import { ContentSurface } from "@/components/layout/primitives";
-import MagicLoader from "@/components/magic/MagicLoader";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -114,7 +114,16 @@ export default function MissionCategoryPage() {
 
   const renderContent = () => {
     if (loading) {
-      return <div className="py-10"><MagicLoader variant="missions" fullPage={false} /></div>;
+      return (
+        <div className="space-y-4 py-2">
+          <Bone className="h-12 leaf-lg" />
+          <Bone className="h-64 leaf-lg" />
+          <div className="grid grid-cols-2 gap-3">
+            <Bone className="h-16 leaf-lg" />
+            <Bone className="h-16 leaf-lg" />
+          </div>
+        </div>
+      );
     }
 
     if (loadError) {

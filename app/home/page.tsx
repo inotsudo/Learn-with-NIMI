@@ -22,11 +22,11 @@ import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import AppShell              from "@/components/layout/AppShell";
+import { Bone }             from "@/components/ui/Bone";
 import { RefreshingBadge }  from "@/components/layout/RefreshingBadge";
 import WhoIsPlaying          from "@/components/home/WhoIsPlaying";
 import CreateChildModal      from "@/components/home/CreateChildModal";
 import CreateExplorerProfile from "@/components/home/CreateExplorerProfile";
-import MagicLoader           from "@/components/magic/MagicLoader";
 import HomeAdventureSection  from "@/components/home/HomeAdventureSection";
 import HomeStoryLibrarySection from "@/components/home/HomeStoryLibrarySection";
 import HomeStoryJourneyPanel from "@/components/home/HomeStoryJourneyPanel";
@@ -149,7 +149,6 @@ export default function HomePage() {
 
   const activeChildRef  = useRef<Child | null>(null);
   const switchGenRef    = useRef(0);
-  const [mounted,         setMounted]         = useState(false);
   const [loading,         setLoading]         = useState(true);
   const [refreshing,      setRefreshing]      = useState(false);
   const [children,        setChildren]        = useState<Child[]>([]);
@@ -169,7 +168,7 @@ export default function HomePage() {
   const [favorites,          setFavorites]          = useState<Set<string>>(new Set());
   const [cosmetics,          setCosmetics]          = useState<ChildCosmetics>({ nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null });
 
-  useEffect(() => { setMounted(true); void init(); }, []);
+  useEffect(() => { void init(); }, []);
 
   // Keep ref current so the language-change handler below always sees the
   // latest child without re-registering the event listener on every render.
@@ -293,7 +292,6 @@ export default function HomePage() {
     await select(child, [...children, child]);
   }
 
-  if (!mounted) return null;
   if (noChildrenYet) return <AppShell><CreateExplorerProfile onCreated={handleCreated} /></AppShell>;
   if (showPicker) return (
     <>
@@ -325,11 +323,33 @@ export default function HomePage() {
     <AppShell>
       <RefreshingBadge show={refreshing} />
       {loading ? (
-        <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-          <MagicLoader variant="home" fullPage={false} />
-        </div>
+        <>
+          <div className="min-h-screen pb-24">
+            <Bone className="w-full rounded-none" style={{ height: 380 }} />
+            <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6 flex flex-col xl:flex-row gap-6">
+              <div className="flex-1 space-y-8">
+                <div className="leaf-lg border border-gray-100 p-5 space-y-4">
+                  <Bone className="h-7 w-48" />
+                  <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="aspect-square leaf" />)}
+                  </div>
+                </div>
+                <div className="leaf-lg border border-gray-100 p-5 space-y-4">
+                  <Bone className="h-7 w-56" />
+                  <div className="flex gap-4 overflow-hidden">
+                    {Array.from({ length: 4 }).map((_, i) => <Bone key={i} className="shrink-0 w-[160px] h-[220px] leaf" />)}
+                  </div>
+                </div>
+              </div>
+              <div className="w-full xl:w-[284px] space-y-5">
+                <Bone className="h-[280px] leaf-lg" />
+                <Bone className="h-[180px] leaf-lg" />
+              </div>
+            </div>
+          </div>
+        </>
       ) : (
-        <div className={`min-h-screen transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`} style={{ background: "linear-gradient(180deg, #ecfdf5 0%, #f4fef6 8%, #f9fafb 20%, #ffffff 36%)" }}>
+        <div className={`min-h-screen content-enter transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`} style={{ background: "linear-gradient(180deg, #ecfdf5 0%, #f4fef6 8%, #f9fafb 20%, #ffffff 36%)" }}>
 
           {/* ════════════════════════════════ HERO ══════════════════════════ */}
           <motion.div

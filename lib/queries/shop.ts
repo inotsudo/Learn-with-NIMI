@@ -1,4 +1,5 @@
 import supabase from "@/lib/supabaseClient";
+import { qcached, qinvalidate } from "@/lib/queryCache";
 import type { ShopPurchase, ChildCosmetics } from "./types";
 
 const EMPTY_COSMETICS: ChildCosmetics = {
@@ -32,13 +33,15 @@ export async function purchaseShopItem(childId: string, itemId: string, price: n
   return data as ShopPurchase;
 }
 
-export async function getChildCosmetics(childId: string): Promise<ChildCosmetics> {
-  const { data } = await supabase
-    .from("child_cosmetics")
-    .select("nimi_outfit, piko_outfit, frame, title_badge")
-    .eq("child_id", childId)
-    .maybeSingle();
-  return data ? (data as ChildCosmetics) : { ...EMPTY_COSMETICS };
+export function getChildCosmetics(childId: string): Promise<ChildCosmetics> {
+  return qcached(`childCosmetics:${childId}`, async () => {
+    const { data } = await supabase
+      .from("child_cosmetics")
+      .select("nimi_outfit, piko_outfit, frame, title_badge")
+      .eq("child_id", childId)
+      .maybeSingle();
+    return data ? (data as ChildCosmetics) : { ...EMPTY_COSMETICS };
+  });
 }
 
 export async function equipItem(
@@ -50,6 +53,7 @@ export async function equipItem(
     { child_id: childId, [slot]: itemId, updated_at: new Date().toISOString() },
     { onConflict: "child_id" }
   );
+  if (!error) qinvalidate(`childCosmetics:${childId}`);
   return !error;
 }
 

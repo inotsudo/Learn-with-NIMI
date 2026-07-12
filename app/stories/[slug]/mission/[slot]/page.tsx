@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Star } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
-import MagicLoader from "@/components/magic/MagicLoader";
+import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getChildren, getStoryPages, getColoringPages, createNotification } from "@/lib/queries";
 import type { Mission, StoryPage, ColoringPage } from "@/lib/queries";
@@ -247,7 +247,14 @@ export default function StoryMissionPage() {
   if (loading) {
     return (
       <AppShell>
-        <MagicLoader variant="missions" />
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 py-4 pb-24 space-y-4">
+          <Bone className="h-10 w-56" />
+          <Bone className="h-64 leaf-lg" />
+          <div className="grid grid-cols-2 gap-3">
+            <Bone className="h-16 leaf-lg" />
+            <Bone className="h-16 leaf-lg" />
+          </div>
+        </div>
       </AppShell>
     );
   }

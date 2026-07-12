@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback, useRef, RefObject } from "reac
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { ArrowLeft, Loader2, Flame } from "lucide-react";
 import { useRouter } from "next/navigation";
-import MagicLoader from "@/components/magic/MagicLoader";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import supabase from "@/lib/supabaseClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getStorageUrl } from "@/lib/queries";
@@ -422,7 +422,7 @@ export default function CommunityPage() {
   return (
     <AppShell>
       <PageSurface>
-        <main className="max-w-4xl mx-auto px-3 py-4 sm:px-4 lg:px-6 pb-28 w-full">
+        <main className="max-w-4xl mx-auto px-3 py-4 sm:px-4 lg:px-6 pb-28 w-full content-enter">
 
           {/* ── HERO ──────────────────────────────────────────── */}
           <HeroBanner zone="communitySquare" className="mb-5">
@@ -508,8 +508,8 @@ export default function CommunityPage() {
 
           {/* ── FEED ───────────────────────────────────────────── */}
           {loading ? (
-            <div className="py-12">
-              <MagicLoader variant="community" fullPage={false} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+              {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-64 leaf-lg" />)}
             </div>
           ) : visible.length === 0 ? (
             <motion.div

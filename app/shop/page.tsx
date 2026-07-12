@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/layout/AppShell";
-import MagicLoader from "@/components/magic/MagicLoader";
+import { Bone } from "@/components/ui/Bone";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -225,8 +225,11 @@ export default function RewardShopPage() {
 
         <main className="max-w-5xl mx-auto px-4 sm:px-5 lg:px-6 py-4 sm:py-6 pb-28 flex-1 w-full">
           {loading ? (
-            <div className="py-20">
-              <MagicLoader variant="shop" fullPage={false} />
+            <div className="space-y-4 py-2">
+              <Bone className="h-10 w-full rounded-full" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Array.from({ length: 8 }).map((_, i) => <Bone key={i} className="h-52 leaf-lg" />)}
+              </div>
             </div>
           ) : (
             <motion.div

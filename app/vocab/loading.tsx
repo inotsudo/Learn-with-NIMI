@@ -1,16 +1,9 @@
 import AppShell from "@/components/layout/AppShell";
-
-function Bone({ className }: { className?: string }) {
-  return (
-    <div className={`rounded-2xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] ${className ?? ""}`}
-      style={{ animation: "shimmer 1.5s infinite linear" }} />
-  );
-}
+import { Bone } from "@/components/ui/Bone";
 
 export default function VocabLoading() {
   return (
     <AppShell>
-      <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
       <div className="max-w-4xl mx-auto w-full pb-24 space-y-6">
         <Bone className="h-10 w-48 mt-4" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

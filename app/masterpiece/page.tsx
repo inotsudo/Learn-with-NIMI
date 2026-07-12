@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { ArrowLeft, Upload, Camera, Download, Sparkles, Crown, CheckCircle2 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
-import MagicLoader from "@/components/magic/MagicLoader";
+import { Bone } from "@/components/ui/Bone";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import supabase from "@/lib/supabaseClient";
 import { getChildren } from "@/lib/queries";
@@ -203,8 +203,13 @@ export default function MasterpiecePage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="flex-1 flex items-center justify-center min-h-[80vh]">
-          <MagicLoader variant="shop" fullPage={false} />
+        <div className="max-w-3xl mx-auto px-4 py-6 pb-24 space-y-5">
+          <div className="flex items-center gap-2">
+            {Array.from({ length: 3 }).map((_, i) => <Bone key={i} className="h-8 flex-1 rounded-full" />)}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-44 leaf-lg" />)}
+          </div>
         </div>
       </AppShell>
     );
@@ -465,11 +470,14 @@ export default function MasterpiecePage() {
                 initial={{ opacity:0 }} animate={{ opacity:1 }}
                 className="flex flex-col items-center justify-center py-20 text-center"
               >
-                <MagicLoader
-                  variant="shop"
-                  fullPage={false}
-                  message={`Creating ${child?.name || "your child"}'s masterpiece…`}
-                />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="text-6xl mb-4"
+                >🎨</motion.div>
+                <p className="font-baloo font-black text-ds-text text-[18px]">
+                  {`Creating ${child?.name || "your child"}'s masterpiece…`}
+                </p>
                 <p className="text-gray-400 text-[12px] mt-8 font-semibold">
                   This takes about 30–60 seconds
                 </p>

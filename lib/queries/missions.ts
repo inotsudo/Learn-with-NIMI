@@ -1,4 +1,5 @@
 import supabase from "@/lib/supabaseClient";
+import { qinvalidate } from "@/lib/queryCache";
 import type { CurriculumMission, CompleteCurriculumMissionResult, LevelMissionRow } from "./types";
 
 function curriculumCacheKey(childId: string): string {
@@ -70,6 +71,12 @@ export async function completeCurriculumMission(
     console.error("[completeCurriculumMission]", error.message);
     return null;
   }
+  // Bust per-child progress caches so AppShell + home page see fresh data.
+  qinvalidate(`weekStreak:${childId}`);
+  qinvalidate(`totalStars:${childId}`);
+  qinvalidate(`activityDates:${childId}`);
+  qinvalidate(`currentLevel:${childId}`);
+  qinvalidate(`childAchievements:${childId}`);
   return data as CompleteCurriculumMissionResult;
 }
 

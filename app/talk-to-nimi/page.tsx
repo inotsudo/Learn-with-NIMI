@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { ArrowLeft, Send, Mic, Volume2, VolumeX } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
-import MagicLoader from "@/components/magic/MagicLoader";
+import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -29,6 +29,7 @@ import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 const QUEST_TARGET = 3;
+
 const QUEST_STARS  = 10;
 
 const NIMI_PROMPTS = [
@@ -47,7 +48,6 @@ function greetingFor(name: string): ChatMessage {
 export default function TalkToNimiPage() {
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
-  const [mounted, setMounted] = useState(false);
   const [childId, setChildId] = useState<string | null>(null);
   const [childName, setChildName] = useState("Explorer");
   const [childLanguage, setChildLanguage] = useState<"en" | "fr" | "rw">("en");
@@ -86,14 +86,20 @@ export default function TalkToNimiPage() {
 
     setInitialMessages(initial);
     setPendingMessage(pending);
-    setMounted(true);
   };
 
-  if (!mounted || initialMessages === null) {
+  if (initialMessages === null) {
     return (
       <AppShell>
-        <div className="flex-1 flex items-center justify-center min-h-[80vh]">
-          <MagicLoader variant="default" fullPage={false} />
+        <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 pb-24 space-y-3 pt-4">
+          <Bone className="h-14 leaf-lg" />
+          <div className="flex-1 space-y-3">
+            <Bone className="h-16 w-3/4 leaf-lg" />
+            <Bone className="h-12 w-2/3 leaf-lg self-end ml-auto" />
+            <Bone className="h-16 w-4/5 leaf-lg" />
+            <Bone className="h-12 w-1/2 leaf-lg" />
+          </div>
+          <Bone className="h-14 leaf-lg mt-auto" />
         </div>
       </AppShell>
     );
@@ -229,7 +235,7 @@ function NimiChatPageContent({
 
   return (
     <PageSurface>
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full content-enter">
 
         {/* ── HERO ── */}
         <HeroBanner zone="nimiChat" className="mb-4">

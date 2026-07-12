@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Volume2, Search } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
-import MagicLoader from "@/components/magic/MagicLoader";
+import { Bone } from "@/components/ui/Bone";
 import { PageSurface } from "@/components/layout/primitives";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getChildren, getStorageUrl } from "@/lib/queries";
@@ -149,7 +149,12 @@ export default function VocabPage() {
   if (loading) {
     return (
       <AppShell>
-        <MagicLoader variant="default" />
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 lg:px-6 py-4 pb-28 space-y-3">
+          <Bone className="h-10 w-full rounded-full" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-32 leaf-lg" />)}
+          </div>
+        </div>
       </AppShell>
     );
   }
@@ -157,7 +162,7 @@ export default function VocabPage() {
   return (
     <AppShell>
       <PageSurface>
-        <main className="max-w-3xl mx-auto px-3 sm:px-4 lg:px-6 py-4 pb-28 flex-1 w-full">
+        <main className="max-w-3xl mx-auto px-3 sm:px-4 lg:px-6 py-4 pb-28 flex-1 w-full content-enter">
 
           {/* Header */}
           <div className="flex items-center gap-3 mb-5">

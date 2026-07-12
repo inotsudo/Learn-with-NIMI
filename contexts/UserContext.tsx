@@ -59,7 +59,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Listen for auth state changes
+    // onAuthStateChange fires INITIAL_SESSION immediately on subscribe,
+    // covering the page-load case. Removing the separate getSessionAndProfile
+    // call eliminates a redundant profile fetch on every page.
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         const currentUser = session?.user ?? null;
@@ -81,27 +83,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     );
-
-    // Initial fetch
-    const getSessionAndProfile = async () => {
-      setLoading(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        await fetchProfile(currentUser.id);
-      } else {
-        setProfile(null);
-      }
-
-      setLoading(false);
-    };
-
-    getSessionAndProfile();
 
     return () => {
       authListener.subscription.unsubscribe();

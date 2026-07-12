@@ -8,11 +8,11 @@ import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
 import { Lock, CheckCircle2, Play, Star, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import MagicLoader from "@/components/magic/MagicLoader";
 import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildAchievements, type Child } from "@/lib/queries";
 import supabase from "@/lib/supabaseClient";
 import { getStoryLibrary, getCurrentStoryId } from "@/lib/storyRepository";
@@ -156,7 +156,7 @@ export default function StoryLibraryPage() {
     <AppShell>
       <RefreshingBadge show={refreshing} />
       <PageSurface>
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 py-5 pb-28 w-full xl:flex xl:gap-6 xl:items-start transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 py-5 pb-28 w-full xl:flex xl:gap-6 xl:items-start content-enter transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}>
       <main className="flex-1 min-w-0">
 
           {/* ═══ HEADER — gradient hero ═══ */}
@@ -254,8 +254,8 @@ export default function StoryLibraryPage() {
 
           {/* ═══ STORY GRID ═══ */}
           {loading ? (
-            <div className="py-16">
-              <MagicLoader variant="stories" fullPage={false} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+              {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-64 leaf-lg" />)}
             </div>
           ) : paginated.length === 0 ? (
             <div className="page-shell text-center py-16">

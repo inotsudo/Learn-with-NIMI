@@ -1,4 +1,5 @@
 import supabase from "@/lib/supabaseClient";
+import { qcached, qinvalidate } from "@/lib/queryCache";
 import type { ProgressRow } from "./types";
 
 // Sum of `stars` for missions completed today (in the given language's
@@ -18,54 +19,60 @@ export async function getTodayStars(childId: string, language: "en" | "fr" | "rw
 
 // Which of the last 7 days (Mon-Sun, current week) had >=1 completion in the
 // given language's journey. Index 0 = Monday. All-false if no progress yet.
-export async function getWeekStreak(childId: string, language: "en" | "fr" | "rw"): Promise<boolean[]> {
-  const { data } = await supabase
-    .from("child_progress")
-    .select("completed_at")
-    .eq("child_id", childId)
-    .eq("language", language);
-  const result = [false, false, false, false, false, false, false];
-  if (!data) return result;
-  const now = new Date();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  monday.setHours(0, 0, 0, 0);
-  for (const row of data) {
-    const diffDays = Math.floor(
-      (new Date(row.completed_at as string).getTime() - monday.getTime()) / 86400000
-    );
-    if (diffDays >= 0 && diffDays < 7) result[diffDays] = true;
-  }
-  return result;
+export function getWeekStreak(childId: string, language: "en" | "fr" | "rw"): Promise<boolean[]> {
+  return qcached(`weekStreak:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("child_progress")
+      .select("completed_at")
+      .eq("child_id", childId)
+      .eq("language", language);
+    const result = [false, false, false, false, false, false, false];
+    if (!data) return result;
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+    for (const row of data) {
+      const diffDays = Math.floor(
+        (new Date(row.completed_at as string).getTime() - monday.getTime()) / 86400000
+      );
+      if (diffDays >= 0 && diffDays < 7) result[diffDays] = true;
+    }
+    return result;
+  });
 }
 
 // Sum of `stars` across ALL completed missions (all-time) in the given
 // language's journey, plus any challenge bonus stars. 0 if no progress yet.
-export async function getTotalStars(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
-  const [progressRes, bonusRes] = await Promise.all([
-    supabase.from("child_progress").select("mission_id, missions(stars)").eq("child_id", childId).eq("language", language),
-    supabase.from("challenge_bonus_stars").select("stars").eq("child_id", childId).eq("language", language),
-  ]);
-  const missionStars = (progressRes.data ?? []).reduce((sum: number, row: any) => sum + (row.missions?.stars ?? 10), 0);
-  const bonusStars   = (bonusRes.data   ?? []).reduce((sum: number, row: any) => sum + row.stars, 0);
-  return missionStars + bonusStars;
+export function getTotalStars(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  return qcached(`totalStars:${childId}:${language}`, async () => {
+    const [progressRes, bonusRes] = await Promise.all([
+      supabase.from("child_progress").select("mission_id, missions(stars)").eq("child_id", childId).eq("language", language),
+      supabase.from("challenge_bonus_stars").select("stars").eq("child_id", childId).eq("language", language),
+    ]);
+    const missionStars = (progressRes.data ?? []).reduce((sum: number, row: any) => sum + (row.missions?.stars ?? 10), 0);
+    const bonusStars   = (bonusRes.data   ?? []).reduce((sum: number, row: any) => sum + row.stars, 0);
+    return missionStars + bonusStars;
+  });
 }
 
 // All-time set of "YYYY-MM-DD" (local-date) strings with >=1 completion in
 // the given language's journey. Empty if no progress yet. Local-date (not
 // UTC) to match getWeekStreak's local-day bucketing.
-export async function getActivityDates(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
-  const { data } = await supabase
-    .from("child_progress")
-    .select("completed_at")
-    .eq("child_id", childId)
-    .eq("language", language);
-  const dates = new Set<string>();
-  for (const row of data ?? []) {
-    const d = new Date(row.completed_at as string);
-    dates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
-  }
-  return dates;
+export function getActivityDates(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
+  return qcached(`activityDates:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("child_progress")
+      .select("completed_at")
+      .eq("child_id", childId)
+      .eq("language", language);
+    const dates = new Set<string>();
+    for (const row of data ?? []) {
+      const d = new Date(row.completed_at as string);
+      dates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+    }
+    return dates;
+  });
 }
 
 // Number of completions per day (Mon-Sun, current week) in the given
@@ -114,16 +121,18 @@ export async function getAllChildProgress(childId: string): Promise<ProgressRow[
 
 // The child's current curriculum level for a specific language journey
 // (RPC unchanged since migration 026 — authoritative, saturates at maxLevel).
-export async function getCurrentLevel(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
-  const { data, error } = await supabase.rpc("get_current_level", {
-    p_child_id: childId,
-    p_language: language,
+export function getCurrentLevel(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  return qcached(`currentLevel:${childId}:${language}`, async () => {
+    const { data, error } = await supabase.rpc("get_current_level", {
+      p_child_id: childId,
+      p_language: language,
+    });
+    if (error) {
+      console.error("[getCurrentLevel]", error.message);
+      return 1;
+    }
+    return (data ?? 1) as number;
   });
-  if (error) {
-    console.error("[getCurrentLevel]", error.message);
-    return 1;
-  }
-  return (data ?? 1) as number;
 }
 
 // Number of consecutive days (ending today or yesterday) with ≥1 completion
@@ -206,5 +215,11 @@ export async function claimTaskReward(childId: string, language: "en" | "fr" | "
     child_id: childId, language, type: "badge",
     slug: `daily-task-${category}-${dateStr}`,
   });
+  if (!error || error.code === "23505") {
+    qinvalidate(`totalStars:${childId}:${language}`);
+    qinvalidate(`weekStreak:${childId}:${language}`);
+    qinvalidate(`activityDates:${childId}:${language}`);
+    qinvalidate(`currentLevel:${childId}:${language}`);
+  }
   return !error || error.code === "23505";
 }

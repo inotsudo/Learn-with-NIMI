@@ -26,26 +26,6 @@ async function send(to: string, subject: string, html: string): Promise<void> {
   }
 }
 
-// Auth emails sent via SMTP (Hostinger) — template defined here in code.
-// Requires SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in environment.
-async function sendViaSmtp(to: string, subject: string, html: string): Promise<void> {
-  const { createTransport } = await import("nodemailer");
-  const transporter = createTransport({
-    host: process.env.SMTP_HOST ?? "smtp.hostinger.com",
-    port: Number(process.env.SMTP_PORT ?? 465),
-    secure: Number(process.env.SMTP_PORT ?? 465) === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-  await transporter.sendMail({
-    from: `"NIMIPIKO" <${process.env.SMTP_USER ?? "support@nimipiko.com"}>`,
-    to,
-    subject,
-    html,
-  });
-}
 
 // ── Shared branded wrapper for auth emails ───────────────────────────────────
 function authBase(title: string, body: string): string {
@@ -85,7 +65,7 @@ export async function sendAuthConfirmSignup(to: string, confirmUrl: string): Pro
 
 // ── Auth: Reset password ─────────────────────────────────────────────────────
 export async function sendAuthResetPassword(to: string, resetUrl: string): Promise<void> {
-  await sendViaSmtp(to, "Reset your NIMIPIKO password", authBase("Reset your NIMIPIKO password", `
+  await send(to, "Reset your NIMIPIKO password", authBase("Reset your NIMIPIKO password", `
     <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#14532d;text-align:center;">Password reset 🔐</p>
     <p style="margin:0 0 24px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">We received a request to reset the password for your NIMIPIKO account. Click the button below to choose a new one.</p>
     ${ctaButton(resetUrl, "Reset my password")}

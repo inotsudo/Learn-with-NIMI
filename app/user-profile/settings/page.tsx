@@ -11,6 +11,7 @@ import {
 import type { Child } from "@/lib/queries";
 import { ACTIVITIES, type ActivityCategory } from "@/app/_activityData";
 import AppShell from "@/components/layout/AppShell";
+import { Bone } from "@/components/ui/Bone";
 import { PageSurface } from "@/components/layout/primitives";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -30,7 +31,7 @@ export default function MyProfilePage() {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [hasChildren, setHasChildren] = useState(true);
   const [activeChild, setActiveChild] = useState<Child | null>(null);
   const [level, setLevel] = useState(1);
@@ -41,7 +42,6 @@ export default function MyProfilePage() {
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     void load();
   }, []);
 
@@ -67,9 +67,27 @@ export default function MyProfilePage() {
 
     const curriculumMissions = await getCurriculumMissions(child.id);
     setCompletedInLevel(new Set(curriculumMissions.filter(m => m.completed).map(m => m.category)));
+    setLoading(false);
   };
 
-  if (!mounted) return null;
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="max-w-5xl mx-auto px-4 py-6 pb-24 space-y-4">
+          <Bone className="h-10 w-64" />
+          <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4">
+            <Bone className="h-48 leaf-lg" />
+            <Bone className="h-48 leaf-lg" />
+          </div>
+          <Bone className="h-24 leaf-lg" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Bone className="h-40 leaf-lg" />
+            <Bone className="h-40 leaf-lg" />
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!hasChildren) {
     return (
@@ -95,7 +113,7 @@ export default function MyProfilePage() {
   return (
     <AppShell>
       <PageSurface>
-        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full">
+        <main className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full content-enter">
           <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
             <div>
               <h1 className="font-black text-2xl sm:text-3xl text-ds-text">{t("myProfileTitle")}</h1>

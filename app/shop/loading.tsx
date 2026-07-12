@@ -1,21 +1,9 @@
 import AppShell from "@/components/layout/AppShell";
-
-function Bone({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <div
-      className={`rounded-2xl bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] ${className ?? ""}`}
-      style={{ animation: "shimmer 1.5s infinite linear", ...style }}
-    />
-  );
-}
+import { Bone } from "@/components/ui/Bone";
 
 export default function ShopLoading() {
   return (
     <AppShell>
-      <style>{`
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-      `}</style>
-
       <div className="max-w-5xl mx-auto w-full pb-24 space-y-6">
         {/* Balance bar */}
         <div className="leaf-lg border border-gray-100 p-5 flex items-center gap-4">
