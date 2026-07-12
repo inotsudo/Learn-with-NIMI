@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "
 import { ArrowLeft, Check, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import MagicLoader from "@/components/magic/MagicLoader";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -255,9 +256,40 @@ export default function ChallengesPage() {
   const [claimed, setClaimed]           = useState<Set<string>>(new Set());
   const [claimingId, setClaimingId]     = useState<string | null>(null);
   const [loading, setLoading]           = useState(true);
+  const [refreshing, setRefreshing]     = useState(false);
   const [toast, setToast]               = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  const toastKey = useRef(0);
+  const toastKey     = useRef(0);
+  const childRef     = useRef<{ id: string; name: string; language: Language } | null>(null);
+  const switchGenRef = useRef(0);
+
+  const loadData = useCallback(async (child: { id: string; name: string; language: Language }, lang: Language, silent = false) => {
+    const gen = silent ? ++switchGenRef.current : 0;
+    if (silent) setRefreshing(true); else setLoading(true);
+
+    const [activityDates, weekStreak, weekCounts, stories, stars, claimedSet] = await Promise.all([
+      getActivityDates(child.id, lang),
+      getWeekStreak(child.id, lang),
+      getWeekActivityCounts(child.id, lang),
+      getStoryLibrary(child.id, lang),
+      getTotalStars(child.id, lang),
+      getClaimedChallenges(child.id, lang),
+    ]);
+
+    if (silent && gen !== switchGenRef.current) return;
+    const todayIdx = todayWeekIndex();
+    setStats({
+      currentStreak:    computeStreaks(activityDates).current,
+      weekActive:       weekStreak.filter(Boolean).length,
+      weekTotal:        weekCounts.reduce((a, b) => a + b, 0),
+      weekMaxDay:       Math.max(...weekCounts, 0),
+      completedStories: stories.filter(s => s.complete).length,
+      todayCount:       weekCounts[todayIdx] ?? 0,
+    });
+    setTotalStars(stars);
+    setClaimed(claimedSet);
+    if (silent) setRefreshing(false); else setLoading(false);
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -269,30 +301,33 @@ export default function ChallengesPage() {
       setChildId(child.id);
       setChildName(child.name);
       setLanguage(child.language);
+      childRef.current = { id: child.id, name: child.name, language: child.language };
 
-      const [activityDates, weekStreak, weekCounts, stories, stars, claimedSet] = await Promise.all([
-        getActivityDates(child.id, child.language),
-        getWeekStreak(child.id, child.language),
-        getWeekActivityCounts(child.id, child.language),
-        getStoryLibrary(child.id, child.language),
-        getTotalStars(child.id, child.language),
-        getClaimedChallenges(child.id, child.language),
-      ]);
-
-      const todayIdx = todayWeekIndex();
-      setStats({
-        currentStreak:    computeStreaks(activityDates).current,
-        weekActive:       weekStreak.filter(Boolean).length,
-        weekTotal:        weekCounts.reduce((a, b) => a + b, 0),
-        weekMaxDay:       Math.max(...weekCounts, 0),
-        completedStories: stories.filter(s => s.complete).length,
-        todayCount:       weekCounts[todayIdx] ?? 0,
-      });
-      setTotalStars(stars);
-      setClaimed(claimedSet);
-      setLoading(false);
+      await loadData(child, child.language, false);
     })();
-  }, []);
+  }, [loadData]);
+
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const handler = (e: Event) => {
+      const lang = (e as CustomEvent<{ language: Language }>).detail?.language;
+      if (!lang) return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        const child = childRef.current;
+        if (!child) return;
+        const updated = { ...child, language: lang };
+        childRef.current = updated;
+        setLanguage(lang);
+        await loadData(updated, lang, true);
+      }, 200);
+    };
+    window.addEventListener("app:languageChange", handler as EventListener);
+    return () => {
+      window.removeEventListener("app:languageChange", handler as EventListener);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [loadData]);
 
   const handleClaim = useCallback(async (challenge: Challenge) => {
     if (!childId || claimingId) return;
@@ -327,6 +362,7 @@ export default function ChallengesPage() {
 
   return (
     <AppShell>
+      <RefreshingBadge show={refreshing} />
       <PageSurface>
         <AnimatePresence>
           {showConfetti && <Confetti key="confetti" onDone={() => setShowConfetti(false)} />}
@@ -342,7 +378,7 @@ export default function ChallengesPage() {
             <motion.div
               initial={{ opacity:0 }} animate={{ opacity:1 }}
               transition={{ duration:0.3 }}
-              className="space-y-6"
+              className={`space-y-6 transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}
             >
 
               {/* ── HERO ─────────────────────────────────── */}

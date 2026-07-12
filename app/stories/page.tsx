@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -8,6 +8,7 @@ import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
 import { Lock, CheckCircle2, Play, Star, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
+import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -41,6 +42,7 @@ export default function StoryLibraryPage() {
   const [stories, setStories] = useState<StoryLibraryItem[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [totalStars, setTotalStars] = useState(0);
   const [storyStars, setStoryStars] = useState<Record<string, number>>({});
   const [weekStreak, setWeekStreak] = useState<boolean[]>([false,false,false,false,false,false,false]);
@@ -51,9 +53,11 @@ export default function StoryLibraryPage() {
   const [page, setPage] = useState(1);
 
   const activeChildRef = useRef<Child | null>(null);
+  const switchGenRef   = useRef(0);
 
-  const loadForChild = async (child: Child, lang: Language) => {
-    setLoading(true);
+  const loadForChild = useCallback(async (child: Child, lang: Language, silent = false) => {
+    const gen = silent ? ++switchGenRef.current : 0;
+    if (silent) setRefreshing(true); else setLoading(true);
     const [lib, cur, streak, consStreak, ach] = await Promise.all([
       getStoryLibrary(child.id, lang),
       getCurrentStoryId(child.id, lang),
@@ -61,14 +65,7 @@ export default function StoryLibraryPage() {
       getConsecutiveStreak(child.id, lang),
       getChildAchievements(child.id),
     ]);
-    setStories(lib);
-    setCurrentId(cur);
-    setWeekStreak(streak);
-    setStreakCount(consStreak);
-    setBadgeCount(ach.filter(a => a.type === "badge" && a.language === lang).length);
-
     const stars = await getTotalStars(child.id, lang);
-    setTotalStars(stars);
 
     const { data: progressData } = await supabase
       .from("child_progress")
@@ -82,9 +79,17 @@ export default function StoryLibraryPage() {
       const storyId = Array.isArray(m?.story_slots) ? m.story_slots[0]?.story_id : m?.story_slots?.story_id;
       if (storyId) perStory[storyId] = (perStory[storyId] ?? 0) + (m?.stars ?? 0);
     }
+
+    if (silent && gen !== switchGenRef.current) return;
+    setStories(lib);
+    setCurrentId(cur);
+    setWeekStreak(streak);
+    setStreakCount(consStreak);
+    setBadgeCount(ach.filter(a => a.type === "badge" && a.language === lang).length);
+    setTotalStars(stars);
     setStoryStars(perStory);
-    setLoading(false);
-  };
+    if (silent) setRefreshing(false); else setLoading(false);
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -95,23 +100,31 @@ export default function StoryLibraryPage() {
       activeChildRef.current = child;
       await loadForChild(child, child.language);
     })();
-  }, []);
+  }, [loadForChild]);
 
   // Reload stories when the global language switcher fires.
   useEffect(() => {
-    const handler = async (e: Event) => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const handler = (e: Event) => {
       const lang = (e as CustomEvent<{ language: Language }>).detail?.language;
-      const child = activeChildRef.current;
-      if (!lang || !child) return;
-      const updated = { ...child, language: lang };
-      activeChildRef.current = updated;
-      setCategory("all");
-      setPage(1);
-      await loadForChild(updated, lang);
+      if (!lang) return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        const child = activeChildRef.current;
+        if (!child) return;
+        const updated = { ...child, language: lang };
+        activeChildRef.current = updated;
+        setCategory("all");
+        setPage(1);
+        await loadForChild(updated, lang, true);
+      }, 200);
     };
     window.addEventListener("app:languageChange", handler as EventListener);
-    return () => window.removeEventListener("app:languageChange", handler as EventListener);
-  }, []);
+    return () => {
+      window.removeEventListener("app:languageChange", handler as EventListener);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [loadForChild]);
 
   // Build category tabs from actual story data
   const activeCategories = Array.from(new Set(stories.map(s => s.category).filter(Boolean))) as string[];
@@ -141,8 +154,9 @@ export default function StoryLibraryPage() {
 
   return (
     <AppShell>
+      <RefreshingBadge show={refreshing} />
       <PageSurface>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 pb-28 w-full xl:flex xl:gap-6 xl:items-start">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 py-5 pb-28 w-full xl:flex xl:gap-6 xl:items-start transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}>
       <main className="flex-1 min-w-0">
 
           {/* ═══ HEADER — gradient hero ═══ */}

@@ -162,6 +162,14 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
     setDuration(0)
   }, [activeLang, mission.id])
 
+  const defaultLangInitRef = useRef(false)
+  useEffect(() => {
+    if (!defaultLang) return
+    if (defaultLangInitRef.current) setMessage(`${LANGUAGE_META[defaultLang].flag} Switched to ${LANGUAGE_META[defaultLang].label}`)
+    defaultLangInitRef.current = true
+    setActiveLang(defaultLang)
+  }, [defaultLang])
+
   // ── FlipFlop story helpers ───────────────────────────────────
   const fetchStory = async () => {
     if (!mission.story_id) { setStory(null); return }

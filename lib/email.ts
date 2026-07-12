@@ -26,6 +26,88 @@ async function send(to: string, subject: string, html: string): Promise<void> {
   }
 }
 
+// ── Shared branded wrapper for auth emails ───────────────────────────────────
+function authBase(title: string, body: string): string {
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head>
+<body style="margin:0;padding:0;background:#f0fdf4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;padding:40px 16px;"><tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+  <tr><td align="center" style="padding-bottom:24px;">
+    <div style="display:inline-block;background:#22c55e;border-radius:16px;padding:12px 24px;">
+      <span style="font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">🌿 NIMIPIKO</span>
+    </div>
+  </td></tr>
+  <tr><td style="background:#ffffff;border-radius:20px;padding:40px 36px;box-shadow:0 4px 24px rgba(0,0,0,0.07);">${body}</td></tr>
+  <tr><td align="center" style="padding-top:24px;">
+    <p style="margin:0;font-size:12px;color:#6b7280;">© 2025 NIMIPIKO · <a href="https://nimipiko.com" style="color:#22c55e;text-decoration:none;">nimipiko.com</a></p>
+    <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Questions? <a href="mailto:support@nimipiko.com" style="color:#22c55e;text-decoration:none;">support@nimipiko.com</a></p>
+  </td></tr>
+</table>
+</td></tr></table></body></html>`;
+}
+
+function ctaButton(href: string, label: string): string {
+  return `<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 0 28px;">
+    <a href="${href}" style="display:inline-block;background:#22c55e;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:14px 36px;border-radius:14px;letter-spacing:0.2px;">${label}</a>
+  </td></tr></table>`;
+}
+
+// ── Auth: Confirm signup ─────────────────────────────────────────────────────
+export async function sendAuthConfirmSignup(to: string, confirmUrl: string): Promise<void> {
+  await send(to, "Confirm your NIMIPIKO account", authBase("Confirm your NIMIPIKO account", `
+    <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#14532d;text-align:center;">Welcome aboard! 🎉</p>
+    <p style="margin:0 0 24px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">You're one step away from unlocking a world of stories, missions, and learning adventures for your child.</p>
+    ${ctaButton(confirmUrl, "Confirm my account")}
+    <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">This link expires in 24 hours. If you didn't create a NIMIPIKO account, you can safely ignore this email.</p>
+  `));
+}
+
+// ── Auth: Reset password ─────────────────────────────────────────────────────
+export async function sendAuthResetPassword(to: string, resetUrl: string): Promise<void> {
+  await send(to, "Reset your NIMIPIKO password", authBase("Reset your NIMIPIKO password", `
+    <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#14532d;text-align:center;">Password reset 🔐</p>
+    <p style="margin:0 0 24px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">We received a request to reset the password for your NIMIPIKO account. Click the button below to choose a new one.</p>
+    ${ctaButton(resetUrl, "Reset my password")}
+    <div style="background:#fef9c3;border-radius:12px;padding:14px 18px;margin-bottom:20px;">
+      <p style="margin:0;font-size:13px;color:#854d0e;line-height:1.6;">⚠️ This link expires in <strong>1 hour</strong>. If you didn't request this, your account is safe — just ignore this email.</p>
+    </div>
+    <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">For security, this link can only be used once.</p>
+  `));
+}
+
+// ── Auth: Magic link ─────────────────────────────────────────────────────────
+export async function sendAuthMagicLink(to: string, magicUrl: string): Promise<void> {
+  await send(to, "Your NIMIPIKO magic link", authBase("Your NIMIPIKO magic link", `
+    <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#14532d;text-align:center;">Your magic link ✨</p>
+    <p style="margin:0 0 24px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Click the button below to sign in to your NIMIPIKO account instantly — no password needed.</p>
+    ${ctaButton(magicUrl, "Sign in to NIMIPIKO")}
+    <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">This link expires in 1 hour and can only be used once. If you didn't request this, you can safely ignore it.</p>
+  `));
+}
+
+// ── Auth: Change email ───────────────────────────────────────────────────────
+export async function sendAuthChangeEmail(to: string, confirmUrl: string): Promise<void> {
+  await send(to, "Confirm your new email — NIMIPIKO", authBase("Confirm your new email — NIMIPIKO", `
+    <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#14532d;text-align:center;">Confirm your new email 📧</p>
+    <p style="margin:0 0 24px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">You requested to update the email address on your NIMIPIKO account. Click below to confirm and apply the change.</p>
+    ${ctaButton(confirmUrl, "Confirm new email")}
+    <div style="background:#fef9c3;border-radius:12px;padding:14px 18px;margin-bottom:20px;">
+      <p style="margin:0;font-size:13px;color:#854d0e;line-height:1.6;">⚠️ If you did not request this change, contact us immediately at <a href="mailto:support@nimipiko.com" style="color:#854d0e;">support@nimipiko.com</a></p>
+    </div>
+    <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">This link expires in 24 hours.</p>
+  `));
+}
+
+// ── Auth: Invite user ────────────────────────────────────────────────────────
+export async function sendAuthInvite(to: string, inviteUrl: string): Promise<void> {
+  await send(to, "You've been invited to NIMIPIKO", authBase("You've been invited to NIMIPIKO", `
+    <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#14532d;text-align:center;">You're invited! 🌟</p>
+    <p style="margin:0 0 24px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">You've been invited to join NIMIPIKO — a joyful learning platform featuring stories, missions, and language adventures for children.</p>
+    ${ctaButton(inviteUrl, "Accept invitation")}
+    <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">This invitation expires in 24 hours. If you weren't expecting this, you can safely ignore it.</p>
+  `));
+}
+
 // ── Welcome email sent after signup ─────────────────────────────────────────
 export async function sendWelcomeEmail(to: string, parentName: string): Promise<void> {
   await send(

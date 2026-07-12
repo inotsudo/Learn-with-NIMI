@@ -22,6 +22,7 @@ import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import AppShell              from "@/components/layout/AppShell";
+import { RefreshingBadge }  from "@/components/layout/RefreshingBadge";
 import WhoIsPlaying          from "@/components/home/WhoIsPlaying";
 import CreateChildModal      from "@/components/home/CreateChildModal";
 import CreateExplorerProfile from "@/components/home/CreateExplorerProfile";
@@ -146,9 +147,11 @@ export default function HomePage() {
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
 
-  const activeChildRef = useRef<Child | null>(null);
+  const activeChildRef  = useRef<Child | null>(null);
+  const switchGenRef    = useRef(0);
   const [mounted,         setMounted]         = useState(false);
   const [loading,         setLoading]         = useState(true);
+  const [refreshing,      setRefreshing]      = useState(false);
   const [children,        setChildren]        = useState<Child[]>([]);
   const [activeChild,     setActiveChild]     = useState<Child | null>(null);
   const [showPicker,      setShowPicker]      = useState(false);
@@ -174,14 +177,19 @@ export default function HomePage() {
 
   // When the global language switcher fires, reload all per-language data.
   useEffect(() => {
-    const handler = async (e: Event) => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const handler = (e: Event) => {
       const lang = (e as CustomEvent<{ language: Language }>).detail?.language;
+      if (!lang) return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
       const child = activeChildRef.current;
-      if (!lang || !child) return;
+      if (!child) return;
+      const gen = ++switchGenRef.current;
       const updated = { ...child, language: lang };
       activeChildRef.current = updated;
       setActiveChild(updated);
-      setLoading(true);
+      setRefreshing(true);
       const [lib, lvl, stars, streak, ach, consStreak, popular, cos] = await Promise.all([
         getStoryLibrary(updated.id, lang),
         getCurrentLevel(updated.id, lang),
@@ -192,6 +200,7 @@ export default function HomePage() {
         getPopularStories(),
         getChildCosmetics(updated.id),
       ]);
+      if (gen !== switchGenRef.current) return;
       setStories(lib);
       setLevel(lvl);
       setTotalStars(stars);
@@ -203,10 +212,14 @@ export default function HomePage() {
       const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
       if (cur) setSlots(await getStorySlots(updated.id, cur.sid, lang));
       else setSlots([]);
-      setLoading(false);
+      setRefreshing(false);
+      }, 200);
     };
     window.addEventListener("app:languageChange", handler as EventListener);
-    return () => window.removeEventListener("app:languageChange", handler as EventListener);
+    return () => {
+      window.removeEventListener("app:languageChange", handler as EventListener);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, []);
 
   async function init() {
@@ -310,12 +323,13 @@ export default function HomePage() {
   /* ═══════════════════════════════════════════════════════════════════════ */
   return (
     <AppShell>
+      <RefreshingBadge show={refreshing} />
       {loading ? (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
           <MagicLoader variant="home" fullPage={false} />
         </div>
       ) : (
-        <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #ecfdf5 0%, #f4fef6 8%, #f9fafb 20%, #ffffff 36%)" }}>
+        <div className={`min-h-screen transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`} style={{ background: "linear-gradient(180deg, #ecfdf5 0%, #f4fef6 8%, #f9fafb 20%, #ffffff 36%)" }}>
 
           {/* ════════════════════════════════ HERO ══════════════════════════ */}
           <motion.div

@@ -359,8 +359,8 @@ export default function AppShell({ children }: AppShellProps) {
                   />
                 </div>
 
-                {/* Language picker */}
-                <div className="relative">
+                {/* Language picker — desktop only; mobile users access via profile dropdown */}
+                <div className="relative hidden md:block">
                   <button
                     onClick={() => setShowLangPicker(p => !p)}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-gray-200/80 bg-white/90 shadow-sm transition-all hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 active:scale-95"
@@ -455,7 +455,22 @@ export default function AppShell({ children }: AppShellProps) {
                             <span className="font-nunito text-gray-700 text-[13px] font-bold">{item.label}</span>
                           </a>
                         ))}
-                        <div className="border-t border-gray-100 mt-1">
+                        <div className="border-t border-gray-100 mt-1 px-4 py-2">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-wide mb-1.5">Language</p>
+                          <div className="flex gap-1.5">
+                            {LANGS.map(l => (
+                              <button
+                                key={l.code}
+                                onClick={() => { setShowProfileMenu(false); setPendingLanguage(l.code); }}
+                                className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-brand-primary)] focus-visible:ring-offset-1 ${l.code === language ? "border-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)]" : "border-gray-200 hover:bg-gray-50"}`}
+                              >
+                                <Flag lang={l.code} className="w-6 h-4 rounded-sm" />
+                                <span className={`text-[9px] font-black uppercase tracking-wide ${l.code === language ? "text-[var(--ds-brand-primary)]" : "text-gray-500"}`}>{l.code}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="border-t border-gray-100">
                           <button
                             onClick={() => { setShowProfileMenu(false); setShowLogout(true); }}
                             className="flex items-center gap-3 px-4 py-2.5 w-full hover:bg-red-50 transition"

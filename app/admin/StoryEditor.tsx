@@ -214,6 +214,14 @@ export default function StoryEditor({ story, onSaved, defaultLang }: StoryEditor
 
   useEffect(() => { loadContent() }, [loadContent])
 
+  const defaultLangInitRef = useRef(false)
+  useEffect(() => {
+    if (!defaultLang) return
+    if (defaultLangInitRef.current) toastOk(`${LANGUAGE_META[defaultLang].flag} Switched to ${LANGUAGE_META[defaultLang].label}`)
+    defaultLangInitRef.current = true
+    setActiveLang(defaultLang)
+  }, [defaultLang])
+
   const reloadMissionVersions = async (slotKey: string) => {
     const slot = slots.find((s: SlotData) => s.slot_key === slotKey)
     if (!slot?.mission_id) return

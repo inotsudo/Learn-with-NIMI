@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,6 +12,7 @@ import {
 import { MILESTONE_BADGES } from "@/lib/milestoneBadges";
 import { type ActivityCategory } from "@/app/_activityData";
 import AppShell from "@/components/layout/AppShell";
+import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import MagicLoader from "@/components/magic/MagicLoader";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ProgressHeader, { type ProgressTab } from "@/components/profile/ProgressHeader";
@@ -145,6 +146,67 @@ export default function UserProfilePage() {
   const [certificates, setCertificates] = useState(0);
   const [earnedBadgeSlugs, setEarnedBadgeSlugs] = useState<string[]>([]);
   const [editOpen, setEditOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const activeChildRef = useRef<Child | null>(null);
+  const switchGenRef   = useRef(0);
+
+  const loadProgress = useCallback(async (targetChildId?: string, silent = false) => {
+    const gen = silent ? ++switchGenRef.current : 0;
+    if (silent) setRefreshing(true); else setLoading(true);
+    const list = await getChildren();
+    if (list.length === 0) {
+      setHasChildren(false);
+      setLoading(false);
+      return;
+    }
+
+    const savedId = targetChildId
+      ?? (typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null);
+    const child = list.find(c => c.id === savedId) ?? list[0];
+    if (typeof window !== "undefined") localStorage.setItem(ACTIVE_CHILD_KEY, child.id);
+
+    const curriculumMissions = await getCurriculumMissions(child.id);
+    const level = await getCurrentLevel(child.id, child.language);
+
+    const [wStreak, wCounts, stars, dates, achievements, badges] = await Promise.all([
+      getWeekStreak(child.id, child.language),
+      getWeekActivityCounts(child.id, child.language),
+      getTotalStars(child.id, child.language),
+      getActivityDates(child.id, child.language),
+      getChildAchievements(child.id),
+      getChildBadges(child.id),
+    ]);
+
+    if (silent && gen !== switchGenRef.current) return;
+
+    await awardMilestoneBadges(child.id, child.language);
+
+    setAllChildren(list);
+    setChildName(child.name);
+    setActiveChild(child);
+    activeChildRef.current = child;
+    setCertificates(Math.max(0, level - 1));
+
+    const completedInLevel = new Set(
+      curriculumMissions.filter(m => m.completed).map(m => m.category)
+    );
+    setCompletedCategories(completedInLevel);
+
+    const progress = emptyCategoryProgress();
+    for (const m of curriculumMissions) {
+      progress[m.category].total = 1;
+      if (m.completed) progress[m.category].completed = 1;
+    }
+    setCategoryProgress(progress);
+
+    setWeekStreak(wStreak);
+    setWeekCounts(wCounts);
+    setTotalStars(stars);
+    setActivityDates(dates);
+    setBadgeCount(achievements.filter(a => a.type === "badge" && a.language === child.language).length);
+    setEarnedBadgeSlugs(badges.map(b => b.badge_slug));
+    if (silent) setRefreshing(false); else setLoading(false);
+  }, []);
 
   const handleSaveProfile = async (newName: string, newAvatarUrl: string) => {
     if (!activeChild) return;
@@ -161,61 +223,24 @@ export default function UserProfilePage() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
+  }, [loadProgress]);
 
-  const loadProgress = async (targetChildId?: string) => {
-    setLoading(true);
-    const list = await getChildren();
-    if (list.length === 0) {
-      setHasChildren(false);
-      setLoading(false);
-      return;
-    }
-    setAllChildren(list);
-
-    const savedId = targetChildId
-      ?? (typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null);
-    const child = list.find(c => c.id === savedId) ?? list[0];
-    if (typeof window !== "undefined") localStorage.setItem(ACTIVE_CHILD_KEY, child.id);
-
-    setChildName(child.name);
-    setActiveChild(child);
-
-    const curriculumMissions = await getCurriculumMissions(child.id);
-    const level = await getCurrentLevel(child.id, child.language);
-    setCertificates(Math.max(0, level - 1));
-
-    const completedInLevel = new Set(
-      curriculumMissions.filter(m => m.completed).map(m => m.category)
-    );
-    setCompletedCategories(completedInLevel);
-
-    const progress = emptyCategoryProgress();
-    for (const m of curriculumMissions) {
-      progress[m.category].total = 1;
-      if (m.completed) progress[m.category].completed = 1;
-    }
-    setCategoryProgress(progress);
-
-    await awardMilestoneBadges(child.id, child.language);
-
-    const [wStreak, wCounts, stars, dates, achievements, badges] = await Promise.all([
-      getWeekStreak(child.id, child.language),
-      getWeekActivityCounts(child.id, child.language),
-      getTotalStars(child.id, child.language),
-      getActivityDates(child.id, child.language),
-      getChildAchievements(child.id),
-      getChildBadges(child.id),
-    ]);
-
-    setWeekStreak(wStreak);
-    setWeekCounts(wCounts);
-    setTotalStars(stars);
-    setActivityDates(dates);
-    setBadgeCount(achievements.filter(a => a.type === "badge" && a.language === child.language).length);
-    setEarnedBadgeSlugs(badges.map(b => b.badge_slug));
-    setLoading(false);
-  };
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const handler = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        const child = activeChildRef.current;
+        if (!child) return;
+        await loadProgress(child.id, true);
+      }, 200);
+    };
+    window.addEventListener("app:languageChange", handler as EventListener);
+    return () => {
+      window.removeEventListener("app:languageChange", handler as EventListener);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [loadProgress]);
 
   const handleChildSwitch = (childId: string) => {
     void loadProgress(childId);
@@ -246,8 +271,9 @@ export default function UserProfilePage() {
 
   return (
     <AppShell>
+      <RefreshingBadge show={refreshing} />
       <PageSurface>
-        <main className="max-w-lg mx-auto px-4 sm:px-5 py-4 pb-28 flex-1 w-full">
+        <main className={`max-w-lg mx-auto px-4 sm:px-5 py-4 pb-28 flex-1 w-full transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}>
           <ProgressHeader
             activeTab={activeTab}
             onTabChange={setActiveTab}
