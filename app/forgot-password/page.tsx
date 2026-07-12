@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
     );
 
     if (resetError) {
-      setError(t("resetErrGeneric"));
+      setError(resetError.message || t("resetErrGeneric"));
     } else {
       setMessage(t("resetSuccess"));
     }
