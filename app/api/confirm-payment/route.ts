@@ -62,9 +62,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, status: "SUCCESS", transactionId: order.provider_transaction_id });
     }
 
-    // Validate amount (1% tolerance for FX rounding)
+    // Validate amount (1% tolerance for FX rounding).
+    // Do NOT short-circuit when authorizedAmount is 0 — a zero response from
+    // CyberSource (network glitch, test-mode quirk) must still fail this check.
     const expectedAmount = Number(order.amount);
-    if (authorizedAmount > 0 && authorizedAmount < expectedAmount * 0.99) {
+    if (authorizedAmount < expectedAmount * 0.99) {
       return NextResponse.json(
         { success: false, message: "Payment amount mismatch." },
         { status: 402 }

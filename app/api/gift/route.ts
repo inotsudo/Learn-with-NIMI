@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
   let body: {
     productId?: string;
     currency?: string;
-    amount?: number;
     paymentProvider?: string;
     recipientEmail?: string;
     recipientName?: string;
@@ -28,25 +27,30 @@ export async function POST(req: NextRequest) {
   };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Bad request" }, { status: 400 }); }
 
-  if (!body.productId || !body.currency || body.amount == null || !body.recipientEmail) {
+  if (!body.productId || !body.currency || !body.recipientEmail) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 422 });
   }
 
-  // Validate product exists
+  // Fetch product with authoritative prices — never trust client-supplied amount
   const { data: product } = await supabase
     .from("products")
-    .select("id, name, tier, billing_interval")
+    .select("id, name, tier, billing_interval, price_usd, price_rwf")
     .eq("id", body.productId)
     .eq("is_active", true)
     .maybeSingle();
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+
+  const authorizedAmount = body.currency === "RWF" ? product.price_rwf : product.price_usd;
+  if (authorizedAmount == null) {
+    return NextResponse.json({ error: "Currency not supported for this product" }, { status: 422 });
+  }
 
   // Create the order
   const { data: order, error: orderErr } = await supabase.from("orders").insert({
     parent_id: user.id,
     product_id: body.productId,
     currency: body.currency,
-    amount: body.amount,
+    amount: authorizedAmount,
     payment_provider: body.paymentProvider ?? "cybersource",
     payment_status: "pending",
     personalization_data: {

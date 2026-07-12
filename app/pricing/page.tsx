@@ -157,21 +157,28 @@ export default function PricingPage() {
           {/* Billing toggle */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2 mb-8">
-            <div className="flex items-center gap-3 bg-gray-100 rounded-full p-1">
+            <div className="flex items-center gap-3 bg-ds-surface rounded-full p-1 border border-ds-border">
               <button
                 onClick={() => setBillingAnnual(false)}
                 className={`px-5 py-2 rounded-full font-baloo font-black text-[13px] transition-all ${
-                  !billingAnnual ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                  !billingAnnual ? "bg-ds-card text-ds-text shadow-sm" : "text-ds-muted"
                 }`}
               >Monthly</button>
               <button
                 onClick={() => setBillingAnnual(true)}
                 className={`px-5 py-2 rounded-full font-baloo font-black text-[13px] transition-all flex items-center gap-2 ${
-                  billingAnnual ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                  billingAnnual ? "bg-ds-card text-ds-text shadow-sm" : "text-ds-muted"
                 }`}
               >
                 Annual
-                <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">SAVE 33%</span>
+                {clubMonthly && clubAnnual && (() => {
+                  const monthly = getPrice(clubMonthly, currency).amount;
+                  const annual = getPrice(clubAnnual, currency).amount;
+                  const pct = Math.round((1 - annual / (monthly * 12)) * 100);
+                  return pct > 0
+                    ? <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">SAVE {pct}%</span>
+                    : null;
+                })()}
               </button>
             </div>
             {billingAnnual && (
@@ -199,7 +206,7 @@ export default function PricingPage() {
               return (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="relative overflow-hidden border-2 border-yellow-400/40 shadow-ds-card bg-white" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+                  className="relative overflow-hidden border-2 border-yellow-400/40 shadow-ds-card bg-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
 
                   {/* Popular badge */}
                   <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-center py-1.5">
@@ -227,17 +234,23 @@ export default function PricingPage() {
                       <span className="font-baloo font-black text-ds-text text-[40px]">{price.formatted}</span>
                       <span className="text-gray-400 text-[15px] font-bold">/{billingAnnual ? "year" : "month"}</span>
                     </div>
-                    {billingAnnual && clubMonthly && (
-                      <p className="text-green-600 text-[12px] font-bold mt-0.5">
-                        ≈ {currency === "RWF"
-                          ? `${Math.round((clubAnnual?.price_rwf ?? 99000) / 12).toLocaleString()} RWF/month`
-                          : `$${((clubAnnual?.price_usd ?? 119.99) / 12).toFixed(2)}/month`
-                        } · saves {currency === "RWF"
-                          ? `${((clubMonthly.price_rwf ?? 9900) * 12 - (clubAnnual?.price_rwf ?? 99000)).toLocaleString()} RWF`
-                          : `$${((clubMonthly.price_usd ?? 14.99) * 12 - (clubAnnual?.price_usd ?? 119.99)).toFixed(2)}`
-                        }
-                      </p>
-                    )}
+                    {billingAnnual && clubMonthly && clubAnnual && (() => {
+                      const annualPrice = getPrice(clubAnnual, currency);
+                      const monthlyPrice = getPrice(clubMonthly, currency);
+                      const perMonth = annualPrice.amount / 12;
+                      const saved = monthlyPrice.amount * 12 - annualPrice.amount;
+                      const perMonthFmt = currency === "RWF"
+                        ? `${Math.round(perMonth).toLocaleString()} RWF/month`
+                        : `$${perMonth.toFixed(2)}/month`;
+                      const savedFmt = currency === "RWF"
+                        ? `${Math.round(saved).toLocaleString()} RWF`
+                        : `$${saved.toFixed(2)}`;
+                      return (
+                        <p className="text-green-600 text-[12px] font-bold mt-0.5">
+                          ≈ {perMonthFmt} · saves {savedFmt}
+                        </p>
+                      );
+                    })()}
                     <p className="text-gray-500 text-[13px] mt-1">Full access to everything. Cancel anytime.</p>
                   </div>
 
@@ -362,7 +375,7 @@ export default function PricingPage() {
               return (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="relative overflow-hidden border-2 border-ds-border shadow-ds-card bg-white" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+                  className="relative overflow-hidden border-2 border-ds-border shadow-ds-card bg-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
 
                   {/* Badge */}
                   <div className="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black text-[10px] px-3 py-1 rounded-full">
@@ -434,7 +447,7 @@ export default function PricingPage() {
 
           {/* Parent testimonials */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            className="mt-10 border border-ds-border bg-white/60 backdrop-blur-sm p-6 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+            className="mt-10 border border-ds-border bg-ds-card/80 backdrop-blur-sm p-6 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
             <p className="font-black text-ds-text text-[15px] mb-4 text-center">❤️ What parents say</p>
             <div className="grid sm:grid-cols-3 gap-4">
               {([

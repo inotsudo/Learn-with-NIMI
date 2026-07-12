@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Shield, CreditCard, Phone } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, EASE, SPRING } from "@/lib/design-system/motion";
 import supabase from "@/lib/supabaseClient";
-import { createOrder } from "@/lib/payments/products";
 import { getPrice, getProviderForCurrency } from "@/lib/payments/types";
 import type { Product, Currency } from "@/lib/payments/types";
 
@@ -33,11 +32,19 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
   );
   const [errorMsg, setErrorMsg] = useState("");
   const [phone, setPhone] = useState("");
+  const [countdown, setCountdown] = useState(3);
+  const momoAbort = useRef(false);
 
   useEffect(() => {
     if (step !== "success") return;
-    const t = setTimeout(() => { window.location.href = "/stories"; }, 3000);
-    return () => clearTimeout(t);
+    setCountdown(3);
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { clearInterval(interval); window.location.href = "/stories"; return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, [step]);
 
   useEffect(() => {
@@ -49,20 +56,26 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { window.location.href = "/loginpage"; return; }
 
-        const order = await createOrder({
-          parentId: user.id,
-          productId: product.id,
-          currency,
-          amount: chargeAmount,
-          paymentProvider: "cybersource",
-          ...(discountCodeId ? { personalizationData: { discount_code_id: discountCodeId } } : {}),
+        // Create order server-side — server derives the canonical price from the DB.
+        const orderRes = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId: product.id, currency, paymentProvider: "cybersource",
+            ...(discountCodeId ? { discountCodeId } : {}),
+          }),
         });
-        if (!order || cancelled) { if (!cancelled) { setStep("error"); setErrorMsg("Failed to create order"); } return; }
+        const orderData = await orderRes.json();
+        if (!orderRes.ok || !orderData.orderId || cancelled) {
+          if (!cancelled) { setStep("error"); setErrorMsg(orderData.error ?? "Failed to create order"); }
+          return;
+        }
+        const orderId = orderData.orderId as string;
 
         const ctxRes = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: order.id }),
+          body: JSON.stringify({ orderId }),
         });
         const { captureContext, success } = await ctxRes.json();
         if (!success || !captureContext || cancelled) {
@@ -102,14 +115,14 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
 
         if (!transientToken || cancelled) return;
 
-        sessionStorage.setItem("nimipiko_pending_payment", JSON.stringify({ orderId: order.id }));
+        sessionStorage.setItem("nimipiko_pending_payment", JSON.stringify({ orderId }));
         const completionJwt = await up.complete(transientToken);
         setStep("processing");
 
         const confirmRes = await fetch("/api/confirm-payment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ response: completionJwt, orderId: order.id }),
+          body: JSON.stringify({ response: completionJwt, orderId }),
         });
         const confirmResult = await confirmRes.json();
         sessionStorage.removeItem("nimipiko_pending_payment");
@@ -122,40 +135,53 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     };
 
     init();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; momoAbort.current = true; };
   }, [provider, product.id, currency, chargeAmount]);
 
   const handleMomoSubmit = async () => {
-    setStep("processing");
+    const cleanPhone = phone.replace(/[\s\-]/g, "");
+    if (cleanPhone.length < 9) {
+      setErrorMsg("Enter a valid MTN phone number");
+      return;
+    }
     setErrorMsg("");
+    setStep("processing");
+    momoAbort.current = false;
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/loginpage"; return; }
 
-      const order = await createOrder({
-        parentId: user.id, productId: product.id, currency,
-        amount: chargeAmount, paymentProvider: "mtn_momo",
-        ...(discountCodeId ? { personalizationData: { discount_code_id: discountCodeId } } : {}),
+      const orderRes = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id, currency, paymentProvider: "mtn_momo",
+          ...(discountCodeId ? { discountCodeId } : {}),
+        }),
       });
-      if (!order) { setStep("error"); setErrorMsg("Failed to create order"); return; }
+      const orderData = await orderRes.json();
+      if (!orderRes.ok || !orderData.orderId) { setStep("error"); setErrorMsg(orderData.error ?? "Failed to create order"); return; }
+      const momoOrderId = orderData.orderId as string;
 
       const res = await fetch("/api/payments/mtn-momo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.id, phoneNumber: phone, amount: chargeAmount }),
+        body: JSON.stringify({ orderId: momoOrderId, phoneNumber: cleanPhone }),
       });
       const result = await res.json();
       if (result.success) {
         for (let i = 0; i < 30; i++) {
           await new Promise(r => setTimeout(r, 5000));
-          const s = await fetch(`/api/payments/mtn-momo?orderId=${order.id}&referenceId=${result.referenceId}`);
+          if (momoAbort.current) return;
+          const s = await fetch(`/api/payments/mtn-momo?orderId=${momoOrderId}&referenceId=${result.referenceId}`);
           const d = await s.json();
+          if (momoAbort.current) return;
           if (d.status === "completed") { setStep("success"); return; }
           if (d.status === "failed") { setStep("error"); setErrorMsg(d.reason || "Payment declined"); return; }
         }
-        setStep("error"); setErrorMsg("Payment timed out");
+        if (!momoAbort.current) { setStep("error"); setErrorMsg("Payment timed out — please try again"); }
       } else { setStep("error"); setErrorMsg(result.error || "MoMo request failed"); }
-    } catch { setStep("error"); setErrorMsg("Something went wrong"); }
+    } catch { if (!momoAbort.current) { setStep("error"); setErrorMsg("Something went wrong"); } }
   };
 
   return (
@@ -166,7 +192,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         <motion.div
           initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
           transition={{ ...SPRING.dialog }}
-          className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl border border-ds-border shadow-ds-card p-6 pb-8 sm:pb-6 sm:mx-4">
+          className="w-full sm:max-w-md bg-ds-card rounded-t-3xl sm:rounded-3xl border border-ds-border shadow-ds-card p-6 pb-8 sm:pb-6 sm:mx-4">
 
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
 
@@ -233,6 +259,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
                     className="w-full border border-ds-border bg-ds-input leaf px-4 py-3 text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400" />
                 </div>
                 <p className="text-gray-400 text-[10px]">📱 A payment prompt will be sent to your MTN MoMo</p>
+                {errorMsg && <p className="text-red-500 text-[11px] mt-1 font-semibold">{errorMsg}</p>}
               </div>
               <div className="flex gap-3 mt-5">
                 <button onClick={onClose} className="flex-1 py-3 leaf border border-ds-border text-gray-400 font-bold text-[13px] hover:bg-gray-50 transition">Cancel</button>
@@ -265,11 +292,12 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
               </motion.h3>
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                 className="text-gray-500 text-[14px] mt-2">
-                Your {product.name} is now active. Taking you to the stories…
+                Your {product.name} is now active.
               </motion.p>
               <motion.a href="/stories" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
-                className="inline-block mt-6 px-8 py-3.5 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[15px] shadow-xl">
-                📖 Go to Stories Now
+                className="inline-flex items-center gap-2 mt-6 px-8 py-3.5 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[15px] shadow-xl">
+                📖 Go to Stories
+                <span className="bg-white/30 rounded-full text-[11px] font-black px-2 py-0.5">{countdown}s</span>
               </motion.a>
             </div>
           )}
@@ -281,7 +309,13 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
               <p className="text-red-500 text-[13px] mt-2">{errorMsg}</p>
               <div className="flex gap-3 mt-5 justify-center">
                 <button onClick={onClose} className="px-6 py-3 leaf border border-ds-border text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition">Close</button>
-                <button onClick={onClose} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Again</button>
+                {provider === "mtn_momo"
+                  ? <button onClick={() => { setErrorMsg(""); setStep("momo"); }} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Again</button>
+                  : <button onClick={onClose} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Close & Reopen to Retry</button>
+                }
+                {provider === "cybersource" && (
+                  <p className="text-gray-400 text-[10px] mt-2 text-center w-full">Card sessions can't be resumed — close this dialog and click Subscribe again.</p>
+                )}
               </div>
             </div>
           )}

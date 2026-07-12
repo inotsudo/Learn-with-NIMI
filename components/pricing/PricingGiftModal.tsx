@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
@@ -34,8 +34,12 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const giftIdRef = useState<string>("");
-  const orderIdRef = useState<string>("");
+  const giftIdRef = useRef<string>("");
+  const orderIdRef = useRef<string>("");
+  const momoAbort = useRef(false);
+
+  // Stop polling when modal unmounts mid-flight
+  useEffect(() => () => { momoAbort.current = true; }, []);
 
   const handleGiftPay = async () => {
     if (!recipientEmail.includes("@")) { setErrorMsg("Enter a valid email"); return; }
@@ -48,7 +52,6 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       body: JSON.stringify({
         productId: product.id,
         currency,
-        amount: price.amount,
         paymentProvider: provider,
         recipientEmail,
         recipientName: recipientName.trim() || null,
@@ -60,8 +63,8 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       setStep("error"); setErrorMsg(data.error ?? "Failed to create gift order");
       return;
     }
-    giftIdRef[1](data.giftId);
-    orderIdRef[1](data.orderId);
+    giftIdRef.current = data.giftId;
+    orderIdRef.current = data.orderId;
 
     if (provider === "mtn_momo") return;
 
@@ -119,25 +122,31 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
   };
 
   const handleMomoPay = async () => {
+    const cleanPhone = phone.replace(/[\s\-]/g, "");
+    if (cleanPhone.length < 9) { setErrorMsg("Enter a valid MTN phone number"); return; }
+    setErrorMsg("");
     setStep("processing");
+    momoAbort.current = false;
     try {
       const res = await fetch("/api/payments/mtn-momo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: orderIdRef[0], phoneNumber: phone, amount: price.amount }),
+        body: JSON.stringify({ orderId: orderIdRef.current, phoneNumber: cleanPhone }),
       });
       const result = await res.json();
       if (result.success) {
         for (let i = 0; i < 30; i++) {
           await new Promise(r => setTimeout(r, 5000));
-          const s = await fetch(`/api/payments/mtn-momo?orderId=${orderIdRef[0]}&referenceId=${result.referenceId}`);
+          if (momoAbort.current) return;
+          const s = await fetch(`/api/payments/mtn-momo?orderId=${orderIdRef.current}&referenceId=${result.referenceId}`);
           const d = await s.json();
+          if (momoAbort.current) return;
           if (d.status === "completed") { setStep("success"); return; }
           if (d.status === "failed") { setStep("error"); setErrorMsg(d.reason || "Payment declined"); return; }
         }
-        setStep("error"); setErrorMsg("Payment timed out");
+        if (!momoAbort.current) { setStep("error"); setErrorMsg("Payment timed out — please try again"); }
       } else { setStep("error"); setErrorMsg(result.error || "MoMo request failed"); }
-    } catch { setStep("error"); setErrorMsg("Something went wrong"); }
+    } catch { if (!momoAbort.current) { setStep("error"); setErrorMsg("Something went wrong"); } }
   };
 
   return (
@@ -148,7 +157,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
         <motion.div
           initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
           transition={{ ...SPRING.dialog }}
-          className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl border border-ds-border shadow-ds-card p-6 pb-8 sm:pb-6 sm:mx-4">
+          className="w-full sm:max-w-md bg-ds-card rounded-t-3xl sm:rounded-3xl border border-ds-border shadow-ds-card p-6 pb-8 sm:pb-6 sm:mx-4">
 
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
 
@@ -225,7 +234,8 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
                   placeholder="078 XXX XXXX"
                   className="w-full border border-ds-border bg-ds-input leaf px-4 py-3 text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400" />
               </div>
-              <div className="flex gap-3 mt-5">
+              {errorMsg && <p className="text-red-500 text-[11px] mt-2 font-semibold">{errorMsg}</p>}
+              <div className="flex gap-3 mt-4">
                 <button onClick={onClose} className="flex-1 py-3 leaf border border-ds-border text-gray-400 font-bold text-[13px] hover:bg-gray-50 transition">Cancel</button>
                 <motion.button whileTap={m.buttonPress} onClick={handleMomoPay}
                   className="flex-1 py-3 leaf bg-[var(--nimi-green)] text-white font-black text-[14px] shadow-md">
@@ -239,7 +249,10 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
             <div className="text-center py-8">
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                 className="text-4xl mx-auto mb-4 w-fit">⏳</motion.div>
-              <p className="font-baloo font-black text-ds-text text-[18px]">Processing payment...</p>
+              <p className="font-baloo font-black text-ds-text text-[18px]">
+                {provider === "mtn_momo" ? "Waiting for MoMo confirmation..." : "Processing payment..."}
+              </p>
+              {provider === "mtn_momo" && <p className="text-gray-500 text-[13px] mt-2">Check your phone and enter your PIN</p>}
             </div>
           )}
 

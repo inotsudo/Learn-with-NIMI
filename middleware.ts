@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // ── In-memory rate limiter ───────────────────────────────────────────────────
-// Intentionally lightweight; per-instance in serverless (resets on cold start).
-// Provides meaningful friction against bursts from a single IP/client.
+// Per-instance in serverless — resets on cold start, does not coordinate
+// across Vercel function instances. Provides meaningful burst protection from
+// a single IP on a single instance. For distributed rate limiting upgrade to
+// @upstash/ratelimit + UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN.
 const rl = new Map<string, { count: number; reset: number }>();
 const WINDOW = 60_000; // 1 minute
 
@@ -16,7 +18,17 @@ function ip(req: NextRequest): string {
   );
 }
 
+// Evict expired entries so the Map stays bounded in warm long-running instances.
+let lastEvict = 0;
+function evictExpired() {
+  const now = Date.now();
+  if (now - lastEvict < WINDOW) return;
+  lastEvict = now;
+  for (const [k, v] of rl) { if (now > v.reset) rl.delete(k); }
+}
+
 function rateLimited(key: string, max: number): boolean {
+  evictExpired();
   const now = Date.now();
   const e = rl.get(key);
   if (!e || now > e.reset) {
@@ -34,6 +46,7 @@ const LIMITS: [string, number][] = [
   ["/api/referral",              20], // referral code ops
   ["/api/gift",                  10], // gift creation + redemption
   ["/api/discount",              20], // discount code validation
+  ["/api/orders",                10], // order creation
   ["/api/payments",              10], // payment initiation
   ["/api/account/cancel",        10], // cancel sub
   ["/api/account/welcome-email", 5],  // welcome trigger
@@ -108,6 +121,7 @@ export const config = {
     "/api/referral/:path*",
     "/api/referral",
     "/api/schools/:path*",
+    "/api/orders",
     "/api/payments/:path*",
     "/api/account/:path*",
     "/api/confirm-payment",
