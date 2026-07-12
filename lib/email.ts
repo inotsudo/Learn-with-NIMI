@@ -75,7 +75,7 @@ export async function sendAuthResetPassword(to: string, resetUrl: string): Promi
       <p style="margin:0;font-size:13px;color:#854d0e;line-height:1.6;">⚠️ This link expires in <strong>1 hour</strong>. If you didn't request this, your account is safe — just ignore this email.</p>
     </div>
     <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">For security, this link can only be used once.</p>
-  `), true));
+  `), true);
 }
 
 // ── Auth: Magic link ─────────────────────────────────────────────────────────
