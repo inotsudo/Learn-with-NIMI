@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -8,11 +8,11 @@ import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
 import { Lock, CheckCircle2, Play, Star, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import MagicLoader from "@/components/magic/MagicLoader";
-import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildAchievements } from "@/lib/queries";
+import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildAchievements, type Child } from "@/lib/queries";
 import supabase from "@/lib/supabaseClient";
 import { getStoryLibrary, getCurrentStoryId } from "@/lib/storyRepository";
 import type { StoryLibraryItem } from "@/lib/story-types";
@@ -50,45 +50,67 @@ export default function StoryLibraryPage() {
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
 
+  const activeChildRef = useRef<Child | null>(null);
+
+  const loadForChild = async (child: Child, lang: Language) => {
+    setLoading(true);
+    const [lib, cur, streak, consStreak, ach] = await Promise.all([
+      getStoryLibrary(child.id, lang),
+      getCurrentStoryId(child.id, lang),
+      getWeekStreak(child.id, lang),
+      getConsecutiveStreak(child.id, lang),
+      getChildAchievements(child.id),
+    ]);
+    setStories(lib);
+    setCurrentId(cur);
+    setWeekStreak(streak);
+    setStreakCount(consStreak);
+    setBadgeCount(ach.filter(a => a.type === "badge" && a.language === lang).length);
+
+    const stars = await getTotalStars(child.id, lang);
+    setTotalStars(stars);
+
+    const { data: progressData } = await supabase
+      .from("child_progress")
+      .select("mission_id, missions(stars, story_slots(story_id))")
+      .eq("child_id", child.id)
+      .eq("language", lang);
+
+    const perStory: Record<string, number> = {};
+    for (const row of progressData ?? []) {
+      const m = row.missions as { stars?: number; story_slots?: { story_id?: string } | { story_id?: string }[] } | null;
+      const storyId = Array.isArray(m?.story_slots) ? m.story_slots[0]?.story_id : m?.story_slots?.story_id;
+      if (storyId) perStory[storyId] = (perStory[storyId] ?? 0) + (m?.stars ?? 0);
+    }
+    setStoryStars(perStory);
+    setLoading(false);
+  };
+
   useEffect(() => {
     void (async () => {
       const list = await getChildren();
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0];
       if (!child) { setLoading(false); return; }
-      const [lib, cur, streak, consStreak, ach] = await Promise.all([
-        getStoryLibrary(child.id, child.language),
-        getCurrentStoryId(child.id, child.language),
-        getWeekStreak(child.id, child.language),
-        getConsecutiveStreak(child.id, child.language),
-        getChildAchievements(child.id),
-      ]);
-      setStories(lib);
-      setCurrentId(cur);
-      setWeekStreak(streak);
-      setStreakCount(consStreak);
-      setBadgeCount(ach.filter(a => a.type === "badge" && a.language === child.language).length);
-
-      // Fetch total stars and per-story stars
-      const stars = await getTotalStars(child.id, child.language);
-      setTotalStars(stars);
-
-      const { data: progressData } = await supabase
-        .from("child_progress")
-        .select("mission_id, missions(stars, story_slots(story_id))")
-        .eq("child_id", child.id)
-        .eq("language", child.language);
-
-      const perStory: Record<string, number> = {};
-      for (const row of progressData ?? []) {
-        const m = row.missions as { stars?: number; story_slots?: { story_id?: string } | { story_id?: string }[] } | null;
-        const storyId = Array.isArray(m?.story_slots) ? m.story_slots[0]?.story_id : m?.story_slots?.story_id;
-        if (storyId) perStory[storyId] = (perStory[storyId] ?? 0) + (m?.stars ?? 0);
-      }
-      setStoryStars(perStory);
-
-      setLoading(false);
+      activeChildRef.current = child;
+      await loadForChild(child, child.language);
     })();
+  }, []);
+
+  // Reload stories when the global language switcher fires.
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const lang = (e as CustomEvent<{ language: Language }>).detail?.language;
+      const child = activeChildRef.current;
+      if (!lang || !child) return;
+      const updated = { ...child, language: lang };
+      activeChildRef.current = updated;
+      setCategory("all");
+      setPage(1);
+      await loadForChild(updated, lang);
+    };
+    window.addEventListener("app:languageChange", handler as EventListener);
+    return () => window.removeEventListener("app:languageChange", handler as EventListener);
   }, []);
 
   // Build category tabs from actual story data

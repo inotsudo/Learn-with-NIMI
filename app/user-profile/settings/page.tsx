@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Edit } from "lucide-react";
 import {
   getChildren, getCurrentLevel, getCurriculumMissions, getCompletedMissionIds,
@@ -76,7 +77,7 @@ export default function MyProfilePage() {
         <PageSurface className="items-center justify-center px-4">
           <div className="flex flex-col items-center text-center max-w-xs gap-4 py-12">
             <div className="relative">
-              <img src={assets.nimiCircle} alt="NIMI" className="w-28 h-28 rounded-full object-cover border-4 border-yellow-400 shadow-xl"  loading="lazy" />
+              <Image src={assets.nimiCircle} alt="NIMI" width={112} height={112} className="rounded-full object-cover border-4 border-yellow-400 shadow-xl" />
               <span className="absolute -bottom-1 -right-1 text-3xl">🌟</span>
             </div>
             <div className="bg-white border border-ds-border rounded-2xl rounded-tl-none px-5 py-3 shadow-ds-card">

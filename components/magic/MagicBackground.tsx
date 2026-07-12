@@ -32,7 +32,7 @@ function SideElement({ src, side, bottom = 0, width = 200, height = 250, opacity
       maskImage: `linear-gradient(${fadeDir}, black 10%, transparent 80%), linear-gradient(to top, black 30%, transparent 90%)`,
       WebkitMaskImage: `linear-gradient(${fadeDir}, black 10%, transparent 80%), linear-gradient(to top, black 30%, transparent 90%)`,
       maskComposite: "intersect",
-      WebkitMaskComposite: "source-in" as any,
+      WebkitMaskComposite: "source-in" as React.CSSProperties["WebkitMaskComposite"],
     }}>
       <img src={src} alt="" className="w-full h-full object-cover" draggable={false}
         style={side === "right" ? { transform: "scaleX(-1)" } : undefined}  loading="lazy" />
@@ -66,7 +66,7 @@ function BackdropScene({ src, opacity = 0.06 }: { src: string; opacity?: number 
       maskImage: "linear-gradient(to top, black 0%, transparent 60%), linear-gradient(to bottom, transparent 0%, black 30%)",
       WebkitMaskImage: "linear-gradient(to top, black 0%, transparent 60%), linear-gradient(to bottom, transparent 0%, black 30%)",
       maskComposite: "intersect",
-      WebkitMaskComposite: "source-in" as any,
+      WebkitMaskComposite: "source-in" as React.CSSProperties["WebkitMaskComposite"],
     }}>
       <img src={src} alt="" className="w-full h-full object-cover object-bottom" draggable={false}  loading="lazy" />
     </div>

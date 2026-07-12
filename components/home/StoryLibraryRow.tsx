@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -67,8 +68,8 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
                     {/* Cover */}
                     <div className="relative h-32 bg-gradient-to-br from-gray-100 to-gray-200">
                       {story.cover_url ? (
-                        <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                          className="absolute inset-0 w-full h-full object-cover"  loading="lazy" />
+                        <Image src={getStorageUrl(story.cover_url)} alt={story.title}
+                          fill className="object-cover" />
                       ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                           <span className="text-5xl">{story.theme_emoji}</span>
@@ -77,9 +78,8 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
                       {/* World badge — number chip */}
-                      <div className="absolute top-2.5 left-2.5 w-7 h-7 flex items-center justify-center">
-                        <img src={assets.storyCard.badge} alt="" aria-hidden="true"
-                          className="absolute inset-0 w-full h-full"  loading="lazy" />
+                      <div className="absolute top-2.5 left-2.5 w-7 h-7 relative flex items-center justify-center">
+                        <Image src={assets.storyCard.badge} alt="" aria-hidden="true" fill />
                         <span className="relative z-10 text-white font-black text-xs drop-shadow-sm">
                           {story.sort_order}
                         </span>
@@ -99,8 +99,8 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
 
                     {/* Info panel — world texture layered in white section */}
                     <div className="p-3 bg-white flex-1 flex flex-col relative overflow-hidden">
-                      <img src={assets.storyCard.background} alt="" aria-hidden="true"
-                        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.07]"  loading="lazy" />
+                      <Image src={assets.storyCard.background} alt="" aria-hidden="true"
+                        fill className="object-cover pointer-events-none opacity-[0.07]" />
                       <div className="relative z-10 flex flex-col flex-1">
                         <p className="font-black text-ds-text text-sm leading-tight">
                           {story.theme_emoji} {story.title}
@@ -139,8 +139,8 @@ export default function StoryLibraryRow({ stories, currentStoryId }: Props) {
                 <div className="overflow-hidden border border-ds-border h-full flex flex-col opacity-50" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                   <div className="relative h-32 bg-gradient-to-br from-gray-50 to-gray-100">
                     {story.cover_url ? (
-                      <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                        className="absolute inset-0 w-full h-full object-cover grayscale opacity-40"  loading="lazy" />
+                      <Image src={getStorageUrl(story.cover_url)} alt={story.title}
+                        fill className="object-cover grayscale opacity-40" />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                         <span className="text-4xl grayscale opacity-40">{story.theme_emoji}</span>

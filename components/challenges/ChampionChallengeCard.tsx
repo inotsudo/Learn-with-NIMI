@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Star, CheckSquare, Play, Volume2 } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
@@ -77,8 +78,8 @@ export default function ChampionChallengeCard({
                 onEnded={() => setShowVideo(false)} />
             </div>
           ) : imgUrl ? (
-            <div className="relative overflow-hidden cursor-pointer" style={{ borderRadius: 'var(--leaf-r)' }} onClick={() => vidUrl && setShowVideo(true)}>
-              <img src={imgUrl} alt={title} className="w-full h-40 sm:h-48 object-cover"  loading="lazy" />
+            <div className="relative h-40 sm:h-48 overflow-hidden cursor-pointer" style={{ borderRadius: 'var(--leaf-r)' }} onClick={() => vidUrl && setShowVideo(true)}>
+              <Image src={imgUrl} alt={title} fill className="object-cover" />
               {vidUrl && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                   <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
@@ -103,7 +104,7 @@ export default function ChampionChallengeCard({
         {!imgUrl && !vidUrl && (
           <motion.div animate={m.floatSoft.animate} transition={m.floatSoft.transition}
             className="shrink-0">
-            <img src={assets.trophy} alt="Trophy" className="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg"  loading="lazy" />
+            <Image src={assets.trophy} alt="Trophy" width={96} height={96} className="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" />
           </motion.div>
         )}
 
@@ -155,8 +156,8 @@ export default function ChampionChallengeCard({
           <motion.div animate={m.floatMd.animate} transition={{ ...m.floatMd.transition, delay: 0.5 }}
             className="hidden sm:block shrink-0">
             <div className="relative">
-              <img src={assets.nimiCircle} alt="NIMI"
-                className="w-20 h-20 rounded-full border-[3px] border-yellow-400 shadow-xl"  loading="lazy" />
+              <Image src={assets.nimiCircle} alt="NIMI" width={80} height={80}
+                className="w-20 h-20 rounded-full border-[3px] border-yellow-400 shadow-xl" />
               <div className="absolute -bottom-1.5 -right-1.5 w-9 h-9 bg-red-500 rounded-full flex items-center justify-center text-lg shadow-lg border-2 border-white">
                 ❤️
               </div>

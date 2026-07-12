@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCheck } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
@@ -102,8 +103,8 @@ export default function NotificationPanel({ isOpen, onClose, onCountChange }: Pr
             style={{ borderRadius: 'var(--leaf-r)' }}
           >
             {/* World panel texture */}
-            <img src={assets.storyCard.background} alt="" aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]"  loading="lazy" />
+            <Image src={assets.storyCard.background} alt="" aria-hidden="true" fill
+              className="object-cover pointer-events-none opacity-[0.05]" />
 
             <div className="relative z-10">
               {/* Header */}

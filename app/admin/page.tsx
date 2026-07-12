@@ -9,6 +9,7 @@ import Navbar from './Navbar'
 import { ToastProvider } from './Toast'
 import ErrorBoundary from './ErrorBoundary'
 import { HelpCircle, Mail } from 'lucide-react'
+import { type Lang } from './missionMeta'
 import { SkeletonHeaderBanner, SkeletonStatCards, SkeletonCardGrid } from './Skeleton'
 
 // Each admin view is its own code-split chunk, loaded only when selected —
@@ -77,11 +78,19 @@ export default function AdminPanel() {
   const [retryKey, setRetryKey] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [adminLang, setAdminLang] = useState<Lang>('en')
 
   useEffect(() => {
     const stored = localStorage.getItem('nimipiko-admin-sidebar-collapsed')
     if (stored === 'true') setSidebarCollapsed(true)
+    const storedLang = localStorage.getItem('nimipiko-admin-lang') as Lang | null
+    if (storedLang && ['en', 'fr', 'rw'].includes(storedLang)) setAdminLang(storedLang)
   }, [])
+
+  const handleAdminLangChange = (lang: Lang) => {
+    setAdminLang(lang)
+    localStorage.setItem('nimipiko-admin-lang', lang)
+  }
 
   const toggleSidebarCollapse = () => {
     setSidebarCollapsed(prev => {
@@ -240,11 +249,13 @@ export default function AdminPanel() {
           currentTable={currentTable}
           setCurrentTable={setCurrentTable}
           onOpenSidebar={() => setSidebarOpen(true)}
+          adminLang={adminLang}
+          onAdminLangChange={handleAdminLangChange}
         />
         <main className={isMissionView || isStoryView || isStorySlotsView || isStoryOrderingView || isStoryPublishingView || isColoringView || isChildrenView || isParentsView || isRewardsView || isSettingsView ? 'flex-1 overflow-hidden bg-gray-50 flex flex-col' : 'flex-1 overflow-auto bg-gray-50'}>
           <ErrorBoundary name={currentTable}>
           {isMissionView && missionCategorySlug && (
-            <MissionManager categorySlug={missionCategorySlug} initialMissionId={missionInitialId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
+            <MissionManager categorySlug={missionCategorySlug} initialMissionId={missionInitialId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} defaultLang={adminLang} />
           )}
           {isStorySlotsView && <StorySlotsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isStoryOrderingView && <StoryOrderingManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
@@ -264,7 +275,7 @@ export default function AdminPanel() {
           {isPartnersView       && <PartnersManager       onOpenSidebar={() => setSidebarOpen(true)} />}
           {isContentLibraryView && <ContentLibraryManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isStoryView && (
-            <StoryManager initialStoryId={initialStoryId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
+            <StoryManager initialStoryId={initialStoryId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} defaultLang={adminLang} />
           )}
           {isColoringView && (
             <ColoringManager initialBookId={initialColoringBookId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />

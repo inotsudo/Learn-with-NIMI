@@ -93,7 +93,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         setStep("card");
         await new Promise(r => setTimeout(r, 200));
 
-        const accept = await (window as any).Accept(captureContext);
+        const accept = await window.Accept!(captureContext);
         const up = await accept.unifiedPayments(false);
 
         const transientToken = await up.show({

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/layout/AppShell";
 import MagicLoader from "@/components/magic/MagicLoader";
@@ -89,7 +90,7 @@ function CurrentlyWearing({ cosmetics, nimiSrc, pikoSrc, onUnequip }: {
                 title="Click to remove"
               >
                 {slot.src && (
-                  <img src={slot.src} alt={slot.label} className="w-5 h-5 rounded-full object-cover shrink-0 border border-green-200"  loading="lazy" />
+                  <Image src={slot.src} alt={slot.label} width={20} height={20} className="w-5 h-5 rounded-full object-cover shrink-0 border border-green-200" />
                 )}
                 <span className="text-base leading-none">{item.emoji}</span>
                 <span className="font-black text-[11px]">{t(item.nameKey)}</span>

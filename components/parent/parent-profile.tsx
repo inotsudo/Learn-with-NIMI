@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import NextImage from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -188,7 +189,7 @@ export function UserProfileMenu() {
           onClick={() => !isLoading && fileInputRef.current?.click()}
         >
           {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt="Avatar" className="h-28 w-28 rounded-full object-cover"  loading="lazy" />
+            <NextImage src={profile.avatar_url} alt="Avatar" width={112} height={112} className="h-28 w-28 rounded-full object-cover" />
           ) : (
             <span className="text-gray-500">{isLoading ? "Uploading..." : "Click or Drag & Drop Avatar"}</span>
           )}

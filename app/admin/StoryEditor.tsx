@@ -36,7 +36,7 @@ interface ColoringPage {
 
 interface SlotData { story_id: string; slot_key: string; mission_id: string; sort_order: number }
 
-interface StoryEditorProps { story: StoryRow; onSaved: () => void }
+interface StoryEditorProps { story: StoryRow; onSaved: () => void; defaultLang?: Lang }
 
 const MISSION_ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   flipflop_audio: BookOpen, story_pdf: FileText, coloring: Palette,
@@ -166,9 +166,9 @@ function FileUploader({ label, url, accept, bucket, pathPrefix, dbSave, onDone }
 }
 
 /* ── Main Editor ── */
-export default function StoryEditor({ story, onSaved }: StoryEditorProps) {
+export default function StoryEditor({ story, onSaved, defaultLang }: StoryEditorProps) {
   const { success: toastOk } = useToast()
-  const [activeLang, setActiveLang] = useState<Lang>('en')
+  const [activeLang, setActiveLang] = useState<Lang>(defaultLang ?? 'en')
   const [coverUrl, setCoverUrl] = useState(story.cover_url ?? '')
   const [missionVersions, setMissionVersions] = useState<Record<string, MissionVersionData[]>>({})
   const [allStoryVersions, setAllStoryVersions] = useState<Record<Lang, { id: string } & Record<string, unknown>>>({} as Record<Lang, { id: string } & Record<string, unknown>>)

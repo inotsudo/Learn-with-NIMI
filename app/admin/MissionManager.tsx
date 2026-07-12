@@ -6,7 +6,7 @@ import {
   MoreVertical, Pencil, Copy, ArrowUpDown, Archive, ArchiveRestore, ChevronLeft, ChevronRight,
   Star, ListChecks, Menu, AlertCircle, RefreshCw, X,
 } from 'lucide-react'
-import { ACCENT, CATEGORY_META, FALLBACK_META, TYPE_META, STATUS_META, LANGUAGES, LANGUAGE_META, COVERAGE_META, currentVersion, translationCoverage, type MissionType, type MissionRow } from './missionMeta'
+import { ACCENT, CATEGORY_META, FALLBACK_META, TYPE_META, STATUS_META, LANGUAGES, LANGUAGE_META, COVERAGE_META, currentVersion, translationCoverage, type Lang, type MissionType, type MissionRow } from './missionMeta'
 import MissionEditor from './MissionEditor'
 import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
@@ -17,11 +17,12 @@ interface MissionManagerProps {
   initialMissionId?: string
   onNavigate: (table: string) => void
   onOpenSidebar?: () => void
+  defaultLang?: Lang
 }
 
 const PAGE_SIZE = 12
 
-export default function MissionManager({ categorySlug, initialMissionId, onNavigate, onOpenSidebar }: MissionManagerProps) {
+export default function MissionManager({ categorySlug, initialMissionId, onNavigate, onOpenSidebar, defaultLang }: MissionManagerProps) {
   const [missions, setMissions] = useState<MissionRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -581,7 +582,7 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
         {/* Editor panel */}
         <div className="flex-1 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-gray-50 to-white">
           {selected ? (
-            <MissionEditor key={selected.id} mission={selected} onSaved={fetchMissions} />
+            <MissionEditor key={selected.id} mission={selected} onSaved={fetchMissions} defaultLang={defaultLang} />
           ) : (
             <div className="flex items-center justify-center h-full p-8">
               <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-10 text-center max-w-sm">

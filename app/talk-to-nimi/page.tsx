@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { ArrowLeft, Send, Mic, Volume2, VolumeX } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
@@ -263,7 +264,8 @@ function NimiChatPageContent({
             <motion.img src={assets.nimiCircle} alt="Nimi"
               animate={noMotion ? {} : { y:[0,-5,0] }}
               transition={noMotion ? {} : { duration:2.5, repeat:Infinity }}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-white/40 shadow-lg shrink-0" />
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-white/40 shadow-lg shrink-0"
+              loading="lazy" />
             <div>
               <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.15em] mb-0.5">AI Friend</p>
               <h1 className="font-baloo font-black text-white text-[22px] sm:text-[28px] leading-tight drop-shadow-md">
@@ -323,7 +325,8 @@ function NimiChatPageContent({
               src={assets.nimiCircle} alt="NIMI"
               className="w-36 h-36 rounded-full object-cover border-4 border-yellow-400 shadow-xl"
               animate={noMotion ? {} : { y:[0,-8,0] }}
-              transition={noMotion ? {} : { duration:3.5, repeat:Infinity, ease:"easeInOut" }} />
+              transition={noMotion ? {} : { duration:3.5, repeat:Infinity, ease:"easeInOut" }}
+              loading="lazy" />
 
             {/* Streak */}
             {chatStreakDays > 0 && (
@@ -363,7 +366,8 @@ function NimiChatPageContent({
               <motion.img src={assets.nimiCircle} alt="NIMI"
                 className="w-11 h-11 rounded-full object-cover border-2 border-white/50 shadow-md flex-shrink-0"
                 animate={noMotion ? {} : { y:[0,-3,0] }}
-                transition={noMotion ? {} : { duration:3, repeat:Infinity }} />
+                transition={noMotion ? {} : { duration:3, repeat:Infinity }}
+                loading="lazy" />
 
               <div className="flex-1 min-w-0">
                 <p className="font-black text-white text-[15px]">NIMI</p>
@@ -404,8 +408,9 @@ function NimiChatPageContent({
                       className={`flex items-end gap-2.5 ${isNimi ? "justify-start" : "justify-end"}`}
                     >
                       {isNimi && (
-                        <img src={assets.nimiCircle} alt="NIMI"
-                          className="w-9 h-9 rounded-full object-cover flex-shrink-0 shadow border-2 border-emerald-100"  loading="lazy" />
+                        <Image src={assets.nimiCircle} alt="NIMI"
+                          width={36} height={36}
+                          className="rounded-full object-cover flex-shrink-0 shadow border-2 border-emerald-100" />
                       )}
                       <div className={`text-[14px] leading-relaxed px-4 py-2.5 shadow-sm max-w-[78%] ${
                         isNimi

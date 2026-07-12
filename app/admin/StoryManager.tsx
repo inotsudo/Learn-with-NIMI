@@ -6,7 +6,7 @@ import {
   Search, Filter, Plus, MoreVertical, Pencil, Copy, Trash2, CheckCircle2,
   ChevronLeft, ChevronRight, BookOpen, Menu, AlertCircle, RefreshCw,
 } from 'lucide-react'
-import { ACCENT, type StoryRow } from './missionMeta'
+import { ACCENT, type StoryRow, type Lang } from './missionMeta'
 import { computeReadiness } from '@/lib/storyReadiness'
 import StoryEditor from './StoryEditor'
 import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
@@ -17,6 +17,7 @@ interface StoryManagerProps {
   initialStoryId?: string
   onNavigate: (table: string) => void
   onOpenSidebar?: () => void
+  defaultLang?: Lang
 }
 
 const PAGE_SIZE = 5
@@ -24,7 +25,7 @@ const accent = ACCENT.blue
 
 type TabKey = 'all' | 'ready' | 'progress' | 'missing' | 'published' | 'archived'
 
-export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar }: StoryManagerProps) {
+export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar, defaultLang }: StoryManagerProps) {
   const [stories, setStories] = useState<StoryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -287,7 +288,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
           </div>
         </div>
         <div className="flex-1 overflow-auto p-6">
-          <StoryEditor story={selected} onSaved={fetchStories} />
+          <StoryEditor story={selected} onSaved={fetchStories} defaultLang={defaultLang} />
         </div>
       </div>
     )

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { Check, Lock, Play, Volume2 } from "lucide-react";
@@ -179,7 +180,7 @@ export default function MoveGrooveContent({ mission, onComplete, completed, savi
               {imgUrl ? (
                 <>
                   <div className="relative aspect-square bg-gray-100">
-                    <img src={imgUrl} alt={p.label ?? ''} className="w-full h-full object-cover"  loading="lazy" />
+                    <Image src={imgUrl} alt={p.label ?? ''} fill className="object-cover" />
                     {vidUrl && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">

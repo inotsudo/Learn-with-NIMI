@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { BookOpen, X } from "lucide-react";
 import { useStoryBook } from "./StoryBookContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -31,15 +32,15 @@ export default function BookToolbar({ title, onExit }: Props) {
               <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
             </div>
             <div className="relative flex-1">
-              <img src={assets.reader.chapterHeader} alt="" aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.18]"  loading="lazy" />
+              <Image src={assets.reader.chapterHeader} alt="" aria-hidden="true" fill
+                className="object-fill pointer-events-none opacity-[0.18]" />
               <p className="relative font-baloo font-bold text-ds-text text-[14px] truncate">{title}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <div className="relative flex-1 bg-white/80 rounded-full h-1.5 overflow-hidden border border-emerald-100">
-              <img src={assets.reader.progress} alt="" aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.45]"  loading="lazy" />
+              <Image src={assets.reader.progress} alt="" aria-hidden="true" fill
+                className="object-fill pointer-events-none opacity-[0.45]" />
               <div className={`relative h-full bg-gradient-to-r ${assets.storyCard.progressFill} rounded-full transition-all duration-500`}
                 style={{ width: `${progress}%` }} />
             </div>

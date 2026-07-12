@@ -256,8 +256,8 @@ export default function LandingPage() {
           <div className="flex justify-center -mt-3">
             <motion.div whileHover={{scale:1.06}} whileTap={{scale:0.93}} transition={{type:"spring",stiffness:420,damping:22}}>
               <Link href={authed ? "/home" : "/signuppage"}>
-                <img loading="lazy" src="/themes/default/navs/start-learning.png" alt="Start Learning" draggable={false}
-                  className="w-auto h-auto object-contain drop-shadow-lg select-none" style={{width:"clamp(210px,27vw,270px)"}} />
+                <Image src="/themes/default/navs/start-learning.png" alt="Start Learning" width={270} height={90} draggable={false}
+                  className="object-contain drop-shadow-lg select-none" style={{width:"clamp(210px,27vw,270px)", height:"auto"}} />
               </Link>
             </motion.div>
           </div>
@@ -303,8 +303,8 @@ export default function LandingPage() {
           <div className="flex gap-3 flex-wrap items-center -mt-3">
             <motion.div whileHover={{scale:1.06}} whileTap={{scale:0.93}} transition={{type:"spring",stiffness:420,damping:22}}>
               <Link href={authed ? "/home" : "/signuppage"}>
-                <img loading="lazy" src="/themes/default/navs/start-learning.png" alt="Start Learning" draggable={false}
-                  className="w-auto h-auto object-contain drop-shadow-lg select-none" style={{width:"clamp(230px,16vw,310px)"}} />
+                <Image src="/themes/default/navs/start-learning.png" alt="Start Learning" width={310} height={103} draggable={false}
+                  className="object-contain drop-shadow-lg select-none" style={{width:"clamp(230px,16vw,310px)", height:"auto"}} />
               </Link>
             </motion.div>
             <Link href="/stories" className="font-baloo font-bold text-gray-600 hover:text-[var(--ds-brand-primary)] text-[14px] flex items-center gap-1.5 transition-colors">
@@ -875,8 +875,8 @@ export default function LandingPage() {
           <motion.div variants={fadeUp} whileHover={{scale:1.06}} whileTap={{scale:0.95}}
             transition={{type:"spring",stiffness:400,damping:20}}>
             <Link href={authed ? "/home" : "/signuppage"}>
-              <img loading="lazy" src="/themes/default/navs/start-learning.png" alt="Start Learning" draggable={false}
-                className="h-auto object-contain drop-shadow-xl select-none" style={{width:"clamp(200px,35vw,280px)"}} />
+              <Image src="/themes/default/navs/start-learning.png" alt="Start Learning" width={280} height={93} draggable={false}
+                className="object-contain drop-shadow-xl select-none" style={{width:"clamp(200px,35vw,280px)", height:"auto"}} />
             </Link>
           </motion.div>
 

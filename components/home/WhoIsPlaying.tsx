@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { SPRING, DURATION } from "@/lib/design-system/motion";
 import { Settings, Plus, Star } from "lucide-react";
@@ -58,8 +59,8 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
         transition={{ duration: DURATION.slow }}
         className="flex items-center gap-3 mb-2"
       >
-        <img src={assets.nimiCircle} alt="NIMI"
-          className="w-14 h-14 rounded-full border-3 border-yellow-300 shadow-xl"  loading="lazy" />
+        <Image src={assets.nimiCircle} alt="NIMI" width={56} height={56}
+          className="rounded-full border-3 border-yellow-300 shadow-xl" />
         <div>
           <p className="font-black text-3xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-yellow-200 to-cyan-300">
             NIMIPIKO
@@ -68,8 +69,8 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
             Where Stories Come to Life
           </p>
         </div>
-        <img src={assets.pikoCircle} alt="PIKO"
-          className="w-14 h-14 rounded-full border-3 border-blue-300 shadow-xl"  loading="lazy" />
+        <Image src={assets.pikoCircle} alt="PIKO" width={56} height={56}
+          className="rounded-full border-3 border-blue-300 shadow-xl" />
       </motion.div>
 
       {/* Who's playing? */}

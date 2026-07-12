@@ -35,6 +35,7 @@ const EMPTY_VERSION: VersionForm = {
 interface MissionEditorProps {
   mission: MissionRow
   onSaved: () => void
+  defaultLang?: Lang
 }
 
 function basename(path: string) {
@@ -56,7 +57,7 @@ function formatTime(sec: number) {
 const inputClass = (ring: string) =>
   `w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-gray-700 transition ${ring}`
 
-export default function MissionEditor({ mission, onSaved }: MissionEditorProps) {
+export default function MissionEditor({ mission, onSaved, defaultLang }: MissionEditorProps) {
   const meta = CATEGORY_META[mission.category_slug] ?? FALLBACK_META
   const accent = ACCENT[meta.accent]
 
@@ -67,7 +68,7 @@ export default function MissionEditor({ mission, onSaved }: MissionEditorProps) 
     type: mission.type,
     category_slug: mission.category_slug,
   })
-  const [activeLang, setActiveLang] = useState<Lang>('en')
+  const [activeLang, setActiveLang] = useState<Lang>(defaultLang ?? 'en')
   const [versionForms, setVersionForms] = useState<Record<Lang, VersionForm>>({ en: { ...EMPTY_VERSION }, fr: { ...EMPTY_VERSION }, rw: { ...EMPTY_VERSION } })
   const [revisionsByLang, setRevisionsByLang] = useState<Record<Lang, MissionVersionRow[]>>({ en: [], fr: [], rw: [] })
   const [saving, setSaving] = useState(false)

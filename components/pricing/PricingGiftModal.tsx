@@ -15,7 +15,7 @@ function formatAmount(amount: number, currency: Currency): string {
 }
 
 function isAnnualProduct(product: Product) {
-  return (product as any).billing_interval === "year";
+  return product.billing_interval === "year";
 }
 
 interface Props {
@@ -93,7 +93,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       setStep("pay-card");
       await new Promise(r => setTimeout(r, 200));
 
-      const accept = await (window as any).Accept(captureContext);
+      const accept = await window.Accept!(captureContext);
       const up = await accept.unifiedPayments(false);
       const transientToken = await up.show({
         containers: { paymentSelection: "#cs-gift-list", paymentScreen: "#cs-gift-form" },

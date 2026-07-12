@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Home, BookOpen, Swords, Users, MessageCircle, ShoppingBag } from "lucide-react";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -57,7 +58,7 @@ export default function BottomNavBar() {
           <Link href="/talk-to-nimi" aria-label="Talk to Nimi">
             <div className={`w-[64px] h-[64px] rounded-full p-[3px] ${cv.navigationStyle.fabGradient} ${cv.navigationStyle.fabShadow} active:scale-90 transition-transform duration-100`}>
               <div className="w-full h-full rounded-full bg-white flex items-center justify-center border-2 border-ds-border">
-                <img src={assets.nimiCircle} alt="" aria-hidden="true" className="w-10 h-10 rounded-full object-cover"  loading="lazy" />
+                <Image src={assets.nimiCircle} alt="" aria-hidden="true" width={40} height={40} className="rounded-full object-cover" />
               </div>
             </div>
           </Link>
@@ -69,8 +70,8 @@ export default function BottomNavBar() {
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
           {/* World bottom bar texture */}
-          <img src={assets.navigation.bottomBar} alt="" aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.07]"  loading="lazy" />
+          <Image src={assets.navigation.bottomBar} alt="" aria-hidden="true" fill
+            className="object-cover pointer-events-none opacity-[0.07]" />
 
           {/* Icons + labels row — 68 px tall to accommodate labels */}
           <div className="relative z-10 flex items-stretch h-[68px] px-1">

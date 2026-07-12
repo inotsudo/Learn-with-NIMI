@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
 import { Play, ChevronRight } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
@@ -52,7 +53,7 @@ export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, 
                 boxShadow: "0 0 0 3px rgba(5,150,105,0.22), 0 8px 24px rgba(0,0,0,0.26)",
               }}>
               {curStory.cover_url
-                ? <img src={getStorageUrl(curStory.cover_url)} alt={curStory.title} className="w-full h-full object-cover" loading="lazy" />
+                ? <Image src={getStorageUrl(curStory.cover_url)} alt={curStory.title} fill className="object-cover" />
                 : <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-200 flex items-center justify-center text-5xl">
                     {curStory.theme_emoji ?? "📖"}
                   </div>

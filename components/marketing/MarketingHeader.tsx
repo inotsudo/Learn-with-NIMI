@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -25,9 +26,9 @@ export default function MarketingHeader() {
     <header id="top" className="sticky top-0 z-30 bg-white/90 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto flex items-center gap-3 px-4 sm:px-6 py-3">
         <Link href="#top" className="flex items-center gap-2 shrink-0 mr-auto">
-          <img src={assets.nimiLogo} alt="NIMIPIKO" className="w-9 h-9 rounded-full"  loading="lazy" />
+          <Image src={assets.nimiLogo} alt="NIMIPIKO" width={36} height={36} className="w-9 h-9 rounded-full" />
           <div className="hidden sm:block">
-            <img src={assets.nimiLogoText} alt="NIMIPIKO" className="h-5 w-auto"  loading="lazy" />
+            <Image src={assets.nimiLogoText} alt="NIMIPIKO" width={120} height={20} className="h-5" style={{ width: "auto" }} />
             <p className="font-nunito text-gray-400 text-[10px] leading-none mt-0.5">Grow with Every Story</p>
           </div>
         </Link>
@@ -64,8 +65,8 @@ export default function MarketingHeader() {
         <SheetContent side="left" className="bg-white w-4/5 sm:max-w-xs flex flex-col gap-1">
           <SheetTitle className="sr-only">Menu</SheetTitle>
           <Link href="#top" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 mb-4">
-            <img src={assets.nimiLogo} alt="NIMIPIKO" className="w-9 h-9 rounded-full"  loading="lazy" />
-            <img src={assets.nimiLogoText} alt="NIMIPIKO" className="h-5 w-auto"  loading="lazy" />
+            <Image src={assets.nimiLogo} alt="NIMIPIKO" width={36} height={36} className="w-9 h-9 rounded-full" />
+            <Image src={assets.nimiLogoText} alt="NIMIPIKO" width={120} height={20} className="h-5" style={{ width: "auto" }} />
           </Link>
 
           {NAV_LINKS.map(link => (

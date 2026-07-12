@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, Volume2, VolumeX } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -104,8 +105,8 @@ export default function MissionShell({ activity, mission, completedCount, comple
           {/* Nimi Says banner */}
           <div className="bg-ds-action-subtle border border-ds-border-brand shadow-sm p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap" style={{ borderRadius: 'var(--leaf-r)' }}>
             <div className="flex items-center gap-3 min-w-0">
-              <img src={assets.nimiCircle} alt="NIMI"
-                className="w-12 h-12 rounded-full object-cover border-4 border-ds-border-brand shrink-0"  loading="lazy" />
+              <Image src={assets.nimiCircle} alt="NIMI" width={48} height={48}
+                className="w-12 h-12 rounded-full object-cover border-4 border-ds-border-brand shrink-0" />
               <div className="min-w-0">
                 <p className="font-black text-gray-900 text-sm">{t("nimiSaysLabel")}</p>
                 <p className="text-gray-600 text-sm mt-0.5">{tip}</p>

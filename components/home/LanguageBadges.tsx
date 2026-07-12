@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { updateChildLanguage } from "@/lib/queries";
@@ -29,6 +30,9 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
     if (activeChild) await updateChildLanguage(activeChild.id, pendingLanguage);
     setLanguage(pendingLanguage);
     onLanguageChanged?.(pendingLanguage);
+    window.dispatchEvent(
+      new CustomEvent("app:languageChange", { detail: { language: pendingLanguage } })
+    );
     setSwitching(false);
     setPendingLanguage(null);
   };
@@ -52,7 +56,7 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
                 className={`flex flex-col items-center bg-white border-[3px] ${earned ? badge.border : "border-gray-200"} rounded-[50%] shadow-md overflow-hidden hover:scale-105 transition-transform cursor-pointer ${badge.code === language ? "ring-2 ring-[var(--nimi-green)]" : ""}`}
                 style={{ width: 68, height: 92 }}>
                 <div className="w-full flex-1 overflow-hidden">
-                  <img src={badge.flag} alt={badge.line1} className="w-full h-full object-cover"  loading="lazy" />
+                  <Image src={badge.flag} alt={badge.line1} width={68} height={80} className="w-full h-full object-cover" />
                 </div>
                 <div className="pb-1 pt-0.5 text-center leading-none">
                   <p className={`text-[7px] font-black uppercase ${earned ? "text-gray-500" : "text-gray-400"}`}>{badge.line1}</p>

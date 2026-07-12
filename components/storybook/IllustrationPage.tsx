@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { getStorageUrl } from "@/lib/queries";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -22,8 +23,8 @@ const IllustrationPage = forwardRef<HTMLDivElement, Props>(({ imageUrl, side, te
   return (
     <div ref={ref} className="w-full h-full relative overflow-hidden select-none leaf-lg border border-amber-100/70" style={{ background: "#faf6ee" }}>
       {/* World page texture — parchment hatching (HP) / sea-glass waves (Ocean) */}
-      <img src={assets.reader.pageBackground} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.05]"  loading="lazy" />
+      <Image src={assets.reader.pageBackground} alt="" aria-hidden="true" fill
+        className="object-cover pointer-events-none opacity-[0.05]" />
 
       {/* Story illustration */}
       <img
@@ -42,8 +43,8 @@ const IllustrationPage = forwardRef<HTMLDivElement, Props>(({ imageUrl, side, te
       )}
 
       {/* World page frame — burned edges (HP) / coral wave border (Ocean) */}
-      <img src={assets.reader.pageFrame} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.09]"  loading="lazy" />
+      <Image src={assets.reader.pageFrame} alt="" aria-hidden="true" fill
+        className="object-fill pointer-events-none opacity-[0.09]" />
 
       {/* Story text overlay */}
       <AnimatePresence>

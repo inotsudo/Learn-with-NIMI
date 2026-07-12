@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { Heart, Star, Flame, Play, ChevronRight, Check } from "lucide-react";
@@ -17,7 +18,7 @@ import {
 import type { Child, ChildAchievement } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots, getPopularStories, type PopularStory } from "@/lib/storyRepository";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import AppShell              from "@/components/layout/AppShell";
@@ -145,6 +146,7 @@ export default function HomePage() {
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
 
+  const activeChildRef = useRef<Child | null>(null);
   const [mounted,         setMounted]         = useState(false);
   const [loading,         setLoading]         = useState(true);
   const [children,        setChildren]        = useState<Child[]>([]);
@@ -165,6 +167,47 @@ export default function HomePage() {
   const [cosmetics,          setCosmetics]          = useState<ChildCosmetics>({ nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null });
 
   useEffect(() => { setMounted(true); void init(); }, []);
+
+  // Keep ref current so the language-change handler below always sees the
+  // latest child without re-registering the event listener on every render.
+  useEffect(() => { activeChildRef.current = activeChild; }, [activeChild]);
+
+  // When the global language switcher fires, reload all per-language data.
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const lang = (e as CustomEvent<{ language: Language }>).detail?.language;
+      const child = activeChildRef.current;
+      if (!lang || !child) return;
+      const updated = { ...child, language: lang };
+      activeChildRef.current = updated;
+      setActiveChild(updated);
+      setLoading(true);
+      const [lib, lvl, stars, streak, ach, consStreak, popular, cos] = await Promise.all([
+        getStoryLibrary(updated.id, lang),
+        getCurrentLevel(updated.id, lang),
+        getTotalStars(updated.id, lang),
+        getWeekStreak(updated.id, lang),
+        getChildAchievements(updated.id),
+        getConsecutiveStreak(updated.id, lang),
+        getPopularStories(),
+        getChildCosmetics(updated.id),
+      ]);
+      setStories(lib);
+      setLevel(lvl);
+      setTotalStars(stars);
+      setWeekStreak(streak);
+      setAchievements(ach);
+      setConsecutiveStreak(consStreak);
+      setPopularStories(popular);
+      setCosmetics(cos);
+      const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
+      if (cur) setSlots(await getStorySlots(updated.id, cur.sid, lang));
+      else setSlots([]);
+      setLoading(false);
+    };
+    window.addEventListener("app:languageChange", handler as EventListener);
+    return () => window.removeEventListener("app:languageChange", handler as EventListener);
+  }, []);
 
   async function init() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -351,10 +394,10 @@ export default function HomePage() {
                 className="absolute bottom-0 left-[38%] h-[42px] w-auto object-contain pointer-events-none select-none opacity-60"  loading="lazy" />
 
               {/* ── Corner art frames ── */}
-              <img src="/themes/default/decorations/corner-tl.png" alt="" aria-hidden
-                className="absolute top-0 left-0 w-[110px] pointer-events-none select-none opacity-55"  loading="lazy" />
-              <img src="/themes/default/decorations/corner-tr.png" alt="" aria-hidden
-                className="absolute top-0 right-0 w-[110px] pointer-events-none select-none opacity-55"  loading="lazy" />
+              <Image src="/themes/default/decorations/corner-tl.png" alt="" aria-hidden
+                width={110} height={110} className="absolute top-0 left-0 pointer-events-none select-none opacity-55" />
+              <Image src="/themes/default/decorations/corner-tr.png" alt="" aria-hidden
+                width={110} height={110} className="absolute top-0 right-0 pointer-events-none select-none opacity-55" />
 
               {/* ── Floating magical orbs ── */}
               <motion.img src="/themes/default/decorations/floating-1.png" alt="" aria-hidden
@@ -377,10 +420,10 @@ export default function HomePage() {
               <div className="absolute top-5  right-[34%] w-2   h-7  bg-pink-300    rounded-sm rotate-18  opacity-85 pointer-events-none" />
               <div className="absolute top-9  right-[40%] w-3   h-3  bg-orange-300  rounded-full           opacity-80 pointer-events-none" />
               <div className="absolute top-7  right-[46%] w-1.5 h-5  bg-cyan-300    rounded-sm -rotate-10 opacity-85 pointer-events-none" />
-              <img src="/themes/default/decorations/sparkle.png" alt="" aria-hidden
-                className="absolute top-5 left-[38%] w-8 opacity-80 pointer-events-none select-none"  loading="lazy" />
-              <img src="/themes/default/decorations/sparkle.png" alt="" aria-hidden
-                className="absolute top-8 right-[38%] w-6 opacity-70 pointer-events-none select-none"  loading="lazy" />
+              <Image src="/themes/default/decorations/sparkle.png" alt="" aria-hidden
+                width={32} height={32} className="absolute top-5 left-[38%] opacity-80 pointer-events-none select-none" />
+              <Image src="/themes/default/decorations/sparkle.png" alt="" aria-hidden
+                width={24} height={24} className="absolute top-8 right-[38%] opacity-70 pointer-events-none select-none" />
 
               {/* ══════════════════════════════════════════════════════════════
                    Layer 3 — CONTENT (3 columns, items aligned to bottom)
@@ -418,8 +461,8 @@ export default function HomePage() {
                       <div className="flex gap-3 mb-4">
                         <div className="relative w-[110px] h-[110px] rounded-2xl overflow-hidden shrink-0"
                           style={{ boxShadow: "0 0 0 3px rgba(255,255,255,0.3), 0 8px 24px rgba(0,0,0,0.35)" }}>
-                          <img src={curStory.cover_url ? getStorageUrl(curStory.cover_url) : "/current-story.png"}
-                            alt={curStory.title} className="w-full h-full object-cover"  loading="lazy" />
+                          <Image src={curStory.cover_url ? getStorageUrl(curStory.cover_url) : "/current-story.png"}
+                            alt={curStory.title} fill className="object-cover" />
                           <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-xl">
                               <Play className="w-4 h-4 fill-violet-600 text-violet-600 ml-0.5" />

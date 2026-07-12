@@ -121,7 +121,7 @@ export default function VocabPage() {
       const seen = new Set<string>();
       const collected: VocabWord[] = [];
       for (const m of missions ?? []) {
-        const vocab = (m.content_json as any)?.vocabulary;
+        const vocab = (m.content_json as { vocabulary?: VocabWord[] })?.vocabulary;
         if (!Array.isArray(vocab)) continue;
         for (const v of vocab as VocabWord[]) {
           if (!v.word) continue;

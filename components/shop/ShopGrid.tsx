@@ -46,7 +46,7 @@ export default function ShopGrid({ filter, balance, ownedIds, purchaseCounts, co
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xl">{meta.emoji}</span>
                 <div>
-                  <p className="font-black text-ds-text text-[15px] leading-tight">{t(`filter${cat.charAt(0).toUpperCase() + cat.slice(1)}` as any)}</p>
+                  <p className="font-black text-ds-text text-[15px] leading-tight">{t(`filter${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
                   <p className="text-ds-muted text-[11px]">{meta.desc}</p>
                 </div>
               </div>

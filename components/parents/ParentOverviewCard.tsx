@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fillTemplate, LANGUAGE_META } from "@/app/_achievementData";
 import type { OverviewSummary } from "@/lib/parentInsights";
@@ -32,9 +33,9 @@ export default function ParentOverviewCard({ overview, childName, avatarUrl }: P
       <p className="text-gray-500 text-xs font-bold uppercase tracking-wide mb-2">{t("overviewSectionTitle")}</p>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="relative w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
           {avatarUrl && avatarUrl.startsWith("http") ? (
-            <img src={avatarUrl} alt={childName} className="w-full h-full object-cover"  loading="lazy" />
+            <Image src={avatarUrl} alt={childName} fill className="object-cover" />
           ) : (
             <span className="text-3xl select-none">{avatarUrl || "🧑"}</span>
           )}

@@ -76,7 +76,7 @@ export default function NimiChat({
   const handleVoiceInput = () => {
     if (!("webkitSpeechRecognition" in window)) return alert("Voice not supported!");
 
-    const recognition = new (window as any).webkitSpeechRecognition();
+    const recognition = new window.webkitSpeechRecognition!();
     recognition.lang = language;
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
@@ -85,7 +85,7 @@ export default function NimiChat({
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const voiceInput = event.results[0][0].transcript;
       setInput(voiceInput);
       sendToAI(voiceInput);

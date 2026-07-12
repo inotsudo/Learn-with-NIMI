@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, Circle, ChevronRight } from "lucide-react";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -35,8 +36,8 @@ export default function StoryProgressPanel({ storySlug, slots }: Props) {
   return (
     <div className="relative overflow-hidden border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/40 to-white leaf p-4 sm:p-5 h-full flex flex-col shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
       {/* World card texture — 6% opacity, purely decorative */}
-      <img src={assets.storyCard.background} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.06]"  loading="lazy" />
+      <Image src={assets.storyCard.background} alt="" aria-hidden="true"
+        fill className="object-cover pointer-events-none opacity-[0.06]" />
 
       <div className="absolute inset-x-4 top-4 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
       <div className="relative z-10 flex flex-col flex-1">
@@ -85,7 +86,7 @@ export default function StoryProgressPanel({ storySlug, slots }: Props) {
                   <div className={`flex items-center gap-2 px-1 py-[3px] rounded-lg transition ${
                     slot.completed ? "hover:bg-[var(--ds-brand-soft)]" : "hover:bg-gray-50"
                   }`}>
-                    <img src={meta.icon} alt="" className="w-6 h-6 shrink-0 rounded-md"  loading="lazy" />
+                    <Image src={meta.icon} alt="" width={24} height={24} className="shrink-0 rounded-md" />
                     <span className={`font-nunito text-[11px] sm:text-[12px] font-bold flex-1 leading-tight whitespace-nowrap ${
                       slot.completed ? "text-ds-text" : "text-gray-500"
                     }`}>

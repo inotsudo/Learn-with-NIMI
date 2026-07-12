@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { Check, Play, ChevronRight } from "lucide-react";
@@ -105,9 +106,9 @@ export default function StoryJourney({ completedSteps }: Props) {
                 </div>
                 <div className="flex items-center justify-center flex-1 py-2 px-2">
                   <div className="relative">
-                    <img src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
-                      alt={step.isPiko ? "PIKO" : "NIMI"}
-                      className="w-[60px] h-[60px] rounded-full object-cover border-4 border-white shadow-md"  loading="lazy" />
+                    <Image src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
+                      alt={step.isPiko ? "PIKO" : "NIMI"} width={60} height={60}
+                      className="rounded-full object-cover border-4 border-white shadow-md" />
                     <div className="absolute -bottom-1.5 -right-1.5 bg-white/90 rounded-full w-7 h-7 flex items-center justify-center text-base shadow border border-gray-200 leading-none">
                       {step.emoji}
                     </div>
@@ -163,9 +164,9 @@ export default function StoryJourney({ completedSteps }: Props) {
                 </div>
                 <div className="flex items-center justify-center flex-1 py-2 px-2">
                   <div className="relative">
-                    <img src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
-                      alt={step.isPiko ? "PIKO" : "NIMI"}
-                      className="w-14 h-14 rounded-full object-cover border-4 border-white shadow-md"  loading="lazy" />
+                    <Image src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
+                      alt={step.isPiko ? "PIKO" : "NIMI"} width={56} height={56}
+                      className="rounded-full object-cover border-4 border-white shadow-md" />
                     <div className="absolute -bottom-1.5 -right-1.5 bg-white/90 rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-gray-200 leading-none">
                       {step.emoji}
                     </div>
@@ -214,9 +215,9 @@ export default function StoryJourney({ completedSteps }: Props) {
                   </div>
                   <div className="flex items-center justify-center py-2 px-2">
                     <div className="relative">
-                      <img src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
-                        alt={step.isPiko ? "PIKO" : "NIMI"}
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-4 border-white shadow-md"  loading="lazy" />
+                      <Image src={step.isPiko ? assets.pikoCircle : assets.nimiCircle}
+                        alt={step.isPiko ? "PIKO" : "NIMI"} width={56} height={56}
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-4 border-white shadow-md" />
                       <div className="absolute -bottom-1.5 -right-1.5 bg-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow border border-gray-200 leading-none">
                         {step.emoji}
                       </div>

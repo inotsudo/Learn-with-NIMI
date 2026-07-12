@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { ChildCosmetics } from "@/lib/queries";
@@ -85,8 +86,8 @@ export default function ChildIdentityCard({
             animate={{ y: [0, -4, 0] }}
             transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
           >
-            <img src={nimiSrc} alt="NIMI" className="w-9 h-9 rounded-full object-cover border-2 shadow opacity-90"
-              style={{ borderColor: nimiOutfit ? undefined : 'var(--nimi-green)' }}  loading="lazy" />
+            <Image src={nimiSrc} alt="NIMI" width={36} height={36} className="w-9 h-9 rounded-full object-cover border-2 shadow opacity-90"
+              style={{ borderColor: nimiOutfit ? undefined : 'var(--nimi-green)' }} />
             {nimiOutfit && (
               <span className="absolute -bottom-1 -right-1 text-base leading-none drop-shadow-lg">{nimiOutfit.emoji}</span>
             )}

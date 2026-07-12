@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { CheckCircle2, Lock } from "lucide-react";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -36,8 +37,8 @@ function CertificateVisual({ storyTitle, earned }: { storyTitle: string; earned:
   return (
     <div className="relative overflow-hidden border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/35 to-white shadow-[0_16px_34px_rgba(15,23,42,0.08)]" style={{ borderRadius: 'var(--leaf-r)' }}>
       <div className="absolute inset-x-3 top-3 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
-      <img src={assets.rewards.certificateFrame} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-fill pointer-events-none opacity-[0.07]"  loading="lazy" />
+      <Image src={assets.rewards.certificateFrame} alt="" aria-hidden="true" fill
+        className="object-fill pointer-events-none opacity-[0.07]" />
 
       {/* Confetti */}
       {earned && CONFETTI_POS.map((pos, i) => (
@@ -48,8 +49,8 @@ function CertificateVisual({ storyTitle, earned }: { storyTitle: string; earned:
       ))}
 
       <div className="relative z-10 py-4 px-5 text-center">
-        <img src={assets.storyComplete} alt="Story Complete!"
-          className={`h-[28px] sm:h-[36px] w-auto mx-auto mb-2 drop-shadow-lg ${earned ? "" : "grayscale opacity-50"}`}  loading="lazy" />
+        <Image src={assets.storyComplete} alt="Story Complete!" width={200} height={36}
+          className={`h-[28px] sm:h-[36px] mx-auto mb-2 drop-shadow-lg ${earned ? "" : "grayscale opacity-50"}`} style={{ width: "auto" }} />
 
         <p className="text-yellow-300 text-[14px] sm:text-[16px] font-black">{t("storyCertCongrats")}</p>
         <p className="text-ds-text text-[10px] sm:text-[11px] font-bold">{t("storyCertYouEarned")}</p>
@@ -64,14 +65,14 @@ function CertificateVisual({ storyTitle, earned }: { storyTitle: string; earned:
         <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-3">
           {["flipflop", "pdf", "coloring", "move", "sing", "video"].map(icon => (
             <div key={icon} className="relative">
-              <img src={`/assets/icon-${icon}.svg`} alt="" className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg shadow"  loading="lazy" />
+              <Image src={`/assets/icon-${icon}.svg`} alt="" width={32} height={32} className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg shadow" />
               {earned && <CheckCircle2 className="absolute -top-0.5 -right-0.5 w-3 h-3 text-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] rounded-full" />}
             </div>
           ))}
         </div>
 
         {/* Star medal */}
-        <motion.img src={assets.starMascot} alt=""
+        <motion.img src={assets.starMascot} alt="" loading="lazy"
           className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mt-3 drop-shadow-lg"
           animate={earned ? { scale: [1, 1.08, 1], rotate: [0, 3, -3, 0] } : {}}
           transition={{ duration: 3, repeat: Infinity }} />
@@ -79,12 +80,12 @@ function CertificateVisual({ storyTitle, earned }: { storyTitle: string; earned:
         {/* Characters + Signatures */}
         <div className="flex items-end justify-between mt-3 px-1 sm:px-4">
           <div className="flex flex-col items-center gap-0.5">
-            <img src={assets.nimiCircle} alt="NIMI" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400 shadow-lg"  loading="lazy" />
+            <Image src={assets.nimiCircle} alt="NIMI" width={48} height={48} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400 shadow-lg" />
             <p className="text-gray-400 text-[7px]">{t("storyCertSigned")}</p>
             <p className="text-ds-text text-[9px] sm:text-[10px] font-black italic">Nimi 💜</p>
           </div>
           <div className="flex flex-col items-center gap-0.5">
-            <img src={assets.pikoCircle} alt="PIKO" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-blue-400 shadow-lg"  loading="lazy" />
+            <Image src={assets.pikoCircle} alt="PIKO" width={48} height={48} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-blue-400 shadow-lg" />
             <p className="text-gray-400 text-[7px]">{t("storyCertSigned")}</p>
             <p className="text-ds-text text-[9px] sm:text-[10px] font-black italic">Piko 💜</p>
           </div>

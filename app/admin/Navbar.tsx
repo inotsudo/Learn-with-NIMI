@@ -7,11 +7,15 @@ import {
 } from 'lucide-react'
 import { ACCENT, CATEGORY_META, FALLBACK_META } from './missionMeta'
 
+import { LANGUAGE_META, LANGUAGES, type Lang } from './missionMeta'
+
 interface NavbarProps {
   tables: string[]
   currentTable: string
   setCurrentTable: (table: string) => void
   onOpenSidebar?: () => void
+  adminLang?: Lang
+  onAdminLangChange?: (lang: Lang) => void
 }
 
 type SearchResult =
@@ -78,7 +82,7 @@ function ResultRow({ result }: { result: SearchResult }) {
   }
 }
 
-export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSidebar }: NavbarProps) {
+export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSidebar, adminLang = 'en', onAdminLangChange }: NavbarProps) {
   const [adminName, setAdminName] = useState('Admin')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -88,7 +92,9 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
   const [searchFocused, setSearchFocused] = useState(false)
   const searchBoxRef = useRef<HTMLDivElement>(null)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [langPickerOpen, setLangPickerOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+  const langPickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     void (async () => {
@@ -148,6 +154,12 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
     const h = (e: MouseEvent) => { if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false) }
     document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h)
   }, [profileOpen])
+
+  useEffect(() => {
+    if (!langPickerOpen) return
+    const h = (e: MouseEvent) => { if (langPickerRef.current && !langPickerRef.current.contains(e.target as Node)) setLangPickerOpen(false) }
+    document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h)
+  }, [langPickerOpen])
 
   const showDropdown = searchFocused && search.trim().length >= 2
   const isPending = searching || search.trim() !== debouncedSearch
@@ -240,6 +252,39 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
             className="relative w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100 transition text-gray-500">
             <Bell size={16} />
           </button>
+
+          {/* Content language picker */}
+          {onAdminLangChange && (
+            <div className="relative" ref={langPickerRef}>
+              <button
+                onClick={() => { setLangPickerOpen(o => !o); setProfileOpen(false) }}
+                className="flex items-center gap-1 bg-gray-50 hover:bg-gray-100 pl-2 pr-1.5 py-1.5 rounded-lg transition text-[13px] font-semibold text-gray-700"
+                title="Content language"
+              >
+                <span>{LANGUAGE_META[adminLang].flag}</span>
+                <span className="uppercase text-[11px] font-bold text-gray-500">{adminLang}</span>
+                <ChevronDown size={12} className="text-gray-400" />
+              </button>
+              {langPickerOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-44 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                  <p className="px-3.5 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Content language</p>
+                  {LANGUAGES.map(lang => {
+                    const meta = LANGUAGE_META[lang]
+                    return (
+                      <button key={lang}
+                        onClick={() => { onAdminLangChange(lang); setLangPickerOpen(false) }}
+                        className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] transition ${lang === adminLang ? 'bg-green-50 text-green-700 font-bold' : 'hover:bg-gray-50 text-gray-700 font-semibold'}`}
+                      >
+                        <span className="text-base">{meta.flag}</span>
+                        <span>{meta.label}</span>
+                        {lang === adminLang && <span className="ml-auto text-[10px] font-black text-green-600">✓</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Profile */}
           <button onClick={() => setProfileOpen(!profileOpen)}

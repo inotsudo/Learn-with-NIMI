@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 const NAV_LINKS = [
@@ -81,7 +82,7 @@ export default function LandingNav({ scrolled, menuOpen, setMenuOpen, authed }: 
           <Link href="/" className={`shrink-0 transition-opacity duration-200 ${
             menuOpen ? "opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto" : "opacity-100"
           }`}>
-            <img loading="lazy" src="/nimi-logo.png" alt="NIMIPIKO"
+            <Image src="/nimi-logo.png" alt="NIMIPIKO" width={96} height={96}
               className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 object-contain drop-shadow-md" />
           </Link>
 
@@ -91,8 +92,8 @@ export default function LandingNav({ scrolled, menuOpen, setMenuOpen, authed }: 
                 whileHover={{ scale:1.08, y:-2 }} whileTap={{ scale:0.94 }}
                 transition={{ type:"spring", stiffness:400, damping:20 }}>
                 <Link href={n.href}>
-                  <img loading="lazy" src={n.img} alt={n.label} draggable={false}
-                    className="h-9 xl:h-10 w-auto object-contain select-none drop-shadow-sm" />
+                  <Image src={n.img} alt={n.label} width={48} height={40}
+                    className="h-9 xl:h-10 object-contain select-none drop-shadow-sm" style={{ width: "auto" }} />
                 </Link>
               </motion.li>
             ))}
@@ -138,14 +139,14 @@ export default function LandingNav({ scrolled, menuOpen, setMenuOpen, authed }: 
               className="fixed left-0 top-0 h-[100dvh] w-72 z-50 shadow-2xl flex flex-col overflow-hidden"
               style={{background:"#f2ead8"}}>
               <div className="flex flex-col items-center pt-6 pb-2 px-5 shrink-0">
-                <img loading="lazy" src="/nimi-logo.png" alt="NIMIPIKO" className="w-40 h-40 object-contain drop-shadow-sm" />
+                <Image src="/nimi-logo.png" alt="NIMIPIKO" width={160} height={160} className="w-40 h-40 object-contain drop-shadow-sm" />
               </div>
               <nav className="flex flex-col px-4 flex-1 justify-center gap-0.5 overflow-y-auto">
                 {NAV_LINKS.map(({label,href,img}) => (
                   <motion.div key={label} whileHover={{scale:1.05,y:-2}} whileTap={{scale:0.96}}
                     transition={{type:"spring",stiffness:400,damping:20}}>
                     <Link href={href} onClick={() => setMenuOpen(() => false)} className="flex items-center px-4 py-2">
-                      <img loading="lazy" src={img} alt={label} draggable={false} className="h-10 w-auto object-contain select-none" />
+                      <Image src={img} alt={label} width={48} height={40} className="h-10 object-contain select-none" style={{ width: "auto" }} />
                     </Link>
                   </motion.div>
                 ))}

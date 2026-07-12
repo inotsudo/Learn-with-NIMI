@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -97,8 +98,8 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount }: 
           <p className="font-black text-ds-text text-[12px] tracking-wide uppercase mb-1">{t("nimiTipTitle")}</p>
           <p className="text-[11px] text-gray-500 leading-snug">{t("nimiTipBody")}</p>
         </div>
-        <img src={assets.nimiCircle} alt="NIMI"
-          className="w-10 h-10 rounded-full object-cover border-2 border-yellow-300 shadow flex-shrink-0"  loading="lazy" />
+        <Image src={assets.nimiCircle} alt="NIMI" width={40} height={40}
+          className="w-10 h-10 rounded-full object-cover border-2 border-yellow-300 shadow flex-shrink-0" />
       </div>
     </div>
   );

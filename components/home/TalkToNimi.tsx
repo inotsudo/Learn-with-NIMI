@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
@@ -76,8 +77,8 @@ export default function TalkToNimi({ childName }: Props) {
           className="w-7 h-7 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center flex-shrink-0 transition">
           <ChevronRight className="w-4 h-4 rotate-180" />
         </motion.button>
-        <img src={assets.nimiCircle} alt="NIMI"
-          className="w-7 h-7 rounded-full object-cover border-2 border-yellow-300 flex-shrink-0 shadow"  loading="lazy" />
+        <Image src={assets.nimiCircle} alt="NIMI" width={28} height={28}
+          className="rounded-full object-cover border-2 border-yellow-300 flex-shrink-0 shadow" />
         <span className="font-black text-white text-[12px] tracking-wide flex-1">{t("talkToNimiTitle")}</span>
         <motion.button whileTap={m.buttonPress}
           className="w-7 h-7 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center flex-shrink-0 transition font-black text-sm">
@@ -95,8 +96,8 @@ export default function TalkToNimi({ childName }: Props) {
             return (
               <div key={idx} className={`flex items-end gap-2 ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.from === "nimi" && (
-                  <img src={assets.nimiCircle} alt="NIMI"
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-md border-2 border-yellow-200"  loading="lazy" />
+                  <Image src={assets.nimiCircle} alt="NIMI" width={32} height={32}
+                    className="rounded-full object-cover flex-shrink-0 shadow-md border-2 border-yellow-200" />
                 )}
                 <div className={`text-[10.5px] leading-snug px-3 py-2 max-w-[72%] shadow-sm ${
                   msg.from === "nimi"

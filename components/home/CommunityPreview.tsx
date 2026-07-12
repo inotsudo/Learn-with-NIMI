@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { ChevronRight, Heart } from "lucide-react";
@@ -73,8 +74,8 @@ export default function CommunityPreview() {
               style={{ borderRadius: 'var(--leaf-r)' }}>
               <div className="h-24 bg-gray-50 flex items-center justify-center relative overflow-hidden">
                 {item.image_url ? (
-                  <img src={item.image_url.startsWith("/") ? item.image_url : getStorageUrl(item.image_url)}
-                    alt="" className="w-full h-full object-cover" loading="lazy" />
+                  <Image src={item.image_url.startsWith("/") ? item.image_url : getStorageUrl(item.image_url)}
+                    alt="" fill className="object-cover" />
                 ) : (
                   <span className="text-4xl opacity-40">
                     {item.type === "challenge" ? "🏆" : item.type === "certificate" ? "📜" : "🎨"}

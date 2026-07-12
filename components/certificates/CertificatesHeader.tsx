@@ -21,17 +21,17 @@ export default function CertificatesHeader() {
       <div className="absolute top-4 right-24 w-16 h-16 rounded-full bg-white/10" />
 
       {/* Floating stars */}
-      {[
+      {([
         { top: "18%", left: "8%",  size: 18, delay: 0 },
         { top: "70%", left: "12%", size: 12, delay: 0.6 },
         { top: "30%", right: "6%", size: 22, delay: 0.3 },
         { top: "75%", right: "10%", size: 14, delay: 1 },
         { top: "50%", left: "30%", size: 10, delay: 0.9 },
-      ].map((s, i) => (
+      ] as Array<{ top: string; size: number; delay: number; left?: string; right?: string }>).map((s, i) => (
         <motion.span
           key={i}
           className="absolute pointer-events-none select-none"
-          style={{ top: s.top, left: (s as any).left, right: (s as any).right, fontSize: s.size }}
+          style={{ top: s.top, left: s.left, right: s.right, fontSize: s.size }}
           animate={{ opacity: [0.3, 1, 0.3], scale: [0.7, 1.3, 0.7], rotate: [0, 20, -20, 0] }}
           transition={{ duration: 2.4, repeat: Infinity, delay: s.delay, ease: "easeInOut" }}
           aria-hidden

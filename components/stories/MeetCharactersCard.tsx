@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
 
@@ -28,7 +29,7 @@ export default function MeetCharactersCard({ assets }: Props) {
             <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: DURATION.loopBase, repeat: Infinity, delay: idx * 0.4 }}
               className={`w-16 h-16 rounded-full bg-gradient-to-br ${c.bg} border-4 ${c.border} shadow-lg flex items-center justify-center overflow-hidden`}>
               {c.img
-                ? <img src={c.img} alt={c.name} className="w-full h-full object-cover rounded-full" loading="lazy" />
+                ? <Image src={c.img} alt={c.name} width={64} height={64} className="w-full h-full object-cover rounded-full" />
                 : <span className="text-2xl">🌿</span>
               }
             </motion.div>

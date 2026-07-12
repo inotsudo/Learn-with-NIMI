@@ -16,7 +16,7 @@ interface Props {
   children: ReactNode;
   spec?: RippleSpec;
   className?: string;
-  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   as?: "div" | "span";
 }
 
@@ -24,7 +24,7 @@ export default function ButtonRipple({ children, spec = BUTTON_RIPPLE, className
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const reduced = useReducedMotionPreferences();
 
-  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
     if (!reduced) {
       const rect = e.currentTarget.getBoundingClientRect();
       const id = Date.now();
@@ -35,7 +35,7 @@ export default function ButtonRipple({ children, spec = BUTTON_RIPPLE, className
   }, [reduced, spec.duration, onClick]);
 
   return (
-    <Tag className={`relative overflow-hidden ${className ?? ""}`} onClick={handleClick as any}>
+    <Tag className={`relative overflow-hidden ${className ?? ""}`} onClick={handleClick}>
       {children}
       {!reduced && (
         <AnimatePresence>

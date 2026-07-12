@@ -27,16 +27,16 @@ export default function ShopHeader({ balance, gems }: Props) {
       <div className="absolute top-3 left-1/3 w-12 h-12 rounded-full bg-white/10" />
 
       {/* Floating emoji decorations */}
-      {[
+      {([
         { top: "15%", left: "5%",  emoji: "⭐", size: 16, delay: 0 },
         { top: "70%", left: "10%", emoji: "💎", size: 14, delay: 0.5 },
         { top: "20%", right: "5%", emoji: "🎁", size: 18, delay: 0.3 },
         { top: "65%", right: "8%", emoji: "⭐", size: 12, delay: 0.9 },
-      ].map((d, i) => (
+      ] as Array<{ top: string; emoji: string; size: number; delay: number; left?: string; right?: string }>).map((d, i) => (
         <motion.span
           key={i}
           className="absolute pointer-events-none select-none"
-          style={{ top: d.top, left: (d as any).left, right: (d as any).right, fontSize: d.size }}
+          style={{ top: d.top, left: d.left, right: d.right, fontSize: d.size }}
           animate={{ opacity: [0.3, 0.9, 0.3], y: [0, -6, 0], scale: [0.8, 1.2, 0.8] }}
           transition={{ duration: 2.4, repeat: Infinity, delay: d.delay, ease: "easeInOut" }}
           aria-hidden

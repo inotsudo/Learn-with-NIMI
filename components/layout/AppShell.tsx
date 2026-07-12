@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
@@ -44,7 +43,6 @@ interface AppShellProps {
 }
 
 export default function AppShell({ children }: AppShellProps) {
-  const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -172,7 +170,9 @@ export default function AppShell({ children }: AppShellProps) {
     setLanguage(pendingLanguage);
     setSwitchingLanguage(false);
     setPendingLanguage(null);
-    router.refresh();
+    window.dispatchEvent(
+      new CustomEvent("app:languageChange", { detail: { language: pendingLanguage } })
+    );
   };
 
   return (
@@ -359,8 +359,8 @@ export default function AppShell({ children }: AppShellProps) {
                   />
                 </div>
 
-                {/* Language — desktop only */}
-                <div className="relative hidden md:block">
+                {/* Language picker */}
+                <div className="relative">
                   <button
                     onClick={() => setShowLangPicker(p => !p)}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-gray-200/80 bg-white/90 shadow-sm transition-all hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 active:scale-95"

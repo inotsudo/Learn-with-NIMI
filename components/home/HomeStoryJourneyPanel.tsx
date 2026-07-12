@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
@@ -22,8 +23,8 @@ export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
         <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
         <div className="flex items-center gap-3">
           {curStory?.cover_url ? (
-            <img src={getStorageUrl(curStory.cover_url)} alt={curStory.title}
-              className="w-12 h-12 rounded-xl object-cover border-2 border-white/40 shadow-md shrink-0" loading="lazy" />
+            <Image src={getStorageUrl(curStory.cover_url)} alt={curStory.title}
+              width={48} height={48} className="rounded-xl object-cover border-2 border-white/40 shadow-md shrink-0" />
           ) : (
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-[22px] shrink-0 shadow-md">
               {curStory?.theme_emoji ?? "📖"}

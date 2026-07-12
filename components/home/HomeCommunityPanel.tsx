@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
@@ -40,8 +41,8 @@ export default function HomeCommunityPanel({ communityCreations }: Props) {
             {communityCreations.map((c) => (
               <Link key={c.id} href="/community"
                 className="group relative aspect-square rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
-                <img src={getStorageUrl(c.imageUrl)} alt={c.childName}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
+                <Image src={getStorageUrl(c.imageUrl)} alt={c.childName}
+                  fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-1 right-1 text-[10px]">🎨</div>
               </Link>

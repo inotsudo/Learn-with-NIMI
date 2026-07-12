@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
 import { Star, ChevronRight, Play, Lock } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
@@ -66,8 +67,8 @@ export default function HomeStoryLibrarySection({ stories, curStory, up, stagger
                     style={{ border: isActive ? "2px solid rgba(5,150,105,0.45)" : "1px solid rgba(219,234,254,0.8)" }}>
                     <div className="relative w-full overflow-hidden" style={{ aspectRatio: "1/1" }}>
                       {story.cover_url
-                        ? <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        ? <Image src={getStorageUrl(story.cover_url)} alt={story.title} fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-500" />
                         : <div className="w-full h-full flex items-center justify-center text-5xl"
                             style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}>
                             {story.theme_emoji ?? "📖"}
@@ -107,8 +108,8 @@ export default function HomeStoryLibrarySection({ stories, curStory, up, stagger
                   <div className="leaf overflow-hidden border border-gray-100 opacity-55">
                     <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
                       {story.cover_url
-                        ? <img src={getStorageUrl(story.cover_url)} alt={story.title}
-                            className="w-full h-full object-cover grayscale" loading="lazy" />
+                        ? <Image src={getStorageUrl(story.cover_url)} alt={story.title} fill
+                            className="object-cover grayscale" />
                         : <div className="w-full h-full flex items-center justify-center text-5xl bg-gray-100">
                             {story.theme_emoji ?? "📖"}
                           </div>

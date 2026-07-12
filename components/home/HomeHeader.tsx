@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -56,8 +57,8 @@ export default function HomeHeader() {
         <motion.div className="flex-shrink-0"
           animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}>
           <div className="relative">
-            <div className="w-20 h-20 lg:w-28 lg:h-28 xl:w-32 xl:h-32 rounded-full overflow-hidden border-4 border-yellow-400 shadow-2xl ring-4 ring-yellow-100">
-              <img src={assets.nimiCircle} alt="NIMI" className="w-full h-full object-cover"  loading="lazy" />
+            <div className="relative w-20 h-20 lg:w-28 lg:h-28 xl:w-32 xl:h-32 rounded-full overflow-hidden border-4 border-yellow-400 shadow-2xl ring-4 ring-yellow-100">
+              <Image src={assets.nimiCircle} alt="NIMI" fill className="object-cover" />
             </div>
             <motion.span className="absolute -top-3 -right-2 text-2xl lg:text-3xl drop-shadow"
               animate={{ rotate: [0, 30, 0, 30, 0] }} transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 3 }}>
@@ -130,8 +131,8 @@ export default function HomeHeader() {
           <motion.div className="flex-shrink-0"
             animate={{ y: [0, -6, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1.8 }}>
             <div className="relative">
-              <div className="w-20 h-20 lg:w-28 lg:h-28 xl:w-32 xl:h-32 rounded-full overflow-hidden border-4 border-blue-300 shadow-2xl ring-4 ring-blue-100">
-                <img src={assets.pikoCircle} alt="PIKO" className="w-full h-full object-cover"  loading="lazy" />
+              <div className="relative w-20 h-20 lg:w-28 lg:h-28 xl:w-32 xl:h-32 rounded-full overflow-hidden border-4 border-blue-300 shadow-2xl ring-4 ring-blue-100">
+                <Image src={assets.pikoCircle} alt="PIKO" fill className="object-cover" />
               </div>
               <motion.span className="absolute -top-3 -left-2 text-2xl lg:text-3xl drop-shadow"
                 animate={{ rotate: [0, 30, 0, 30, 0] }} transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 3, delay: 0.7 }}>
@@ -149,7 +150,7 @@ export default function HomeHeader() {
       <div className="sm:hidden flex items-center justify-between px-3 py-3 relative z-10">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <img src={assets.nimiCircle} alt="NIMI" className="w-11 h-11 rounded-full object-cover border-2 border-yellow-400 shadow-md"  loading="lazy" />
+            <Image src={assets.nimiCircle} alt="NIMI" width={44} height={44} className="rounded-full object-cover border-2 border-yellow-400 shadow-md" />
             <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-[var(--nimi-green)] text-white text-[8px] font-black px-2 py-0.5 rounded-full border border-white">NIMI</span>
           </div>
           <h1 className="font-black" style={{ fontSize: "1.75rem", lineHeight: 1,
@@ -177,7 +178,7 @@ export default function HomeHeader() {
             )}
           </div>
           <div className="relative">
-            <img src={assets.pikoCircle} alt="PIKO" className="w-9 h-9 rounded-full object-cover border-2 border-blue-300 shadow"  loading="lazy" />
+            <Image src={assets.pikoCircle} alt="PIKO" width={36} height={36} className="rounded-full object-cover border-2 border-blue-300 shadow" />
             <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full border border-white">PIKO</span>
           </div>
         </div>

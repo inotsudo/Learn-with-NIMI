@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
@@ -18,8 +19,8 @@ export default function NimiEncouragement({ childName }: Props) {
     <div className={`relative ${cv.backgroundStyle.accent} ${cv.backgroundStyle.accentBorder} ${cv.cardStyle.radius} overflow-hidden shadow-[0_16px_34px_rgba(15,23,42,0.08)]`}>
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.75),transparent_45%)]" />
-      <img src={assets.storyCard.background} alt="" aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-[0.08]"  loading="lazy" />
+      <Image src={assets.storyCard.background} alt="" aria-hidden="true" fill
+        className="object-cover pointer-events-none opacity-[0.08]" />
 
       {/* Themed sparkle ornaments */}
       {[
@@ -47,8 +48,8 @@ export default function NimiEncouragement({ childName }: Props) {
           transition={m.floatSoft.transition}
           className="shrink-0"
         >
-          <img src={assets.nimiCircle} alt="NIMI"
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-[var(--ds-brand-primary)]/50 shadow-xl"  loading="lazy" />
+          <Image src={assets.nimiCircle} alt="NIMI" width={80} height={80}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-[var(--ds-brand-primary)]/50 shadow-xl" />
         </motion.div>
 
         {/* CENTER — message */}
@@ -64,16 +65,16 @@ export default function NimiEncouragement({ childName }: Props) {
 
         {/* RIGHT — star characters + trophy */}
         <div className="hidden sm:flex items-end gap-3 shrink-0">
-          <motion.img src={assets.starMascot} alt="" className="w-12 h-12"
+          <motion.img src={assets.starMascot} alt="" className="w-12 h-12" loading="lazy"
             animate={m.floatRotate(8).animate}
             transition={m.floatRotate(8).transition} />
-          <motion.img src={assets.trophy} alt="" className="w-10 h-10"
+          <motion.img src={assets.trophy} alt="" className="w-10 h-10" loading="lazy"
             animate={m.floatMd.animate}
             transition={{ ...m.floatMd.transition, delay: 0.3 }} />
-          <motion.img src={assets.starMascot} alt="" className="w-10 h-10"
+          <motion.img src={assets.starMascot} alt="" className="w-10 h-10" loading="lazy"
             animate={m.floatRotate(-8, 0.6).animate}
             transition={m.floatRotate(-8, 0.6).transition} />
-          <motion.img src={assets.pikoCircle} alt="PIKO"
+          <motion.img src={assets.pikoCircle} alt="PIKO" loading="lazy"
             className="w-10 h-10 rounded-full border-2 border-[var(--ds-brand-primary)]/30 shadow-lg"
             animate={m.floatSoft.animate}
             transition={{ ...m.floatSoft.transition, delay: 0.8 }} />

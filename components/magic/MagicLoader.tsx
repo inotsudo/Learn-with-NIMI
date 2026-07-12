@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -54,7 +55,7 @@ function NimiWalking({ reduced }: AnimProps) {
       <motion.div className="absolute bottom-0 left-1/2 -translate-x-1/2"
         animate={reduced ? {} : MOTION.floatBounce.animate}
         transition={reduced ? {} : MOTION.floatBounce.transition}>
-        <img src={assets.nimiCircle} alt="Nimi" className="w-16 h-16 rounded-full border-3 border-yellow-400/50 shadow-xl" draggable={false}  loading="lazy" />
+        <Image src={assets.nimiCircle} alt="Nimi" width={64} height={64} className="w-16 h-16 rounded-full border-3 border-yellow-400/50 shadow-xl" />
       </motion.div>
 
       {/* Sparkle trail */}

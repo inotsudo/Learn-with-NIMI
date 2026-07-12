@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DURATION, EASE } from "@/lib/design-system/motion";
@@ -22,7 +23,7 @@ function Logo() {
   const assets = getThemeAssets(themeId);
   return (
     <Link href="/" className="shrink-0 mr-auto">
-      <img src={assets.nimiLogo} alt="NIMIPIKO — Grow With Every Story" className="h-28 w-auto sm:h-32"  loading="lazy" />
+      <Image src={assets.nimiLogo} alt="NIMIPIKO — Grow With Every Story" width={128} height={128} className="h-28 sm:h-32" style={{ width: "auto" }} />
     </Link>
   );
 }
