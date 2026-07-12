@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import supabase from "@/lib/supabaseClient";
 import Link from "next/link";
 import { motion, MotionConfig } from "framer-motion";
 import { ArrowLeft, Mail, Lock, Shield } from "lucide-react";
@@ -30,15 +31,14 @@ export default function ForgotPasswordPage() {
     setError("");
     setMessage("");
 
-    const res = await fetch("/api/auth/send-reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://learn-with-nimi.vercel.app";
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      email.trim().toLowerCase(),
+      { redirectTo: `${siteUrl}/reset-password` }
+    );
 
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({})) as { error?: string };
-      setError(json.error ?? t("resetErrGeneric"));
+    if (resetError) {
+      setError(t("resetErrGeneric"));
     } else {
       setMessage(t("resetSuccess"));
     }
