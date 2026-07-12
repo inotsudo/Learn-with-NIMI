@@ -1,5 +1,7 @@
 import supabase from "@/lib/supabaseClient";
 import { qcached, qinvalidate } from "@/lib/queryCache";
+import { computeStreaks } from "@/lib/parentInsights";
+import { getUsedShieldDates } from "./shop";
 import type { ProgressRow } from "./types";
 
 // Sum of `stars` for missions completed today (in the given language's
@@ -21,17 +23,20 @@ export async function getTodayStars(childId: string, language: "en" | "fr" | "rw
 // given language's journey. Index 0 = Monday. All-false if no progress yet.
 export function getWeekStreak(childId: string, language: "en" | "fr" | "rw"): Promise<boolean[]> {
   return qcached(`weekStreak:${childId}:${language}`, async () => {
-    const { data } = await supabase
-      .from("child_progress")
-      .select("completed_at")
-      .eq("child_id", childId)
-      .eq("language", language);
-    const result = [false, false, false, false, false, false, false];
-    if (!data) return result;
     const now = new Date();
     const monday = new Date(now);
     monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
     monday.setHours(0, 0, 0, 0);
+
+    const { data } = await supabase
+      .from("child_progress")
+      .select("completed_at")
+      .eq("child_id", childId)
+      .eq("language", language)
+      .gte("completed_at", monday.toISOString());
+
+    const result = [false, false, false, false, false, false, false];
+    if (!data) return result;
     for (const row of data) {
       const diffDays = Math.floor(
         (new Date(row.completed_at as string).getTime() - monday.getTime()) / 86400000
@@ -135,33 +140,34 @@ export function getCurrentLevel(childId: string, language: "en" | "fr" | "rw"): 
   });
 }
 
-// Number of consecutive days (ending today or yesterday) with ≥1 completion
-// in the given language's journey. If the child hasn't done anything today
-// but did yesterday, the streak is still alive. Returns 0 if no history.
+// Shield-aware consecutive day streak. Delegates to computeStreaks so the
+// algorithm is never duplicated. Any caller automatically gets the correct
+// shielded count without knowing about shields.
 export async function getConsecutiveStreak(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
-  const dates = await getActivityDates(childId, language);
-  if (dates.size === 0) return 0;
+  const [dates, shieldedDates] = await Promise.all([
+    getActivityDates(childId, language),
+    getUsedShieldDates(childId, language),
+  ]);
+  return computeStreaks(dates, new Date(), shieldedDates).current;
+}
 
-  const fmt = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-  const today = new Date();
-  const todayKey = fmt(today);
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-  const yesterdayKey = fmt(yesterday);
-
-  // Start from today if active, else from yesterday (streak still alive)
-  const startOffset = dates.has(todayKey) ? 0 : dates.has(yesterdayKey) ? 1 : -1;
-  if (startOffset === -1) return 0;
-
-  let streak = 0;
-  for (let i = startOffset; i < 365; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    if (dates.has(fmt(d))) streak++;
-    else break;
-  }
-  return streak;
+// Per-story star totals derived from child_progress, used by the stories page
+// to render the star count on each story card without a raw DB query in the page.
+export function getStoryProgressStars(childId: string, language: "en" | "fr" | "rw"): Promise<Record<string, number>> {
+  return qcached(`storyProgressStars:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("child_progress")
+      .select("mission_id, missions(stars, story_slots(story_id))")
+      .eq("child_id", childId)
+      .eq("language", language);
+    const perStory: Record<string, number> = {};
+    for (const row of data ?? []) {
+      const m = (row as any).missions as { stars?: number; story_slots?: { story_id?: string } | { story_id?: string }[] } | null;
+      const storyId = Array.isArray(m?.story_slots) ? m.story_slots[0]?.story_id : m?.story_slots?.story_id;
+      if (storyId) perStory[storyId] = (perStory[storyId] ?? 0) + (m?.stars ?? 0);
+    }
+    return perStory;
+  });
 }
 
 // Daily claim helpers — stored as a badge slug 'daily-claim-YYYY-MM-DD'.
@@ -171,16 +177,19 @@ function todayClaimSlug(): string {
   return `daily-claim-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export async function hasDailyClaimedToday(childId: string, language: "en" | "fr" | "rw"): Promise<boolean> {
-  const { data } = await supabase
-    .from("child_achievements")
-    .select("id")
-    .eq("child_id", childId)
-    .eq("language", language)
-    .eq("type", "badge")
-    .eq("slug", todayClaimSlug())
-    .maybeSingle();
-  return data !== null;
+export function hasDailyClaimedToday(childId: string, language: "en" | "fr" | "rw"): Promise<boolean> {
+  const dateStr = todayClaimSlug().replace("daily-claim-", "");
+  return qcached(`dailyClaimed:${childId}:${language}:${dateStr}`, async () => {
+    const { data } = await supabase
+      .from("child_achievements")
+      .select("id")
+      .eq("child_id", childId)
+      .eq("language", language)
+      .eq("type", "badge")
+      .eq("slug", `daily-claim-${dateStr}`)
+      .maybeSingle();
+    return data !== null;
+  });
 }
 
 export async function claimDailyBonus(childId: string, language: "en" | "fr" | "rw"): Promise<boolean> {
@@ -188,25 +197,31 @@ export async function claimDailyBonus(childId: string, language: "en" | "fr" | "
   const { error } = await supabase.from("child_achievements").insert({
     child_id: childId, language, type: "badge", slug,
   });
+  if (!error || error.code === "23505") {
+    qinvalidate(`childAchievements:${childId}`);
+    qinvalidate(`dailyClaimed:${childId}:${language}`);
+  }
   return !error || error.code === "23505";
 }
 
 // Per-task daily claim — slug: 'daily-task-{category}-YYYY-MM-DD'
-export async function getClaimedTasksToday(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
+export function getClaimedTasksToday(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
   const dateStr = todayClaimSlug().replace("daily-claim-", "");
-  const { data } = await supabase
-    .from("child_achievements")
-    .select("slug")
-    .eq("child_id", childId)
-    .eq("language", language)
-    .eq("type", "badge")
-    .like("slug", `daily-task-%-${dateStr}`);
-  const set = new Set<string>();
-  for (const row of data ?? []) {
-    const cat = row.slug.replace(`daily-task-`, "").replace(`-${dateStr}`, "");
-    set.add(cat);
-  }
-  return set;
+  return qcached(`claimedTasks:${childId}:${language}:${dateStr}`, async () => {
+    const { data } = await supabase
+      .from("child_achievements")
+      .select("slug")
+      .eq("child_id", childId)
+      .eq("language", language)
+      .eq("type", "badge")
+      .like("slug", `daily-task-%-${dateStr}`);
+    const set = new Set<string>();
+    for (const row of data ?? []) {
+      const cat = row.slug.replace(`daily-task-`, "").replace(`-${dateStr}`, "");
+      set.add(cat);
+    }
+    return set;
+  });
 }
 
 export async function claimTaskReward(childId: string, language: "en" | "fr" | "rw", category: string): Promise<boolean> {
@@ -216,10 +231,8 @@ export async function claimTaskReward(childId: string, language: "en" | "fr" | "
     slug: `daily-task-${category}-${dateStr}`,
   });
   if (!error || error.code === "23505") {
-    qinvalidate(`totalStars:${childId}:${language}`);
-    qinvalidate(`weekStreak:${childId}:${language}`);
-    qinvalidate(`activityDates:${childId}:${language}`);
-    qinvalidate(`currentLevel:${childId}:${language}`);
+    qinvalidate(`childAchievements:${childId}`);
+    qinvalidate(`claimedTasks:${childId}:${language}`);
   }
   return !error || error.code === "23505";
 }

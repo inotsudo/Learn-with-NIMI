@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabaseClient";
-import { qinvalidate } from "@/lib/queryCache";
+import { qcached, qinvalidate } from "@/lib/queryCache";
 import type { CurriculumMission, CompleteCurriculumMissionResult, LevelMissionRow } from "./types";
 
 function curriculumCacheKey(childId: string): string {
@@ -38,13 +38,15 @@ export async function getCurriculumMissions(childId: string): Promise<Curriculum
 }
 
 // Mission ids completed by this child in the given language's journey.
-export async function getCompletedMissionIds(childId: string, language: "en" | "fr" | "rw"): Promise<string[]> {
-  const { data } = await supabase
-    .from("child_progress")
-    .select("mission_id")
-    .eq("child_id", childId)
-    .eq("language", language);
-  return (data ?? []).map((r: { mission_id: string }) => r.mission_id);
+export function getCompletedMissionIds(childId: string, language: "en" | "fr" | "rw"): Promise<string[]> {
+  return qcached(`completedMissionIds:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("child_progress")
+      .select("mission_id")
+      .eq("child_id", childId)
+      .eq("language", language);
+    return (data ?? []).map((r: { mission_id: string }) => r.mission_id);
+  });
 }
 
 export async function completeChildMission(
@@ -77,6 +79,9 @@ export async function completeCurriculumMission(
   qinvalidate(`activityDates:${childId}`);
   qinvalidate(`currentLevel:${childId}`);
   qinvalidate(`childAchievements:${childId}`);
+  qinvalidate(`childBadges:${childId}`);
+  qinvalidate(`completedMissionIds:${childId}`);
+  qinvalidate(`storyProgressStars:${childId}`);
   return data as CompleteCurriculumMissionResult;
 }
 

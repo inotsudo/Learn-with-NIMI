@@ -7,6 +7,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import supabase from "./supabaseClient";
+import { qinvalidate } from "./queryCache";
 import type {
   StoryCompletion,
   StoryIntroProgress,
@@ -25,6 +26,15 @@ export async function completeStorySlot(
     console.error("[completeStorySlot]", error);
     return null;
   }
+  // Bust all per-child progress caches (prefix-only = all language variants).
+  qinvalidate(`weekStreak:${childId}`);
+  qinvalidate(`totalStars:${childId}`);
+  qinvalidate(`activityDates:${childId}`);
+  qinvalidate(`currentLevel:${childId}`);
+  qinvalidate(`childAchievements:${childId}`);
+  qinvalidate(`childBadges:${childId}`);
+  qinvalidate(`completedMissionIds:${childId}`);
+  qinvalidate(`storyProgressStars:${childId}`);
   return data as CompleteSlotResult;
 }
 

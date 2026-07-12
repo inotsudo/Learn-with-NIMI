@@ -5,9 +5,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { computeStreaks } from "@/lib/parentInsights";
-import {
-  getStreakShieldsPurchased, getUsedShieldDates, activateStreakShield,
-} from "@/lib/queries";
+import { resolveShields } from "@/lib/streakShields";
 import WeekStreakCard from "./WeekStreakCard";
 
 interface Props {
@@ -64,65 +62,19 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
 
   const [shieldsPurchased, setShieldsPurchased] = useState(0);
   const [usedShieldDates, setUsedShieldDates] = useState<Set<string>>(new Set());
-  const [shieldJustActivated, setShieldJustActivated] = useState(false);
+  const [shieldsAvailableCount, setShieldsAvailableCount] = useState(0);
 
   useEffect(() => {
-    void (async () => {
-      const [purchased, used] = await Promise.all([
-        getStreakShieldsPurchased(childId),
-        getUsedShieldDates(childId, language),
-      ]);
+    void resolveShields(childId, language, activityDates).then(({ purchased, usedDates, available }) => {
       setShieldsPurchased(purchased);
-
-      // Auto-activate: scan backwards from yesterday for a 1-day gap that a shield can fill.
-      // We do this before setting state so the activation is reflected immediately.
-      let available = purchased - used.size;
-      if (available <= 0) {
-        setUsedShieldDates(used);
-        return;
-      }
-
-      // Build effective dates to detect gaps properly.
-      const effective = new Set([...activityDates, ...used]);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // Walk backwards from yesterday looking for gap days within a streak window.
-      const newlyUsed = new Set(used);
-      let activated = false;
-      const cursor = new Date(today);
-      cursor.setDate(cursor.getDate() - 1); // start at yesterday
-
-      // Only scan back as far as there's an active streak worth protecting (max 60 days).
-      for (let i = 0; i < 60 && available > 0; i++) {
-        const curStr = localDateStr(cursor);
-        cursor.setDate(cursor.getDate() - 1);
-        const prevStr = localDateStr(cursor);
-
-        if (!effective.has(curStr) && !newlyUsed.has(curStr)) {
-          // This day is a gap. Check if there's activity on the day before.
-          if (effective.has(prevStr) || newlyUsed.has(prevStr)) {
-            // There's continuity behind the gap — a shield can bridge it.
-            await activateStreakShield(childId, language, curStr);
-            newlyUsed.add(curStr);
-            effective.add(curStr);
-            available--;
-            activated = true;
-          } else {
-            // Two consecutive misses with no activity behind — streak broken, stop scanning.
-            break;
-          }
-        }
-      }
-
-      setUsedShieldDates(newlyUsed);
-      if (activated) setShieldJustActivated(true);
-    })();
+      setUsedShieldDates(usedDates);
+      setShieldsAvailableCount(available);
+    });
   // activityDates identity changes on each render, use size as proxy dependency
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childId, language, activityDates.size]);
 
-  const shieldsAvailable = shieldsPurchased - usedShieldDates.size;
+  const shieldsAvailable = shieldsAvailableCount;
   const { current, longest } = computeStreaks(activityDates, new Date(), usedShieldDates);
   const weeks = buildCalendar(activityDates, usedShieldDates);
   const dayKeys = ["dayMon", "dayTue", "dayWed", "dayThu", "dayFri", "daySat", "daySun"] as const;
@@ -143,13 +95,9 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
         >
           <span className="text-2xl">🛡️</span>
           <div className="flex-1">
-            {shieldJustActivated ? (
-              <p className="font-black text-indigo-700 text-sm">{t("streakShieldActivated")}</p>
-            ) : (
-              <p className="font-black text-indigo-700 text-sm">
-                {t("shieldsAvailableLabel").replace("{n}", String(Math.max(0, shieldsAvailable)))}
-              </p>
-            )}
+            <p className="font-black text-indigo-700 text-sm">
+              {t("shieldsAvailableLabel").replace("{n}", String(shieldsAvailable))}
+            </p>
             <p className="text-indigo-500 text-xs">{t("rewardStreakShieldDesc")}</p>
           </div>
           {shieldsAvailable > 0 && (
@@ -207,7 +155,7 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
         })}
       </div>
 
-      <WeekStreakCard weekStreak={weekStreak} activityDates={activityDates} />
+      <WeekStreakCard weekStreak={weekStreak} activityDates={activityDates} usedShieldDates={usedShieldDates} />
 
       {/* Activity calendar */}
       <div className="bg-white border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>

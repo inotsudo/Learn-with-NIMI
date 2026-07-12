@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
 import { sendPaymentReceipt } from "@/lib/email";
 
@@ -33,6 +36,13 @@ async function getAccessToken(): Promise<string> {
 // POST — initiate payment request
 export async function POST(req: NextRequest) {
   try {
+    // Verify caller is the authenticated parent who owns this order.
+    const authClient = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { orderId, phoneNumber, amount } = body;
 
@@ -43,6 +53,9 @@ export async function POST(req: NextRequest) {
     const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
     if (!order || order.payment_status !== "pending") {
       return NextResponse.json({ error: "Invalid order" }, { status: 400 });
+    }
+    if (order.parent_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await supabase.from("orders").update({ payment_status: "processing" }).eq("id", orderId);
@@ -65,7 +78,8 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: String(Math.round(amount)),
+        // Always use DB amount — never trust client-supplied value.
+        amount: String(Math.round(Number(order.amount))),
         currency: "RWF",
         externalId: orderId,
         payer: { partyIdType: "MSISDN", partyId: phone },
@@ -104,6 +118,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing params" }, { status: 400 });
     }
 
+    const { data: order } = await supabase.from("orders").select("payment_ref").eq("id", orderId).maybeSingle();
+    if (!order || order.payment_ref !== referenceId) {
+      return NextResponse.json({ error: "Invalid reference" }, { status: 400 });
+    }
+
     const token = await getAccessToken();
     const statusUrl = MOMO_STATUS_URL.replace("{referenceId}", referenceId);
     const res = await fetch(statusUrl, {
@@ -121,8 +140,9 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
 
     if (data.status === "SUCCESSFUL") {
-      const { data: order } = await supabase.from("orders").select("*, products(tier, story_id, billing_interval)").eq("id", orderId).single();
-      if (order && order.payment_status !== "completed") {
+      const { data: fullOrder } = await supabase.from("orders").select("*, products(tier, story_id, billing_interval)").eq("id", orderId).single();
+      if (fullOrder && fullOrder.payment_status !== "completed") {
+        const order = fullOrder;
         await supabase.from("orders").update({
           payment_status: "completed",
           provider_transaction_id: data.financialTransactionId ?? referenceId,
@@ -138,15 +158,7 @@ export async function GET(req: NextRequest) {
             : "story";
 
           if (product.product_type === "subscription" || product.tier === "club") {
-            // Save MoMo phone for auto-renewal
             const phone = order.personalization_data?.phone ?? null;
-            const { data: pm } = await supabase.from("payment_methods").insert({
-              parent_id: order.parent_id,
-              provider: "mtn_momo",
-              phone_number: phone,
-              is_default: true,
-            }).select().single();
-
             const billingInterval = (product.billing_interval ?? "month") as "month" | "year";
             const periodEnd = new Date();
             if (billingInterval === "year") {
@@ -155,26 +167,28 @@ export async function GET(req: NextRequest) {
               periodEnd.setMonth(periodEnd.getMonth() + 1);
             }
 
-            const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
-              parent_id: order.parent_id,
-              product_id: order.product_id,
-              status: "active",
-              currency: order.currency,
-              amount: order.amount,
-              billing_interval: billingInterval,
-              current_period_start: new Date().toISOString(),
-              current_period_end: periodEnd.toISOString(),
-              payment_provider: "mtn_momo",
-              payment_method_id: pm?.id ?? null,
-            }).select().single();
-
-            await supabase.from("content_access").insert({
-              parent_id: order.parent_id,
-              access_type: accessType,
-              story_id: product.story_id,
-              order_id: orderId,
-              subscription_id: sub?.id ?? null,
+            // Atomically provision payment_method + subscription + content_access.
+            const { error: provisionErr } = await supabase.rpc("provision_subscription", {
+              p_parent_id:        order.parent_id,
+              p_product_id:       order.product_id,
+              p_order_id:         orderId,
+              p_provider:         "mtn_momo",
+              p_token:            null,
+              p_phone:            phone,
+              p_amount:           Number(order.amount),
+              p_currency:         order.currency,
+              p_billing_interval: billingInterval,
+              p_period_start:     new Date().toISOString(),
+              p_period_end:       periodEnd.toISOString(),
+              p_access_type:      accessType,
+              p_story_id:         product.story_id ?? null,
             });
+
+            if (provisionErr) {
+              console.error("[MTN MoMo] provision_subscription failed:", provisionErr.message);
+              // Don't expose internal error — status polling will keep retrying.
+              return NextResponse.json({ status: "pending" });
+            }
 
             // Fire referral reward (best-effort)
             void fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com"}/api/referral/reward`, {
@@ -198,14 +212,14 @@ export async function GET(req: NextRequest) {
 
             // Send receipt email (best-effort)
             const { data: parent } = await supabase.from("parents").select("email, name").eq("id", order.parent_id).maybeSingle();
-            if (parent?.email && sub) {
+            if (parent?.email) {
               void sendPaymentReceipt({
                 to: parent.email,
                 parentName: parent.name ?? "there",
                 amount: String(order.amount),
                 currency: order.currency,
                 provider: "mtn_momo",
-                periodEnd: sub.current_period_end,
+                periodEnd: periodEnd.toISOString(),
               });
             }
           } else {

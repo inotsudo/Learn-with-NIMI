@@ -9,7 +9,7 @@ const AUTHORIZED_STATUSES = [
 
 export async function verifyCybersourceTransaction(
   transactionId: string
-): Promise<{ csStatus: string; isAuthorized: boolean; authorizedAmount: number }> {
+): Promise<{ csStatus: string; isAuthorized: boolean; authorizedAmount: number; customerToken: string | null }> {
   const merchantId = process.env.CYBERSOURCE_MERCHANT_ID!;
   const keyId = process.env.CYBERSOURCE_KEY_ID!;
   const secretKey = process.env.CYBERSOURCE_SECRET_KEY!;
@@ -55,5 +55,7 @@ export async function verifyCybersourceTransaction(
     data.orderInformation?.amountDetails?.totalAmount ??
     "0"
   );
-  return { csStatus, isAuthorized: AUTHORIZED_STATUSES.includes(csStatus), authorizedAmount };
+  // Prefer the customer token (reusable for recurring charges) over the raw transaction ID.
+  const customerToken = (data.tokenInformation?.customer?.id as string | undefined) ?? null;
+  return { csStatus, isAuthorized: AUTHORIZED_STATUSES.includes(csStatus), authorizedAmount, customerToken };
 }

@@ -12,7 +12,7 @@ const supabase = createClient(
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { response: completeJwt, amount, orderId } = body;
+    const { response: completeJwt, orderId } = body;
 
     if (!completeJwt || !orderId) {
       return NextResponse.json({ success: false, message: "Missing fields." }, { status: 400 });
@@ -34,8 +34,9 @@ export async function POST(req: Request) {
     let csStatus: string;
     let isAuthorized: boolean;
     let authorizedAmount: number;
+    let customerToken: string | null;
     try {
-      ({ csStatus, isAuthorized, authorizedAmount } = await verifyCybersourceTransaction(transactionId));
+      ({ csStatus, isAuthorized, authorizedAmount, customerToken } = await verifyCybersourceTransaction(transactionId));
     } catch (verifyErr: unknown) {
       const _vmsg = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
       console.error("[ConfirmPayment] Verify failed:", _vmsg);
@@ -54,6 +55,11 @@ export async function POST(req: Request) {
 
     if (!order) {
       return NextResponse.json({ success: false, message: "Order not found." }, { status: 404 });
+    }
+
+    // Idempotency — if already completed (e.g. client retry on network timeout) return success immediately.
+    if (order.payment_status === "completed") {
+      return NextResponse.json({ success: true, status: "SUCCESS", transactionId: order.provider_transaction_id });
     }
 
     // Validate amount (1% tolerance for FX rounding)
@@ -80,16 +86,8 @@ export async function POST(req: Request) {
           : product.tier === "family_bundle" ? "bundle"
           : "story";
 
-        // For subscriptions — create subscription record + save payment method
+        // For subscriptions — atomically provision payment_method + subscription + content_access.
         if (product.product_type === "subscription" || product.tier === "club") {
-          // Save CyberSource payment instrument for auto-renewal
-          const { data: pm } = await supabase.from("payment_methods").insert({
-            parent_id: order.parent_id,
-            provider: "cybersource",
-            token: transactionId,
-            is_default: true,
-          }).select().single();
-
           const billingInterval = (product.billing_interval ?? "month") as "month" | "year";
           const periodEnd = new Date();
           if (billingInterval === "year") {
@@ -98,26 +96,33 @@ export async function POST(req: Request) {
             periodEnd.setMonth(periodEnd.getMonth() + 1);
           }
 
-          const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
-            parent_id: order.parent_id,
-            product_id: order.product_id,
-            status: "active",
-            currency: order.currency,
-            amount: order.amount,
-            billing_interval: billingInterval,
-            current_period_start: new Date().toISOString(),
-            current_period_end: periodEnd.toISOString(),
-            payment_provider: "cybersource",
-            payment_method_id: pm?.id ?? null,
-          }).select().single();
+          // customerToken is the reusable CyberSource customer ID for recurring charges.
+          // Fall back to transactionId only when tokenization is not enabled on the profile.
+          const tokenToStore = customerToken ?? transactionId;
+          if (!customerToken) {
+            console.warn("[ConfirmPayment] No customer token returned by CyberSource — auto-renewal may fail. Enable tokenization in the merchant profile.");
+          }
 
-          await supabase.from("content_access").insert({
-            parent_id: order.parent_id,
-            access_type: accessType,
-            story_id: product.story_id,
-            order_id: orderId,
-            subscription_id: sub?.id ?? null,
+          const { error: provisionErr } = await supabase.rpc("provision_subscription", {
+            p_parent_id:        order.parent_id,
+            p_product_id:       order.product_id,
+            p_order_id:         orderId,
+            p_provider:         "cybersource",
+            p_token:            tokenToStore,
+            p_phone:            null,
+            p_amount:           Number(order.amount),
+            p_currency:         order.currency,
+            p_billing_interval: billingInterval,
+            p_period_start:     new Date().toISOString(),
+            p_period_end:       periodEnd.toISOString(),
+            p_access_type:      accessType,
+            p_story_id:         product.story_id ?? null,
           });
+
+          if (provisionErr) {
+            console.error("[ConfirmPayment] provision_subscription failed:", provisionErr.message);
+            return NextResponse.json({ success: false, message: "Failed to activate subscription." }, { status: 500 });
+          }
 
           // Fire referral reward (best-effort, non-blocking)
           void fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com"}/api/referral/reward`, {

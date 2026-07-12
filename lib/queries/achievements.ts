@@ -2,13 +2,15 @@ import supabase from "@/lib/supabaseClient";
 import { qcached, qinvalidate } from "@/lib/queryCache";
 import type { ChildBadge, ChildAchievement } from "./types";
 
-export async function getChildBadges(childId: string): Promise<ChildBadge[]> {
-  const { data } = await supabase
-    .from("child_badges")
-    .select("*")
-    .eq("child_id", childId)
-    .order("earned_at");
-  return (data ?? []) as ChildBadge[];
+export function getChildBadges(childId: string): Promise<ChildBadge[]> {
+  return qcached(`childBadges:${childId}`, async () => {
+    const { data } = await supabase
+      .from("child_badges")
+      .select("*")
+      .eq("child_id", childId)
+      .order("earned_at");
+    return (data ?? []) as ChildBadge[];
+  });
 }
 
 export async function awardBadge(
@@ -18,7 +20,7 @@ export async function awardBadge(
   await supabase
     .from("child_badges")
     .upsert({ child_id: childId, badge_slug: badgeSlug });
-  qinvalidate(`childAchievements:${childId}`);
+  qinvalidate(`childBadges:${childId}`);
 }
 
 // Calls the DB function that checks story-count and star-count milestones
@@ -35,6 +37,8 @@ export async function awardMilestoneBadges(
     console.error("[awardMilestoneBadges]", error.message);
     return [];
   }
+  // RPC writes to child_badges; bust both caches in case it also touches child_achievements.
+  qinvalidate(`childBadges:${childId}`);
   qinvalidate(`childAchievements:${childId}`);
   return (data as string[]) ?? [];
 }
@@ -72,5 +76,8 @@ export async function claimChallengeReward(
   const { error } = await supabase.from("challenge_bonus_stars").insert({
     child_id: childId, language, challenge_slug: challengeSlug, stars,
   });
-  return !error || error.code === "23505"; // 23505 = unique violation (already claimed)
+  if (!error || error.code === "23505") {
+    qinvalidate(`totalStars:${childId}:${language}`);
+  }
+  return !error || error.code === "23505";
 }

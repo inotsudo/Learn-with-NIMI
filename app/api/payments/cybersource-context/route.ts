@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -33,6 +36,12 @@ function getPrivateKey(): string {
 
 export async function POST() {
   try {
+    const authClient = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const resource = "/flex/v2/sessions";
     const date = new Date().toUTCString();
 

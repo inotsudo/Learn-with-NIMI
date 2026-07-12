@@ -58,37 +58,42 @@ export async function equipItem(
 }
 
 // Returns total shield purchases for this child (each purchase = 1 shield).
-export async function getStreakShieldsPurchased(childId: string): Promise<number> {
-  const { data } = await supabase
-    .from("shop_purchases")
-    .select("id")
-    .eq("child_id", childId)
-    .eq("item_id", "streakShield");
-  return (data ?? []).length;
+export function getStreakShieldsPurchased(childId: string): Promise<number> {
+  return qcached(`shieldsPurchased:${childId}`, async () => {
+    const { data } = await supabase
+      .from("shop_purchases")
+      .select("id")
+      .eq("child_id", childId)
+      .eq("item_id", "streakShield");
+    return (data ?? []).length;
+  });
 }
 
 // Returns the set of YYYY-MM-DD dates where a shield was activated.
-export async function getUsedShieldDates(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
-  const { data } = await supabase
-    .from("child_achievements")
-    .select("slug")
-    .eq("child_id", childId)
-    .eq("language", language)
-    .eq("type", "badge")
-    .like("slug", "streak-shield-used-%");
-  const set = new Set<string>();
-  for (const row of data ?? []) {
-    const dateStr = row.slug.replace("streak-shield-used-", "");
-    set.add(dateStr);
-  }
-  return set;
+export function getUsedShieldDates(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
+  return qcached(`usedShieldDates:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("child_achievements")
+      .select("slug")
+      .eq("child_id", childId)
+      .eq("language", language)
+      .eq("type", "badge")
+      .like("slug", "streak-shield-used-%");
+    const set = new Set<string>();
+    for (const row of data ?? []) {
+      set.add(row.slug.replace("streak-shield-used-", ""));
+    }
+    return set;
+  });
 }
 
-// Marks a shield as used for the given YYYY-MM-DD date string.
+// Marks a shield as used for the given YYYY-MM-DD date string and busts the cache.
 export async function activateStreakShield(childId: string, language: "en" | "fr" | "rw", dateStr: string): Promise<boolean> {
   const { error } = await supabase.from("child_achievements").insert({
     child_id: childId, language, type: "badge",
     slug: `streak-shield-used-${dateStr}`,
   });
-  return !error || error.code === "23505";
+  const ok = !error || error.code === "23505";
+  if (ok) qinvalidate(`usedShieldDates:${childId}:${language}`);
+  return ok;
 }

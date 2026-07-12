@@ -13,8 +13,7 @@ import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildAchievements, type Child } from "@/lib/queries";
-import supabase from "@/lib/supabaseClient";
+import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildAchievements, getStoryProgressStars, type Child } from "@/lib/queries";
 import { getStoryLibrary, getCurrentStoryId } from "@/lib/storyRepository";
 import type { StoryLibraryItem } from "@/lib/story-types";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
@@ -58,27 +57,15 @@ export default function StoryLibraryPage() {
   const loadForChild = useCallback(async (child: Child, lang: Language, silent = false) => {
     const gen = silent ? ++switchGenRef.current : 0;
     if (silent) setRefreshing(true); else setLoading(true);
-    const [lib, cur, streak, consStreak, ach] = await Promise.all([
+    const [lib, cur, streak, consStreak, ach, stars, perStory] = await Promise.all([
       getStoryLibrary(child.id, lang),
       getCurrentStoryId(child.id, lang),
       getWeekStreak(child.id, lang),
       getConsecutiveStreak(child.id, lang),
       getChildAchievements(child.id),
+      getTotalStars(child.id, lang),
+      getStoryProgressStars(child.id, lang),
     ]);
-    const stars = await getTotalStars(child.id, lang);
-
-    const { data: progressData } = await supabase
-      .from("child_progress")
-      .select("mission_id, missions(stars, story_slots(story_id))")
-      .eq("child_id", child.id)
-      .eq("language", lang);
-
-    const perStory: Record<string, number> = {};
-    for (const row of progressData ?? []) {
-      const m = row.missions as { stars?: number; story_slots?: { story_id?: string } | { story_id?: string }[] } | null;
-      const storyId = Array.isArray(m?.story_slots) ? m.story_slots[0]?.story_id : m?.story_slots?.story_id;
-      if (storyId) perStory[storyId] = (perStory[storyId] ?? 0) + (m?.stars ?? 0);
-    }
 
     if (silent && gen !== switchGenRef.current) return;
     setStories(lib);

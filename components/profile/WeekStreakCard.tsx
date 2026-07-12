@@ -9,12 +9,13 @@ import { computeStreaks } from "@/lib/parentInsights";
 interface Props {
   weekStreak: boolean[];
   activityDates: Set<string>;
+  usedShieldDates?: Set<string>;
 }
 
-export default function WeekStreakCard({ weekStreak, activityDates }: Props) {
+export default function WeekStreakCard({ weekStreak, activityDates, usedShieldDates }: Props) {
   const { t } = useLanguage();
   useAppTheme(); // subscribe so CSS vars are live
-  const { current, activeToday } = computeStreaks(activityDates);
+  const { current, activeToday } = computeStreaks(activityDates, new Date(), usedShieldDates);
   const dayKeys = ["dayMon", "dayTue", "dayWed", "dayThu", "dayFri", "daySat", "daySun"] as const;
 
   const motivationMsg =

@@ -6,6 +6,7 @@ import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy,
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildAchievements, getCurrentLevel, updateChildLanguage, getChildCosmetics } from "@/lib/queries";
 import { computeStreaks } from "@/lib/parentInsights";
+import { resolveShields } from "@/lib/streakShields";
 import type { Child, ChildCosmetics } from "@/lib/queries";
 import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
 import Sidebar from "./Sidebar";
@@ -90,14 +91,17 @@ export default function AppShell({ children }: AppShellProps) {
       setActiveChild(child);
       if (child) {
         setLanguage(child.language);
-        const [, , , , achievements, cos] = await Promise.all([
-          getWeekStreak(child.id, child.language).then(setWeekStreak),
-          getActivityDates(child.id, child.language).then(dates => setStreakCount(computeStreaks(dates).current)),
+        const [ws, dates, , , achievements, cos] = await Promise.all([
+          getWeekStreak(child.id, child.language),
+          getActivityDates(child.id, child.language),
           getTotalStars(child.id, child.language).then(setTotalStars),
           getCurrentLevel(child.id, child.language).then(setLevel),
           getChildAchievements(child.id),
           getChildCosmetics(child.id),
         ]);
+        setWeekStreak(ws);
+        const { usedDates } = await resolveShields(child.id, child.language, dates);
+        setStreakCount(computeStreaks(dates, new Date(), usedDates).current);
         setGems(achievements.filter((a: { type: string; language: string }) => a.type === "badge" && a.language === child.language).length);
         setCosmetics(cos);
       }
@@ -125,14 +129,17 @@ export default function AppShell({ children }: AppShellProps) {
       activeChildRef.current = child;
       setActiveChild(child);
       setLanguage(child.language as Language);
-      const [, , , , achievements, cos] = await Promise.all([
-        getWeekStreak(child.id, child.language).then(setWeekStreak),
-        getActivityDates(child.id, child.language).then(dates => setStreakCount(computeStreaks(dates).current)),
+      const [ws, dates, , , achievements, cos] = await Promise.all([
+        getWeekStreak(child.id, child.language),
+        getActivityDates(child.id, child.language),
         getTotalStars(child.id, child.language).then(setTotalStars),
         getCurrentLevel(child.id, child.language).then(setLevel),
         getChildAchievements(child.id),
         getChildCosmetics(child.id),
       ]);
+      setWeekStreak(ws);
+      const { usedDates } = await resolveShields(child.id, child.language, dates);
+      setStreakCount(computeStreaks(dates, new Date(), usedDates).current);
       setGems(achievements.filter((a: { type: string; language: string }) => a.type === "badge" && a.language === child.language).length);
       setCosmetics(cos);
     };
@@ -151,13 +158,20 @@ export default function AppShell({ children }: AppShellProps) {
       const updated = { ...current, language: lang };
       activeChildRef.current = updated;
       setActiveChild(updated);
-      void getWeekStreak(updated.id, lang).then(setWeekStreak);
-      void getActivityDates(updated.id, lang).then(dates => setStreakCount(computeStreaks(dates).current));
-      void getTotalStars(updated.id, lang).then(setTotalStars);
-      void getCurrentLevel(updated.id, lang).then(setLevel);
-      void getChildAchievements(updated.id).then(achievements =>
-        setGems(achievements.filter(a => a.type === "badge" && a.language === lang).length)
-      );
+      void (async () => {
+        const [ws, dates] = await Promise.all([
+          getWeekStreak(updated.id, lang),
+          getActivityDates(updated.id, lang),
+          getTotalStars(updated.id, lang).then(setTotalStars),
+          getCurrentLevel(updated.id, lang).then(setLevel),
+          getChildAchievements(updated.id).then(achievements =>
+            setGems(achievements.filter(a => a.type === "badge" && a.language === lang).length)
+          ),
+        ]);
+        setWeekStreak(ws);
+        const { usedDates } = await resolveShields(updated.id, lang, dates);
+        setStreakCount(computeStreaks(dates, new Date(), usedDates).current);
+      })();
     };
     window.addEventListener("app:languageChange", handler);
     return () => window.removeEventListener("app:languageChange", handler);

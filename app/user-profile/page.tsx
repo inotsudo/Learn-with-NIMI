@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   getChildren, getCurriculumMissions, getCurrentLevel,
   getWeekStreak, getWeekActivityCounts, getChildAchievements, getTotalStars,
-  getActivityDates, getChildBadges, awardMilestoneBadges, updateChild,
+  getActivityDates, getChildBadges, updateChild,
   type Child,
 } from "@/lib/queries";
 import { MILESTONE_BADGES } from "@/lib/milestoneBadges";
@@ -177,8 +177,6 @@ export default function UserProfilePage() {
     ]);
 
     if (silent && gen !== switchGenRef.current) return;
-
-    await awardMilestoneBadges(child.id, child.language);
 
     setAllChildren(list);
     setChildName(child.name);

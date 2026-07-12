@@ -1,6 +1,9 @@
 // app/api/creations/[id]/comments/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
 // Service-role client — bypasses RLS so comments are always readable
 // even before the migration's RLS policy propagates.
@@ -27,6 +30,12 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
 }
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authClient = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
 
   let body: { content?: string; author?: string };

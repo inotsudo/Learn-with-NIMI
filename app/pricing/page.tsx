@@ -32,11 +32,6 @@ const FEATURE_LABELS: Record<string, string> = {
   keepsake_memory: "A Memory That Lasts Forever",
 };
 
-const CURRENCIES: { code: Currency; label: string; flag: string }[] = [
-  { code: "USD", label: "USD", flag: "🇺🇸" },
-  { code: "RWF", label: "RWF", flag: "🇷🇼" },
-];
-
 type DiscountInfo = {
   code_id: string; code: string;
   discount_type: "percent" | "fixed"; discount_value: number;
@@ -156,19 +151,6 @@ export default function PricingPage() {
               <p className="text-white/80 text-[15px] font-nunito mt-2 max-w-lg mx-auto">
                 Every story is a complete learning adventure — reading, singing, creating, and growing together.
               </p>
-
-              <div className="flex justify-center mt-6 gap-2">
-                {CURRENCIES.map(c => (
-                  <button key={c.code} onClick={() => setCurrency(c.code)}
-                    className={`flex items-center gap-1.5 px-5 py-2.5 rounded-full font-baloo font-bold text-[14px] transition ${
-                      currency === c.code
-                        ? "bg-white text-[var(--ds-brand-primary)] shadow-lg"
-                        : "bg-white/20 border border-white/30 text-white/90 hover:bg-white/30"
-                    }`}>
-                    <span>{c.flag}</span> {c.label}
-                  </button>
-                ))}
-              </div>
             </div>
           </HeroBanner>
 
@@ -221,7 +203,7 @@ export default function PricingPage() {
 
                   {/* Popular badge */}
                   <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-center py-1.5">
-                    <span className="text-white font-black text-[11px] tracking-wider">⭐ MOST POPULAR</span>
+                    <span className="text-orange-950 font-black text-[11px] tracking-wider">⭐ MOST POPULAR</span>
                   </div>
 
                   {/* Header */}
@@ -390,12 +372,12 @@ export default function PricingPage() {
                   {/* Header */}
                   <div className="bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-400 p-6">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-                        <Crown className="w-7 h-7 text-white" />
+                      <div className="w-14 h-14 bg-black/10 rounded-2xl flex items-center justify-center">
+                        <Crown className="w-7 h-7 text-amber-900" />
                       </div>
                       <div>
-                        <h2 className="font-baloo font-black text-white text-[24px]">Masterpiece</h2>
-                        <p className="text-white/70 text-[12px] font-bold">Personalized Hero Story</p>
+                        <h2 className="font-baloo font-black text-amber-950 text-[24px]">Masterpiece</h2>
+                        <p className="text-amber-800 text-[12px] font-bold">Personalized Hero Story</p>
                       </div>
                     </div>
                   </div>

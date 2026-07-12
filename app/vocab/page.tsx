@@ -8,7 +8,7 @@ import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { PageSurface } from "@/components/layout/primitives";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getChildren, getStorageUrl } from "@/lib/queries";
+import { getChildren, getStorageUrl, getCompletedMissionIds } from "@/lib/queries";
 import supabase from "@/lib/supabaseClient";
 import { SPRING } from "@/lib/design-system/motion";
 
@@ -101,14 +101,7 @@ export default function VocabPage() {
       const child = list.find(c => c.id === savedId) ?? list[0];
       if (!child) { setLoading(false); return; }
 
-      // All completed mission IDs for this child+language
-      const { data: progress } = await supabase
-        .from("child_progress")
-        .select("mission_id")
-        .eq("child_id", child.id)
-        .eq("language", child.language);
-
-      const missionIds = (progress ?? []).map(p => p.mission_id);
+      const missionIds = await getCompletedMissionIds(child.id, child.language as "en" | "fr" | "rw");
       if (missionIds.length === 0) { setLoading(false); return; }
 
       // Fetch content_json for those missions (only those with vocabulary)

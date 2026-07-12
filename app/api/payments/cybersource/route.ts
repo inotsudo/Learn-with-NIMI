@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -67,19 +70,29 @@ function generateHeaders(method: string, resource: string, payload: string): Rec
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { orderId, transientToken, cardNumber, expirationMonth, expirationYear, currency, amount } = body;
+    // Verify caller is the authenticated parent who owns this order.
+    const authClient = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!orderId || !currency || !amount) {
+    const body = await req.json();
+    const { orderId, transientToken, currency } = body;
+
+    if (!orderId || !currency) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    if (!transientToken && !cardNumber) {
-      return NextResponse.json({ error: "Missing payment details" }, { status: 400 });
+    if (!transientToken) {
+      return NextResponse.json({ error: "Missing payment token" }, { status: 400 });
     }
 
     const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
     if (!order || order.payment_status !== "pending") {
       return NextResponse.json({ error: "Invalid order" }, { status: 400 });
+    }
+    if (order.parent_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await supabase.from("orders").update({ payment_status: "processing" }).eq("id", orderId);
@@ -88,17 +101,11 @@ export async function POST(req: NextRequest) {
     const payload = JSON.stringify({
       clientReferenceInformation: { code: orderId },
       processingInformation: { capture: true },
-      ...(transientToken
-        ? { tokenInformation: { transientTokenJwt: transientToken } }
-        : { paymentInformation: { card: {
-            number: cardNumber.replace(/\s/g, ""),
-            expirationMonth,
-            expirationYear,
-          }}}
-      ),
+      tokenInformation: { transientTokenJwt: transientToken },
       orderInformation: {
         amountDetails: {
-          totalAmount: String(amount),
+          // Always use DB amount — never trust client-supplied value.
+          totalAmount: String(order.amount),
           currency,
         },
       },

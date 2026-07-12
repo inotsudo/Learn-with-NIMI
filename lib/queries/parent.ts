@@ -83,13 +83,14 @@ export async function updateChildLanguage(
   childId: string,
   language: "en" | "fr" | "rw"
 ): Promise<void> {
-  const { data: current } = await supabase
-    .from("children")
-    .select("language")
-    .eq("id", childId)
-    .maybeSingle();
+  const [{ data: { user } }, { data: current }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("children").select("language").eq("id", childId).maybeSingle(),
+  ]);
 
   await supabase.from("children").update({ language }).eq("id", childId);
+
+  if (user) qinvalidate(`children:${user.id}`);
 
   const fromLanguage = current?.language as "en" | "fr" | "rw" | undefined;
   if (fromLanguage && fromLanguage !== language) {
