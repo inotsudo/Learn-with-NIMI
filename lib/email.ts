@@ -5,24 +5,27 @@ const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_FROM   = process.env.SENDGRID_FROM_EMAIL ?? "support@nimipiko.com";
 const SENDGRID_URL    = "https://api.sendgrid.com/v3/mail/send";
 
-async function send(to: string, subject: string, html: string): Promise<void> {
-  if (!SENDGRID_API_KEY) return; // graceful no-op when key not configured
-  try {
-    await fetch(SENDGRID_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${SENDGRID_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: SENDGRID_FROM, name: "NIMIPIKO" },
-        subject,
-        content: [{ type: "text/html", value: html }],
-      }),
-    });
-  } catch {
-    // Non-fatal — email is best-effort
+async function send(to: string, subject: string, html: string, strict = false): Promise<void> {
+  if (!SENDGRID_API_KEY) {
+    if (strict) throw new Error("SENDGRID_API_KEY not configured");
+    return;
+  }
+  const res = await fetch(SENDGRID_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SENDGRID_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: SENDGRID_FROM, name: "NIMIPIKO" },
+      subject,
+      content: [{ type: "text/html", value: html }],
+    }),
+  });
+  if (strict && !res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`SendGrid ${res.status}: ${body}`);
   }
 }
 
@@ -72,7 +75,7 @@ export async function sendAuthResetPassword(to: string, resetUrl: string): Promi
       <p style="margin:0;font-size:13px;color:#854d0e;line-height:1.6;">⚠️ This link expires in <strong>1 hour</strong>. If you didn't request this, your account is safe — just ignore this email.</p>
     </div>
     <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">For security, this link can only be used once.</p>
-  `));
+  `), true));
 }
 
 // ── Auth: Magic link ─────────────────────────────────────────────────────────

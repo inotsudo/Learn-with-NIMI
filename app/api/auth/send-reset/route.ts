@@ -28,7 +28,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  await sendAuthResetPassword(email, data.properties.action_link);
+  try {
+    await sendAuthResetPassword(email, data.properties.action_link);
+  } catch (err) {
+    console.error("[send-reset] SendGrid error:", err);
+    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
