@@ -197,17 +197,23 @@ export async function GET(req: NextRequest) {
               body: JSON.stringify({ referred_id: order.parent_id }),
             }).catch(() => {});
 
-            // Track discount code redemption
+            // Track discount code redemption — atomic CAS prevents over-redemption race
             const discountCodeId = (order.personalization_data as any)?.discount_code_id;
             if (discountCodeId) {
-              void Promise.all([
+              const [, { data: incremented }] = await Promise.all([
                 supabase.from("discount_redemptions").insert({
                   code_id: discountCodeId,
                   parent_id: order.parent_id,
                   order_id: orderId,
                 }),
-                supabase.rpc("increment_discount_uses", { code_id_param: discountCodeId }),
+                supabase.rpc("try_increment_discount_uses", { code_id_param: discountCodeId }),
               ]);
+              if (!incremented) {
+                console.error(
+                  "[MTN MoMo] Discount over-redemption detected.",
+                  JSON.stringify({ discountCodeId, orderId, parentId: order.parent_id })
+                );
+              }
             }
 
             // Send receipt email (best-effort)

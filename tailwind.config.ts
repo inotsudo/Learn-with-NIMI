@@ -5,7 +5,17 @@ const config: Config = {
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./pages/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
     "./node_modules/@shadcn/ui/**/*.{js,ts,jsx,tsx}",
+  ],
+  safelist: [
+    // HeroBanner builds the direction class dynamically: `bg-gradient-to-${direction}`
+    // Tailwind cannot detect these at scan time — safelist them explicitly.
+    "bg-gradient-to-r",
+    "bg-gradient-to-br",
+    "bg-gradient-to-b",
+    "bg-gradient-to-bl",
+    "bg-gradient-to-tr",
   ],
   theme: {
     // xs fills the gap below sm (375px) — needed for small-phone

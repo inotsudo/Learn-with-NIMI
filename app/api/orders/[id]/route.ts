@@ -14,9 +14,10 @@ const serviceSupabase = createClient(
 // Called when a CyberSource modal is closed before payment is submitted.
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authClient = createRouteHandlerClient({ cookies });
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,7 +29,7 @@ export async function PATCH(
     const { data: order } = await serviceSupabase
       .from("orders")
       .select("id, parent_id, payment_status")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -38,7 +39,7 @@ export async function PATCH(
       return NextResponse.json({ success: true, skipped: true });
     }
 
-    await serviceSupabase.from("orders").update({ payment_status: "cancelled" }).eq("id", params.id);
+    await serviceSupabase.from("orders").update({ payment_status: "cancelled" }).eq("id", id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });

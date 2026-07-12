@@ -1,6 +1,9 @@
 export const runtime = "nodejs";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+// @ts-ignore
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import { verifyCybersourceTransaction } from "@/lib/cybersource/verify";
 import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
 
@@ -9,8 +12,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // Auth check — caller must be the parent who owns the order
+    const authClient = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { response: completeJwt, orderId } = body;
 
@@ -49,12 +59,17 @@ export async function POST(req: Request) {
     // Get order from DB
     const { data: order } = await supabase
       .from("orders")
-      .select("*, products(tier, story_id, billing_interval)")
+      .select("*, products(tier, story_id, billing_interval, product_type, name)")
       .eq("id", orderId)
       .single();
 
     if (!order) {
       return NextResponse.json({ success: false, message: "Order not found." }, { status: 404 });
+    }
+
+    // Owner check — prevents user A confirming user B's order
+    if (order.parent_id !== user.id) {
+      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
 
     // Idempotency — if already completed (e.g. client retry on network timeout) return success immediately.
@@ -99,10 +114,20 @@ export async function POST(req: Request) {
           }
 
           // customerToken is the reusable CyberSource customer ID for recurring charges.
-          // Fall back to transactionId only when tokenization is not enabled on the profile.
+          // If null, tokenization is not enabled on the merchant profile — auto-renewal
+          // will fail for every subscriber. Fix: enable "Token Management Service" in
+          // Business Center → Payment Configuration → Tokenization.
           const tokenToStore = customerToken ?? transactionId;
           if (!customerToken) {
-            console.warn("[ConfirmPayment] No customer token returned by CyberSource — auto-renewal may fail. Enable tokenization in the merchant profile.");
+            console.error(
+              "[ConfirmPayment] CRITICAL: No customer token from CyberSource.",
+              JSON.stringify({
+                orderId,
+                parentId: order.parent_id,
+                transactionId,
+                action: "auto-renewal will fail — enable Token Management Service in CyberSource Business Center",
+              })
+            );
           }
 
           const { error: provisionErr } = await supabase.rpc("provision_subscription", {
@@ -133,17 +158,26 @@ export async function POST(req: Request) {
             body: JSON.stringify({ referred_id: order.parent_id }),
           }).catch(() => {});
 
-          // Track discount code redemption if one was applied
+          // Track discount code redemption — atomic CAS update prevents over-redemption
+          // if two orders with the same code reached payment simultaneously.
           const discountCodeId = (order.personalization_data as any)?.discount_code_id;
           if (discountCodeId) {
-            await Promise.all([
+            const [, { data: incremented }] = await Promise.all([
               supabase.from("discount_redemptions").insert({
                 code_id: discountCodeId,
                 parent_id: order.parent_id,
                 order_id: orderId,
-              }).then(() => {}),
-              supabase.rpc("increment_discount_uses", { code_id_param: discountCodeId }).then(() => {}),
+              }),
+              supabase.rpc("try_increment_discount_uses", { code_id_param: discountCodeId }),
             ]);
+            // Payment already succeeded — log but don't block. The user legitimately
+            // had a valid code when ordering; an over-redemption race is an ops concern.
+            if (!incremented) {
+              console.error(
+                "[ConfirmPayment] Discount over-redemption detected.",
+                JSON.stringify({ discountCodeId, orderId, parentId: order.parent_id })
+              );
+            }
           }
 
           // Send emails (best-effort)
@@ -155,8 +189,6 @@ export async function POST(req: Request) {
 
           const isGift = (order.personalization_data as any)?.gift === true;
           if (isGift) {
-            // Send gift notification to recipient + confirmation to giver
-            const pd = order.personalization_data as any;
             const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
             const { data: giftRecord } = await supabase
               .from("gift_subscriptions")
@@ -168,7 +200,7 @@ export async function POST(req: Request) {
                 to: giftRecord.recipient_email,
                 recipientName: giftRecord.recipient_name ?? null,
                 giverName: parent?.name ?? "Someone special",
-                productName: (product as any).name ?? "Nimipiko Club",
+                productName: product.name ?? "Nimipiko Club",
                 message: giftRecord.message ?? null,
                 redeemUrl: `${siteUrl}/gift/redeem?code=${giftRecord.redemption_code}`,
               });
@@ -177,7 +209,7 @@ export async function POST(req: Request) {
                   to: parent.email,
                   giverName: parent.name ?? "there",
                   recipientEmail: giftRecord.recipient_email,
-                  productName: (product as any).name ?? "Nimipiko Club",
+                  productName: product.name ?? "Nimipiko Club",
                 });
               }
             }
