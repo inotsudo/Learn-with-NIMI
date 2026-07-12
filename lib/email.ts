@@ -5,28 +5,46 @@ const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_FROM   = process.env.SENDGRID_FROM_EMAIL ?? "support@nimipiko.com";
 const SENDGRID_URL    = "https://api.sendgrid.com/v3/mail/send";
 
-async function send(to: string, subject: string, html: string, strict = false): Promise<void> {
-  if (!SENDGRID_API_KEY) {
-    if (strict) throw new Error("SENDGRID_API_KEY not configured");
-    return;
+async function send(to: string, subject: string, html: string): Promise<void> {
+  if (!SENDGRID_API_KEY) return;
+  try {
+    await fetch(SENDGRID_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SENDGRID_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: to }] }],
+        from: { email: SENDGRID_FROM, name: "NIMIPIKO" },
+        subject,
+        content: [{ type: "text/html", value: html }],
+      }),
+    });
+  } catch {
+    // Non-fatal — email is best-effort
   }
-  const res = await fetch(SENDGRID_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${SENDGRID_API_KEY}`,
-      "Content-Type": "application/json",
+}
+
+// Auth emails sent via SMTP (Hostinger) — template defined here in code.
+// Requires SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in environment.
+async function sendViaSmtp(to: string, subject: string, html: string): Promise<void> {
+  const { createTransport } = await import("nodemailer");
+  const transporter = createTransport({
+    host: process.env.SMTP_HOST ?? "smtp.hostinger.com",
+    port: Number(process.env.SMTP_PORT ?? 465),
+    secure: Number(process.env.SMTP_PORT ?? 465) === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: SENDGRID_FROM, name: "NIMIPIKO" },
-      subject,
-      content: [{ type: "text/html", value: html }],
-    }),
   });
-  if (strict && !res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`SendGrid ${res.status}: ${body}`);
-  }
+  await transporter.sendMail({
+    from: `"NIMIPIKO" <${process.env.SMTP_USER ?? "support@nimipiko.com"}>`,
+    to,
+    subject,
+    html,
+  });
 }
 
 // ── Shared branded wrapper for auth emails ───────────────────────────────────
@@ -67,7 +85,7 @@ export async function sendAuthConfirmSignup(to: string, confirmUrl: string): Pro
 
 // ── Auth: Reset password ─────────────────────────────────────────────────────
 export async function sendAuthResetPassword(to: string, resetUrl: string): Promise<void> {
-  await send(to, "Reset your NIMIPIKO password", authBase("Reset your NIMIPIKO password", `
+  await sendViaSmtp(to, "Reset your NIMIPIKO password", authBase("Reset your NIMIPIKO password", `
     <p style="margin:0 0 8px;font-size:26px;font-weight:800;color:#14532d;text-align:center;">Password reset 🔐</p>
     <p style="margin:0 0 24px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">We received a request to reset the password for your NIMIPIKO account. Click the button below to choose a new one.</p>
     ${ctaButton(resetUrl, "Reset my password")}
@@ -75,7 +93,7 @@ export async function sendAuthResetPassword(to: string, resetUrl: string): Promi
       <p style="margin:0;font-size:13px;color:#854d0e;line-height:1.6;">⚠️ This link expires in <strong>1 hour</strong>. If you didn't request this, your account is safe — just ignore this email.</p>
     </div>
     <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">For security, this link can only be used once.</p>
-  `), true);
+  `));
 }
 
 // ── Auth: Magic link ─────────────────────────────────────────────────────────
