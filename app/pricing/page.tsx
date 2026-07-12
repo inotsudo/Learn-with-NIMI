@@ -157,14 +157,18 @@ export default function PricingPage() {
           {/* Billing toggle */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2 mb-8">
-            <div className="flex items-center gap-3 bg-ds-surface rounded-full p-1 border border-ds-border">
+            <div role="tablist" aria-label="Billing period" className="flex items-center gap-3 bg-ds-page rounded-full p-1 border border-ds-border">
               <button
+                role="tab"
+                aria-selected={!billingAnnual}
                 onClick={() => setBillingAnnual(false)}
                 className={`px-5 py-2 rounded-full font-baloo font-black text-[13px] transition-all ${
                   !billingAnnual ? "bg-ds-card text-ds-text shadow-sm" : "text-ds-muted"
                 }`}
               >Monthly</button>
               <button
+                role="tab"
+                aria-selected={billingAnnual}
                 onClick={() => setBillingAnnual(true)}
                 className={`px-5 py-2 rounded-full font-baloo font-black text-[13px] transition-all flex items-center gap-2 ${
                   billingAnnual ? "bg-ds-card text-ds-text shadow-sm" : "text-ds-muted"

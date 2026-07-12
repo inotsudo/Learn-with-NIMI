@@ -31,6 +31,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 422 });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!emailRegex.test(body.recipientEmail)) {
+    return NextResponse.json({ error: "Invalid recipient email address" }, { status: 422 });
+  }
+
   // Fetch product with authoritative prices — never trust client-supplied amount
   const { data: product } = await supabase
     .from("products")

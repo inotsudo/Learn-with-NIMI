@@ -1,6 +1,9 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+// @ts-ignore
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import * as crypto from "crypto";
 
 const supabase = createClient(
@@ -10,6 +13,13 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth check — caller must be logged in and own the order
+    const authClient = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { orderId } = body;
 
@@ -21,6 +31,11 @@ export async function POST(request: NextRequest) {
     const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).single();
     if (!order) {
       return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });
+    }
+
+    // Owner check — prevents BOLA: user A getting a capture context for user B's order
+    if (order.parent_id !== user.id) {
+      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
 
     const formattedAmount = parseFloat(String(order.amount)).toFixed(2);

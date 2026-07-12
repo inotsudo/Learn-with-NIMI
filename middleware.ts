@@ -46,7 +46,8 @@ const LIMITS: [string, number][] = [
   ["/api/referral",              20], // referral code ops
   ["/api/gift",                  10], // gift creation + redemption
   ["/api/discount",              20], // discount code validation
-  ["/api/orders",                10], // order creation
+  ["/api/orders",                10], // order creation + cancel
+  ["/api/checkout",              10], // CyberSource capture context
   ["/api/payments",              10], // payment initiation
   ["/api/account/cancel",        10], // cancel sub
   ["/api/account/welcome-email", 5],  // welcome trigger
@@ -121,7 +122,9 @@ export const config = {
     "/api/referral/:path*",
     "/api/referral",
     "/api/schools/:path*",
+    "/api/orders/:path*",
     "/api/orders",
+    "/api/checkout",
     "/api/payments/:path*",
     "/api/account/:path*",
     "/api/confirm-payment",

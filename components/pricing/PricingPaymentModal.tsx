@@ -33,7 +33,11 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
   const [errorMsg, setErrorMsg] = useState("");
   const [phone, setPhone] = useState("");
   const [countdown, setCountdown] = useState(3);
+  const [momoAttempt, setMomoAttempt] = useState(0);
+  const [momoElapsed, setMomoElapsed] = useState(0);
   const momoAbort = useRef(false);
+  // Tracks the pending CS order so we can cancel it if the modal closes before payment
+  const pendingCsOrderId = useRef<string | null>(null);
 
   useEffect(() => {
     if (step !== "success") return;
@@ -46,6 +50,14 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     }, 1000);
     return () => clearInterval(interval);
   }, [step]);
+
+  // Elapsed-time counter shown while MoMo is processing
+  useEffect(() => {
+    if (step !== "processing" || provider !== "mtn_momo") return;
+    setMomoElapsed(0);
+    const interval = setInterval(() => setMomoElapsed(s => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [step, provider]);
 
   useEffect(() => {
     if (provider !== "cybersource") return;
@@ -71,6 +83,8 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
           return;
         }
         const orderId = orderData.orderId as string;
+        // Track so cleanup can cancel it if the modal closes before the user pays
+        pendingCsOrderId.current = orderId;
 
         const ctxRes = await fetch("/api/checkout", {
           method: "POST",
@@ -127,15 +141,30 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         const confirmResult = await confirmRes.json();
         sessionStorage.removeItem("nimipiko_pending_payment");
 
-        if (confirmResult.success) setStep("success");
-        else { setStep("error"); setErrorMsg(confirmResult.message || "Payment was declined"); }
+        if (confirmResult.success) {
+          pendingCsOrderId.current = null; // payment complete — don't cancel on unmount
+          setStep("success");
+        } else { setStep("error"); setErrorMsg(confirmResult.message || "Payment was declined"); }
       } catch (err: any) {
         if (!cancelled) { setStep("error"); setErrorMsg(err?.message || "Payment failed"); }
       }
     };
 
     init();
-    return () => { cancelled = true; momoAbort.current = true; };
+    return () => {
+      cancelled = true;
+      momoAbort.current = true;
+      // Cancel the pending order if the user closes before completing payment
+      const oid = pendingCsOrderId.current;
+      if (oid) {
+        pendingCsOrderId.current = null;
+        void fetch(`/api/orders/${oid}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "cancel" }),
+        }).catch(() => {});
+      }
+    };
   }, [provider, product.id, currency, chargeAmount]);
 
   const handleMomoSubmit = async () => {
@@ -145,6 +174,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
       return;
     }
     setErrorMsg("");
+    setMomoAttempt(0);
     setStep("processing");
     momoAbort.current = false;
     try {
@@ -173,6 +203,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         for (let i = 0; i < 30; i++) {
           await new Promise(r => setTimeout(r, 5000));
           if (momoAbort.current) return;
+          setMomoAttempt(i + 1);
           const s = await fetch(`/api/payments/mtn-momo?orderId=${momoOrderId}&referenceId=${result.referenceId}`);
           const d = await s.json();
           if (momoAbort.current) return;
@@ -278,7 +309,14 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
               <p className="font-baloo font-black text-ds-text text-[18px]">
                 {provider === "mtn_momo" ? "Waiting for MoMo confirmation..." : "Processing payment..."}
               </p>
-              {provider === "mtn_momo" && <p className="text-gray-500 text-[13px] mt-2">Check your phone and enter your PIN</p>}
+              {provider === "mtn_momo" && (
+                <>
+                  <p className="text-gray-500 text-[13px] mt-2">Check your phone and enter your PIN</p>
+                  <p className="text-gray-400 text-[11px] mt-3 font-mono">
+                    Check {momoAttempt}/{30} · {momoElapsed}s elapsed
+                  </p>
+                </>
+              )}
             </div>
           )}
 
