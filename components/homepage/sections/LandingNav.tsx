@@ -92,7 +92,7 @@ export default function LandingNav({ scrolled, menuOpen, setMenuOpen, authed }: 
                 whileHover={{ scale:1.08, y:-2 }} whileTap={{ scale:0.94 }}
                 transition={{ type:"spring", stiffness:400, damping:20 }}>
                 <Link href={n.href}>
-                  <Image src={n.img} alt={n.label} width={48} height={40}
+                  <Image src={n.img} alt={n.label} width={486} height={125}
                     className="h-9 xl:h-10 object-contain select-none drop-shadow-sm" style={{ width: "auto" }} />
                 </Link>
               </motion.li>
@@ -146,7 +146,7 @@ export default function LandingNav({ scrolled, menuOpen, setMenuOpen, authed }: 
                   <motion.div key={label} whileHover={{scale:1.05,y:-2}} whileTap={{scale:0.96}}
                     transition={{type:"spring",stiffness:400,damping:20}}>
                     <Link href={href} onClick={() => setMenuOpen(() => false)} className="flex items-center px-4 py-2">
-                      <Image src={img} alt={label} width={48} height={40} className="h-10 object-contain select-none" style={{ width: "auto" }} />
+                      <Image src={img} alt={label} width={486} height={125} className="h-10 object-contain select-none" style={{ width: "auto" }} />
                     </Link>
                   </motion.div>
                 ))}
