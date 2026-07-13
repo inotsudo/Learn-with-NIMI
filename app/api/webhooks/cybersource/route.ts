@@ -53,10 +53,44 @@ export async function POST(req: NextRequest) {
     if (eventType.startsWith("dispute.") || eventType.includes("chargeback")) {
       const txId = event.payload?.id;
       if (txId) {
+        // Find the order so we can revoke content
+        const { data: order } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("provider_transaction_id", txId)
+          .maybeSingle();
+
+        // Mark order refunded
         await supabase.from("orders")
           .update({ payment_status: "refunded" })
           .eq("provider_transaction_id", txId);
-        console.warn("[Webhook] Chargeback received:", txId);
+
+        if (order) {
+          // Pull content_access rows to find linked subscription ids
+          const { data: accesses } = await supabase
+            .from("content_access")
+            .select("subscription_id")
+            .eq("order_id", order.id);
+
+          const subIds = (accesses ?? [])
+            .map(a => a.subscription_id)
+            .filter((id): id is string => !!id);
+
+          await Promise.all([
+            // Revoke content access
+            supabase.from("content_access")
+              .update({ is_active: false })
+              .eq("order_id", order.id),
+            // Cancel linked subscription if one exists
+            ...(subIds.length > 0 ? [
+              supabase.from("nimipiko_subscriptions")
+                .update({ status: "cancelled" })
+                .in("id", subIds),
+            ] : []),
+          ]);
+        }
+
+        console.warn("[Webhook] Chargeback — access revoked:", txId);
       }
     }
 

@@ -47,10 +47,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 422 });
   }
 
-  // Fetch product with authoritative prices
+  // Fetch product with authoritative prices and tier info for free-order provisioning
   const { data: product } = await supabase
     .from("products")
-    .select("id, price_usd, price_rwf, is_active")
+    .select("id, price_usd, price_rwf, is_active, tier, story_id, product_type, billing_interval")
     .eq("id", productId)
     .eq("is_active", true)
     .maybeSingle();
@@ -100,6 +100,64 @@ export async function POST(req: NextRequest) {
   if (orderErr || !order) {
     console.error("[/api/orders]", orderErr?.message);
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+  }
+
+  // Zero-amount orders are immediately completed — provision access now.
+  // The confirm-payment / mtn-momo flow is never called for these.
+  if (finalAmount === 0) {
+    const accessType = product.tier === "club" ? "club"
+      : product.tier === "personalized" ? "personalized"
+      : product.tier === "champion_pack" ? "challenge_pack"
+      : product.tier === "family_bundle" ? "bundle"
+      : "story";
+
+    if (product.product_type === "subscription" || product.tier === "club") {
+      const billingInterval = (product.billing_interval ?? "month") as "month" | "year";
+      const periodEnd = new Date();
+      if (billingInterval === "year") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      else periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+      const { error: provisionErr } = await supabase.rpc("provision_subscription", {
+        p_parent_id:        user.id,
+        p_product_id:       productId,
+        p_order_id:         order.id,
+        p_provider:         paymentProvider,
+        p_token:            null,
+        p_phone:            null,
+        p_amount:           0,
+        p_currency:         currency,
+        p_billing_interval: billingInterval,
+        p_period_start:     new Date().toISOString(),
+        p_period_end:       periodEnd.toISOString(),
+        p_access_type:      accessType,
+        p_story_id:         product.story_id ?? null,
+      });
+      if (provisionErr) {
+        console.error("[/api/orders] free subscription provision failed:", provisionErr.message);
+      }
+    } else {
+      const { error: accessErr } = await supabase.from("content_access").insert({
+        parent_id: user.id,
+        access_type: accessType,
+        story_id: product.story_id ?? null,
+        order_id: order.id,
+      });
+      if (accessErr) {
+        console.error("[/api/orders] free content_access insert failed:", accessErr.message);
+      }
+    }
+
+    // Track discount redemption
+    if (resolvedDiscountCodeId) {
+      await Promise.all([
+        supabase.from("discount_redemptions").insert({
+          code_id: resolvedDiscountCodeId,
+          parent_id: user.id,
+          order_id: order.id,
+        }),
+        supabase.rpc("try_increment_discount_uses", { code_id_param: resolvedDiscountCodeId }),
+      ]);
+    }
   }
 
   return NextResponse.json({ orderId: order.id, amount: Number(order.amount) });

@@ -2,15 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 
 const serviceSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-function makeCode(id: string): string {
-  // Deterministic short code from UUID — take first 8 hex chars, uppercase
-  return id.replace(/-/g, "").slice(0, 8).toUpperCase();
+function makeCode(): string {
+  // Cryptographically random 8-char code from unambiguous alphabet
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.randomBytes(8);
+  return Array.from(bytes).map(b => chars[b % chars.length]).join("");
 }
 
 // GET: Return (or create) the caller's referral code
@@ -28,8 +31,15 @@ export async function GET() {
 
   if (existing) return NextResponse.json({ code: existing.code });
 
-  // Create one
-  const code = makeCode(user.id);
+  // Create one — retry once on the astronomically unlikely collision
+  let code = makeCode();
+  const { data: collision } = await serviceSupabase
+    .from("referral_codes")
+    .select("id")
+    .eq("code", code)
+    .maybeSingle();
+  if (collision) code = makeCode();
+
   const { data, error } = await serviceSupabase
     .from("referral_codes")
     .insert({ parent_id: user.id, code })

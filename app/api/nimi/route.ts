@@ -1,5 +1,8 @@
 // app/api/nimi/route.ts
 import { NextRequest, NextResponse } from "next/server";
+// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -107,6 +110,10 @@ export async function POST(req: NextRequest) {
   if (!OPENROUTER_API_KEY) {
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
+
+  const authClient = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     let body;

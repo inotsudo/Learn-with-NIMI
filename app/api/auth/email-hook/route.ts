@@ -42,9 +42,11 @@ function buildConfirmUrl(tokenHash: string, type: string, redirectTo: string): s
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Verify the request came from Supabase
+  // Verify the request came from Supabase.
+  // Reject unconditionally if HOOK_SECRET is not configured — never allow
+  // unauthenticated access to this endpoint regardless of env state.
   const authHeader = req.headers.get("authorization");
-  if (HOOK_SECRET && authHeader !== `Bearer ${HOOK_SECRET}`) {
+  if (!HOOK_SECRET || authHeader !== `Bearer ${HOOK_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

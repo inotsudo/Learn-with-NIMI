@@ -2,6 +2,9 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
 import * as fs from "fs";
@@ -270,6 +273,10 @@ async function loadPublicAssetAsBase64(relPath: string): Promise<string | null> 
 
 // ── Main handler ────────────────────────────────────────────
 export async function GET(req: NextRequest) {
+  const authClient = createRouteHandlerClient({ cookies });
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const childName = searchParams.get("child") || "Explorer";
   const storyId   = searchParams.get("storyId");

@@ -110,6 +110,13 @@ export async function POST(req: NextRequest) {
 // GET — check payment status
 export async function GET(req: NextRequest) {
   try {
+    // Auth check — only the order owner may poll
+    const authClient = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get("orderId");
     const referenceId = searchParams.get("referenceId");
@@ -118,9 +125,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing params" }, { status: 400 });
     }
 
-    const { data: order } = await supabase.from("orders").select("payment_ref").eq("id", orderId).maybeSingle();
+    const { data: order } = await supabase.from("orders").select("payment_ref, parent_id").eq("id", orderId).maybeSingle();
     if (!order || order.payment_ref !== referenceId) {
       return NextResponse.json({ error: "Invalid reference" }, { status: 400 });
+    }
+    if (order.parent_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const token = await getAccessToken();

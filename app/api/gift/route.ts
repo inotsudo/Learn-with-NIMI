@@ -5,10 +5,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 
 function randomCode(len = 12): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  const bytes = crypto.randomBytes(len);
+  return Array.from(bytes).map(b => chars[b % chars.length]).join("");
 }
 
 export async function POST(req: NextRequest) {

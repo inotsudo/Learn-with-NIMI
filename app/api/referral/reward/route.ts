@@ -18,6 +18,19 @@ export async function POST(req: Request) {
 
   const { referred_id } = await req.json() as { referred_id: string };
 
+  // Validate referred_id is a real parent (prevents arbitrary free sub grants if secret leaks)
+  if (!referred_id || typeof referred_id !== "string") {
+    return NextResponse.json({ error: "Invalid referred_id" }, { status: 400 });
+  }
+  const { data: parentCheck } = await supabase
+    .from("parents")
+    .select("id")
+    .eq("id", referred_id)
+    .maybeSingle();
+  if (!parentCheck) {
+    return NextResponse.json({ error: "Invalid referred_id" }, { status: 400 });
+  }
+
   // Find the referral record for this new subscriber
   const { data: redemption } = await supabase
     .from("referral_redemptions")

@@ -14,15 +14,7 @@ create table if not exists school_inquiries (
 -- Only admins can read these
 alter table school_inquiries enable row level security;
 
+-- is_admin() is defined in migration 013_admin_foundation.sql
 create policy "admins can manage school inquiries"
   on school_inquiries for all
-  using (
-    exists (
-      select 1 from admin_users where id = auth.uid()
-    )
-  );
-
--- Service role (API) can always insert
-create policy "service role can insert inquiries"
-  on school_inquiries for insert
-  with check (true);
+  using (is_admin()) with check (is_admin());

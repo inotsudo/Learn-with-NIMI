@@ -3,6 +3,9 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import { PDFDocument, rgb } from "pdf-lib";
 import sharp from "sharp";
 
@@ -35,6 +38,10 @@ async function makeCircularPhoto(photoBuffer: Buffer, size: number): Promise<Buf
 
 export async function POST(req: NextRequest) {
   try {
+    const authClient = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { masterpieceId } = await req.json();
     if (!masterpieceId) {
       return NextResponse.json({ error: "Missing masterpieceId" }, { status: 400 });
@@ -48,6 +55,10 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (!mp) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    if (mp.parent_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     await supabase.from("masterpiece_orders").update({ status: "processing" }).eq("id", masterpieceId);
 

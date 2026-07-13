@@ -74,11 +74,12 @@ async function rateLimited(key: string, max: number): Promise<boolean> {
 
 // ── Route → per-minute limit for non-GET requests ───────────────────────────
 const LIMITS: [string, number][] = [
+  ["/api/auth/send-reset",       5],  // password reset — limit to protect Resend quota and prevent spam
   ["/api/schools/inquiry",       5],  // lead form
   ["/api/newsletter",            5],  // newsletter sign-up
   ["/api/referral",              20], // referral code ops
   ["/api/gift",                  10], // gift creation + redemption
-  ["/api/discount",              20], // discount code validation
+  ["/api/discount",              20], // discount code validation (brute-force guard)
   ["/api/orders",                10], // order creation + cancel
   ["/api/checkout",              10], // CyberSource capture context
   ["/api/payments",              10], // payment initiation
@@ -87,6 +88,7 @@ const LIMITS: [string, number][] = [
   ["/api/confirm-payment",       10], // payment confirmation
   ["/api/push",                  20], // push subscription ops
   ["/api/nimi",                  60], // AI chat
+  ["/api/masterpiece",           10], // expensive PDF generation
   ["/api/admin",                 60], // admin mutations
 ];
 
@@ -137,5 +139,12 @@ export const config = {
     "/api/push/:path*",
     "/api/nimi/:path*",
     "/api/admin/:path*",
+    "/api/gift/:path*",
+    "/api/gift",
+    "/api/discount/:path*",
+    "/api/certificate",
+    "/api/masterpiece/:path*",
+    "/api/auth/:path*",
+    "/api/creations/:path*",
   ],
 };

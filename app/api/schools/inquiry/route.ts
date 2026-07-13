@@ -6,6 +6,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+function esc(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -41,12 +50,12 @@ export async function POST(req: NextRequest) {
 <div style="font-family:Arial,sans-serif;max-width:520px">
   <h2 style="color:#15803d">New School Inquiry</h2>
   <table style="width:100%;border-collapse:collapse;font-size:14px">
-    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Name</td><td style="font-weight:700">${name}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">School</td><td style="font-weight:700">${school}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Email</td><td><a href="mailto:${email}">${email}</a></td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Country</td><td>${country || "—"}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Learners</td><td>${size || "—"}</td></tr>
-    <tr><td style="padding:6px 0;color:#6b7280">Message</td><td>${message || "—"}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Name</td><td style="font-weight:700">${esc(name)}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">School</td><td style="font-weight:700">${esc(school)}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Email</td><td><a href="mailto:${esc(email)}">${esc(email)}</a></td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Country</td><td>${esc(country) || "—"}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280;border-bottom:1px solid #f3f4f6">Learners</td><td>${esc(size) || "—"}</td></tr>
+    <tr><td style="padding:6px 0;color:#6b7280">Message</td><td>${esc(message) || "—"}</td></tr>
   </table>
 </div>
           `.trim(),
