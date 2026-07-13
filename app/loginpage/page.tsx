@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, MotionConfig } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -13,10 +13,23 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
+
+  // Safe redirect: only allow relative paths to prevent open-redirect attacks
+  const rawNext = searchParams?.get("next") ?? "";
+  const nextPath = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/home";
 
   const m = useThemeMotion();
   const [email, setEmail] = useState("");
@@ -30,9 +43,9 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace("/home");
+      if (user) router.replace(nextPath);
     });
-  }, [router]);
+  }, [router, nextPath]);
 
   const login = async () => {
     setLoading(true);
@@ -51,7 +64,7 @@ export default function LoginPage() {
       }
 
       setMessage(t("loginSuccess"));
-      router.replace("/home");
+      router.replace(nextPath);
     } catch (err) {
       console.error("Unexpected login error:", err);
       setError(t("loginError"));

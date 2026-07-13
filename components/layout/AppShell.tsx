@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useUser } from "@/contexts/UserContext";
@@ -49,6 +49,7 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const { user, loading: authLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const { language, setLanguage, t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -77,9 +78,10 @@ export default function AppShell({ children }: AppShellProps) {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/loginpage");
+      const next = pathname ? `?next=${encodeURIComponent(pathname)}` : "";
+      router.replace(`/loginpage${next}`);
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, router, pathname]);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -96,6 +98,10 @@ export default function AppShell({ children }: AppShellProps) {
   useEffect(() => {
     void (async () => {
       const list = await getChildren();
+      if (list.length === 0) {
+        router.replace("/onboarding");
+        return;
+      }
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0] ?? null;
       activeChildRef.current = child;
@@ -128,7 +134,7 @@ export default function AppShell({ children }: AppShellProps) {
         void getActiveStories();
       }
     })();
-  }, []);
+  }, [router]);
 
   // Listen for cosmetics changes from the shop (equip/unequip)
   useEffect(() => {
