@@ -55,6 +55,7 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
   useEffect(() => {
     const fetchCoverage = async () => {
       setLoading(true)
+      try {
       const [{ data: missions }, { data: stories }] = await Promise.all([
         supabase.from('missions').select('id, category_slug, mission_versions(language, published, status)').order('category_slug'),
         supabase.from('stories').select('id, title, theme_emoji, sort_order, story_pages(id, story_page_versions(language, text, audio_url, published))').order('sort_order'),
@@ -99,7 +100,11 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
         })
       )
 
-      setLoading(false)
+      } catch (err) {
+        console.error('[LanguagesManager] fetchCoverage failed:', err)
+      } finally {
+        setLoading(false)
+      }
     }
     fetchCoverage()
   }, [])

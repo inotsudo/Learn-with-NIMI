@@ -26,10 +26,15 @@ export default function PartnersManager({ onOpenSidebar }: PartnersManagerProps)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase.from('partners').select('*')
-      .order('sort_order', { ascending: true }).order('created_at', { ascending: true })
-    setRows((data ?? []) as Partner[])
-    setLoading(false)
+    try {
+      const { data } = await supabase.from('partners').select('*')
+        .order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+      setRows((data ?? []) as Partner[])
+    } catch (err) {
+      console.error('[PartnersManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { void load() }, [load])

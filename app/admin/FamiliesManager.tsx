@@ -40,24 +40,29 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
 
   useEffect(() => {
     void (async () => {
-      const [{ data: parents }, { data: children }, { data: subs }] = await Promise.all([
-        supabase.from('parents').select('id, name, email').order('name'),
-        supabase.from('children').select('id, name, avatar_url, age, language, created_at, parent_id').order('name'),
-        supabase.from('nimipiko_subscriptions').select('parent_id, status, amount, currency, billing_interval, current_period_end, cancel_at_period_end, payment_provider').eq('status', 'active'),
-      ])
+      try {
+        const [{ data: parents }, { data: children }, { data: subs }] = await Promise.all([
+          supabase.from('parents').select('id, name, email').order('name'),
+          supabase.from('children').select('id, name, avatar_url, age, language, created_at, parent_id').order('name'),
+          supabase.from('nimipiko_subscriptions').select('parent_id, status, amount, currency, billing_interval, current_period_end, cancel_at_period_end, payment_provider').eq('status', 'active'),
+        ])
 
-      const subMap = new Map<string, SubRow>()
-      for (const s of subs ?? []) subMap.set(s.parent_id, s)
+        const subMap = new Map<string, SubRow>()
+        for (const s of subs ?? []) subMap.set(s.parent_id, s)
 
-      const result: FamilyRow[] = (parents ?? []).map(p => ({
-        parent_id: p.id,
-        parent_name: p.name ?? 'Unknown',
-        parent_email: p.email ?? '',
-        children: (children ?? []).filter(c => c.parent_id === p.id),
-        subscription: subMap.get(p.id) ?? null,
-      }))
-      setFamilies(result)
-      setLoading(false)
+        const result: FamilyRow[] = (parents ?? []).map(p => ({
+          parent_id: p.id,
+          parent_name: p.name ?? 'Unknown',
+          parent_email: p.email ?? '',
+          children: (children ?? []).filter(c => c.parent_id === p.id),
+          subscription: subMap.get(p.id) ?? null,
+        }))
+        setFamilies(result)
+      } catch (err) {
+        console.error('[FamiliesManager] load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 
@@ -65,32 +70,35 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
 
   async function handleGrantAccess(parentId: string, months: number) {
     setGrantingFor(parentId)
-    const periodEnd = new Date()
-    periodEnd.setMonth(periodEnd.getMonth() + months)
-    // Fetch the club product id
-    const { data: clubProduct } = await supabase.from('products').select('id').eq('slug', 'nimipiko-club').maybeSingle()
-    await supabase.from('nimipiko_subscriptions').insert({
-      parent_id: parentId,
-      product_id: clubProduct?.id ?? null,
-      status: 'active',
-      currency: 'USD',
-      amount: 0,
-      billing_interval: 'month',
-      current_period_start: new Date().toISOString(),
-      current_period_end: periodEnd.toISOString(),
-      payment_provider: 'admin_grant',
-      cancel_at_period_end: true,
-    })
-    await supabase.from('content_access').insert({
-      parent_id: parentId,
-      access_type: 'club',
-      story_id: null,
-    })
-    // Refresh this family's subscription
-    const { data: newSub } = await supabase.from('nimipiko_subscriptions').select('*').eq('parent_id', parentId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle()
-    setFamilies(prev => prev.map(f => f.parent_id === parentId ? { ...f, subscription: newSub } : f))
-    setGrantingFor(null)
-    setGrantingId(null)
+    try {
+      const periodEnd = new Date()
+      periodEnd.setMonth(periodEnd.getMonth() + months)
+      const { data: clubProduct } = await supabase.from('products').select('id').eq('slug', 'nimipiko-club').maybeSingle()
+      await supabase.from('nimipiko_subscriptions').insert({
+        parent_id: parentId,
+        product_id: clubProduct?.id ?? null,
+        status: 'active',
+        currency: 'USD',
+        amount: 0,
+        billing_interval: 'month',
+        current_period_start: new Date().toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        payment_provider: 'admin_grant',
+        cancel_at_period_end: true,
+      })
+      await supabase.from('content_access').insert({
+        parent_id: parentId,
+        access_type: 'club',
+        story_id: null,
+      })
+      const { data: newSub } = await supabase.from('nimipiko_subscriptions').select('*').eq('parent_id', parentId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle()
+      setFamilies(prev => prev.map(f => f.parent_id === parentId ? { ...f, subscription: newSub } : f))
+    } catch (err) {
+      console.error('[FamiliesManager] handleGrantAccess failed:', err)
+    } finally {
+      setGrantingFor(null)
+      setGrantingId(null)
+    }
   }
 
   const filtered = families.filter(f => {

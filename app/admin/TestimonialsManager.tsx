@@ -35,13 +35,18 @@ export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManag
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('testimonials')
-      .select('*')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false })
-    if (!error) setRows((data ?? []) as Testimonial[])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('testimonials')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: false })
+      setRows((data ?? []) as Testimonial[])
+    } catch (err) {
+      console.error('[TestimonialsManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { void load() }, [load])
@@ -86,25 +91,37 @@ export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManag
   }
 
   const toggleApprove = async (r: Testimonial) => {
-    await supabase.from('testimonials').update({ approved: !r.approved }).eq('id', r.id)
-    void load()
+    try {
+      await supabase.from('testimonials').update({ approved: !r.approved }).eq('id', r.id)
+      void load()
+    } catch (err) {
+      console.error('[TestimonialsManager] toggleApprove failed:', err)
+    }
   }
 
   const remove = async (id: string) => {
     if (!confirm('Delete this testimonial?')) return
-    await supabase.from('testimonials').delete().eq('id', id)
-    void load()
+    try {
+      await supabase.from('testimonials').delete().eq('id', id)
+      void load()
+    } catch (err) {
+      console.error('[TestimonialsManager] remove failed:', err)
+    }
   }
 
   const move = async (r: Testimonial, dir: 'up' | 'down') => {
     const idx = rows.findIndex(x => x.id === r.id)
     const swap = dir === 'up' ? rows[idx - 1] : rows[idx + 1]
     if (!swap) return
-    await Promise.all([
-      supabase.from('testimonials').update({ sort_order: swap.sort_order }).eq('id', r.id),
-      supabase.from('testimonials').update({ sort_order: r.sort_order }).eq('id', swap.id),
-    ])
-    void load()
+    try {
+      await Promise.all([
+        supabase.from('testimonials').update({ sort_order: swap.sort_order }).eq('id', r.id),
+        supabase.from('testimonials').update({ sort_order: r.sort_order }).eq('id', swap.id),
+      ])
+      void load()
+    } catch (err) {
+      console.error('[TestimonialsManager] move failed:', err)
+    }
   }
 
   const approvedCount = rows.filter(r => r.approved).length

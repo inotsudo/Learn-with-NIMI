@@ -46,12 +46,17 @@ export default function DiscountCodesManager({ onOpenSidebar }: { onOpenSidebar?
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('discount_codes')
-      .select('*')
-      .order('created_at', { ascending: false })
-    setCodes(data ?? [])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('discount_codes')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setCodes(data ?? [])
+    } catch (err) {
+      console.error('[DiscountCodesManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { void load() }, [load])

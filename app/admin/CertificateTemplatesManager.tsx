@@ -43,31 +43,37 @@ export default function CertificateTemplatesManager({ onNavigate, onOpenSidebar 
 
   // ── Load admin + existing templates ──────────────────────────
   useEffect(() => {
-    void Promise.all([
-      getCachedAdmin(),
-      supabase.from('certificate_templates').select('*'),
-    ]).then(([adminData, { data: rows }]) => {
-      if (adminData) setAdmin(adminData)
-      if (rows?.length) {
-        setConfigs(prev => {
-          const next = { ...prev }
-          for (const row of rows) {
-            const lang = row.lang as LangKey
-            if (next[lang]) {
-              next[lang] = {
-                image_url:  row.image_url  ?? null,
-                name_x:     row.name_x     ?? DEFAULTS.name_x,
-                name_y:     row.name_y     ?? DEFAULTS.name_y,
-                name_size:  row.name_size  ?? DEFAULTS.name_size,
-                name_color: row.name_color ?? DEFAULTS.name_color,
+    void (async () => {
+      try {
+        const [adminData, { data: rows }] = await Promise.all([
+          getCachedAdmin(),
+          supabase.from('certificate_templates').select('*'),
+        ])
+        if (adminData) setAdmin(adminData)
+        if (rows?.length) {
+          setConfigs(prev => {
+            const next = { ...prev }
+            for (const row of rows) {
+              const lang = row.lang as LangKey
+              if (next[lang]) {
+                next[lang] = {
+                  image_url:  row.image_url  ?? null,
+                  name_x:     row.name_x     ?? DEFAULTS.name_x,
+                  name_y:     row.name_y     ?? DEFAULTS.name_y,
+                  name_size:  row.name_size  ?? DEFAULTS.name_size,
+                  name_color: row.name_color ?? DEFAULTS.name_color,
+                }
               }
             }
-          }
-          return next
-        })
+            return next
+          })
+        }
+      } catch (err) {
+        console.error('[CertificateTemplatesManager] init failed:', err)
+      } finally {
+        setLoadingInit(false)
       }
-      setLoadingInit(false)
-    })
+    })()
   }, [])
 
   // ── Draw canvas whenever config / preview name changes ────────

@@ -41,35 +41,46 @@ export default function ContentLibraryManager({ onNavigate, onOpenSidebar }: Pro
 
   useEffect(() => {
     void (async () => {
-      const { data: slots } = await supabase.from('story_slots').select('story_id, slot_key, mission_id')
-      const { data: stories } = await supabase.from('stories').select('id, title').order('sort_order')
-      const { data: missions } = await supabase.from('missions').select('id, type')
-      const { data: versions } = await supabase.from('mission_versions').select('id, mission_id, language, title, media_url, published')
+      try {
+        const [{ data: slots }, { data: stories }, { data: missions }, { data: versions }] = await Promise.all([
+          supabase.from('story_slots').select('story_id, slot_key, mission_id'),
+          supabase.from('stories').select('id, title').order('sort_order'),
+          supabase.from('missions').select('id, type'),
+          supabase.from('mission_versions').select('id, mission_id, language, title, media_url, published'),
+        ])
 
-      const result: ContentItem[] = []
-      for (const v of versions ?? []) {
-        const m = (missions ?? []).find(ms => ms.id === v.mission_id)
-        if (!m) continue
-        const slot = (slots ?? []).find(s => s.mission_id === v.mission_id)
-        const story = slot ? (stories ?? []).find(s => s.id === slot.story_id) : null
-        result.push({
-          id: v.id,
-          type: TYPE_MAP[m.type] ?? 'flipflop',
-          title: v.title ?? 'Untitled',
-          story: story?.title ?? 'Unassigned',
-          language: v.language,
-          media_url: v.media_url,
-          published: v.published,
-        })
+        const result: ContentItem[] = []
+        for (const v of versions ?? []) {
+          const m = (missions ?? []).find(ms => ms.id === v.mission_id)
+          if (!m) continue
+          const slot = (slots ?? []).find(s => s.mission_id === v.mission_id)
+          const story = slot ? (stories ?? []).find(s => s.id === slot.story_id) : null
+          result.push({
+            id: v.id,
+            type: TYPE_MAP[m.type] ?? 'flipflop',
+            title: v.title ?? 'Untitled',
+            story: story?.title ?? 'Unassigned',
+            language: v.language,
+            media_url: v.media_url,
+            published: v.published,
+          })
+        }
+        setItems(result)
+      } catch (err) {
+        console.error('[ContentLibraryManager] load failed:', err)
+      } finally {
+        setLoading(false)
       }
-      setItems(result)
-      setLoading(false)
     })()
   }, [])
 
   const handleSaveUrl = async (id: string, url: string) => {
-    await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', id)
-    setItems(prev => prev.map(i => i.id === id ? { ...i, media_url: url || null } : i))
+    try {
+      await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', id)
+      setItems(prev => prev.map(i => i.id === id ? { ...i, media_url: url || null } : i))
+    } catch (err) {
+      console.error('[ContentLibraryManager] handleSaveUrl failed:', err)
+    }
   }
 
   const filtered = items.filter(i => {

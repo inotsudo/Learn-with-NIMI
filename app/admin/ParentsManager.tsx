@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
   Search, ChevronDown, Menu, Users, ArrowUpRight, Settings, AlertCircle, RefreshCw,
 } from 'lucide-react'
@@ -86,14 +87,7 @@ export default function ParentsManager({ initialParentId, onNavigate, onOpenSide
   const [settingsByChild, setSettingsByChild] = useState<Record<string, SettingsRow>>({})
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
+    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[ParentsManager] auth:', err))
   }, [])
 
   const fetchParents = useCallback(async () => {

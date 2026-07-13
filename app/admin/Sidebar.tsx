@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
   LayoutDashboard, BookOpen, Palette, Trophy, Star,
   Users, Globe, Award, Bell, FolderOpen, Settings,
@@ -49,12 +49,7 @@ export default function Sidebar({ currentTable, onSelectTable, collapsed, onTogg
   const baseTable = currentTable.split(':')[0]
 
   useEffect(() => {
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-      if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-    })()
+    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[Sidebar] auth:', err))
   }, [])
 
   const isActive = (table: string) => {

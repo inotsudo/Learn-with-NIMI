@@ -113,27 +113,33 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
     setSearching(true)
     const orSafeQ = q.replace(/[,()]/g, '')
     void (async () => {
-      const [missionsRes, childrenRes, parentsRes, storiesRes] = await Promise.all([
-        supabase.from('mission_versions').select('mission_id, title, missions(category_slug)').eq('language', 'en').ilike('title', `%${q}%`).limit(5),
-        supabase.from('children').select('id, name').ilike('name', `%${q}%`).limit(5),
-        supabase.from('parents').select('id, name, email').or(`name.ilike.%${orSafeQ}%,email.ilike.%${orSafeQ}%`).limit(5),
-        supabase.from('stories').select('id, title').ilike('title', `%${q}%`).limit(5),
-      ])
-      if (cancelled) return
-      const all: SearchResult[] = [
-        ...(missionsRes.data ?? []).map((m: any) => {
-          const rel = m.missions; const cs = Array.isArray(rel) ? rel[0]?.category_slug : rel?.category_slug
-          return cs ? { kind: 'mission' as const, id: m.mission_id, title: m.title, categorySlug: cs } : null
-        }).filter(Boolean) as SearchResult[],
-        ...(childrenRes.data ?? []).map((c: any) => ({ kind: 'child' as const, id: c.id, name: c.name })),
-        ...(parentsRes.data ?? []).map((p: any) => ({ kind: 'parent' as const, id: p.id, name: p.name || p.email || 'Parent', email: p.email ?? null })),
-        ...(storiesRes.data ?? []).map((s: any) => ({ kind: 'story' as const, id: s.id, title: s.title })),
-        ...tables.filter(t => t.toLowerCase().includes(q.toLowerCase())).slice(0, 3).map(t => ({
-          kind: 'page' as const, table: t, label: t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-        })),
-      ]
-      setResults(all)
-      setSearching(false)
+      try {
+        const [missionsRes, childrenRes, parentsRes, storiesRes] = await Promise.all([
+          supabase.from('mission_versions').select('mission_id, title, missions(category_slug)').eq('language', 'en').ilike('title', `%${q}%`).limit(5),
+          supabase.from('children').select('id, name').ilike('name', `%${q}%`).limit(5),
+          supabase.from('parents').select('id, name, email').or(`name.ilike.%${orSafeQ}%,email.ilike.%${orSafeQ}%`).limit(5),
+          supabase.from('stories').select('id, title').ilike('title', `%${q}%`).limit(5),
+        ])
+        if (cancelled) return
+        const all: SearchResult[] = [
+          ...(missionsRes.data ?? []).map((m: any) => {
+            const rel = m.missions; const cs = Array.isArray(rel) ? rel[0]?.category_slug : rel?.category_slug
+            return cs ? { kind: 'mission' as const, id: m.mission_id, title: m.title, categorySlug: cs } : null
+          }).filter(Boolean) as SearchResult[],
+          ...(childrenRes.data ?? []).map((c: any) => ({ kind: 'child' as const, id: c.id, name: c.name })),
+          ...(parentsRes.data ?? []).map((p: any) => ({ kind: 'parent' as const, id: p.id, name: p.name || p.email || 'Parent', email: p.email ?? null })),
+          ...(storiesRes.data ?? []).map((s: any) => ({ kind: 'story' as const, id: s.id, title: s.title })),
+          ...tables.filter(t => t.toLowerCase().includes(q.toLowerCase())).slice(0, 3).map(t => ({
+            kind: 'page' as const, table: t, label: t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          })),
+        ]
+        if (!cancelled) setResults(all)
+      } catch (err) {
+        console.error('[Navbar] search failed:', err)
+        if (!cancelled) setResults([])
+      } finally {
+        if (!cancelled) setSearching(false)
+      }
     })()
     return () => { cancelled = true }
   }, [debouncedSearch, tables])

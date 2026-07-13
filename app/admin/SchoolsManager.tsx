@@ -38,17 +38,27 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase.from('school_inquiries').select('*').order('created_at', { ascending: false })
-      setRows((data ?? []) as InquiryRow[])
-      setLoading(false)
+      try {
+        const { data } = await supabase.from('school_inquiries').select('*').order('created_at', { ascending: false })
+        setRows((data ?? []) as InquiryRow[])
+      } catch (err) {
+        console.error('[SchoolsManager] load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 
   async function updateStatus(id: string, status: 'new' | 'contacted' | 'closed') {
     setUpdating(id)
-    await supabase.from('school_inquiries').update({ status }).eq('id', id)
-    setRows(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-    setUpdating(null)
+    try {
+      await supabase.from('school_inquiries').update({ status }).eq('id', id)
+      setRows(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+    } catch (err) {
+      console.error('[SchoolsManager] updateStatus failed:', err)
+    } finally {
+      setUpdating(null)
+    }
   }
 
   const newCount = rows.filter(r => r.status === 'new').length

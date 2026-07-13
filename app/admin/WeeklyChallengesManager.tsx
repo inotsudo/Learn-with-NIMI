@@ -35,29 +35,37 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
   const { success: toastOk, error: toastErr } = useToast()
 
   const load = async () => {
-    const { data: ch } = await supabase.from('weekly_challenges').select('*').order('sort_order')
-    const { data: versions } = await supabase.from('weekly_challenge_versions').select('id, challenge_id, language, title, description, status, published, content_json')
-    const { data: stories } = await supabase.from('stories').select('id, title')
-
-    const rows: ChallengeRow[] = (ch ?? []).map(c => ({
-      ...c,
-      story_title: (stories ?? []).find(s => s.id === c.story_id)?.title ?? null,
-      versions: (versions ?? []).filter(v => v.challenge_id === c.id),
-    }))
-    setChallenges(rows)
-    setLoading(false)
+    setLoading(true)
+    try {
+      const [{ data: ch }, { data: versions }, { data: stories }] = await Promise.all([
+        supabase.from('weekly_challenges').select('*').order('sort_order'),
+        supabase.from('weekly_challenge_versions').select('id, challenge_id, language, title, description, status, published, content_json'),
+        supabase.from('stories').select('id, title'),
+      ])
+      const rows: ChallengeRow[] = (ch ?? []).map(c => ({
+        ...c,
+        story_title: (stories ?? []).find(s => s.id === c.story_id)?.title ?? null,
+        versions: (versions ?? []).filter(v => v.challenge_id === c.id),
+      }))
+      setChallenges(rows)
+    } catch (err) {
+      console.error('[WeeklyChallengesManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { void load() }, [])
 
   const handleCreate = async () => {
     setCreating(true)
-    const maxSort = challenges.reduce((max, c) => Math.max(max, c.sort_order), 0)
-    const { data: newCh, error } = await supabase
-      .from('weekly_challenges')
-      .insert({ sort_order: maxSort + 1, type: 'kindness', stars: 50 })
-      .select().single()
-    if (!error && newCh) {
+    try {
+      const maxSort = challenges.reduce((max, c) => Math.max(max, c.sort_order), 0)
+      const { data: newCh, error } = await supabase
+        .from('weekly_challenges')
+        .insert({ sort_order: maxSort + 1, type: 'kindness', stars: 50 })
+        .select().single()
+      if (error || !newCh) { toastErr('Failed to create challenge'); return }
       await supabase.from('weekly_challenge_versions').insert([
         { challenge_id: newCh.id, language: 'en', title: 'New Challenge', description: 'Description here...', status: 'draft' },
         { challenge_id: newCh.id, language: 'fr', title: 'Nouveau défi', description: 'Description ici...', status: 'draft' },
@@ -66,29 +74,48 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
       await load()
       setExpandedId(newCh.id)
       toastOk('Challenge created')
-    } else { toastErr('Failed to create challenge') }
-    setCreating(false)
+    } catch (err) {
+      toastErr('Failed to create challenge')
+    } finally {
+      setCreating(false)
+    }
   }
 
   const handleDelete = async (id: string) => {
-    await supabase.from('weekly_challenges').delete().eq('id', id)
-    await load()
-    toastOk('Challenge deleted')
+    try {
+      await supabase.from('weekly_challenges').delete().eq('id', id)
+      await load()
+      toastOk('Challenge deleted')
+    } catch (err) {
+      toastErr('Failed to delete challenge')
+    }
   }
 
   const handleVersionSave = async (versionId: string, field: string, value: string) => {
-    await supabase.from('weekly_challenge_versions').update({ [field]: value || null }).eq('id', versionId)
+    try {
+      await supabase.from('weekly_challenge_versions').update({ [field]: value || null }).eq('id', versionId)
+    } catch (err) {
+      console.error('[WeeklyChallengesManager] handleVersionSave failed:', err)
+    }
   }
 
   const handlePublish = async (versionId: string, publish: boolean) => {
-    await supabase.from('weekly_challenge_versions').update({ status: publish ? 'published' : 'draft' }).eq('id', versionId)
-    await load()
-    toastOk(publish ? 'Version published' : 'Version unpublished')
+    try {
+      await supabase.from('weekly_challenge_versions').update({ status: publish ? 'published' : 'draft' }).eq('id', versionId)
+      await load()
+      toastOk(publish ? 'Version published' : 'Version unpublished')
+    } catch (err) {
+      toastErr('Failed to update publish status')
+    }
   }
 
   const handleChallengeSave = async (id: string, field: string, value: string | number) => {
-    await supabase.from('weekly_challenges').update({ [field]: value }).eq('id', id)
-    await load()
+    try {
+      await supabase.from('weekly_challenges').update({ [field]: value }).eq('id', id)
+      await load()
+    } catch (err) {
+      console.error('[WeeklyChallengesManager] handleChallengeSave failed:', err)
+    }
   }
 
   const statusColor = (c: ChallengeRow) => {

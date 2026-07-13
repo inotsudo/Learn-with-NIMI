@@ -42,11 +42,12 @@ export default function ColoringImporter({ storyId, storyTitle, onDone, onClose 
         const { error: uploadErr, storagePath } = await smartUpload('storyBook', path, file)
         if (uploadErr) throw new Error(`Upload failed: ${file.name}`)
 
-        await supabase.from('coloring_pages').insert({
+        const { error: insertErr } = await supabase.from('coloring_pages').insert({
           story_id: storyId,
           page_number: nextPage,
           template_image_url: storagePath,
         })
+        if (insertErr) throw new Error(`DB insert failed for page ${nextPage}: ${insertErr.message}`)
 
         nextPage++
         completed++

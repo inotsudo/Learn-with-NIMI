@@ -31,40 +31,51 @@ export default function ContentMediaManager({ title, description, missionType, m
 
   useEffect(() => {
     void (async () => {
-      const { data: slots } = await supabase.from('story_slots').select('story_id, slot_key, mission_id')
-      const { data: stories } = await supabase.from('stories').select('id, title').order('sort_order')
-      const { data: missions } = await supabase.from('missions').select('id, type')
-      const { data: versions } = await supabase.from('mission_versions').select('id, mission_id, language, title, media_url, published')
+      try {
+        const [{ data: slots }, { data: stories }, { data: missions }, { data: versions }] = await Promise.all([
+          supabase.from('story_slots').select('story_id, slot_key, mission_id'),
+          supabase.from('stories').select('id, title').order('sort_order'),
+          supabase.from('missions').select('id, type'),
+          supabase.from('mission_versions').select('id, mission_id, language, title, media_url, published'),
+        ])
 
-      const typedMissions = (missions ?? []).filter(m => m.type === missionType)
-      const result: MediaRow[] = []
+        const typedMissions = (missions ?? []).filter(m => m.type === missionType)
+        const result: MediaRow[] = []
 
-      for (const m of typedMissions) {
-        const slot = (slots ?? []).find(s => s.mission_id === m.id)
-        const story = slot ? (stories ?? []).find(s => s.id === slot.story_id) : null
-        const mvs = (versions ?? []).filter(v => v.mission_id === m.id)
+        for (const m of typedMissions) {
+          const slot = (slots ?? []).find(s => s.mission_id === m.id)
+          const story = slot ? (stories ?? []).find(s => s.id === slot.story_id) : null
+          const mvs = (versions ?? []).filter(v => v.mission_id === m.id)
 
-        for (const v of mvs) {
-          result.push({
-            version_id: v.id,
-            mission_id: m.id,
-            language: v.language,
-            title: v.title ?? 'Untitled',
-            media_url: v.media_url,
-            published: v.published,
-            story_title: story?.title ?? 'Unassigned',
-            slot_key: slot?.slot_key ?? '',
-          })
+          for (const v of mvs) {
+            result.push({
+              version_id: v.id,
+              mission_id: m.id,
+              language: v.language,
+              title: v.title ?? 'Untitled',
+              media_url: v.media_url,
+              published: v.published,
+              story_title: story?.title ?? 'Unassigned',
+              slot_key: slot?.slot_key ?? '',
+            })
+          }
         }
+        setRows(result)
+      } catch (err) {
+        console.error('[ContentMediaManager] load failed:', err)
+      } finally {
+        setLoading(false)
       }
-      setRows(result)
-      setLoading(false)
     })()
   }, [missionType])
 
   const handleSave = async (versionId: string, url: string) => {
-    await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', versionId)
-    setRows(prev => prev.map(r => r.version_id === versionId ? { ...r, media_url: url || null } : r))
+    try {
+      await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', versionId)
+      setRows(prev => prev.map(r => r.version_id === versionId ? { ...r, media_url: url || null } : r))
+    } catch (err) {
+      console.error('[ContentMediaManager] handleSave failed:', err)
+    }
   }
 
   const filtered = search.trim()

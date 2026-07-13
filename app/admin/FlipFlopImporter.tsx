@@ -84,13 +84,14 @@ export default function FlipFlopImporter({ storyId, storyTitle, language, onDone
         .select().single()
       if (pageErr) throw new Error(`Failed to create page ${pageNum}`)
 
-      await supabase.from('story_page_versions').insert({
+      const { error: versionErr } = await supabase.from('story_page_versions').insert({
         story_page_id: page.id,
         language,
         text: '',
         audio_url: (audioResult && !audioResult.error) ? audioResult.storagePath : null,
         published: true,
       })
+      if (versionErr) throw new Error(`Failed to create version for page ${pageNum}: ${versionErr.message}`)
 
       completed++
       setProgress(Math.round((completed / total) * 100))

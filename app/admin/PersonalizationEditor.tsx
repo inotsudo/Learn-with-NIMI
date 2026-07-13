@@ -187,15 +187,21 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
 
   const handleSave = async () => {
     setSaving(true)
-    const personalizationConfig: PersonalizationConfig = { pages: pageConfigs }
-    await supabase.from('stories').update({
-      is_personalizable: isPersonalizable,
-      personalization_config: isPersonalizable ? personalizationConfig : null,
-    }).eq('id', story.id)
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-    onSaved()
+    try {
+      const personalizationConfig: PersonalizationConfig = { pages: pageConfigs }
+      const { error } = await supabase.from('stories').update({
+        is_personalizable: isPersonalizable,
+        personalization_config: isPersonalizable ? personalizationConfig : null,
+      }).eq('id', story.id)
+      if (error) throw error
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+      onSaved()
+    } catch (err) {
+      console.error('[PersonalizationEditor] save failed:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

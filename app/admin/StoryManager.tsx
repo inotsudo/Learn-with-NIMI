@@ -60,11 +60,16 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
     const ok = await confirm({ title: `Publish ${checkedIds.size} stories?`, message: 'These stories will be visible to children.' })
     if (!ok) return
     setBulkActing(true)
-    await Promise.all([...checkedIds].map(id => supabase.from('stories').update({ status: 'published' }).eq('id', id)))
-    await fetchStories()
-    toastSuccess(`${checkedIds.size} stories published`)
-    setCheckedIds(new Set())
-    setBulkActing(false)
+    try {
+      await Promise.all([...checkedIds].map(id => supabase.from('stories').update({ status: 'published' }).eq('id', id)))
+      await fetchStories()
+      toastSuccess(`${checkedIds.size} stories published`)
+      setCheckedIds(new Set())
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : 'Bulk publish failed')
+    } finally {
+      setBulkActing(false)
+    }
   }
 
   const handleBulkDelete = async () => {
@@ -72,11 +77,16 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
     const ok = await confirm({ title: `Delete ${checkedIds.size} stories?`, message: 'This cannot be undone.' })
     if (!ok) return
     setBulkActing(true)
-    await Promise.all([...checkedIds].map(id => supabase.from('stories').delete().eq('id', id)))
-    await fetchStories()
-    toastSuccess(`${checkedIds.size} stories deleted`)
-    setCheckedIds(new Set())
-    setBulkActing(false)
+    try {
+      await Promise.all([...checkedIds].map(id => supabase.from('stories').delete().eq('id', id)))
+      await fetchStories()
+      toastSuccess(`${checkedIds.size} stories deleted`)
+      setCheckedIds(new Set())
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : 'Bulk delete failed')
+    } finally {
+      setBulkActing(false)
+    }
   }
 
   const fetchStories = useCallback(async () => {

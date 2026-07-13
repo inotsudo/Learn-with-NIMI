@@ -41,12 +41,18 @@ export default function ProductsManager() {
   const [featInput, setFeatInput] = useState('')
 
   const load = async () => {
-    const { data } = await supabase.from('products').select('*').order('sort_order')
-    setProducts((data ?? []) as Product[])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const { data } = await supabase.from('products').select('*').order('sort_order')
+      setProducts((data ?? []) as Product[])
+    } catch (err) {
+      console.error('[ProductsManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { void load() }, [])
 
   const startEdit = (p: Product) => {
     setEditing(p)

@@ -20,12 +20,17 @@ export default function GiftManager({ onOpenSidebar }: { onOpenSidebar?: () => v
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('gift_subscriptions')
-      .select('id, recipient_email, recipient_name, redeemed_at, created_at, products(name), giver:parents!giver_parent_id(name, email)')
-      .order('created_at', { ascending: false })
-    setGifts((data ?? []) as unknown as GiftRow[])
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('gift_subscriptions')
+        .select('id, recipient_email, recipient_name, redeemed_at, created_at, products(name), giver:parents!giver_parent_id(name, email)')
+        .order('created_at', { ascending: false })
+      setGifts((data ?? []) as unknown as GiftRow[])
+    } catch (err) {
+      console.error('[GiftManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { void load() }, [load])

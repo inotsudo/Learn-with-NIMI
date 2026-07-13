@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
   HardDrive, Menu, ChevronDown, ChevronRight, ArrowLeft, Folder, Search, Upload,
   ExternalLink, Trash2, ImageIcon, Video, Music, FileText, File as FileIcon,
@@ -74,14 +75,7 @@ export default function BucketsView({ onNavigate, onOpenSidebar }: BucketsViewPr
   const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
+    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[BucketsView] auth:', err))
   }, [])
 
   const fetchEntries = useCallback(async (b: string, p: string) => {

@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import { getStorageUrl } from '@/lib/queries'
 import {
   Search, SlidersHorizontal, LayoutGrid, Eye, Bell, ChevronDown, Plus,
@@ -77,30 +78,26 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
   }, [initialBookId, books])
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
+    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[ColoringManager] auth:', err))
   }, [])
 
   useEffect(() => {
-    const fetchNotifs = async () => {
-      const { data: coloringMissions } = await supabase.from('missions').select('id').eq('category_slug', 'coloring')
-      const missionIds = (coloringMissions ?? []).map(m => m.id)
-      if (missionIds.length === 0) { setNotifCount(0); return }
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { count } = await supabase
-        .from('child_progress')
-        .select('*', { count: 'exact', head: true })
-        .in('mission_id', missionIds)
-        .gte('completed_at', since)
-      setNotifCount(count ?? 0)
-    }
-    fetchNotifs()
+    void (async () => {
+      try {
+        const { data: coloringMissions } = await supabase.from('missions').select('id').eq('category_slug', 'coloring')
+        const missionIds = (coloringMissions ?? []).map(m => m.id)
+        if (missionIds.length === 0) { setNotifCount(0); return }
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+        const { count } = await supabase
+          .from('child_progress')
+          .select('*', { count: 'exact', head: true })
+          .in('mission_id', missionIds)
+          .gte('completed_at', since)
+        setNotifCount(count ?? 0)
+      } catch (err) {
+        console.error('[ColoringManager] fetchNotifs failed:', err)
+      }
+    })()
   }, [])
 
   const totalTemplates = useMemo(() => books.reduce((sum, b) => sum + b.coloring_pages.length, 0), [books])

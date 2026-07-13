@@ -25,14 +25,21 @@ export default function StoryOrderingManager({ onNavigate, onOpenSidebar }: Prop
 
   useEffect(() => {
     void (async () => {
-      const { data: storiesData } = await supabase.from('stories').select('id, title, slug, sort_order, status').order('sort_order')
-      const { data: slotsData } = await supabase.from('story_slots').select('story_id, mission_id')
-      const result: StoryOrder[] = (storiesData ?? []).map(s => ({
-        ...s,
-        slots_filled: (slotsData ?? []).filter(sl => sl.story_id === s.id && sl.mission_id).length,
-      }))
-      setStories(result)
-      setLoading(false)
+      try {
+        const [{ data: storiesData }, { data: slotsData }] = await Promise.all([
+          supabase.from('stories').select('id, title, slug, sort_order, status').order('sort_order'),
+          supabase.from('story_slots').select('story_id, mission_id'),
+        ])
+        const result: StoryOrder[] = (storiesData ?? []).map(s => ({
+          ...s,
+          slots_filled: (slotsData ?? []).filter(sl => sl.story_id === s.id && sl.mission_id).length,
+        }))
+        setStories(result)
+      } catch (err) {
+        console.error('[StoryOrderingManager] load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 
@@ -50,12 +57,15 @@ export default function StoryOrderingManager({ onNavigate, onOpenSidebar }: Prop
 
   const handleSave = async () => {
     setSaving(true)
-    for (const s of stories) {
-      await supabase.from('stories').update({ sort_order: s.sort_order }).eq('id', s.id)
+    try {
+      await Promise.all(stories.map(s => supabase.from('stories').update({ sort_order: s.sort_order }).eq('id', s.id)))
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err) {
+      console.error('[StoryOrderingManager] handleSave failed:', err)
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
   }
 
   return (

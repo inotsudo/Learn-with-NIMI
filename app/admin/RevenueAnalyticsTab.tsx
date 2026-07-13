@@ -44,13 +44,18 @@ export default function RevenueAnalyticsTab() {
 
   useEffect(() => {
     void (async () => {
-      const [{ data: s }, { data: o }] = await Promise.all([
-        supabase.from('nimipiko_subscriptions').select('id, status, amount, currency, payment_provider, cancel_at_period_end, created_at, current_period_end').order('created_at'),
-        supabase.from('orders').select('amount, currency, payment_status, completed_at').order('completed_at'),
-      ])
-      setSubs((s ?? []) as SubRow[])
-      setOrders((o ?? []) as OrderRow[])
-      setLoading(false)
+      try {
+        const [{ data: s }, { data: o }] = await Promise.all([
+          supabase.from('nimipiko_subscriptions').select('id, status, amount, currency, payment_provider, cancel_at_period_end, created_at, current_period_end').order('created_at'),
+          supabase.from('orders').select('amount, currency, payment_status, completed_at').order('completed_at'),
+        ])
+        setSubs((s ?? []) as SubRow[])
+        setOrders((o ?? []) as OrderRow[])
+      } catch (err) {
+        console.error('[RevenueAnalyticsTab] load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 

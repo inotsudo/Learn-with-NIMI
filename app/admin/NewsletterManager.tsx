@@ -1,12 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import supabase from '@/lib/supabaseClient'
 import { Mail, Download, Search, Users } from 'lucide-react'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
 
 interface Row {
   id: string
@@ -25,12 +20,17 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase
-        .from('newsletter_signups')
-        .select('*')
-        .order('created_at', { ascending: false })
-      setRows(data ?? [])
-      setLoading(false)
+      try {
+        const { data } = await supabase
+          .from('newsletter_signups')
+          .select('*')
+          .order('created_at', { ascending: false })
+        setRows(data ?? [])
+      } catch (err) {
+        console.error('[NewsletterManager] load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 

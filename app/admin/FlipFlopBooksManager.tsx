@@ -36,33 +36,48 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
   const { success: toastOk } = useToast()
 
   const load = async () => {
-    const { data: stories } = await supabase.from('stories').select('id, title, slug').order('sort_order')
-    const { data: pages } = await supabase.from('story_pages').select('id, story_id, page_number, image_url').order('page_number')
-    const { data: versions } = await supabase.from('story_page_versions').select('id, story_page_id, language, text, audio_url, published')
-
-    const result: StoryGroup[] = (stories ?? []).map(s => ({
-      ...s,
-      pages: (pages ?? []).filter(p => p.story_id === s.id).map(p => ({
-        ...p,
-        versions: (versions ?? []).filter(v => v.story_page_id === p.id),
-      })),
-    }))
-    setGroups(result)
-    setLoading(false)
+    setLoading(true)
+    try {
+      const [{ data: stories }, { data: pages }, { data: versions }] = await Promise.all([
+        supabase.from('stories').select('id, title, slug').order('sort_order'),
+        supabase.from('story_pages').select('id, story_id, page_number, image_url').order('page_number'),
+        supabase.from('story_page_versions').select('id, story_page_id, language, text, audio_url, published'),
+      ])
+      const result: StoryGroup[] = (stories ?? []).map(s => ({
+        ...s,
+        pages: (pages ?? []).filter(p => p.story_id === s.id).map(p => ({
+          ...p,
+          versions: (versions ?? []).filter(v => v.story_page_id === p.id),
+        })),
+      }))
+      setGroups(result)
+    } catch (err) {
+      console.error('[FlipFlopBooksManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { void load() }, [])
 
   const handleAddPage = async (storyId: string, pageCount: number) => {
-    await supabase.from('story_pages').insert({ story_id: storyId, page_number: pageCount + 1 })
-    await load()
-    toastOk('Page added')
+    try {
+      await supabase.from('story_pages').insert({ story_id: storyId, page_number: pageCount + 1 })
+      await load()
+      toastOk('Page added')
+    } catch (err) {
+      console.error('[FlipFlopBooksManager] handleAddPage failed:', err)
+    }
   }
 
   const handleDeletePage = async (pageId: string) => {
-    await supabase.from('story_pages').delete().eq('id', pageId)
-    await load()
-    toastOk('Page deleted')
+    try {
+      await supabase.from('story_pages').delete().eq('id', pageId)
+      await load()
+      toastOk('Page deleted')
+    } catch (err) {
+      console.error('[FlipFlopBooksManager] handleDeletePage failed:', err)
+    }
   }
 
   const handleImageUpload = async (pageId: string, rawFile: File) => {
@@ -71,12 +86,18 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
     if (!error) {
       await supabase.from('story_pages').update({ image_url: storagePath }).eq('id', pageId)
       await load()
+    } else {
+      console.error('[FlipFlopBooksManager] image upload failed:', error)
     }
   }
 
   const handleVersionSave = async (versionId: string, field: string, value: string) => {
-    await supabase.from('story_page_versions').update({ [field]: value || null }).eq('id', versionId)
-    await load()
+    try {
+      await supabase.from('story_page_versions').update({ [field]: value || null }).eq('id', versionId)
+      await load()
+    } catch (err) {
+      console.error('[FlipFlopBooksManager] handleVersionSave failed:', err)
+    }
   }
 
   const handleAudioUpload = async (versionId: string, pageId: string, file: File) => {
@@ -86,6 +107,8 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
     if (!error) {
       await supabase.from('story_page_versions').update({ audio_url: storagePath }).eq('id', versionId)
       await load()
+    } else {
+      console.error('[FlipFlopBooksManager] audio upload failed:', error)
     }
   }
 

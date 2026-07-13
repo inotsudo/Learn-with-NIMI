@@ -34,24 +34,38 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
   const { success: toastOk } = useToast()
 
   const load = async () => {
-    const { data, error } = await supabase.rpc('admin_get_all_creations')
-    if (error) console.error('[Community] RPC error:', error.message)
-    setPosts((data ?? []) as PostRow[])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.rpc('admin_get_all_creations')
+      if (error) console.error('[Community] RPC error:', error.message)
+      setPosts((data ?? []) as PostRow[])
+    } catch (err) {
+      console.error('[CommunityManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { void load() }, [])
 
   const handleApprove = async (id: string) => {
-    await supabase.from('creations').update({ status: 'approved', is_public: true }).eq('id', id)
-    await load()
-    toastOk('Post approved')
+    try {
+      await supabase.from('creations').update({ status: 'approved', is_public: true }).eq('id', id)
+      await load()
+      toastOk('Post approved')
+    } catch (err) {
+      console.error('[CommunityManager] handleApprove failed:', err)
+    }
   }
 
   const handleReject = async (id: string) => {
-    await supabase.from('creations').update({ status: 'rejected', is_public: false }).eq('id', id)
-    await load()
-    toastOk('Post rejected')
+    try {
+      await supabase.from('creations').update({ status: 'rejected', is_public: false }).eq('id', id)
+      await load()
+      toastOk('Post rejected')
+    } catch (err) {
+      console.error('[CommunityManager] handleReject failed:', err)
+    }
   }
 
   const filtered = useMemo(() => {

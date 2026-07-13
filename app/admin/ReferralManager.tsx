@@ -1,12 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import supabase from '@/lib/supabaseClient'
 import { Share2, Gift, Users, CheckCircle2 } from 'lucide-react'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-)
 
 interface Redemption {
   id: string
@@ -26,17 +21,22 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
 
   useEffect(() => {
     void (async () => {
-      const [{ data: redemptions }, { count }] = await Promise.all([
-        supabase
-          .from('referral_redemptions')
-          .select('*, referrer:referrer_id(name, email), referred:referred_id(name, email)', { count: 'exact' })
-          .order('redeemed_at', { ascending: false })
-          .limit(200),
-        supabase.from('referral_codes').select('*', { count: 'exact', head: true }),
-      ])
-      setRows((redemptions as any[]) ?? [])
-      setCodes(count ?? 0)
-      setLoading(false)
+      try {
+        const [{ data: redemptions }, { count }] = await Promise.all([
+          supabase
+            .from('referral_redemptions')
+            .select('*, referrer:referrer_id(name, email), referred:referred_id(name, email)', { count: 'exact' })
+            .order('redeemed_at', { ascending: false })
+            .limit(200),
+          supabase.from('referral_codes').select('*', { count: 'exact', head: true }),
+        ])
+        setRows((redemptions as any[]) ?? [])
+        setCodes(count ?? 0)
+      } catch (err) {
+        console.error('[ReferralManager] load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 

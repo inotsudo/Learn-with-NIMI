@@ -28,16 +28,22 @@ export default function StoryPublishingManager({ onNavigate, onOpenSidebar }: Pr
   const [bulkAction, setBulkAction] = useState<string | null>(null)
 
   const load = async () => {
-    const { data: storiesData } = await supabase.from('stories')
-      .select('id, title, slug, status, cover_url, story_versions(id, story_id, language, published, intro_video_url, theme_song_url, meet_characters_url, story_intro_url), story_slots(story_id, slot_key, mission_id)')
-      .order('sort_order')
-    setStories((storiesData ?? []) as unknown as StoryData[])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const { data: storiesData } = await supabase.from('stories')
+        .select('id, title, slug, status, cover_url, story_versions(id, story_id, language, published, intro_video_url, theme_song_url, meet_characters_url, story_intro_url), story_slots(story_id, slot_key, mission_id)')
+        .order('sort_order')
+      setStories((storiesData ?? []) as unknown as StoryData[])
+    } catch (err) {
+      console.error('[StoryPublishingManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { void load() }, [])
 
-  const filtered = useMemo(() => {
+const filtered = useMemo(() => {
     let list = stories
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -67,37 +73,47 @@ export default function StoryPublishingManager({ onNavigate, onOpenSidebar }: Pr
   }, [stories])
 
   const handlePublish = async (id: string) => {
-    await supabase.from('stories').update({ status: 'published', published_at: new Date().toISOString() }).eq('id', id)
-    await load()
+    try {
+      await supabase.from('stories').update({ status: 'published', published_at: new Date().toISOString() }).eq('id', id)
+      await load()
+    } catch (err) {
+      console.error('[StoryPublishingManager] handlePublish failed:', err)
+    }
   }
 
   const handleUnpublish = async (id: string) => {
-    await supabase.from('stories').update({ status: 'draft', published_at: null }).eq('id', id)
-    await load()
+    try {
+      await supabase.from('stories').update({ status: 'draft', published_at: null }).eq('id', id)
+      await load()
+    } catch (err) {
+      console.error('[StoryPublishingManager] handleUnpublish failed:', err)
+    }
   }
 
   const handleBulkAction = async (action: string) => {
     if (selected.size === 0) return
     const ids = Array.from(selected)
-
-    if (action === 'publish') {
-      for (const id of ids) {
-        const s = stories.find(st => st.id === id)
-        if (!s) continue
-        const r = computeReadiness(s)
-        if (r.score === 100 && s.story_versions.some((v: any) => v.published)) {
-          await supabase.from('stories').update({ status: 'published', published_at: new Date().toISOString() }).eq('id', id)
+    try {
+      if (action === 'publish') {
+        for (const id of ids) {
+          const s = stories.find(st => st.id === id)
+          if (!s) continue
+          const r = computeReadiness(s)
+          if (r.score === 100 && s.story_versions.some((v: any) => v.published)) {
+            await supabase.from('stories').update({ status: 'published', published_at: new Date().toISOString() }).eq('id', id)
+          }
         }
+      } else if (action === 'unpublish') {
+        await supabase.from('stories').update({ status: 'draft', published_at: null }).in('id', ids)
+      } else if (action === 'retire') {
+        await supabase.from('stories').update({ status: 'retired' }).in('id', ids)
       }
-    } else if (action === 'unpublish') {
-      await supabase.from('stories').update({ status: 'draft', published_at: null }).in('id', ids)
-    } else if (action === 'retire') {
-      await supabase.from('stories').update({ status: 'retired' }).in('id', ids)
+      setSelected(new Set())
+      setBulkAction(null)
+      await load()
+    } catch (err) {
+      console.error('[StoryPublishingManager] handleBulkAction failed:', err)
     }
-
-    setSelected(new Set())
-    setBulkAction(null)
-    await load()
   }
 
   const toggleSelect = (id: string) => {

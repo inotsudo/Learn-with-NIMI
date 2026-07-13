@@ -32,34 +32,38 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
 
   useEffect(() => {
     void (async () => {
-      const { data: kids } = await supabase.from('children').select('id, name, avatar_url, age, language, created_at, parent_id, parents(name)').order('created_at', { ascending: false })
-      const { data: stories } = await supabase.from('stories').select('id')
-      const { data: progress } = await supabase.from('child_progress').select('child_id, completed_at').order('completed_at', { ascending: false })
-      // story library not needed for the table view
+      try {
+        const [{ data: kids }, { data: stories }, { data: progress }] = await Promise.all([
+          supabase.from('children').select('id, name, avatar_url, age, language, created_at, parent_id, parents(name)').order('created_at', { ascending: false }),
+          supabase.from('stories').select('id'),
+          supabase.from('child_progress').select('child_id, completed_at').order('completed_at', { ascending: false }),
+        ])
 
-      const totalStories = (stories ?? []).length
+        const totalStories = (stories ?? []).length
 
-      const rows: ChildRow[] = (kids ?? []).map(k => {
-        const parentData = k.parents as any
-        const childProgress = (progress ?? []).filter(p => p.child_id === k.id)
-        const uniqueMissions = new Set(childProgress.map(p => p.completed_at)).size
-        const lastActive = childProgress[0]?.completed_at ?? null
-
-        return {
-          id: k.id,
-          name: k.name,
-          avatar_url: k.avatar_url,
-          age: k.age,
-          language: k.language,
-          created_at: k.created_at,
-          parent_name: parentData?.name ?? 'Unknown',
-          stories_complete: 0,
-          total_stories: totalStories,
-          last_active: lastActive,
-        }
-      })
-      setChildren(rows)
-      setLoading(false)
+        const rows: ChildRow[] = (kids ?? []).map(k => {
+          const parentData = k.parents as any
+          const childProgress = (progress ?? []).filter(p => p.child_id === k.id)
+          const lastActive = childProgress[0]?.completed_at ?? null
+          return {
+            id: k.id,
+            name: k.name,
+            avatar_url: k.avatar_url,
+            age: k.age,
+            language: k.language,
+            created_at: k.created_at,
+            parent_name: parentData?.name ?? 'Unknown',
+            stories_complete: 0,
+            total_stories: totalStories,
+            last_active: lastActive,
+          }
+        })
+        setChildren(rows)
+      } catch (err) {
+        console.error('[ChildrenManager] load failed:', err)
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 

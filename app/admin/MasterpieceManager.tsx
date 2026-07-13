@@ -13,34 +13,52 @@ export default function MasterpieceManager() {
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
-    const [{ data: s }, { data: o }] = await Promise.all([
-      supabase.from('stories').select('id, title, slug, theme_emoji, is_personalizable, personalization_config, certificate_config').order('sort_order'),
-      supabase.from('masterpiece_orders').select('*, stories(title)').order('created_at', { ascending: false }).limit(50),
-    ])
-    setStories((s ?? []) as Story[])
-    setOrders((o ?? []) as MasterpieceOrder[])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const [{ data: s }, { data: o }] = await Promise.all([
+        supabase.from('stories').select('id, title, slug, theme_emoji, is_personalizable, personalization_config, certificate_config').order('sort_order'),
+        supabase.from('masterpiece_orders').select('*, stories(title)').order('created_at', { ascending: false }).limit(50),
+      ])
+      setStories((s ?? []) as Story[])
+      setOrders((o ?? []) as MasterpieceOrder[])
+    } catch (err) {
+      console.error('[MasterpieceManager] load failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { void load() }, [])
 
   const togglePersonalizable = async (story: Story) => {
-    await supabase.from('stories').update({ is_personalizable: !story.is_personalizable }).eq('id', story.id)
-    load()
+    try {
+      await supabase.from('stories').update({ is_personalizable: !story.is_personalizable }).eq('id', story.id)
+      void load()
+    } catch (err) {
+      console.error('[MasterpieceManager] togglePersonalizable failed:', err)
+    }
   }
 
   const updateConfig = async (storyId: string, config: any) => {
-    await supabase.from('stories').update({ personalization_config: config }).eq('id', storyId)
-    load()
+    try {
+      await supabase.from('stories').update({ personalization_config: config }).eq('id', storyId)
+      void load()
+    } catch (err) {
+      console.error('[MasterpieceManager] updateConfig failed:', err)
+    }
   }
 
   const retryGenerate = async (orderId: string) => {
-    await fetch('/api/masterpiece/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ masterpieceId: orderId }),
-    })
-    load()
+    try {
+      await fetch('/api/masterpiece/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ masterpieceId: orderId }),
+      })
+      void load()
+    } catch (err) {
+      console.error('[MasterpieceManager] retryGenerate failed:', err)
+    }
   }
 
   if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>

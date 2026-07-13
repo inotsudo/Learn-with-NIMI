@@ -26,29 +26,36 @@ export default function StorySlotsManager({ onNavigate, onOpenSidebar }: Props) 
 
   useEffect(() => {
     void (async () => {
-      const { data: stories } = await supabase.from('stories').select('id, title, slug, sort_order').order('sort_order')
-      const { data: slots } = await supabase.from('story_slots').select('story_id, slot_key, mission_id, sort_order')
-      const { data: versions } = await supabase.from('mission_versions').select('mission_id, title, published, language').eq('language', 'en')
+      try {
+        const [{ data: stories }, { data: slots }, { data: versions }] = await Promise.all([
+          supabase.from('stories').select('id, title, slug, sort_order').order('sort_order'),
+          supabase.from('story_slots').select('story_id, slot_key, mission_id, sort_order'),
+          supabase.from('mission_versions').select('mission_id, title, published, language').eq('language', 'en'),
+        ])
 
-      const result: StorySlotRow[] = []
-      for (const story of stories ?? []) {
-        for (const slotKey of ['flipflop_audio', 'story_pdf', 'coloring', 'move_explore', 'sing_along', 'bonus_video']) {
-          const slot = (slots ?? []).find(s => s.story_id === story.id && s.slot_key === slotKey)
-          const ver = slot ? (versions ?? []).find(v => v.mission_id === slot.mission_id) : null
-          result.push({
-            story_id: story.id,
-            slot_key: slotKey,
-            mission_id: slot?.mission_id ?? null,
-            sort_order: slot?.sort_order ?? 0,
-            story_title: story.title,
-            story_slug: story.slug,
-            mission_title: ver?.title ?? null,
-            published: ver?.published ?? false,
-          })
+        const result: StorySlotRow[] = []
+        for (const story of stories ?? []) {
+          for (const slotKey of ['flipflop_audio', 'story_pdf', 'coloring', 'move_explore', 'sing_along', 'bonus_video']) {
+            const slot = (slots ?? []).find(s => s.story_id === story.id && s.slot_key === slotKey)
+            const ver = slot ? (versions ?? []).find(v => v.mission_id === slot.mission_id) : null
+            result.push({
+              story_id: story.id,
+              slot_key: slotKey,
+              mission_id: slot?.mission_id ?? null,
+              sort_order: slot?.sort_order ?? 0,
+              story_title: story.title,
+              story_slug: story.slug,
+              mission_title: ver?.title ?? null,
+              published: ver?.published ?? false,
+            })
+          }
         }
+        setRows(result)
+      } catch (err) {
+        console.error('[StorySlotsManager] load failed:', err)
+      } finally {
+        setLoading(false)
       }
-      setRows(result)
-      setLoading(false)
     })()
   }, [])
 

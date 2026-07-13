@@ -140,12 +140,11 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
     setLoading(true)
     setLoadError(null)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const [{ data: { user } }, { data, error }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from('admins').select('id, email, name, role, created_at').order('created_at', { ascending: true }),
+      ])
       setCurrentUserId(user?.id ?? null)
-      const { data, error } = await supabase
-        .from('admins')
-        .select('id, email, name, role, created_at')
-        .order('created_at', { ascending: true })
       if (error) throw error
       setAdmins((data ?? []) as AdminRow[])
     } catch (err) {
