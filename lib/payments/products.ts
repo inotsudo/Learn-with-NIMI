@@ -1,14 +1,21 @@
 import supabase from "@/lib/supabaseClient";
+import { qcached, lscached, TTL_LONG } from "@/lib/queryCache";
 import type { Product, Order, Subscription, Currency } from "./types";
 
-export async function getProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order");
-  if (error) { console.error("[getProducts]", error); return []; }
-  return data ?? [];
+const LS_PRODUCTS_TTL = 60 * 60_000; // 1 hour — survives page reloads so pricing shows instantly
+
+export function getProducts(): Promise<Product[]> {
+  return lscached("nimi:products", LS_PRODUCTS_TTL, () =>
+    qcached("products", async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (error) { console.error("[getProducts]", error); return []; }
+      return data ?? [];
+    }, TTL_LONG)
+  );
 }
 
 export async function getProduct(slug: string): Promise<Product | null> {

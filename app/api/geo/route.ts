@@ -9,5 +9,7 @@ export async function GET(req: NextRequest) {
     country,
     currency: isRwanda ? "RWF" : "USD",
     isLocal: isRwanda,
+  }, {
+    headers: { "Cache-Control": "private, max-age=86400" },
   });
 }

@@ -94,6 +94,9 @@ export async function activateStreakShield(childId: string, language: "en" | "fr
     slug: `streak-shield-used-${dateStr}`,
   });
   const ok = !error || error.code === "23505";
-  if (ok) qinvalidate(`usedShieldDates:${childId}:${language}`);
+  if (ok) {
+    qinvalidate(`usedShieldDates:${childId}:${language}`);
+    qinvalidate(`consecutiveStreak:${childId}:${language}`);
+  }
   return ok;
 }

@@ -8,6 +8,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import supabase from "./supabaseClient";
+import { qcached, TTL_LONG } from "./queryCache";
 import type {
   StoryLibraryItem,
   StoryDetails,
@@ -15,28 +16,30 @@ import type {
   StoryRecommendation,
 } from "./story-types";
 
-export async function getStoryLibrary(
+export function getStoryLibrary(
   childId: string,
   language: string
 ): Promise<StoryLibraryItem[]> {
-  const { data, error } = await supabase.rpc("get_story_library_progress", {
-    p_child_id: childId,
-    p_language: language,
+  return qcached(`storyLibrary:${childId}:${language}`, async () => {
+    // Fetch RPC and category map in parallel — categories are not in the RPC result set.
+    const [{ data, error }, { data: cats }] = await Promise.all([
+      supabase.rpc("get_story_library_progress", {
+        p_child_id: childId,
+        p_language: language,
+      }),
+      supabase.from("stories").select("id, category"),
+    ]);
+    if (error) {
+      console.error("[getStoryLibrary]", error);
+      return [];
+    }
+    const items = (data ?? []) as StoryLibraryItem[];
+    if (cats) {
+      const catMap = new Map(cats.map((c: any) => [c.id, c.category]));
+      for (const item of items) item.category = catMap.get(item.sid) ?? null;
+    }
+    return items;
   });
-  if (error) {
-    console.error("[getStoryLibrary]", error);
-    return [];
-  }
-  const items = (data ?? []) as StoryLibraryItem[];
-
-  // Fetch categories (not in the RPC)
-  const { data: cats } = await supabase.from("stories").select("id, category");
-  if (cats) {
-    const catMap = new Map(cats.map((c: any) => [c.id, c.category]));
-    for (const item of items) item.category = catMap.get(item.sid) ?? null;
-  }
-
-  return items;
 }
 
 export async function getCurrentStoryId(
@@ -154,13 +157,15 @@ export interface PopularStory {
 
 // Returns up to 6 stories ordered by learner completion count.
 // Falls back to sort_order when no one has completed any story yet.
-export async function getPopularStories(): Promise<PopularStory[]> {
-  try {
-    const res = await fetch("/api/popular-stories");
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (error) {
-    console.error("[getPopularStories]", error);
-    return [];
-  }
+export function getPopularStories(): Promise<PopularStory[]> {
+  return qcached("popularStories", async () => {
+    try {
+      const res = await fetch("/api/popular-stories");
+      if (!res.ok) return [];
+      return await res.json() as PopularStory[];
+    } catch (error) {
+      console.error("[getPopularStories]", error);
+      return [];
+    }
+  }, TTL_LONG);
 }

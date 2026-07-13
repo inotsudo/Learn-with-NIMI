@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
   Award, Menu, ChevronDown, Trophy, Medal, Users, Sparkles, ArrowUpRight, AlertCircle, RefreshCw,
 } from 'lucide-react'
@@ -83,14 +84,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
   const [langFilter, setLangFilter] = useState<'all' | Lang>('all')
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
+    void getCachedAdmin().then(d => { if (d) setAdmin(d) })
   }, [])
 
   const fetchData = useCallback(async () => {

@@ -56,16 +56,19 @@ export default function MyProfilePage() {
     const child = list.find(c => c.id === savedId) ?? list[0];
     setActiveChild(child);
 
-    setLevel(await getCurrentLevel(child.id, child.language));
+    // All independent queries fire in parallel — previously 5 sequential round-trips.
+    const [level, completedIds, stars, achievements, curriculumMissions] = await Promise.all([
+      getCurrentLevel(child.id, child.language),
+      getCompletedMissionIds(child.id, child.language),
+      getTotalStars(child.id, child.language),
+      getChildAchievements(child.id),
+      getCurriculumMissions(child.id),
+    ]);
 
-    const completedIds = await getCompletedMissionIds(child.id, child.language);
+    setLevel(level);
     setActivitiesCompleted(completedIds.length);
-    setStarsCollected(await getTotalStars(child.id, child.language));
-
-    const achievements = await getChildAchievements(child.id);
+    setStarsCollected(stars);
     setBadgesEarned(achievements.filter(a => a.type === "badge" && a.language === child.language).length);
-
-    const curriculumMissions = await getCurriculumMissions(child.id);
     setCompletedInLevel(new Set(curriculumMissions.filter(m => m.completed).map(m => m.category)));
     setLoading(false);
   };

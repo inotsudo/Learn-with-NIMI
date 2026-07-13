@@ -110,9 +110,12 @@ export default function AdminPanel() {
 
     const checkAdmin = async () => {
       try {
+        // getUser() validates the JWT server-side and refreshes it if expired.
+        // The admins query must come AFTER so it uses a fresh, valid token.
         const { data: { user }, error: userError } = await supabase.auth.getUser()
         if (cancelled) return
         if (userError || !user) {
+          // No valid session — send to login (no sign-out needed, nothing to clear)
           router.replace('/admin/login')
           return
         }
@@ -122,8 +125,14 @@ export default function AdminPanel() {
           .eq('id', user.id)
           .maybeSingle()
         if (cancelled) return
-        if (adminError) console.error('[admin] admins lookup failed:', adminError.message)
+        if (adminError) {
+          // DB error (network blip, RLS issue) — don't sign out, let user retry
+          console.error('[admin] admins lookup failed:', adminError.message)
+          setCheckTimedOut(true)
+          return
+        }
         if (!admin) {
+          // Positive confirmation: authenticated user is not an admin — sign out
           await supabase.auth.signOut()
           router.replace('/admin/login')
           return
@@ -132,8 +141,9 @@ export default function AdminPanel() {
         setCheckTimedOut(false)
       } catch (err) {
         if (cancelled) return
-        console.error('[admin] auth check failed:', err)
-        router.replace('/admin/login')
+        // Network/timeout error — show retry UI, don't kick user out
+        console.error('[admin] auth check error:', err)
+        setCheckTimedOut(true)
       }
     }
     void checkAdmin()
@@ -150,22 +160,40 @@ export default function AdminPanel() {
 
   if (checking) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 text-gray-500 text-sm font-semibold text-center px-6">
-        <p>{checkTimedOut ? "This is taking longer than expected..." : "Checking admin access..."}</p>
+      <div className="flex h-screen overflow-hidden bg-gray-50 animate-pulse">
+        {/* Sidebar skeleton */}
+        <div className="hidden lg:flex flex-col w-56 border-r border-gray-100 bg-white shrink-0 p-4 gap-3">
+          <div className="h-8 w-32 bg-gray-100 rounded-lg mb-2" />
+          {Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-7 bg-gray-100 rounded-lg" />)}
+        </div>
+        {/* Main area skeleton */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="h-14 border-b border-gray-100 bg-white shrink-0 flex items-center px-6 gap-3">
+            <div className="h-7 w-40 bg-gray-100 rounded-lg" />
+            <div className="flex-1" />
+            <div className="h-7 w-24 bg-gray-100 rounded-full" />
+          </div>
+          <div className="flex-1 p-6 lg:p-8 space-y-6">
+            <div className="h-8 w-48 bg-gray-100 rounded-lg" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 bg-white rounded-xl border border-gray-100" />)}
+            </div>
+            <div className="h-64 bg-white rounded-xl border border-gray-100" />
+          </div>
+        </div>
         {checkTimedOut && (
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => { setCheckTimedOut(false); setRetryKey(k => k + 1) }}
-              className="px-4 py-2 rounded-full bg-white hover:bg-gray-100 border border-ds-border text-ds-text text-xs font-bold transition"
-            >
-              Try again
-            </button>
-            <button
-              onClick={() => router.replace('/admin/login')}
-              className="px-4 py-2 rounded-full bg-white hover:bg-gray-100 border border-ds-border text-ds-text text-xs font-bold transition"
-            >
-              Go to login
-            </button>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-sm">
+            <p className="text-sm font-semibold text-gray-500">Taking longer than expected…</p>
+            <div className="flex gap-3">
+              <button onClick={() => { setCheckTimedOut(false); setRetryKey(k => k + 1) }}
+                className="px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-700 text-xs font-bold shadow-sm hover:bg-gray-50 transition">
+                Try again
+              </button>
+              <button onClick={() => router.replace('/admin/login')}
+                className="px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-700 text-xs font-bold shadow-sm hover:bg-gray-50 transition">
+                Go to login
+              </button>
+            </div>
           </div>
         )}
       </div>

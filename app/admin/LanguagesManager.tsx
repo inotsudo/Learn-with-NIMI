@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
   Languages as LanguagesIcon, Menu, ChevronDown, PenTool,
 } from 'lucide-react'
@@ -48,14 +49,7 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
   const accent = ACCENT.sky
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
+    void getCachedAdmin().then(d => { if (d) setAdmin(d) })
   }, [])
 
   useEffect(() => {

@@ -77,6 +77,7 @@ export async function claimChallengeReward(
     child_id: childId, language, challenge_slug: challengeSlug, stars,
   });
   if (!error || error.code === "23505") {
+    qinvalidate(`bonusStars:${childId}:${language}`);
     qinvalidate(`totalStars:${childId}:${language}`);
   }
   return !error || error.code === "23505";

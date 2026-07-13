@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Shield, CreditCard, Phone } from "lucide-react";
+import { Shield, CreditCard } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, EASE, SPRING } from "@/lib/design-system/motion";
 import supabase from "@/lib/supabaseClient";
-import { getPrice, getProviderForCurrency } from "@/lib/payments/types";
+import { getPrice } from "@/lib/payments/types";
 import type { Product, Currency } from "@/lib/payments/types";
 
 function formatAmount(amount: number, currency: Currency): string {
   if (currency === "RWF") return `${Math.round(amount).toLocaleString()} RWF`;
   return `$${amount.toFixed(2)}`;
 }
+
+type Step = "choose" | "loading" | "card" | "momo" | "processing" | "success" | "error";
+type ActiveProvider = "cybersource" | "mtn_momo";
 
 interface Props {
   product: Product;
@@ -26,19 +29,22 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
   const m = useThemeMotion();
   const price = getPrice(product, currency);
   const chargeAmount = effectiveAmount ?? price.amount;
-  const provider = getProviderForCurrency(currency);
-  const [step, setStep] = useState<"loading" | "card" | "momo" | "processing" | "success" | "error">(
-    provider === "cybersource" ? "loading" : "momo"
+  const isRwanda = currency === "RWF";
+
+  // Rwanda users pick their method; everyone else goes straight to CyberSource card.
+  const [activeProvider, setActiveProvider] = useState<ActiveProvider | null>(
+    isRwanda ? null : "cybersource"
   );
+  const [step, setStep] = useState<Step>(isRwanda ? "choose" : "loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [phone, setPhone] = useState("");
   const [countdown, setCountdown] = useState(3);
   const [momoAttempt, setMomoAttempt] = useState(0);
   const [momoElapsed, setMomoElapsed] = useState(0);
   const momoAbort = useRef(false);
-  // Tracks the pending CS order so we can cancel it if the modal closes before payment
   const pendingCsOrderId = useRef<string | null>(null);
 
+  // Countdown → redirect on success
   useEffect(() => {
     if (step !== "success") return;
     setCountdown(3);
@@ -51,16 +57,17 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     return () => clearInterval(interval);
   }, [step]);
 
-  // Elapsed-time counter shown while MoMo is processing
+  // Elapsed-time counter for MoMo processing UI
   useEffect(() => {
-    if (step !== "processing" || provider !== "mtn_momo") return;
+    if (step !== "processing" || activeProvider !== "mtn_momo") return;
     setMomoElapsed(0);
     const interval = setInterval(() => setMomoElapsed(s => s + 1), 1000);
     return () => clearInterval(interval);
-  }, [step, provider]);
+  }, [step, activeProvider]);
 
+  // CyberSource card flow — triggers when provider is set to "cybersource"
   useEffect(() => {
-    if (provider !== "cybersource") return;
+    if (activeProvider !== "cybersource") return;
     let cancelled = false;
 
     const init = async () => {
@@ -68,7 +75,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { window.location.href = "/loginpage"; return; }
 
-        // Create order server-side — server derives the canonical price from the DB.
         const orderRes = await fetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -83,7 +89,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
           return;
         }
         const orderId = orderData.orderId as string;
-        // Track so cleanup can cancel it if the modal closes before the user pays
         pendingCsOrderId.current = orderId;
 
         const ctxRes = await fetch("/api/checkout", {
@@ -122,7 +127,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
 
         const accept = await window.Accept!(captureContext);
         const up = await accept.unifiedPayments(false);
-
         const transientToken = await up.show({
           containers: { paymentSelection: "#cs-payment-list", paymentScreen: "#cs-payment-form" },
         });
@@ -142,7 +146,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         sessionStorage.removeItem("nimipiko_pending_payment");
 
         if (confirmResult.success) {
-          pendingCsOrderId.current = null; // payment complete — don't cancel on unmount
+          pendingCsOrderId.current = null;
           setStep("success");
         } else { setStep("error"); setErrorMsg(confirmResult.message || "Payment was declined"); }
       } catch (err: any) {
@@ -154,7 +158,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     return () => {
       cancelled = true;
       momoAbort.current = true;
-      // Cancel the pending order if the user closes before completing payment
       const oid = pendingCsOrderId.current;
       if (oid) {
         pendingCsOrderId.current = null;
@@ -165,14 +168,21 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         }).catch(() => {});
       }
     };
-  }, [provider, product.id, currency, chargeAmount]);
+  }, [activeProvider, product.id, currency, chargeAmount]);
+
+  const handlePickCard = () => {
+    setActiveProvider("cybersource");
+    setStep("loading");
+  };
+
+  const handlePickMomo = () => {
+    setActiveProvider("mtn_momo");
+    setStep("momo");
+  };
 
   const handleMomoSubmit = async () => {
     const cleanPhone = phone.replace(/[\s\-]/g, "");
-    if (cleanPhone.length < 9) {
-      setErrorMsg("Enter a valid MTN phone number");
-      return;
-    }
+    if (cleanPhone.length < 9) { setErrorMsg("Enter a valid MTN phone number"); return; }
     setErrorMsg("");
     setMomoAttempt(0);
     setStep("processing");
@@ -215,6 +225,11 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     } catch { if (!momoAbort.current) { setStep("error"); setErrorMsg("Something went wrong"); } }
   };
 
+  const priceDisplay = effectiveAmount !== undefined && effectiveAmount < price.amount
+    ? formatAmount(effectiveAmount, currency)
+    : price.formatted;
+  const hasDiscount = effectiveAmount !== undefined && effectiveAmount < price.amount;
+
   return (
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -227,6 +242,37 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
 
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
 
+          {/* ── Method picker (Rwanda only) ───────────────────────────── */}
+          {step === "choose" && (
+            <>
+              <div className="text-center mb-5">
+                <h3 className="font-baloo font-black text-ds-text text-[20px] mb-1">{product.name}</h3>
+                <div className="flex items-baseline justify-center gap-2">
+                  {hasDiscount && <span className="line-through text-gray-400 text-[16px] font-bold">{price.formatted}</span>}
+                  <p className="font-baloo font-black text-yellow-600 text-[26px]">{priceDisplay}</p>
+                  {hasDiscount && <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">PROMO</span>}
+                </div>
+              </div>
+              <p className="text-[11px] font-bold text-gray-500 text-center mb-3 uppercase tracking-wide">Choose payment method</p>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <motion.button whileTap={m.buttonPress} onClick={handlePickMomo}
+                  className="flex flex-col items-center gap-2 p-4 leaf border-2 border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition text-center">
+                  <span className="text-3xl">📱</span>
+                  <span className="font-baloo font-black text-ds-text text-[14px]">MTN MoMo</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-[11px]">Pay with mobile money</span>
+                </motion.button>
+                <motion.button whileTap={m.buttonPress} onClick={handlePickCard}
+                  className="flex flex-col items-center gap-2 p-4 leaf border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition text-center">
+                  <CreditCard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  <span className="font-baloo font-black text-ds-text text-[14px]">Debit / Card</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-[11px]">Visa, Mastercard, Amex</span>
+                </motion.button>
+              </div>
+              <button onClick={onClose} className="w-full py-2.5 leaf border border-ds-border text-gray-400 font-bold text-[13px] hover:bg-gray-50 transition">Cancel</button>
+            </>
+          )}
+
+          {/* ── CyberSource loading ───────────────────────────────────── */}
           {step === "loading" && (
             <div className="text-center py-8">
               <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: DURATION.loopFast, repeat: Infinity }}
@@ -234,26 +280,27 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
                 💳
               </motion.div>
               <p className="font-baloo font-black text-ds-text text-[16px]">Secure Card Checkout</p>
-              <p className="text-gray-400 text-[12px] mt-1">Loading CyberSource payment form...</p>
+              <p className="text-gray-400 text-[12px] mt-1">Loading payment form...</p>
             </div>
           )}
 
+          {/* ── Card form ────────────────────────────────────────────── */}
           {step === "card" && (
             <>
-              <h3 className="font-baloo font-black text-ds-text text-[20px] mb-1">{product.name}</h3>
-              <div className="flex items-baseline gap-2 mb-4">
-                {effectiveAmount !== undefined && effectiveAmount < price.amount && (
-                  <span className="line-through text-gray-400 text-[18px] font-bold">{price.formatted}</span>
+              <div className="flex items-center gap-2 mb-3">
+                {isRwanda && (
+                  <button onClick={() => { setActiveProvider(null); setStep("choose"); }}
+                    className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
                 )}
+                <h3 className="font-baloo font-black text-ds-text text-[20px]">{product.name}</h3>
+              </div>
+              <div className="flex items-baseline gap-2 mb-4">
+                {hasDiscount && <span className="line-through text-gray-400 text-[18px] font-bold">{price.formatted}</span>}
                 <p className="font-baloo font-black text-yellow-600 text-[28px]">
-                  {effectiveAmount !== undefined && effectiveAmount < price.amount
-                    ? formatAmount(effectiveAmount, currency)
-                    : price.formatted}
+                  {priceDisplay}
                   {product.product_type === "subscription" ? <span className="text-[14px] text-gray-400">/mo</span> : ""}
                 </p>
-                {effectiveAmount !== undefined && effectiveAmount < price.amount && (
-                  <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">PROMO</span>
-                )}
+                {hasDiscount && <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">PROMO</span>}
               </div>
               <div id="cs-payment-list" className="mb-3" />
               <div id="cs-payment-form" className="min-h-[200px] leaf overflow-hidden" />
@@ -265,22 +312,23 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
             </>
           )}
 
+          {/* ── MoMo phone entry ─────────────────────────────────────── */}
           {step === "momo" && (
             <>
-              <h3 className="font-baloo font-black text-ds-text text-[20px] mb-1">{product.name}</h3>
-              <div className="flex items-baseline gap-2 mb-4">
-                {effectiveAmount !== undefined && effectiveAmount < price.amount && (
-                  <span className="line-through text-gray-400 text-[18px] font-bold">{price.formatted}</span>
+              <div className="flex items-center gap-2 mb-3">
+                {isRwanda && (
+                  <button onClick={() => { setActiveProvider(null); setStep("choose"); }}
+                    className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
                 )}
+                <h3 className="font-baloo font-black text-ds-text text-[20px]">{product.name}</h3>
+              </div>
+              <div className="flex items-baseline gap-2 mb-4">
+                {hasDiscount && <span className="line-through text-gray-400 text-[18px] font-bold">{price.formatted}</span>}
                 <p className="font-baloo font-black text-yellow-600 text-[28px]">
-                  {effectiveAmount !== undefined && effectiveAmount < price.amount
-                    ? formatAmount(effectiveAmount, currency)
-                    : price.formatted}
+                  {priceDisplay}
                   {product.product_type === "subscription" ? <span className="text-[14px] text-gray-400">/mo</span> : ""}
                 </p>
-                {effectiveAmount !== undefined && effectiveAmount < price.amount && (
-                  <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">PROMO</span>
-                )}
+                {hasDiscount && <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">PROMO</span>}
               </div>
               <div className="space-y-3">
                 <div>
@@ -302,24 +350,26 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
             </>
           )}
 
+          {/* ── Processing ───────────────────────────────────────────── */}
           {step === "processing" && (
             <div className="text-center py-8">
               <motion.div animate={{ rotate: 360 }} transition={{ duration: DURATION.loopBase, repeat: Infinity, ease: EASE.linear }}
                 className="w-16 h-16 mx-auto mb-4 text-4xl">⏳</motion.div>
               <p className="font-baloo font-black text-ds-text text-[18px]">
-                {provider === "mtn_momo" ? "Waiting for MoMo confirmation..." : "Processing payment..."}
+                {activeProvider === "mtn_momo" ? "Waiting for MoMo confirmation..." : "Processing payment..."}
               </p>
-              {provider === "mtn_momo" && (
+              {activeProvider === "mtn_momo" && (
                 <>
                   <p className="text-gray-500 text-[13px] mt-2">Check your phone and enter your PIN</p>
                   <p className="text-gray-400 text-[11px] mt-3 font-mono">
-                    Check {momoAttempt}/{30} · {momoElapsed}s elapsed
+                    Check {momoAttempt}/30 · {momoElapsed}s elapsed
                   </p>
                 </>
               )}
             </div>
           )}
 
+          {/* ── Success ──────────────────────────────────────────────── */}
           {step === "success" && (
             <div className="text-center py-8">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -340,23 +390,29 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
             </div>
           )}
 
+          {/* ── Error ────────────────────────────────────────────────── */}
           {step === "error" && (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">❌</div>
               <h3 className="font-baloo font-black text-ds-text text-[18px]">Payment Failed</h3>
               <p className="text-red-500 text-[13px] mt-2">{errorMsg}</p>
-              <div className="flex gap-3 mt-5 justify-center">
-                <button onClick={onClose} className="px-6 py-3 leaf border border-ds-border text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition">Close</button>
-                {provider === "mtn_momo"
-                  ? <button onClick={() => { setErrorMsg(""); setStep("momo"); }} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Again</button>
-                  : <button onClick={onClose} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Close & Reopen to Retry</button>
-                }
-                {provider === "cybersource" && (
-                  <p className="text-gray-400 text-[10px] mt-2 text-center w-full">Card sessions can't be resumed — close this dialog and click Subscribe again.</p>
+              <div className="flex flex-col gap-3 mt-5 items-center">
+                <div className="flex gap-3">
+                  <button onClick={onClose} className="px-6 py-3 leaf border border-ds-border text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition">Close</button>
+                  {activeProvider === "mtn_momo"
+                    ? <button onClick={() => { setErrorMsg(""); setStep("momo"); }} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Again</button>
+                    : isRwanda
+                      ? <button onClick={() => { setActiveProvider(null); setStep("choose"); }} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Different Method</button>
+                      : <button onClick={onClose} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Close & Reopen to Retry</button>
+                  }
+                </div>
+                {activeProvider === "cybersource" && !isRwanda && (
+                  <p className="text-gray-400 text-[10px] text-center">Card sessions can't be resumed — close this dialog and click Subscribe again.</p>
                 )}
               </div>
             </div>
           )}
+
         </motion.div>
       </div>
     </>

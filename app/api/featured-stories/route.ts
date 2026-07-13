@@ -26,5 +26,7 @@ export async function GET(req: NextRequest) {
     console.error("[GET /api/featured-stories]", error);
     return NextResponse.json([], { status: 500 });
   }
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data ?? [], {
+    headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
+  });
 }

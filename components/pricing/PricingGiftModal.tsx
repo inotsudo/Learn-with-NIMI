@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield } from "lucide-react";
+import { Shield, CreditCard } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { SPRING } from "@/lib/design-system/motion";
 import supabase from "@/lib/supabaseClient";
-import { getPrice, getProviderForCurrency } from "@/lib/payments/types";
+import { getPrice } from "@/lib/payments/types";
 import type { Product, Currency } from "@/lib/payments/types";
 
 function formatAmount(amount: number, currency: Currency): string {
@@ -18,6 +18,9 @@ function isAnnualProduct(product: Product) {
   return product.billing_interval === "year";
 }
 
+type GiftStep = "form" | "choose" | "pay-loading" | "pay-card" | "pay-momo" | "processing" | "success" | "error";
+type ActiveProvider = "cybersource" | "mtn_momo";
+
 interface Props {
   product: Product;
   currency: Currency;
@@ -27,8 +30,10 @@ interface Props {
 export default function PricingGiftModal({ product, currency, onClose }: Props) {
   const m = useThemeMotion();
   const price = getPrice(product, currency);
-  const provider = getProviderForCurrency(currency);
-  const [step, setStep] = useState<"form" | "pay-loading" | "pay-card" | "pay-momo" | "processing" | "success" | "error">("form");
+  const isRwanda = currency === "RWF";
+
+  const [step, setStep] = useState<GiftStep>("form");
+  const [activeProvider, setActiveProvider] = useState<ActiveProvider | null>(null);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [message, setMessage] = useState("");
@@ -38,13 +43,13 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
   const orderIdRef = useRef<string>("");
   const momoAbort = useRef(false);
 
-  // Stop polling when modal unmounts mid-flight
   useEffect(() => () => { momoAbort.current = true; }, []);
 
-  const handleGiftPay = async () => {
-    if (!recipientEmail.includes("@")) { setErrorMsg("Enter a valid email"); return; }
+  // Called after form validation; provider is chosen by user (Rwanda) or auto-selected (USD)
+  const handleGiftPay = async (paymentProvider: ActiveProvider) => {
+    setActiveProvider(paymentProvider);
     setErrorMsg("");
-    setStep(provider === "cybersource" ? "pay-loading" : "pay-momo");
+    setStep(paymentProvider === "cybersource" ? "pay-loading" : "pay-momo");
 
     const res = await fetch("/api/gift", {
       method: "POST",
@@ -52,7 +57,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       body: JSON.stringify({
         productId: product.id,
         currency,
-        paymentProvider: provider,
+        paymentProvider,
         recipientEmail,
         recipientName: recipientName.trim() || null,
         message: message.trim() || null,
@@ -66,8 +71,9 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     giftIdRef.current = data.giftId;
     orderIdRef.current = data.orderId;
 
-    if (provider === "mtn_momo") return;
+    if (paymentProvider === "mtn_momo") return; // phone step handles the rest
 
+    // CyberSource card flow
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/loginpage"; return; }
@@ -121,6 +127,17 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     }
   };
 
+  const handleFormContinue = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(recipientEmail)) { setErrorMsg("Enter a valid recipient email"); return; }
+    setErrorMsg("");
+    if (isRwanda) {
+      setStep("choose"); // Rwanda: pick method first
+    } else {
+      handleGiftPay("cybersource"); // USD: straight to card
+    }
+  };
+
   const handleMomoPay = async () => {
     const cleanPhone = phone.replace(/[\s\-]/g, "");
     if (cleanPhone.length < 9) { setErrorMsg("Enter a valid MTN phone number"); return; }
@@ -161,6 +178,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
 
           <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
 
+          {/* ── Recipient form ────────────────────────────────────────── */}
           {step === "form" && (
             <>
               <div className="text-center mb-5">
@@ -192,14 +210,46 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
               {errorMsg && <p className="text-red-500 text-[12px] mt-2">{errorMsg}</p>}
               <div className="flex gap-3 mt-5">
                 <button onClick={onClose} className="flex-1 py-3 leaf border border-ds-border text-gray-400 font-bold text-[13px] hover:bg-gray-50 transition">Cancel</button>
-                <motion.button whileTap={m.buttonPress} onClick={handleGiftPay}
+                <motion.button whileTap={m.buttonPress} onClick={handleFormContinue}
                   className="flex-1 py-3 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[14px] shadow-md">
-                  {provider === "mtn_momo" ? "Continue with MoMo" : `Pay ${price.formatted}`}
+                  {isRwanda ? "Choose Payment" : `Pay ${price.formatted}`}
                 </motion.button>
               </div>
             </>
           )}
 
+          {/* ── Method picker (Rwanda only) ───────────────────────────── */}
+          {step === "choose" && (
+            <>
+              <div className="flex items-center gap-2 mb-4">
+                <button onClick={() => setStep("form")}
+                  className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
+                <div>
+                  <h3 className="font-baloo font-black text-ds-text text-[18px]">Gift · {product.name}</h3>
+                  <p className="text-gray-400 text-[11px]">🎁 To <strong>{recipientEmail}</strong></p>
+                </div>
+              </div>
+              <p className="font-baloo font-black text-yellow-600 text-[24px] mb-1">{price.formatted}</p>
+              <p className="text-[11px] font-bold text-gray-500 text-center mb-3 uppercase tracking-wide">Choose payment method</p>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <motion.button whileTap={m.buttonPress} onClick={() => handleGiftPay("mtn_momo")}
+                  className="flex flex-col items-center gap-2 p-4 leaf border-2 border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition text-center">
+                  <span className="text-3xl">📱</span>
+                  <span className="font-baloo font-black text-ds-text text-[14px]">MTN MoMo</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-[11px]">Pay with mobile money</span>
+                </motion.button>
+                <motion.button whileTap={m.buttonPress} onClick={() => handleGiftPay("cybersource")}
+                  className="flex flex-col items-center gap-2 p-4 leaf border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition text-center">
+                  <CreditCard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  <span className="font-baloo font-black text-ds-text text-[14px]">Debit / Card</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-[11px]">Visa, Mastercard, Amex</span>
+                </motion.button>
+              </div>
+              <button onClick={onClose} className="w-full py-2.5 leaf border border-ds-border text-gray-400 font-bold text-[13px] hover:bg-gray-50 transition">Cancel</button>
+            </>
+          )}
+
+          {/* ── CS loading ────────────────────────────────────────────── */}
           {step === "pay-loading" && (
             <div className="text-center py-8">
               <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
@@ -208,10 +258,17 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
             </div>
           )}
 
+          {/* ── Card form ─────────────────────────────────────────────── */}
           {step === "pay-card" && (
             <>
-              <h3 className="font-baloo font-black text-ds-text text-[20px] mb-1">Gift · {product.name}</h3>
-              <p className="font-baloo font-black text-yellow-600 text-[28px] mb-4">{price.formatted}</p>
+              <div className="flex items-center gap-2 mb-1">
+                {isRwanda && (
+                  <button onClick={() => setStep("choose")}
+                    className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
+                )}
+                <h3 className="font-baloo font-black text-ds-text text-[20px]">Gift · {product.name}</h3>
+              </div>
+              <p className="font-baloo font-black text-yellow-600 text-[28px] mb-2">{price.formatted}</p>
               <p className="text-gray-400 text-[12px] mb-3">🎁 Will be sent to <strong>{recipientEmail}</strong></p>
               <div id="cs-gift-list" className="mb-3" />
               <div id="cs-gift-form" className="min-h-[200px] leaf overflow-hidden" />
@@ -223,9 +280,16 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
             </>
           )}
 
+          {/* ── MoMo phone entry ──────────────────────────────────────── */}
           {step === "pay-momo" && (
             <>
-              <h3 className="font-baloo font-black text-ds-text text-[20px] mb-1">Gift · {product.name}</h3>
+              <div className="flex items-center gap-2 mb-1">
+                {isRwanda && (
+                  <button onClick={() => setStep("choose")}
+                    className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
+                )}
+                <h3 className="font-baloo font-black text-ds-text text-[20px]">Gift · {product.name}</h3>
+              </div>
               <p className="font-baloo font-black text-yellow-600 text-[28px] mb-2">{price.formatted}</p>
               <p className="text-gray-400 text-[12px] mb-4">🎁 Will be sent to <strong>{recipientEmail}</strong></p>
               <div>
@@ -245,17 +309,21 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
             </>
           )}
 
+          {/* ── Processing ────────────────────────────────────────────── */}
           {step === "processing" && (
             <div className="text-center py-8">
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                 className="text-4xl mx-auto mb-4 w-fit">⏳</motion.div>
               <p className="font-baloo font-black text-ds-text text-[18px]">
-                {provider === "mtn_momo" ? "Waiting for MoMo confirmation..." : "Processing payment..."}
+                {activeProvider === "mtn_momo" ? "Waiting for MoMo confirmation..." : "Processing payment..."}
               </p>
-              {provider === "mtn_momo" && <p className="text-gray-500 text-[13px] mt-2">Check your phone and enter your PIN</p>}
+              {activeProvider === "mtn_momo" && (
+                <p className="text-gray-500 text-[13px] mt-2">Check your phone and enter your PIN</p>
+              )}
             </div>
           )}
 
+          {/* ── Success ───────────────────────────────────────────────── */}
           {step === "success" && (
             <div className="text-center py-8">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -271,6 +339,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
             </div>
           )}
 
+          {/* ── Error ─────────────────────────────────────────────────── */}
           {step === "error" && (
             <div className="text-center py-8">
               <div className="text-5xl mb-4">❌</div>
@@ -278,10 +347,14 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
               <p className="text-red-500 text-[13px] mt-2">{errorMsg}</p>
               <div className="flex gap-3 mt-5 justify-center">
                 <button onClick={onClose} className="px-6 py-3 leaf border border-ds-border text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition">Close</button>
-                <button onClick={() => setStep("form")} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Again</button>
+                {isRwanda
+                  ? <button onClick={() => { setErrorMsg(""); setStep("choose"); }} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Different Method</button>
+                  : <button onClick={() => { setErrorMsg(""); setStep("form"); }} className="px-6 py-3 leaf bg-gray-100 text-ds-text font-bold text-[13px] hover:bg-gray-200 transition">Try Again</button>
+                }
               </div>
             </div>
           )}
+
         </motion.div>
       </div>
     </>

@@ -10,6 +10,7 @@ import { Bone } from "@/components/ui/Bone";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import supabase from "@/lib/supabaseClient";
 import { getProducts, getActiveSubscription } from "@/lib/payments/products";
+import { lscached } from "@/lib/queryCache";
 import { getPrice, getProviderForCurrency } from "@/lib/payments/types";
 import type { Product, Currency, Subscription } from "@/lib/payments/types";
 import PricingPaymentModal from "@/components/pricing/PricingPaymentModal";
@@ -60,6 +61,8 @@ export default function PricingPage() {
   const [billingAnnual, setBillingAnnual] = useState(false);
 
   const [showGift, setShowGift] = useState<Product | null>(null);
+  // Gift section: tracks which plan the user has selected; default to annual once loaded
+  const [giftProduct, setGiftProduct] = useState<Product | null>(null);
 
   // Promo code state
   const [discountInput, setDiscountInput] = useState("");
@@ -69,17 +72,26 @@ export default function PricingPage() {
 
   useEffect(() => {
     void (async () => {
-      const [p, geo, { data: { user } }] = await Promise.all([
+      // Start the auth → subscription chain immediately so it runs in parallel
+      // with the products and geo fetches, not sequentially after them.
+      const subPromise = supabase.auth.getUser().then(({ data: { user } }) =>
+        user?.id ? getActiveSubscription(user.id) : Promise.resolve(null)
+      );
+
+      const [p, geo] = await Promise.all([
         getProducts(),
-        fetch("/api/geo").then(r => r.json()).catch(() => ({ currency: "USD" })),
-        supabase.auth.getUser(),
+        lscached("nimi:geo", 24 * 60 * 60_000, () =>
+          fetch("/api/geo").then(r => r.json()).catch(() => ({ currency: "USD" }))
+        ),
       ]);
       setProducts(p);
       setCurrency(geo.currency === "RWF" ? "RWF" : "USD");
-      if (user?.id) {
-        const sub = await getActiveSubscription(user.id);
-        setActiveSub(sub);
-      }
+      const annual = p.find((x: Product) => x.slug === "nimipiko-club-annual");
+      const monthly = p.find((x: Product) => x.slug === "nimipiko-club");
+      setGiftProduct(annual ?? monthly ?? null);
+
+      const sub = await subPromise;
+      setActiveSub(sub);
       setLoading(false);
     })();
   }, []);
@@ -360,11 +372,6 @@ export default function PricingPage() {
                         <p className="text-center text-gray-400 text-[10px] mt-2">
                           {provider === "mtn_momo" ? "📱 MTN Mobile Money Rwanda" : "🔒 Visa, Mastercard & Amex"}
                         </p>
-                        <button
-                          onClick={() => setShowGift(club)}
-                          className="w-full mt-3 py-2.5 leaf border border-dashed border-yellow-400 text-yellow-700 font-black text-[12px] hover:bg-yellow-50 transition flex items-center justify-center gap-1.5">
-                          🎁 Give as a gift
-                        </button>
                       </>
                     )}
                   </div>
@@ -434,6 +441,112 @@ export default function PricingPage() {
               );
             })()}
           </div>
+
+          {/* ═══ GIVE AS GIFT ═══ */}
+          {(clubMonthly || clubAnnual) && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-10 relative overflow-hidden border border-ds-border shadow-ds-card"
+              style={{ borderRadius: "var(--leaf-r-lg)" }}>
+
+              {/* Gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 dark:from-rose-950/40 dark:via-pink-950/30 dark:to-orange-950/30" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-pink-200/40 to-transparent dark:from-pink-800/20 rounded-full translate-x-20 -translate-y-20" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-rose-200/30 to-transparent dark:from-rose-800/10 rounded-full -translate-x-16 translate-y-16" />
+
+              <div className="relative z-10 p-6 sm:p-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-2xl shadow-lg shrink-0">
+                      🎁
+                    </div>
+                    <div>
+                      <h2 className="font-baloo font-black text-ds-text text-[22px] leading-tight">Give the Gift of Learning</h2>
+                      <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-0.5">The perfect gift for any child — delivered instantly by email</p>
+                    </div>
+                  </div>
+                  <div className="sm:ml-auto shrink-0">
+                    <span className="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide">
+                      Great for birthdays &amp; holidays
+                    </span>
+                  </div>
+                </div>
+
+                {/* Plan selector */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                  {([clubMonthly, clubAnnual].filter(Boolean) as Product[]).map(plan => {
+                    const planPrice = getPrice(plan, currency);
+                    const isAnnual = plan.billing_interval === "year";
+                    const isSelected = giftProduct?.id === plan.id;
+                    return (
+                      <button key={plan.id} onClick={() => setGiftProduct(plan)}
+                        className={`relative text-left p-4 leaf border-2 transition-all ${
+                          isSelected
+                            ? "border-rose-400 bg-white dark:bg-rose-950/30 shadow-md"
+                            : "border-ds-border bg-white/60 dark:bg-white/5 hover:border-rose-200 hover:bg-white dark:hover:bg-white/10"
+                        }`}>
+                        {isAnnual && (
+                          <span className="absolute top-2 right-2 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                            BEST VALUE
+                          </span>
+                        )}
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            isSelected ? "border-rose-500 bg-rose-500" : "border-gray-300"
+                          }`}>
+                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <span className="font-baloo font-black text-ds-text text-[15px]">
+                            {isAnnual ? "Annual Club" : "Monthly Club"}
+                          </span>
+                        </div>
+                        <p className="font-baloo font-black text-rose-600 text-[22px] ml-6">
+                          {planPrice.formatted}
+                          <span className="text-gray-400 font-bold text-[13px] ml-1">
+                            /{isAnnual ? "year" : "month"}
+                          </span>
+                        </p>
+                        {isAnnual && clubMonthly && (
+                          <p className="text-green-700 dark:text-green-400 text-[11px] font-bold ml-6 mt-0.5">
+                            🎉 2 months free vs monthly
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* What they get */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
+                  {[
+                    { icon: "📖", text: "All stories in 3 languages" },
+                    { icon: "📧", text: "Delivered by email instantly" },
+                    { icon: "🕐", text: "Recipient redeems any time" },
+                  ].map(({ icon, text }) => (
+                    <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 rounded-xl px-3 py-2 border border-white/80 dark:border-white/10">
+                      <span className="text-lg shrink-0">{icon}</span>
+                      <span className="text-ds-text text-[12px] font-bold">{text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }} whileTap={m.buttonPress}
+                    disabled={!giftProduct}
+                    onClick={() => giftProduct && setShowGift(giftProduct)}
+                    className="flex-1 sm:flex-none sm:px-8 py-3.5 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[15px] shadow-lg shadow-rose-200 dark:shadow-rose-900/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    🎁 Gift {giftProduct ? getPrice(giftProduct, currency).formatted : "…"} now
+                  </motion.button>
+                  <p className="text-gray-400 text-[11px] font-bold text-center sm:text-left">
+                    🔒 Secure checkout · No account needed to give
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Trust badges */}
           <div className="flex justify-center gap-6 mt-10 flex-wrap">

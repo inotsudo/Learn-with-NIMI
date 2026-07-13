@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
 import supabase from "@/lib/supabaseClient"
+import { getCachedAdmin } from './adminAuth'
 import {
   LogOut, Search, ChevronDown, LayoutDashboard, UserCog, Bell, Menu,
   Compass, Baby, Users, BookOpen, X, Loader2, type LucideIcon,
@@ -97,12 +98,7 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
   const langPickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase.from('admins').select('name').eq('id', user.id).maybeSingle()
-      if (data?.name) setAdminName(data.name)
-    })()
+    void getCachedAdmin().then(d => { if (d?.name) setAdminName(d.name) })
   }, [])
 
   useEffect(() => {

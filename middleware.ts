@@ -1,4 +1,3 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
@@ -114,43 +113,16 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // 2. Admin route protection — session + admins table check
-  if (
-    pathname.startsWith("/admin") &&
-    !pathname.startsWith("/admin/login") &&
-    !pathname.startsWith("/admin/reset-password")
-  ) {
-    const supabase = createMiddlewareClient({ req, res });
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      const loginUrl = new URL("/admin/login", req.url);
-      loginUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // Verify the user is in the admins table — prevents regular parents
-    // from seeing admin UI during the client-side check window.
-    const { data: adminRow } = await supabase
-      .from("admins")
-      .select("id")
-      .eq("id", session.user.id)
-      .maybeSingle();
-
-    if (!adminRow) {
-      const loginUrl = new URL("/admin/login", req.url);
-      loginUrl.searchParams.set("error", "not_admin");
-      return NextResponse.redirect(loginUrl);
-    }
-  }
+  // Admin auth is handled client-side in app/admin/page.tsx (checkAdmin).
+  // Middleware cannot read the session because the app uses localStorage-based
+  // auth (supabase-js), not cookies — a middleware session check would always
+  // see no session and create an infinite redirect loop.
 
   return res;
 }
 
 export const config = {
   matcher: [
-    // Admin pages
-    "/admin/:path*",
     // Sensitive API prefixes
     "/api/newsletter",
     "/api/referral/:path*",

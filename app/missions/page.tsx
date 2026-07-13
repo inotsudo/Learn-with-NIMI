@@ -33,6 +33,8 @@ export default function MissionsPage() {
   }, []);
 
   const loadProgress = async () => {
+    // getActiveStories() doesn't need childId — start it immediately in parallel with getChildren().
+    const storiesPromise = getActiveStories();
     const list = await getChildren();
     if (list.length === 0) {
       setHasChildren(false);
@@ -45,7 +47,7 @@ export default function MissionsPage() {
 
     const [curriculumMissions, stories] = await Promise.all([
       getCurriculumMissions(child.id),
-      getActiveStories(),
+      storiesPromise,
     ]);
 
     if (stories[0]?.theme_title && stories[0]?.theme_emoji) {

@@ -208,10 +208,10 @@ export default function HomePage() {
       setConsecutiveStreak(consStreak);
       setPopularStories(popular);
       setCosmetics(cos);
-      const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
-      if (cur) setSlots(await getStorySlots(updated.id, cur.sid, lang));
-      else setSlots([]);
       setRefreshing(false);
+      const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
+      if (cur) getStorySlots(updated.id, cur.sid, lang).then(setSlots);
+      else setSlots([]);
       }, 200);
     };
     window.addEventListener("app:languageChange", handler as EventListener);
@@ -222,10 +222,14 @@ export default function HomePage() {
   }, []);
 
   async function init() {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Fire auth validation, parent-row upsert, and children fetch all in parallel.
+    // All three internally call auth.getUser() which the Supabase client deduplicates.
+    const [{ data: { user } }, , list] = await Promise.all([
+      supabase.auth.getUser(),
+      ensureParentRow(),
+      getChildren(),
+    ]);
     if (!user) { router.replace("/loginpage"); return; }
-    await ensureParentRow();
-    const list = await getChildren();
     setChildren(list);
     if (list.length === 0) { router.replace("/onboarding"); return; }
     const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
@@ -266,8 +270,11 @@ export default function HomePage() {
     setConsecutiveStreak(consStreak);
     setPopularStories(popular);
     setCosmetics(cos);
+    setLoading(false);
+
+    // Load story slots and community creations without blocking the page render.
     const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
-    if (cur) setSlots(await getStorySlots(child.id, cur.sid, child.language));
+    if (cur) getStorySlots(child.id, cur.sid, child.language).then(setSlots);
 
     // Community creations — best-effort, never blocks
     supabase

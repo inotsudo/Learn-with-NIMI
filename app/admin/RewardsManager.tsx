@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
   Search, ChevronDown, Menu, Trophy, Award, X, AlertCircle, RefreshCw,
 } from 'lucide-react'
@@ -97,14 +98,7 @@ export default function RewardsManager({ initialChildId, onNavigate, onOpenSideb
   const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
+    void getCachedAdmin().then(d => { if (d) setAdmin(d) })
   }, [])
 
   const fetchData = useCallback(async () => {

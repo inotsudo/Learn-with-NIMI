@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
   Search, SlidersHorizontal, LayoutGrid, Eye, Bell, ChevronDown, Plus,
   MoreVertical, Pencil, Copy, ArrowUpDown, Archive, ArchiveRestore, ChevronLeft, ChevronRight,
@@ -122,16 +123,13 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
   }, [initialMissionId, missions])
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-      const { data: cat } = await supabase.from('categories').select('default_type').eq('slug', categorySlug).maybeSingle()
+    void Promise.all([
+      getCachedAdmin(),
+      supabase.from('categories').select('default_type').eq('slug', categorySlug).maybeSingle(),
+    ]).then(([adminData, { data: cat }]) => {
+      if (adminData) setAdmin(adminData)
       if (cat?.default_type) setDefaultType(cat.default_type as MissionType)
-    }
-    init()
+    })
   }, [categorySlug])
 
   useEffect(() => {

@@ -1,13 +1,16 @@
 import supabase from "@/lib/supabaseClient";
+import { qcached, TTL_LONG } from "@/lib/queryCache";
 import type { Story, StoryPage, ColoringPage } from "./types";
 
-export async function getActiveStories(): Promise<Story[]> {
-  const { data } = await supabase
-    .from("stories")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order");
-  return (data ?? []) as Story[];
+export function getActiveStories(): Promise<Story[]> {
+  return qcached("activeStories", async () => {
+    const { data } = await supabase
+      .from("stories")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order");
+    return (data ?? []) as Story[];
+  }, TTL_LONG);
 }
 
 export async function getStoryBySlug(slug: string): Promise<Story | null> {

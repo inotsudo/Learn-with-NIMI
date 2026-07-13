@@ -15,26 +15,24 @@ function curriculumCacheKey(childId: string): string {
 // viewed today's missions can keep learning with no signal (village
 // connectivity use case) — on failure we fall back to that cache instead
 // of an empty array.
-export async function getCurriculumMissions(childId: string): Promise<CurriculumMission[]> {
-  const { data, error } = await supabase.rpc("get_curriculum_missions", { p_child_id: childId });
-  if (error) {
-    console.error("[getCurriculumMissions]", error.message);
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem(curriculumCacheKey(childId));
-      if (cached) {
-        try {
-          return JSON.parse(cached) as CurriculumMission[];
-        } catch {
-          // fall through to empty array below
+export function getCurriculumMissions(childId: string): Promise<CurriculumMission[]> {
+  return qcached(`curriculumMissions:${childId}`, async () => {
+    const { data, error } = await supabase.rpc("get_curriculum_missions", { p_child_id: childId });
+    if (error) {
+      console.error("[getCurriculumMissions]", error.message);
+      if (typeof window !== "undefined") {
+        const cached = localStorage.getItem(curriculumCacheKey(childId));
+        if (cached) {
+          try { return JSON.parse(cached) as CurriculumMission[]; } catch { /* fall through */ }
         }
       }
+      return [];
     }
-    return [];
-  }
-  if (typeof window !== "undefined") {
-    localStorage.setItem(curriculumCacheKey(childId), JSON.stringify(data ?? []));
-  }
-  return (data ?? []) as CurriculumMission[];
+    if (typeof window !== "undefined") {
+      localStorage.setItem(curriculumCacheKey(childId), JSON.stringify(data ?? []));
+    }
+    return (data ?? []) as CurriculumMission[];
+  });
 }
 
 // Mission ids completed by this child in the given language's journey.
@@ -74,14 +72,19 @@ export async function completeCurriculumMission(
     return null;
   }
   // Bust per-child progress caches so AppShell + home page see fresh data.
+  qinvalidate(`progressRows:${childId}`);       // shared base — must bust first
+  qinvalidate(`bonusStars:${childId}`);
   qinvalidate(`weekStreak:${childId}`);
+  qinvalidate(`weekCounts:${childId}`);
   qinvalidate(`totalStars:${childId}`);
   qinvalidate(`activityDates:${childId}`);
+  qinvalidate(`consecutiveStreak:${childId}`);
   qinvalidate(`currentLevel:${childId}`);
   qinvalidate(`childAchievements:${childId}`);
   qinvalidate(`childBadges:${childId}`);
   qinvalidate(`completedMissionIds:${childId}`);
   qinvalidate(`storyProgressStars:${childId}`);
+  qinvalidate(`curriculumMissions:${childId}`);
   return data as CompleteCurriculumMissionResult;
 }
 

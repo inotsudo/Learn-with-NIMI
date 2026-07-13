@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import { GraduationCap, Menu, ChevronDown, Layers, Boxes, ListChecks, Rocket, Globe, Grid3x3, Upload, ExternalLink, Languages as LanguagesIcon } from 'lucide-react'
 import { ACCENT, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META } from './missionMeta'
 import LevelEditor from './LevelEditor'
@@ -36,14 +37,7 @@ export default function CurriculumManager({ onNavigate, onOpenSidebar }: Curricu
   const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-    }
-    init()
+    void getCachedAdmin().then(d => { if (d) setAdmin(d) })
   }, [])
 
   return (

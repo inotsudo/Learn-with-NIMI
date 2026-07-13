@@ -367,10 +367,12 @@ export default function CommunityPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const [{ data: { user } }, { data }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from("children").select("name, avatar_url").order("created_at"),
+      ]);
       if (user) setUserId(user.id);
-      const { data } = await supabase.from("children").select("name, avatar_url").order("created_at");
-      if (data) setFriends(data.map(c => ({ name: c.name ?? "Friend", avatar: c.avatar_url || "🌟" })));
+      if (data) setFriends(data.map((c: { name: string | null; avatar_url: string | null }) => ({ name: c.name ?? "Friend", avatar: c.avatar_url || "🌟" })));
     })();
   }, []);
 
@@ -400,13 +402,22 @@ export default function CommunityPage() {
     const c = creations.find(x => x.id === id);
     if (!c || !userId || liking[id]) return;
     const ns = !c.likedByUser;
+    // Optimistic update — UI responds instantly, no spinner needed.
     setLiking(prev => ({ ...prev, [id]: true }));
     setCreations(prev => prev.map(x =>
       x.id === id ? { ...x, likedByUser: ns, likes: ns ? x.likes + 1 : Math.max(0, x.likes - 1) } : x
     ));
-    if (ns) await supabase.from("likes").insert({ creation_id: id, user_id: userId });
-    else    await supabase.from("likes").delete().eq("creation_id", id).eq("user_id", userId);
-    setLiking(prev => ({ ...prev, [id]: false }));
+    try {
+      if (ns) await supabase.from("likes").insert({ creation_id: id, user_id: userId });
+      else    await supabase.from("likes").delete().eq("creation_id", id).eq("user_id", userId);
+    } catch {
+      // Roll back the optimistic update on network/DB failure.
+      setCreations(prev => prev.map(x =>
+        x.id === id ? { ...x, likedByUser: c.likedByUser, likes: c.likes } : x
+      ));
+    } finally {
+      setLiking(prev => ({ ...prev, [id]: false }));
+    }
   };
 
   const submitReport = async (reason: string) => {

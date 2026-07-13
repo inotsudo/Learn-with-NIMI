@@ -4,103 +4,107 @@ import { computeStreaks } from "@/lib/parentInsights";
 import { getUsedShieldDates } from "./shop";
 import type { ProgressRow } from "./types";
 
+// ─── Shared base query ───────────────────────────────────────────────────────
+// getWeekStreak, getActivityDates, getTotalStars, and getWeekActivityCounts all
+// scan the same child_progress table with the same filters. Instead of 4
+// separate round-trips, one cached fetch powers all four.
+type BaseRow = { mission_id: string; completed_at: string; missions: { stars: number } | null };
+
+function rawProgressRows(childId: string, language: "en" | "fr" | "rw"): Promise<BaseRow[]> {
+  return qcached(`progressRows:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("child_progress")
+      .select("mission_id, completed_at, missions(stars)")
+      .eq("child_id", childId)
+      .eq("language", language);
+    return (data ?? []) as unknown as BaseRow[];
+  });
+}
+
+// challenge_bonus_stars is a separate table — cache it independently so
+// getTotalStars doesn't re-fetch it on every call.
+function bonusStarsTotal(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  return qcached(`bonusStars:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("challenge_bonus_stars")
+      .select("stars")
+      .eq("child_id", childId)
+      .eq("language", language);
+    return (data ?? []).reduce((sum: number, r: { stars: number }) => sum + r.stars, 0);
+  });
+}
+
+function weekMonday(): Date {
+  const now = new Date();
+  const m = new Date(now);
+  m.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  m.setHours(0, 0, 0, 0);
+  return m;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Sum of `stars` for missions completed today (in the given language's
 // journey). 0 if no progress yet.
 export async function getTodayStars(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  const rows = await rawProgressRows(childId, language);
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
-  const { data } = await supabase
-    .from("child_progress")
-    .select("mission_id, completed_at, missions(stars)")
-    .eq("child_id", childId)
-    .eq("language", language)
-    .gte("completed_at", startOfDay.toISOString());
-  if (!data) return 0;
-  return data.reduce((sum: number, row: any) => sum + (row.missions?.stars ?? 10), 0);
+  return rows
+    .filter(r => new Date(r.completed_at) >= startOfDay)
+    .reduce((sum, r) => sum + (r.missions?.stars ?? 10), 0);
 }
 
-// Which of the last 7 days (Mon-Sun, current week) had >=1 completion in the
-// given language's journey. Index 0 = Monday. All-false if no progress yet.
+// Which of the last 7 days (Mon–Sun, current week) had >=1 completion.
+// Index 0 = Monday. All-false if no progress yet.
 export function getWeekStreak(childId: string, language: "en" | "fr" | "rw"): Promise<boolean[]> {
   return qcached(`weekStreak:${childId}:${language}`, async () => {
-    const now = new Date();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    monday.setHours(0, 0, 0, 0);
-
-    const { data } = await supabase
-      .from("child_progress")
-      .select("completed_at")
-      .eq("child_id", childId)
-      .eq("language", language)
-      .gte("completed_at", monday.toISOString());
-
+    const rows   = await rawProgressRows(childId, language);
+    const monday = weekMonday();
     const result = [false, false, false, false, false, false, false];
-    if (!data) return result;
-    for (const row of data) {
-      const diffDays = Math.floor(
-        (new Date(row.completed_at as string).getTime() - monday.getTime()) / 86400000
-      );
+    for (const row of rows) {
+      const diffDays = Math.floor((new Date(row.completed_at).getTime() - monday.getTime()) / 86400000);
       if (diffDays >= 0 && diffDays < 7) result[diffDays] = true;
     }
     return result;
   });
 }
 
-// Sum of `stars` across ALL completed missions (all-time) in the given
-// language's journey, plus any challenge bonus stars. 0 if no progress yet.
+// Sum of `stars` across ALL completed missions (all-time) plus challenge bonus stars.
 export function getTotalStars(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
   return qcached(`totalStars:${childId}:${language}`, async () => {
-    const [progressRes, bonusRes] = await Promise.all([
-      supabase.from("child_progress").select("mission_id, missions(stars)").eq("child_id", childId).eq("language", language),
-      supabase.from("challenge_bonus_stars").select("stars").eq("child_id", childId).eq("language", language),
+    const [rows, bonus] = await Promise.all([
+      rawProgressRows(childId, language),
+      bonusStarsTotal(childId, language),
     ]);
-    const missionStars = (progressRes.data ?? []).reduce((sum: number, row: any) => sum + (row.missions?.stars ?? 10), 0);
-    const bonusStars   = (bonusRes.data   ?? []).reduce((sum: number, row: any) => sum + row.stars, 0);
-    return missionStars + bonusStars;
+    return rows.reduce((sum, r) => sum + (r.missions?.stars ?? 10), 0) + bonus;
   });
 }
 
-// All-time set of "YYYY-MM-DD" (local-date) strings with >=1 completion in
-// the given language's journey. Empty if no progress yet. Local-date (not
-// UTC) to match getWeekStreak's local-day bucketing.
+// All-time set of "YYYY-MM-DD" (local-date) strings with >=1 completion.
 export function getActivityDates(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
   return qcached(`activityDates:${childId}:${language}`, async () => {
-    const { data } = await supabase
-      .from("child_progress")
-      .select("completed_at")
-      .eq("child_id", childId)
-      .eq("language", language);
+    const rows = await rawProgressRows(childId, language);
     const dates = new Set<string>();
-    for (const row of data ?? []) {
-      const d = new Date(row.completed_at as string);
+    for (const row of rows) {
+      const d = new Date(row.completed_at);
       dates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
     }
     return dates;
   });
 }
 
-// Number of completions per day (Mon-Sun, current week) in the given
-// language's journey. Index 0 = Monday.
-export async function getWeekActivityCounts(childId: string, language: "en" | "fr" | "rw"): Promise<number[]> {
-  const { data } = await supabase
-    .from("child_progress")
-    .select("completed_at")
-    .eq("child_id", childId)
-    .eq("language", language);
-  const result = [0, 0, 0, 0, 0, 0, 0];
-  if (!data) return result;
-  const now = new Date();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  monday.setHours(0, 0, 0, 0);
-  for (const row of data) {
-    const diffDays = Math.floor(
-      (new Date(row.completed_at as string).getTime() - monday.getTime()) / 86400000
-    );
-    if (diffDays >= 0 && diffDays < 7) result[diffDays]++;
-  }
-  return result;
+// Number of completions per day (Mon–Sun, current week). Index 0 = Monday.
+export function getWeekActivityCounts(childId: string, language: "en" | "fr" | "rw"): Promise<number[]> {
+  return qcached(`weekCounts:${childId}:${language}`, async () => {
+    const rows   = await rawProgressRows(childId, language);
+    const monday = weekMonday();
+    const result = [0, 0, 0, 0, 0, 0, 0];
+    for (const row of rows) {
+      const diffDays = Math.floor((new Date(row.completed_at).getTime() - monday.getTime()) / 86400000);
+      if (diffDays >= 0 && diffDays < 7) result[diffDays]++;
+    }
+    return result;
+  });
 }
 
 // All child_progress rows for this child, across ALL 3 language journeys.
@@ -140,15 +144,16 @@ export function getCurrentLevel(childId: string, language: "en" | "fr" | "rw"): 
   });
 }
 
-// Shield-aware consecutive day streak. Delegates to computeStreaks so the
-// algorithm is never duplicated. Any caller automatically gets the correct
-// shielded count without knowing about shields.
-export async function getConsecutiveStreak(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
-  const [dates, shieldedDates] = await Promise.all([
-    getActivityDates(childId, language),
-    getUsedShieldDates(childId, language),
-  ]);
-  return computeStreaks(dates, new Date(), shieldedDates).current;
+// Shield-aware consecutive day streak — result cached so parallel callers
+// (home page + AppShell + stories) share one computation.
+export function getConsecutiveStreak(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  return qcached(`consecutiveStreak:${childId}:${language}`, async () => {
+    const [dates, shieldedDates] = await Promise.all([
+      getActivityDates(childId, language),
+      getUsedShieldDates(childId, language),
+    ]);
+    return computeStreaks(dates, new Date(), shieldedDates).current;
+  });
 }
 
 // Per-story star totals derived from child_progress, used by the stories page

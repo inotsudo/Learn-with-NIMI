@@ -119,23 +119,21 @@ export default function LandingPage() {
   }[]>([]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data:{ user } }) => { if (user) setAuthed(true); });
-  }, []);
-  useEffect(() => {
-    fetch("/api/featured-stories?limit=4")
-      .then(r => r.json())
-      .then((d: unknown) => { if (Array.isArray(d)) setStories((d as Story[]).slice(0,4)); })
-      .catch(() => {});
-  }, []);
-  useEffect(() => {
-    supabase
-      .from('testimonials')
-      .select('id, name, role, location, quote, rating, avatar_url')
-      .eq('approved', true)
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false })
-      .limit(6)
-      .then(({ data }) => { if (data) setTestimonials(data); });
+    void Promise.all([
+      supabase.auth.getUser(),
+      fetch("/api/featured-stories?limit=4").then(r => r.json()).catch(() => []),
+      supabase
+        .from('testimonials')
+        .select('id, name, role, location, quote, rating, avatar_url')
+        .eq('approved', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: false })
+        .limit(6),
+    ]).then(([{ data: { user } }, storiesData, { data: testimonialsData }]) => {
+      if (user) setAuthed(true);
+      if (Array.isArray(storiesData)) setStories((storiesData as Story[]).slice(0, 4));
+      if (testimonialsData) setTestimonials(testimonialsData);
+    });
   }, []);
   useEffect(() => {
     const fn = () => {

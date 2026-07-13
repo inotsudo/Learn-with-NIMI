@@ -5,8 +5,37 @@ import type { Parent, Child } from "./types";
 // Skip the upsert if we've already ensured a parent row this browser session.
 const ensuredForUser = new Set<string>();
 
+// ─── Auth user cache ─────────────────────────────────────────────────────────
+// getCachedUser() validates the JWT with the Supabase Auth server on
+// every call. With 8+ functions all calling it independently, that's 8 network
+// round-trips on cold page load. Cache the result for 30 s and deduplicate
+// concurrent calls so all callers share one request.
+const AUTH_TTL = 30_000;
+let _authUser:    { user: ReturnType<typeof Object.create> | null; expires: number } | null = null;
+let _authPending: Promise<ReturnType<typeof Object.create> | null> | null = null;
+
+export async function getCachedUser() {
+  if (_authUser && Date.now() < _authUser.expires) return _authUser.user;
+  if (_authPending) return _authPending;
+  _authPending = supabase.auth.getUser()
+    .then(({ data: { user } }) => {
+      _authUser    = { user, expires: Date.now() + AUTH_TTL };
+      _authPending = null;
+      return user;
+    })
+    .catch(err => { _authPending = null; throw err; });
+  return _authPending;
+}
+
+/** Call on sign-out so the next getUser() hits the server. */
+export function clearAuthCache() {
+  _authUser    = null;
+  _authPending = null;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function getParent(): Promise<Parent | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
   const { data } = await supabase
     .from("parents")
@@ -20,7 +49,7 @@ export async function getParent(): Promise<Parent | null> {
 // Handles accounts created before the new schema migration.
 // Skips the upsert if already confirmed this browser session (module-level guard).
 export async function ensureParentRow(): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) { console.warn("[ensureParentRow] no session"); return false; }
   if (ensuredForUser.has(user.id)) return true;
   const { error } = await supabase.from("parents").upsert(
@@ -33,13 +62,13 @@ export async function ensureParentRow(): Promise<boolean> {
 }
 
 export async function updateParent(name: string): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return;
   await supabase.from("parents").update({ name }).eq("id", user.id);
 }
 
 export async function getChildren(): Promise<Child[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) { console.warn("[getChildren] no session"); return []; }
   return qcached(`children:${user.id}`, async () => {
     const { data, error } = await supabase
@@ -55,7 +84,7 @@ export async function getChildren(): Promise<Child[]> {
 export async function createChild(
   child: Pick<Child, "name" | "avatar_url" | "language" | "age"> & Partial<Pick<Child, "favorite_category">>
 ): Promise<{ data: Child | null; error: string | null }> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return { data: null, error: "Not signed in" };
   const parentOk = await ensureParentRow();
   if (!parentOk) return { data: null, error: "Could not create parent profile" };
@@ -83,8 +112,8 @@ export async function updateChildLanguage(
   childId: string,
   language: "en" | "fr" | "rw"
 ): Promise<void> {
-  const [{ data: { user } }, { data: current }] = await Promise.all([
-    supabase.auth.getUser(),
+  const [user, { data: current }] = await Promise.all([
+    getCachedUser(),
     supabase.from("children").select("language").eq("id", childId).maybeSingle(),
   ]);
 
@@ -105,7 +134,7 @@ export async function updateChildLanguage(
 export async function getParentalSettings(
   childId: string
 ): Promise<import("./types").ParentalSettings | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
   const { data } = await supabase
     .from("parental_settings")
@@ -120,7 +149,7 @@ export async function updateParentalSettings(
   childId: string,
   settings: Partial<Pick<import("./types").ParentalSettings, "daily_limit_minutes" | "notifications_enabled">>
 ): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return;
   await supabase.from("parental_settings").upsert({
     parent_id: user.id,

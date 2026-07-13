@@ -39,6 +39,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           { data: storiesData }, { data: childrenData }, { data: achievementsData },
           { data: slotsData }, { data: missionVersions },
           { data: subsData }, { data: ordersData },
+          { count: challengeCount }, { data: storyVersions },
         ] = await Promise.all([
           supabase.from('stories').select('id, title, slug, status, sort_order, age_min, age_max, published_at, cover_url').order('sort_order'),
           supabase.from('children').select('id'),
@@ -47,6 +48,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           supabase.from('mission_versions').select('id, mission_id, published, language'),
           supabase.from('nimipiko_subscriptions').select('id, amount, currency, status, created_at').eq('status', 'active'),
           supabase.from('orders').select('amount, currency, payment_status, completed_at'),
+          supabase.from('weekly_challenges').select('*', { count: 'exact', head: true }),
+          supabase.from('story_versions').select('story_id, intro_video_url, theme_song_url, meet_characters_url, story_intro_url'),
         ])
 
         const allStories = storiesData ?? []
@@ -64,8 +67,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         const ready = storyRows.filter(s => s.slots_filled === 6).length
         const missing = storyRows.filter(s => s.slots_filled < 6).length
         const certs = allAchievements.filter(a => a.type === 'certificate').length
-
-        const { count: challengeCount } = await supabase.from('weekly_challenges').select('*', { count: 'exact', head: true })
         setStats({ published, ready, missing, children: (childrenData ?? []).length, certs, challenges: challengeCount ?? 0 })
 
         // Revenue stats — convert all to USD equivalent (RWF ÷ 1350)
@@ -78,7 +79,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         setRevenue({ activeSubscriptions: activeSubs.length, mrr, totalRevenue, newThisMonth })
         setStories(storyRows)
 
-        const { data: storyVersions } = await supabase.from('story_versions').select('story_id, intro_video_url, theme_song_url, meet_characters_url, story_intro_url')
         const readinessData = allStories.map(s => {
           const sv = (storyVersions ?? []).filter(v => v.story_id === s.id)
           const ss = allSlots.filter(sl => sl.story_id === s.id)

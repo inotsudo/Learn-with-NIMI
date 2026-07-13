@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
-import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildAchievements, getCurrentLevel, updateChildLanguage, getChildCosmetics } from "@/lib/queries";
+import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildAchievements, getCurrentLevel, updateChildLanguage, getChildCosmetics, getCurriculumMissions, getActiveStories, getStreakShieldsPurchased, getUsedShieldDates } from "@/lib/queries";
+import { getStoryLibrary } from "@/lib/storyRepository";
 import { computeStreaks } from "@/lib/parentInsights";
 import { resolveShields } from "@/lib/streakShields";
 import type { Child, ChildCosmetics } from "@/lib/queries";
@@ -91,6 +92,9 @@ export default function AppShell({ children }: AppShellProps) {
       setActiveChild(child);
       if (child) {
         setLanguage(child.language);
+        // Shields (getStreakShieldsPurchased + getUsedShieldDates) now run in
+        // parallel with everything else. resolveShields below hits the warm
+        // qcached results — zero extra network round-trips.
         const [ws, dates, , , achievements, cos] = await Promise.all([
           getWeekStreak(child.id, child.language),
           getActivityDates(child.id, child.language),
@@ -98,12 +102,20 @@ export default function AppShell({ children }: AppShellProps) {
           getCurrentLevel(child.id, child.language).then(setLevel),
           getChildAchievements(child.id),
           getChildCosmetics(child.id),
+          getStreakShieldsPurchased(child.id),
+          getUsedShieldDates(child.id, child.language),
         ]);
         setWeekStreak(ws);
         const { usedDates } = await resolveShields(child.id, child.language, dates);
         setStreakCount(computeStreaks(dates, new Date(), usedDates).current);
         setGems(achievements.filter((a: { type: string; language: string }) => a.type === "badge" && a.language === child.language).length);
         setCosmetics(cos);
+
+        // Warm the cache for the most common navigation destinations so that
+        // /missions, /stories, and /treasure feel instant when the user taps them.
+        void getCurriculumMissions(child.id);
+        void getStoryLibrary(child.id, child.language);
+        void getActiveStories();
       }
     })();
   }, []);

@@ -164,10 +164,10 @@ export default function UserProfilePage() {
     const child = list.find(c => c.id === savedId) ?? list[0];
     if (typeof window !== "undefined") localStorage.setItem(ACTIVE_CHILD_KEY, child.id);
 
-    const curriculumMissions = await getCurriculumMissions(child.id);
-    const level = await getCurrentLevel(child.id, child.language);
-
-    const [wStreak, wCounts, stars, dates, achievements, badges] = await Promise.all([
+    // All queries fire in parallel — previously 2 sequential awaits before this block.
+    const [curriculumMissions, level, wStreak, wCounts, stars, dates, achievements, badges] = await Promise.all([
+      getCurriculumMissions(child.id),
+      getCurrentLevel(child.id, child.language),
       getWeekStreak(child.id, child.language),
       getWeekActivityCounts(child.id, child.language),
       getTotalStars(child.id, child.language),

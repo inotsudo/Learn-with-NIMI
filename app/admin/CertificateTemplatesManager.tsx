@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import { Award, Menu, ChevronDown, Upload, Save, RefreshCw, CheckCircle2, AlertCircle, Eye } from 'lucide-react'
 
 interface CertificateTemplatesManagerProps {
@@ -42,14 +43,11 @@ export default function CertificateTemplatesManager({ onNavigate, onOpenSidebar 
 
   // ── Load admin + existing templates ──────────────────────────
   useEffect(() => {
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('admins').select('name, role').eq('id', user.id).maybeSingle()
-        if (data) setAdmin({ name: data.name ?? 'Admin', role: data.role ?? 'admin' })
-      }
-
-      const { data: rows } = await supabase.from('certificate_templates').select('*')
+    void Promise.all([
+      getCachedAdmin(),
+      supabase.from('certificate_templates').select('*'),
+    ]).then(([adminData, { data: rows }]) => {
+      if (adminData) setAdmin(adminData)
       if (rows?.length) {
         setConfigs(prev => {
           const next = { ...prev }
@@ -69,7 +67,7 @@ export default function CertificateTemplatesManager({ onNavigate, onOpenSidebar 
         })
       }
       setLoadingInit(false)
-    })()
+    })
   }, [])
 
   // ── Draw canvas whenever config / preview name changes ────────
