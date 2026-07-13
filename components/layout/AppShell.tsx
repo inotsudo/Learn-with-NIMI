@@ -2,8 +2,10 @@
 
 import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
+import { useUser } from "@/contexts/UserContext";
 import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildAchievements, getCurrentLevel, updateChildLanguage, getChildCosmetics, getCurriculumMissions, getActiveStories, getStreakShieldsPurchased, getUsedShieldDates } from "@/lib/queries";
 import { getStoryLibrary } from "@/lib/storyRepository";
 import { computeStreaks } from "@/lib/parentInsights";
@@ -45,6 +47,8 @@ interface AppShellProps {
 }
 
 export default function AppShell({ children }: AppShellProps) {
+  const { user, loading: authLoading } = useUser();
+  const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -70,6 +74,12 @@ export default function AppShell({ children }: AppShellProps) {
   const [switchingLanguage, setSwitchingLanguage] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cosmetics, setCosmetics] = useState<ChildCosmetics>({ nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null });
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/loginpage");
+    }
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -200,6 +210,8 @@ export default function AppShell({ children }: AppShellProps) {
       new CustomEvent("app:languageChange", { detail: { language: pendingLanguage } })
     );
   };
+
+  if (authLoading || !user) return null;
 
   return (
     <MotionConfig reducedMotion="user">
