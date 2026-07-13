@@ -761,7 +761,7 @@ export default function LandingPage() {
                           <p className="font-nunito text-green-600 text-[11px]">Not happy? Full refund, no questions asked.</p>
                         </div>
                       </div>
-                      <Link href={authed ? "/pricing" : "/signuppage"} className="mt-auto w-full text-center text-white font-baloo font-black py-3.5 shadow-md transition-all hover:-translate-y-0.5 active:scale-95 text-[15px]" style={{backgroundColor:'var(--nimi-green)', borderRadius:'var(--leaf-r)', boxShadow:'0 6px 20px rgba(5,150,105,0.35)'}}>
+                      <Link href="/pricing" className="mt-auto w-full text-center text-white font-baloo font-black py-3.5 shadow-md transition-all hover:-translate-y-0.5 active:scale-95 text-[15px]" style={{backgroundColor:'var(--nimi-green)', borderRadius:'var(--leaf-r)', boxShadow:'0 6px 20px rgba(5,150,105,0.35)'}}>
                         Start Free → Get Full Access
                       </Link>
                       <p className="text-center font-nunito text-gray-400 text-[11px] -mt-2">No credit card needed to explore</p>
