@@ -502,8 +502,13 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
     saveSnap();
   }, [saveSnap]);
 
-  const canUndo = (undoStacks.current[pageIdx]?.length || 0) > 1;
-  const canRedo = (redoStacks.current[pageIdx]?.length || 0) > 0;
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  useEffect(() => {
+    setCanUndo((undoStacks.current[pageIdx]?.length || 0) > 1);
+    setCanRedo((redoStacks.current[pageIdx]?.length || 0) > 0);
+  }, [pageIdx, histVer]);
 
   // Cursor
   const cursor = useMemo(() => {

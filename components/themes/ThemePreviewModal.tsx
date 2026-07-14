@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
 import { getThemeStatus, type ThemeMetadata } from "@/lib/design-system/themeMetadata";
@@ -28,6 +28,16 @@ export default function ThemePreviewModal({ meta, onClose }: Props) {
 
   const status = meta ? getThemeStatus(meta, themeId) : "locked";
 
+  const handleCancel = useCallback(() => {
+    cancelPreview();
+    onClose();
+  }, [cancelPreview, onClose]);
+
+  const handleApply = useCallback(() => {
+    applyPreview();
+    onClose();
+  }, [applyPreview, onClose]);
+
   // Start preview when meta changes (modal opens)
   useEffect(() => {
     if (!meta?.isInstalled) return;
@@ -45,19 +55,9 @@ export default function ThemePreviewModal({ meta, onClose }: Props) {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") handleCancel(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [meta]);
+  }, [meta, handleCancel]);
 
   if (!meta) return null;
-
-  const handleCancel = () => {
-    cancelPreview();
-    onClose();
-  };
-
-  const handleApply = () => {
-    applyPreview();
-    onClose();
-  };
 
   return (
     <>

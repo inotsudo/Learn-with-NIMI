@@ -96,6 +96,7 @@ export default function AppShell({ children }: AppShellProps) {
   }, [language]);
 
   useEffect(() => {
+    if (!user) return; // Don't fetch until auth is confirmed
     void (async () => {
       const list = await getChildren();
       if (list.length === 0) {
@@ -134,7 +135,7 @@ export default function AppShell({ children }: AppShellProps) {
         void getActiveStories();
       }
     })();
-  }, [router]);
+  }, [user, router]);
 
   // Listen for cosmetics changes from the shop (equip/unequip)
   useEffect(() => {

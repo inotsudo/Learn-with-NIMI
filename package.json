@@ -11,7 +11,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --config eslint.config.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
@@ -513,6 +513,8 @@
     "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.0.3",
     "jsdom": "^29.1.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "eslint": "^9.10.0",
+    "eslint-config-next": "^16.2.2"
   }
 }

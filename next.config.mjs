@@ -78,7 +78,6 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
-  swcMinify: true,
   reactStrictMode: true,
 
   experimental: {

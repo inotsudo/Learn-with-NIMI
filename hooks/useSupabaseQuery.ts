@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type DependencyList } from "react";
 
 export const useSupabaseQuery = <T>(
   queryFn: () => Promise<T>,
-  dependencies: any[] = []
+  dependencies: DependencyList = []
 ) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export const useSupabaseQuery = <T>(
     return () => {
       isMounted = false;
     };
-  }, dependencies);
+  }, [queryFn, dependencies]);
 
   return { data, loading, error };
 };

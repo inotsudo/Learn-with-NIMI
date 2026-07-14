@@ -36,6 +36,21 @@ export default function PdfViewer({ url, title, onClose, onLastPage }: PdfViewer
   useEffect(() => { if (isLastPage) onLastPage?.(); }, [isLastPage]); // eslint-disable-line react-hooks/exhaustive-deps
   const showDots   = numPages > 0 && numPages <= MAX_DOTS;
 
+  const goPrev = useCallback(() => {
+    setDirection(-1);
+    setPage(p => Math.max(p - 1, 1));
+  }, []);
+
+  const goNext = useCallback(() => {
+    setDirection(1);
+    setPage(p => Math.min(p + 1, numPages));
+  }, [numPages]);
+
+  const goTo = useCallback((n: number) => {
+    setDirection(n > page ? 1 : -1);
+    setPage(n);
+  }, [page]);
+
   useEffect(() => {
     const node = containerRef.current;
     if (!node) return;
@@ -59,12 +74,7 @@ export default function PdfViewer({ url, title, onClose, onLastPage }: PdfViewer
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numPages]);
-
-  const goPrev = () => { setDirection(-1); setPage(p => Math.max(p - 1, 1)); };
-  const goNext = () => { setDirection(1);  setPage(p => Math.min(p + 1, numPages)); };
-  const goTo   = (n: number) => { setDirection(n > page ? 1 : -1); setPage(n); };
+  }, [goNext, goPrev]);
 
   const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const onTouchEnd   = (e: React.TouchEvent) => {

@@ -46,13 +46,31 @@ export function useCurrentStory(childId: string | null, language: string) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!childId) { setLoading(false); return; }
-    setLoading(true);
-    setError(null);
-    getCurrentStoryId(childId, language)
-      .then(setStoryId)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    let active = true;
+
+    const loadCurrentStory = async () => {
+      if (!childId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getCurrentStoryId(childId, language);
+        if (active) setStoryId(result);
+      } catch (e: any) {
+        if (active) setError(e.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadCurrentStory();
+    return () => {
+      active = false;
+    };
   }, [childId, language]);
 
   return { storyId, loading, error };
@@ -78,7 +96,33 @@ export function useStoryLibrary(childId: string | null, language: string) {
     }
   }, [childId, language]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    let active = true;
+
+    const loadStoryLibrary = async () => {
+      if (!childId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getStoryLibrary(childId, language);
+        if (active) setStories(result);
+      } catch (e: any) {
+        if (active) setError(e.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadStoryLibrary();
+    return () => {
+      active = false;
+    };
+  }, [childId, language]);
 
   return { stories, loading, error, refresh };
 }
@@ -91,13 +135,31 @@ export function useStoryDetails(storyId: string | null, language: string) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!storyId) { setLoading(false); return; }
-    setLoading(true);
-    setError(null);
-    fetchStoryDetails(storyId, language)
-      .then(setDetails)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    let active = true;
+
+    const loadStoryDetails = async () => {
+      if (!storyId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await fetchStoryDetails(storyId, language);
+        if (active) setDetails(result);
+      } catch (e: any) {
+        if (active) setError(e.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadStoryDetails();
+    return () => {
+      active = false;
+    };
   }, [storyId, language]);
 
   return { details, loading, error };
@@ -127,7 +189,9 @@ export function useStorySlots(
     }
   }, [childId, storyId, language]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const complete = useCallback(async (missionId: string): Promise<CompleteSlotResult | null> => {
     if (!childId) return null;
@@ -169,7 +233,33 @@ export function useStoryProgress(
     }
   }, [childId, storyId, language]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    let active = true;
+
+    const loadStoryProgress = async () => {
+      if (!childId || !storyId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getStoryCompletion(childId, storyId, language);
+        if (active) setCompletion(result);
+      } catch (e: any) {
+        if (active) setError(e.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadStoryProgress();
+    return () => {
+      active = false;
+    };
+  }, [childId, storyId, language]);
 
   return { completion, loading, error, refresh };
 }
@@ -185,11 +275,30 @@ export function useStoryCertificate(
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!childId || !storyId) { setLoading(false); return; }
-    setLoading(true);
-    getStoryCertificate(childId, storyId, language)
-      .then(setCertificate)
-      .finally(() => setLoading(false));
+    let active = true;
+
+    const loadStoryCertificate = async () => {
+      if (!childId || !storyId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        if (active) {
+          setCertificate(await getStoryCertificate(childId, storyId, language));
+        }
+      } catch {
+        if (active) setCertificate(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadStoryCertificate();
+    return () => {
+      active = false;
+    };
   }, [childId, storyId, language]);
 
   return { certificate, loading };
@@ -219,7 +328,33 @@ export function useWeeklyChallenges(
     }
   }, [childId, storyId, language]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    let active = true;
+
+    const loadWeeklyChallenges = async () => {
+      if (!childId || !storyId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await fetchChallenges(childId, storyId, language);
+        if (active) setChallenges(result);
+      } catch (e: any) {
+        if (active) setError(e.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadWeeklyChallenges();
+    return () => {
+      active = false;
+    };
+  }, [childId, storyId, language]);
 
   const complete = useCallback(async (challengeId: string): Promise<CompleteChallengeResult | null> => {
     if (!childId) return null;
@@ -259,7 +394,31 @@ export function useStoryIntroProgress(
     }
   }, [childId, storyId, language]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    let active = true;
+
+    const loadStoryIntroProgress = async () => {
+      if (!childId || !storyId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        if (active) {
+          setItems(await fetchIntroProgress(childId, storyId, language));
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadStoryIntroProgress();
+    return () => {
+      active = false;
+    };
+  }, [childId, storyId, language]);
 
   const markConsumed = useCallback(async (slotKey: string) => {
     if (!childId || !storyId) return;
