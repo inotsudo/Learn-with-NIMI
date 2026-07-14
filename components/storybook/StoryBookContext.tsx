@@ -29,6 +29,7 @@ export function StoryBookProvider({ pages, children }: {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [reachedEnd, setReachedEnd] = useState(false);
+  const [autoPlayed, setAutoPlayed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const totalPages = pages.length;
 
@@ -64,12 +65,13 @@ export function StoryBookProvider({ pages, children }: {
   const pause = useCallback(() => stopAudio(), [stopAudio]);
   const replay = useCallback(() => { stopAudio(); playPageAudio(currentPage); }, [currentPage, stopAudio, playPageAudio]);
 
-  // Auto-play first page
+  // Auto-play first page — runs once pages are loaded (avoids stale closure on empty initial pages)
   useEffect(() => {
-    const t = setTimeout(() => playPageAudio(0), 800);
-    return () => { clearTimeout(t); stopAudio(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (totalPages === 0 || autoPlayed) return;
+    setAutoPlayed(true);
+    const t = setTimeout(() => playPageAudio(0), 600);
+    return () => clearTimeout(t);
+  }, [totalPages, autoPlayed, playPageAudio]);
 
   // Preload next page assets
   useEffect(() => {

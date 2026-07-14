@@ -26,11 +26,12 @@ export default function StoryFlipBook({ pages, onClose, t }: StoryFlipBookProps)
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [, setIsPlayingAudio] = useState(false);
 
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false);
+  // Mobile detection — initialize immediately so first render picks the right viewer
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : true
+  );
   useEffect(() => {
     const checkSize = () => setIsMobile(window.innerWidth < 768);
-    checkSize();
     window.addEventListener("resize", checkSize);
     return () => window.removeEventListener("resize", checkSize);
   }, []);
