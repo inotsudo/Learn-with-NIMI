@@ -864,7 +864,7 @@ export default function ParentsZonePage() {
                                 className="flex flex-col items-center gap-2 text-center"
                               >
                                 <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-b from-amber-300 to-yellow-500 ring-[3px] ring-amber-400 shadow-[0_6px_20px_rgba(251,191,36,0.45)] relative">
-                                  <Image src={assets.badgeExplorer} alt="" width={40} height={40} className="w-10 h-10" />
+                                  <span className="text-3xl leading-none select-none">🏅</span>
                                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
                                     <span className="text-[8px] text-white font-black">✓</span>
                                   </div>

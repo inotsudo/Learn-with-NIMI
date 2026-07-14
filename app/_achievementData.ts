@@ -29,6 +29,7 @@ export interface AchievementItem {
   language: Lang;
   emoji: string;
   level?: number;
+  storySlug?: string;
   category?: ActivityCategory;
   titleKey: string;
   titleParams?: Record<string, string>;
@@ -43,7 +44,11 @@ const CERT_EMOJI = "📜";
 // languages. `t` resolves i18n keys to localized strings up front (e.g.
 // category names) so AchievementItem.titleParams/descParams are plain
 // strings ready for fillTemplate().
-export function buildAchievementCatalog(maxLevel: number, t: (key: string) => string): AchievementItem[] {
+export function buildAchievementCatalog(
+  maxLevel: number,
+  t: (key: string) => string,
+  levelSlugs: Map<number, string> = new Map(),
+): AchievementItem[] {
   const items: AchievementItem[] = [];
 
   for (const lang of LANGUAGES) {
@@ -69,6 +74,7 @@ export function buildAchievementCatalog(maxLevel: number, t: (key: string) => st
         language: lang,
         emoji: EXPLORER_EMOJI,
         level,
+        storySlug: levelSlugs.get(level),
         titleKey: "levelExplorer",
         titleParams: { level: String(level) },
         descKey: "achExplorerBadgeDesc",

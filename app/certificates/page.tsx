@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getChildren, getChildAchievements, getMaxCurriculumLevel, type ChildAchievement } from "@/lib/queries";
+import { getChildren, getChildAchievements, getMaxCurriculumLevel, getActiveStories, type ChildAchievement } from "@/lib/queries";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { PageSurface } from "@/components/layout/primitives";
@@ -26,6 +26,7 @@ export default function CertificatesPage() {
   const [childLanguage, setChildLanguage] = useState<Lang>("en");
   const [achievements, setAchievements] = useState<ChildAchievement[]>([]);
   const [maxLevel, setMaxLevel] = useState(3);
+  const [levelSlugs, setLevelSlugs] = useState<Map<number, string>>(new Map());
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -49,12 +50,14 @@ export default function CertificatesPage() {
       setChildName(child.name);
       setChildLanguage(child.language);
 
-      const [achievementRows, level] = await Promise.all([
+      const [achievementRows, level, stories] = await Promise.all([
         getChildAchievements(child.id),
         getMaxCurriculumLevel(),
+        getActiveStories(),
       ]);
       setAchievements(achievementRows);
       setMaxLevel(level);
+      setLevelSlugs(new Map(stories.map(s => [s.sort_order, s.slug])));
       setLoading(false);
     } catch (err) {
       console.error("[CertificatesPage]", err);
@@ -135,6 +138,7 @@ export default function CertificatesPage() {
             childLanguage={childLanguage}
             achievements={achievements}
             maxLevel={maxLevel}
+            levelSlugs={levelSlugs}
           />
         </main>
       </PageSurface>

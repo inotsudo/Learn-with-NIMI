@@ -15,13 +15,14 @@ interface Props {
   childLanguage: Lang;
   achievements: ChildAchievement[];
   maxLevel: number;
+  levelSlugs?: Map<number, string>;
 }
 
-export default function AchievementDashboard({ childName, childLanguage, achievements, maxLevel }: Props) {
+export default function AchievementDashboard({ childName, childLanguage, achievements, maxLevel, levelSlugs }: Props) {
   const { t } = useLanguage();
   const [activeLang, setActiveLang] = useState<Lang>(childLanguage);
 
-  const catalog = buildAchievementCatalog(maxLevel, t);
+  const catalog = buildAchievementCatalog(maxLevel, t, levelSlugs);
   const earnedMap = getEarnedMap(achievements);
   const trilingual = getTrilingualStatus(achievements);
 

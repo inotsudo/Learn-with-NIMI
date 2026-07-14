@@ -127,6 +127,7 @@ export default function StoryMissionPage() {
   const [pagesLoading, setPagesLoading] = useState(false);
   const [childId, setChildId] = useState<string | null>(null);
   const [childName, setChildName] = useState<string>("");
+  const [childLanguage, setChildLanguage] = useState<string>("en");
   const [storyId, setStoryId] = useState<string | null>(null);
   const [slot, setSlot] = useState<StorySlot | null>(null);
   const [allSlots, setAllSlots] = useState<StorySlot[]>([]);
@@ -154,6 +155,7 @@ export default function StoryMissionPage() {
       if (!child) { setLoading(false); return; }
       setChildId(child.id);
       setChildName(child.name ?? "");
+      setChildLanguage(child.language ?? "en");
 
       if (!story) { setLoading(false); return; }
       setStoryId(story.id);
@@ -487,11 +489,12 @@ export default function StoryMissionPage() {
                 <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 1.1 }}
                   className="mt-4 space-y-2 w-full text-left">
-                  {childId && childName && mission?.title && (
+                  {result.story_complete && childId && childName && mission?.title && (
                     <ShareAchievementFlow
                       childId={childId}
                       childName={childName}
-                      shareType="sticker"
+                      childLanguage={childLanguage}
+                      shareType="certificate"
                       title={mission.title}
                     />
                   )}

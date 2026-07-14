@@ -15,10 +15,10 @@ export default function MyBadgesCard({ slots }: Props) {
   const assets = getThemeAssets(themeId);
 
   const BADGES = [
-    { key: "flipflop_audio", label: "Story Explorer",  icon: assets.badgeExplorer },
-    { key: "coloring",       label: "Kind Heart",      icon: assets.badgeKindHeart },
-    { key: "move_explore",   label: "Healthy Hero",    icon: assets.badgeHero },
-    { key: "bonus_video",    label: "Adventure Star",  icon: assets.starMascot },
+    { key: "flipflop_audio", label: "Story Explorer",  emoji: "📖" },
+    { key: "coloring",       label: "Kind Heart",      emoji: "🎨" },
+    { key: "move_explore",   label: "Healthy Hero",    emoji: "⚡" },
+    { key: "bonus_video",    label: "Adventure Star",  emoji: "🌟" },
   ];
 
   const earned = (key: string) => slots.find(s => s.slot_key === key)?.completed ?? false;
@@ -53,8 +53,9 @@ export default function MyBadgesCard({ slots }: Props) {
                     className={`w-16 h-16 rounded-full flex items-center justify-center border-[3px] shadow-[0_10px_24px_rgba(15,23,42,0.08)] ${
                       is ? "border-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)]" : "border-gray-200 bg-gray-50"
                     }`}>
-                    <Image src={b.icon} alt={b.label} width={48} height={48}
-                      className={`w-12 h-12 ${is ? "" : "grayscale opacity-30"}`} />
+                    <span className={`text-3xl leading-none select-none ${is ? "" : "grayscale opacity-30"}`}>
+                      {b.emoji}
+                    </span>
                   </motion.div>
                   {is && (
                     <Image src={assets.rewards.badgeFrame} alt="" aria-hidden="true" fill

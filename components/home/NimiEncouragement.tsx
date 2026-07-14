@@ -68,9 +68,9 @@ export default function NimiEncouragement({ childName }: Props) {
           <motion.img src={assets.starMascot} alt="" className="w-12 h-12" loading="lazy"
             animate={m.floatRotate(8).animate}
             transition={m.floatRotate(8).transition} />
-          <motion.img src={assets.trophy} alt="" className="w-10 h-10" loading="lazy"
+          <motion.span className="text-[40px] leading-none select-none"
             animate={m.floatMd.animate}
-            transition={{ ...m.floatMd.transition, delay: 0.3 }} />
+            transition={{ ...m.floatMd.transition, delay: 0.3 }}>🏆</motion.span>
           <motion.img src={assets.starMascot} alt="" className="w-10 h-10" loading="lazy"
             animate={m.floatRotate(-8, 0.6).animate}
             transition={m.floatRotate(-8, 0.6).transition} />

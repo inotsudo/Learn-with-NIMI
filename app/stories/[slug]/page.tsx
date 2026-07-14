@@ -26,6 +26,7 @@ import ShareAchievementFlow from "@/components/community/ShareAchievementFlow";
 import StoryVideoPlayer from "@/components/media/StoryVideoPlayer";
 import StoryAudioPlayer from "@/components/media/StoryAudioPlayer";
 import { playTap, playSuccess, playCelebration, playUnlock, playStar } from "@/lib/sounds";
+import { generateCertificateDataUrl } from "@/lib/certificateImage";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
@@ -34,6 +35,122 @@ import MeetCharactersCard from "@/components/stories/MeetCharactersCard";
 import BadgeCircle from "@/components/stories/BadgeCircle";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
+
+/* ─────────────────────────────────────────────────────────────
+   Certificate modal — personalized admin template with name
+───────────────────────────────────────────────────────────── */
+function CertificateModal({
+  childName,
+  language,
+  storyTitle,
+  onClose,
+}: {
+  childName: string;
+  language: string;
+  storyTitle: string;
+  onClose: () => void;
+}) {
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    generateCertificateDataUrl(childName, language).then(url => {
+      setDataUrl(url);
+      setLoading(false);
+    });
+  }, [childName, language]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.85, opacity: 0, y: 24 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 12 }}
+        transition={{ type: "spring", stiffness: 280, damping: 22 }}
+        onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.4)] border-[3px] border-amber-300"
+      >
+        {/* Gold header bar */}
+        <div className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 px-5 py-3 flex items-center justify-between">
+          <p className="font-baloo font-black text-amber-900 text-[15px] tracking-wide">
+            🎓 Story Certificate
+          </p>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-full bg-amber-900/15 hover:bg-amber-900/30 flex items-center justify-center transition text-amber-900 font-black text-[16px] leading-none"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Certificate image area */}
+        <div className="bg-amber-50 flex items-center justify-center min-h-[300px] p-2">
+          {loading ? (
+            <div className="w-full aspect-[3/4] animate-pulse rounded-2xl bg-gradient-to-b from-amber-100 to-yellow-100 flex items-center justify-center">
+              <span className="text-5xl animate-bounce">🏆</span>
+            </div>
+          ) : dataUrl ? (
+            <img
+              src={dataUrl}
+              alt={`${childName}'s certificate`}
+              className="w-full rounded-2xl object-contain shadow-md"
+            />
+          ) : (
+            /* No admin template configured — show a polished fallback */
+            <div className="w-full aspect-[3/4] rounded-2xl flex flex-col items-center justify-center gap-4 bg-gradient-to-b from-amber-50 to-yellow-100 border-2 border-amber-200 px-6">
+              <span className="text-7xl">🏆</span>
+              <div className="text-center">
+                <p className="font-baloo font-black text-amber-800 text-[22px] leading-tight">
+                  {childName}
+                </p>
+                <p className="font-nunito text-amber-600 text-[13px] mt-1 font-semibold">
+                  has mastered
+                </p>
+                <p className="font-baloo font-black text-amber-800 text-[17px] mt-0.5 leading-snug">
+                  {storyTitle}
+                </p>
+              </div>
+              <div className="flex gap-1 mt-1">
+                {["⭐","⭐","⭐"].map((s, i) => <span key={i} className="text-2xl">{s}</span>)}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="bg-white px-4 py-3 flex gap-2 border-t border-amber-100">
+          <button
+            onClick={() => {
+              if (!dataUrl) return;
+              const win = window.open("", "_blank", "width=900,height=1200");
+              if (!win) return;
+              win.document.write(
+                `<!DOCTYPE html><html><head><title>Story Certificate</title>` +
+                `<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#fff}` +
+                `img{width:100%;height:auto;display:block}</style></head>` +
+                `<body><img src="${dataUrl}" onload="window.focus();window.print();window.close()"/></body></html>`
+              );
+              win.document.close();
+            }}
+            disabled={!dataUrl}
+            className="flex-1 flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-baloo font-black text-[14px] py-2.5 rounded-2xl transition disabled:opacity-40"
+          >
+            🖨️ Print
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--nimi-green)] to-[var(--ds-brand-hover)] text-white font-baloo font-black text-[14px] py-2.5 rounded-2xl shadow-sm transition"
+          >
+            ✅ Done
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 // Steps 2–4 of the boss's learning journey (Cover is step 1, shown on welcome screen)
 const INTRO_ITEMS = [
@@ -79,7 +196,7 @@ export default function StoryDetailPage() {
   const router = useRouter();
   const slug = params.slug as string;
   const { t, language } = useLanguage();
-  const { themeId } = useAppTheme();
+  const { themeId, theme } = useAppTheme();
   const assets = getThemeAssets(themeId);
   const v = getComponentVariant(themeId);
   const m = useThemeMotion();
@@ -106,6 +223,41 @@ export default function StoryDetailPage() {
   const [feeling, setFeeling] = useState<string | null>(null);
   const [premiumLocked, setPremiumLocked] = useState(false);
   const [parentId, setParentId] = useState<string | null>(null);
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [sharingCert, setSharingCert] = useState(false);
+
+  const handleShare = async () => {
+    setSharingCert(true);
+    try {
+      const storyUrl = window.location.href;
+      const message = `🎉 ${childName} just completed "${storyTitle}" on NIMI!\n\n🎓 Check it out and start your own learning adventure:\n${storyUrl}`;
+
+      // Try to include the certificate image
+      const dataUrl = await generateCertificateDataUrl(childName, language);
+      if (dataUrl) {
+        const blob = await fetch(dataUrl).then(r => r.blob());
+        const file = new File([blob], `${childName}-certificate.jpg`, { type: "image/jpeg" });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], text: message });
+          return;
+        }
+      }
+
+      // Fallback: share text + URL via Web Share API or WhatsApp
+      if (navigator.share) {
+        await navigator.share({ title: `${childName} completed ${storyTitle}!`, text: message });
+      } else {
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      }
+    } catch (e) {
+      // User cancelled or error — open WhatsApp directly
+      const storyUrl = window.location.href;
+      const message = `🎉 ${childName} just completed "${storyTitle}" on NIMI!\n\n🎓 ${storyUrl}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } finally {
+      setSharingCert(false);
+    }
+  };
 
   useEffect(() => {
     void (async () => {
@@ -290,6 +442,13 @@ export default function StoryDetailPage() {
       setNextStory(library[currentIdx + 1] ?? null);
     })();
   }, [phase, childId, storyId, details, language]);
+
+  // Auto-open certificate modal 1.5 s after the completion screen appears
+  useEffect(() => {
+    if (phase !== "complete") return;
+    const t = setTimeout(() => setShowCertModal(true), 1500);
+    return () => clearTimeout(t);
+  }, [phase]);
 
   if (loading) {
     return (
@@ -1228,97 +1387,161 @@ export default function StoryDetailPage() {
             )}
 
             {/* ═══════════════════════════════════════════ */}
-            {/* PHASE 6: COMPLETE — WHAT'S NEXT            */}
+            {/* PHASE 6: COMPLETE — CELEBRATION            */}
             {/* ═══════════════════════════════════════════ */}
             {phase === "complete" && (
               <motion.div key="complete" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="flex-1 flex flex-col items-center px-5 pb-8 text-center overflow-y-auto">
+                className="flex-1 flex flex-col items-center pb-10 text-center overflow-y-auto relative">
 
-                {/* ── Celebration hero ── */}
-                <div className="relative w-full flex flex-col items-center pt-6 pb-4 mb-2">
-                  {/* Floating confetti particles */}
-                  {[
-                    { emoji: "⭐", x: "10%",  delay: 0,    dur: 2.8 },
-                    { emoji: "🎉", x: "82%",  delay: 0.3,  dur: 3.1 },
-                    { emoji: "✨", x: "25%",  delay: 0.7,  dur: 2.5 },
-                    { emoji: "🌟", x: "68%",  delay: 0.5,  dur: 3.4 },
-                    { emoji: "⭐", x: "50%",  delay: 1.1,  dur: 2.9 },
-                    { emoji: "🎊", x: "90%",  delay: 0.9,  dur: 3.2 },
-                  ].map((p, i) => (
-                    <motion.span key={i}
-                      className="absolute top-0 text-xl pointer-events-none select-none"
-                      style={{ left: p.x }}
-                      initial={{ y: -10, opacity: 0 }}
-                      animate={{ y: [0, -18, 0], opacity: [0, 1, 0] }}
-                      transition={{ duration: p.dur, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}>
-                      {p.emoji}
-                    </motion.span>
-                  ))}
-
-                  {/* Nimi celebrating */}
-                  <motion.img
-                    src={assets.nimiCelebration}
-                    alt="Nimi celebrating"
-                    initial={{ scale: 0.7, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1, y: [0, -6, 0] }}
-                    transition={{ scale: { type: "spring", stiffness: 260, damping: 18 }, y: { duration: 3, repeat: Infinity, ease: "easeInOut" } }}
-                    className="w-28 h-28 rounded-full object-cover border-4 border-yellow-300 shadow-xl mb-4"
-                  />
-
-                  <motion.h2
-                    initial={{ y: 12, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="font-baloo font-black text-ds-text text-[26px] leading-tight">
-                    {t("storyComplete")} 🌟
-                  </motion.h2>
-                  <motion.p
-                    initial={{ y: 8, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="font-nunito text-gray-400 text-[14px] mt-1">
-                    {storyTitle}
-                  </motion.p>
+                {/* ══ CONFETTI RAIN ══ */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                  {Array.from({ length: 36 }).map((_, i) => {
+                    const confettiColors = ["#fbbf24","#f472b6","#34d399","#60a5fa","#a78bfa","#fb923c","#f87171","#22c55e"];
+                    const col = confettiColors[i % confettiColors.length];
+                    const left = `${(i * 97 + 13) % 100}%`;
+                    const delay = (i * 0.23) % 4;
+                    const dur = 2.5 + (i % 5) * 0.4;
+                    const size = 6 + (i % 4) * 3;
+                    return (
+                      <motion.div key={i}
+                        className="absolute top-0 rounded-sm"
+                        style={{ left, width: size, height: size * 1.6, background: col, opacity: 0.75 }}
+                        animate={{ y: ["0vh","110vh"], rotate: [0, 360 * (i % 2 === 0 ? 1 : -1)], opacity: [0, 0.8, 0.8, 0] }}
+                        transition={{ duration: dur, repeat: Infinity, delay, ease: "linear" }}
+                      />
+                    );
+                  })}
                 </div>
 
-                {/* ── What's Next cards ── */}
-                <motion.div
-                  initial={{ y: 16, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="w-full max-w-sm mb-5">
+                {/* ══ HERO ══ */}
+                <div className="relative z-10 w-full flex flex-col items-center pt-8 px-4">
 
-                  <p className="font-baloo font-black text-ds-text text-[12px] uppercase tracking-[0.12em] mb-3 flex items-center justify-center gap-1.5">
-                    <span>🚀</span> What&apos;s Next?
-                  </p>
+                  {/* YOU DID IT banner */}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -12 }}
+                    animate={{ scale: 1, rotate: -2 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 18 }}
+                    className="mb-4 bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-2"
+                    style={{ borderRadius: "var(--leaf-r)", boxShadow: "0 8px 32px rgba(251,191,36,0.40), inset 0 1px 0 rgba(255,255,255,0.35)" }}>
+                    <p className="font-baloo font-black text-[28px] text-amber-950 tracking-wide leading-none">
+                      🎉 YOU DID IT! 🎉
+                    </p>
+                  </motion.div>
+
+                  {/* Child name shoutout */}
+                  <motion.p
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.25 }}
+                    className="font-baloo font-black text-ds-text text-[22px] leading-tight">
+                    {childName ? `${childName} is a` : "You are a"}
+                  </motion.p>
+                  <motion.div
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.35, type: "spring", stiffness: 260 }}
+                    className={`mt-1 mb-5 px-6 py-1.5 rounded-full bg-gradient-to-r ${v.zoneGradients.library}`}
+                    style={{ boxShadow: `0 6px 24px ${theme.shadow.cta}` }}>
+                    <p className="font-baloo font-black text-white text-[20px] tracking-widest uppercase">
+                      ⭐ SUPER EXPLORER ⭐
+                    </p>
+                  </motion.div>
+
+                  {/* Nimi + Piko celebrating together */}
+                  <div className="flex items-end justify-center gap-4 mb-4">
+                    <motion.div className="relative"
+                      initial={{ x: -40, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.4, type: "spring", stiffness: 220 }}>
+                      <motion.img src={assets.nimiCelebration} alt="Nimi"
+                        animate={{ y: [0, -12, 0], rotate: [0, -6, 6, 0] }}
+                        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-36 h-36 object-contain drop-shadow-xl" />
+                      <motion.span className="absolute -top-3 -right-1 text-3xl"
+                        animate={{ scale: [1,1.3,1], rotate: [0,20,-20,0] }}
+                        transition={{ duration: 1.6, repeat: Infinity }}>⭐</motion.span>
+                    </motion.div>
+
+                    <motion.div className="relative"
+                      initial={{ x: 40, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.5, type: "spring", stiffness: 220 }}>
+                      <motion.img src={assets.pikoCircle} alt="Piko"
+                        animate={{ y: [0, -10, 0], rotate: [0, 8, -8, 0] }}
+                        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                        className="w-28 h-28 object-contain drop-shadow-xl rounded-full" />
+                      <motion.span className="absolute -top-3 -left-1 text-2xl"
+                        animate={{ scale: [1,1.4,1], rotate: [0,-20,20,0] }}
+                        transition={{ duration: 1.8, repeat: Infinity, delay: 0.3 }}>🌟</motion.span>
+                    </motion.div>
+                  </div>
+
+                  {/* Story title + XP */}
+                  <motion.div
+                    initial={{ y: 12, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.55 }}
+                    className="flex flex-col items-center gap-2 mb-6">
+                    <div className="px-4 py-1.5 rounded-full border border-ds-border bg-ds-card">
+                      <p className="font-nunito font-black text-ds-text text-[13px] tracking-wide">
+                        📖 {storyTitle}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <motion.div
+                        className={`px-3 py-1 rounded-full text-[11px] font-black text-white bg-gradient-to-r ${theme.gradients.badge}`}
+                        animate={{ scale: [1,1.08,1] }} transition={{ duration: 2, repeat: Infinity }}>
+                        ⚡ +100 XP
+                      </motion.div>
+                      <div className="px-3 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-yellow-400 to-amber-500 text-amber-950">
+                        🏅 Badge Earned!
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* ── What's Next ── */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.65 }}
+                  className="relative z-10 w-full max-w-sm px-5 mb-6">
+
+                  <div className="flex items-center gap-2 mb-3 justify-center">
+                    <div className="flex-1 h-px bg-ds-border" />
+                    <p className="font-baloo font-black text-ds-muted text-[11px] uppercase tracking-[0.18em]">
+                      🚀 What&apos;s Next?
+                    </p>
+                    <div className="flex-1 h-px bg-ds-border" />
+                  </div>
 
                   <div className="flex items-stretch gap-3">
                     {/* Current story — MASTERED */}
-                    <div className="flex-1 bg-white border-2 border-green-200 rounded-2xl p-3.5 flex flex-col items-center gap-2 shadow-sm">
-                      <p className="text-[9px] font-black text-green-500 uppercase tracking-widest">
+                    <div className="flex-1 p-3.5 flex flex-col items-center gap-2 bg-ds-card border border-ds-border shadow-ds-card"
+                      style={{ borderRadius: "var(--leaf-r)" }}>
+                      <p className="font-baloo font-black text-[9px] text-amber-500 uppercase tracking-widest">
                         Story {details?.sort_order ?? ""}
                       </p>
                       <span className="text-4xl leading-none">{details?.theme_emoji ?? "📖"}</span>
                       <p className="font-baloo font-black text-[12px] text-ds-text text-center leading-tight line-clamp-2 flex-1">
                         {storyTitle}
                       </p>
-                      <div className="w-full bg-green-500 text-white font-black text-[11px] rounded-full py-1.5 flex items-center justify-center gap-1">
+                      <div className={`w-full font-black text-[10px] py-1.5 flex items-center justify-center gap-1 text-white bg-gradient-to-r ${theme.gradients.badge}`}
+                        style={{ borderRadius: "var(--leaf-r-sm)" }}>
                         ✅ MASTERED!
                       </div>
                     </div>
 
                     {/* Connector */}
-                    <div className="flex flex-col items-center justify-center gap-1.5 flex-shrink-0 py-2">
-                      <div className="w-px flex-1 bg-gray-150" />
+                    <div className="flex flex-col items-center justify-center gap-1 flex-shrink-0">
+                      <div className="w-px h-6 bg-ds-border" />
                       <motion.div
-                        animate={nextStory?.unlocked ? { scale: [1, 1.15, 1] } : {}}
+                        animate={nextStory?.unlocked ? { scale: [1, 1.25, 1] } : {}}
                         transition={{ duration: 1.8, repeat: Infinity }}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0 shadow-sm ${
-                          nextStory?.unlocked ? "bg-green-100" : "bg-gray-100"
-                        }`}>
-                        {nextStory?.unlocked ? "🔓" : <Lock className="w-4 h-4 text-gray-400" />}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-ds-card border border-ds-border shadow-ds-card">
+                        {nextStory?.unlocked ? "🔓" : <Lock className="w-4 h-4 text-ds-muted" />}
                       </motion.div>
-                      <div className="w-px flex-1 bg-gray-150" />
+                      <div className="w-px h-6 bg-ds-border" />
                     </div>
 
                     {/* Next story */}
@@ -1326,96 +1549,112 @@ export default function StoryDetailPage() {
                       nextStory.unlocked ? (
                         <Link href={`/stories/${nextStory.slug}`} className="flex-1">
                           <motion.div whileTap={m.buttonPress}
-                            className="h-full bg-white border-2 rounded-2xl p-3.5 flex flex-col items-center gap-2 shadow-sm transition"
-                            style={{ borderColor: "var(--ds-brand-primary)" }}>
-                            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: "var(--ds-brand-primary)" }}>
+                            className="h-full p-3.5 flex flex-col items-center gap-2 bg-ds-card border border-amber-200 shadow-ds-card"
+                            style={{ borderRadius: "var(--leaf-r)" }}>
+                            <p className="font-baloo font-black text-[9px] text-amber-500 uppercase tracking-widest">
                               Story {nextStory.sort_order}
                             </p>
                             <span className="text-4xl leading-none">{nextStory.theme_emoji ?? "📖"}</span>
                             <p className="font-baloo font-black text-[12px] text-ds-text text-center leading-tight line-clamp-2 flex-1">
                               {nextStory.title}
                             </p>
-                            <div className="w-full text-white font-black text-[11px] rounded-full py-1.5 flex items-center justify-center gap-1"
-                              style={{ background: "linear-gradient(to right, var(--nimi-green), var(--ds-brand-hover))" }}>
+                            <div className="w-full font-black text-[10px] py-1.5 flex items-center justify-center gap-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-amber-950"
+                              style={{ borderRadius: "var(--leaf-r-sm)" }}>
                               🚀 START!
                             </div>
                           </motion.div>
                         </Link>
                       ) : (
-                        <div className="flex-1 bg-gray-50 border-2 border-gray-100 rounded-2xl p-3.5 flex flex-col items-center gap-2">
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                            Story {nextStory.sort_order}
-                          </p>
-                          <span className="text-4xl leading-none opacity-50">{nextStory.theme_emoji ?? "📖"}</span>
-                          <p className="font-baloo font-black text-[12px] text-gray-400 text-center leading-tight line-clamp-2 flex-1">
-                            {nextStory.title}
-                          </p>
-                          <div className="w-full bg-gray-300 text-white font-black text-[11px] rounded-full py-1.5 flex items-center justify-center gap-1">
-                            🔒 LOCKED
-                          </div>
+                        <div className="flex-1 p-3.5 flex flex-col items-center gap-2 bg-ds-card border border-ds-border opacity-50"
+                          style={{ borderRadius: "var(--leaf-r)" }}>
+                          <p className="text-[9px] font-black text-ds-muted uppercase tracking-widest">Story {nextStory.sort_order}</p>
+                          <span className="text-4xl leading-none opacity-40">{nextStory.theme_emoji ?? "📖"}</span>
+                          <p className="font-baloo font-black text-[12px] text-ds-muted text-center leading-tight line-clamp-2 flex-1">{nextStory.title}</p>
+                          <div className="w-full bg-gray-100 text-ds-muted font-black text-[10px] py-1.5 flex items-center justify-center gap-1"
+                            style={{ borderRadius: "var(--leaf-r-sm)" }}>🔒 LOCKED</div>
                         </div>
                       )
                     ) : (
-                      <div className="flex-1 border-2 border-dashed border-gray-200 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2">
-                        <span className="text-2xl">🌟</span>
-                        <p className="font-baloo font-black text-[11px] text-gray-400 text-center leading-snug">More coming soon!</p>
+                      <div className="flex-1 p-3.5 flex flex-col items-center justify-center gap-2 bg-ds-card border border-dashed border-ds-border"
+                        style={{ borderRadius: "var(--leaf-r)" }}>
+                        <span className="text-3xl">🌟</span>
+                        <p className="font-baloo font-black text-[11px] text-ds-muted text-center leading-snug">More coming soon!</p>
                       </div>
                     )}
                   </div>
 
-                  <p className="font-nunito text-gray-400 text-[12px] mt-3">
+                  <p className="font-nunito text-ds-muted text-[11px] mt-2.5">
                     {nextStory?.unlocked
-                      ? "Your next adventure is ready — tap to begin! 🎉"
-                      : "Complete all missions to unlock the next adventure!"}
+                      ? "🎉 Your next adventure is ready — tap to begin!"
+                      : nextStory
+                        ? "Keep going — the next adventure will unlock soon!"
+                        : "You've explored all stories so far — more coming soon! 🌟"}
                   </p>
                 </motion.div>
 
                 {/* ── Action buttons ── */}
                 <motion.div
-                  initial={{ y: 16, opacity: 0 }}
+                  initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.55 }}
-                  className="space-y-3 w-full max-w-xs">
+                  transition={{ delay: 0.75 }}
+                  className="relative z-10 w-full max-w-xs px-5 space-y-3">
 
-                  {/* Primary: next story (if unlocked) OR treasure */}
+                  {/* PRIMARY: View Certificate */}
+                  <motion.button
+                    whileTap={m.buttonPress}
+                    onClick={() => setShowCertModal(true)}
+                    className="relative w-full font-baloo font-black text-[20px] py-4 flex items-center justify-center gap-2.5 overflow-hidden bg-gradient-to-r from-yellow-400 to-amber-500 text-amber-950"
+                    style={{ borderRadius: "var(--leaf-r-lg)", boxShadow: "0 4px 20px rgba(251,191,36,0.40), inset 0 1px 0 rgba(255,255,255,0.4)" }}>
+                    <motion.div className="absolute inset-0 pointer-events-none"
+                      animate={{ x: ["-100%","200%"] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.5 }}
+                      style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.40),transparent)", width: "45%" }} />
+                    <span className="text-2xl">🎓</span>
+                    <span>View My Certificate</span>
+                  </motion.button>
+
                   {nextStory?.unlocked ? (
-                    <Link href={`/stories/${nextStory.slug}`}>
+                    <Link href={`/stories/${nextStory.slug}`} className="block">
                       <motion.div whileTap={m.buttonPress}
-                        className="w-full text-white font-baloo font-black text-[17px] rounded-full py-4 shadow-[0_8px_20px_rgba(0,150,80,0.28)] flex items-center justify-center gap-2"
-                        style={{ background: "linear-gradient(to right, var(--nimi-green), var(--ds-brand-hover))" }}>
+                        className={`w-full font-baloo font-black text-[17px] py-3.5 flex items-center justify-center gap-2 text-white ${v.buttonStyle.primary}`}
+                        style={{ borderRadius: "var(--leaf-r-lg)" }}>
                         🚀 Start Next Story
                       </motion.div>
                     </Link>
                   ) : (
-                    <Link href="/treasure">
+                    <Link href="/treasure" className="block">
                       <motion.div whileTap={m.buttonPress}
-                        className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-baloo font-black text-[17px] rounded-full py-4 shadow-[0_8px_20px_rgba(245,158,11,0.28)] flex items-center justify-center gap-2">
-                        {t("storyMyTreasure")}
+                        className={`w-full font-baloo font-black text-[17px] py-3.5 flex items-center justify-center gap-2 text-white bg-gradient-to-r ${v.zoneGradients.treasureRoom}`}
+                        style={{ borderRadius: "var(--leaf-r-lg)", boxShadow: "0 6px 20px rgba(245,158,11,0.30)" }}>
+                        🏆 {t("storyMyTreasure")}
                       </motion.div>
                     </Link>
                   )}
 
-                  {/* Secondary: treasure (if next story is primary) or share */}
                   {nextStory?.unlocked && (
-                    <Link href="/treasure">
+                    <Link href="/treasure" className="block">
                       <motion.div whileTap={m.buttonPress}
-                        className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-baloo font-black text-[15px] rounded-full py-3.5 shadow-[0_6px_16px_rgba(245,158,11,0.22)] flex items-center justify-center gap-2">
-                        {t("storyMyTreasure")}
+                        className={`w-full font-baloo font-black text-[15px] py-3 flex items-center justify-center gap-2 text-white bg-gradient-to-r ${v.zoneGradients.treasureRoom}`}
+                        style={{ borderRadius: "var(--leaf-r)", boxShadow: "0 4px 14px rgba(245,158,11,0.25)" }}>
+                        🏆 {t("storyMyTreasure")}
                       </motion.div>
                     </Link>
                   )}
 
-                  <Link href="/community">
-                    <motion.div whileTap={m.buttonPress}
-                      className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-baloo font-black text-[15px] rounded-full py-3.5 shadow-[0_6px_16px_rgba(236,72,153,0.22)] flex items-center justify-center gap-2">
-                      {t("storyShareFriends")}
-                    </motion.div>
-                  </Link>
+                  <motion.button
+                    whileTap={m.buttonPress}
+                    onClick={handleShare}
+                    disabled={sharingCert}
+                    className={`w-full font-baloo font-black text-[15px] py-3 flex items-center justify-center gap-2 text-white bg-gradient-to-r ${v.zoneGradients.communitySquare} disabled:opacity-60`}
+                    style={{ borderRadius: "var(--leaf-r)", boxShadow: "0 4px 14px rgba(56,189,248,0.25)" }}>
+                    {sharingCert ? "⏳ Preparing..." : "📲 Share on WhatsApp"}
+                  </motion.button>
 
-                  <Link href="/stories">
+                  <Link href="/stories" className="block">
                     <motion.div whileTap={m.buttonPress}
-                      className="w-full bg-white border-2 border-gray-200 text-gray-500 font-baloo font-black text-[14px] rounded-full py-3 flex items-center justify-center gap-2 hover:border-[var(--ds-brand-primary)] hover:text-[var(--ds-brand-primary)] transition">
-                      {t("storyNextStory")}
+                      className="w-full font-baloo font-black text-[14px] py-2.5 flex items-center justify-center gap-2 bg-ds-card border border-ds-border text-ds-text"
+                      style={{ borderRadius: "var(--leaf-r)" }}>
+                      🚀 {t("storyNextStory")}
                     </motion.div>
                   </Link>
                 </motion.div>
@@ -1426,6 +1665,17 @@ export default function StoryDetailPage() {
 
           <CelebrationModal isOpen={showCelebration}
             onClose={() => { setShowCelebration(false); setChallengeDone(true); }} childName={childName} />
+
+          <AnimatePresence>
+            {showCertModal && (
+              <CertificateModal
+                childName={childName}
+                language={language}
+                storyTitle={storyTitle}
+                onClose={() => setShowCertModal(false)}
+              />
+            )}
+          </AnimatePresence>
         </main>
       </PageSurface>
     </AppShell>

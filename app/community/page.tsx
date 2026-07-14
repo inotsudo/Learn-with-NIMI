@@ -14,6 +14,8 @@ import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { HeroBanner } from "@/components/layout/primitives";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { Creation } from "@/components/community/types";
+import { getStoryLibrary } from "@/lib/storyRepository";
+import { generateCertificateImageUrl } from "@/lib/certificateImage";
 
 const PAGE_SIZE = 20;
 const HOT_THRESHOLD = 8;
@@ -31,6 +33,19 @@ function timeAgo(dateStr: string): string {
 }
 
 type CreationRow = { id: string; child_name?: string | null; children?: { avatar_url?: string | null } | null; age?: number | null; description?: string | null; image_url?: string | null; likes?: { user_id: string }[] | null; type?: string | null; created_at: string };
+
+interface PickerItem {
+  key: string;
+  childId: string;
+  childName: string;
+  childAvatar: string;
+  childLanguage: string;
+  storyTitle: string;
+  coverUrl: string | null;
+  themeEmoji: string | null;
+  complete: boolean;
+  progress: number;
+}
 
 function mapCreation(c: CreationRow, uid: string): Creation {
   return {
@@ -139,12 +154,8 @@ function CreationCard({
     ? (creation.imageUrl.startsWith("/") || creation.imageUrl.startsWith("http")
         ? creation.imageUrl : getStorageUrl(creation.imageUrl))
     : null;
-  const hasImg = !!(imgUrl && !imgUrl.endsWith(".svg") && !imgUrl.includes("logo"));
+  const hasImg = !!(imgUrl && imgUrl.startsWith("http") && !imgUrl.endsWith(".svg"));
   const isHot  = creation.likes >= HOT_THRESHOLD;
-
-  const avatarContent = creation.childAvatar && creation.childAvatar.length <= 2
-    ? creation.childAvatar
-    : creation.childName?.[0]?.toUpperCase() ?? "?";
 
   const AVATAR_GRADIENTS = [
     "from-violet-500 to-purple-600", "from-pink-500 to-rose-600",
@@ -152,6 +163,9 @@ function CreationCard({
     "from-amber-500 to-orange-600",  "from-teal-500 to-cyan-600",
   ];
   const avatarGrad = AVATAR_GRADIENTS[(creation.childName?.charCodeAt(0) ?? 0) % AVATAR_GRADIENTS.length];
+  const isAvatarPhoto = !!(creation.childAvatar?.startsWith("http"));
+  const isAvatarEmoji = !isAvatarPhoto && !!(creation.childAvatar && creation.childAvatar.length <= 2);
+  const avatarInitial = creation.childName?.[0]?.toUpperCase() ?? "?";
 
   const handleCheer = () => {
     if (!creation.likedByUser) setBursting(true);
@@ -165,17 +179,19 @@ function CreationCard({
       exit={{ opacity:0, scale:0.94 }}
       transition={{ type:"spring", stiffness:280, damping:26, delay: Math.min(index * 0.05, 0.35) }}
       whileHover={{ y:-4, transition:{ type:"spring", stiffness:360, damping:28 } }}
-      className="group rounded-3xl border border-ds-border bg-ds-surface shadow-[0_4px_20px_rgba(15,23,42,0.07)] hover:shadow-[0_14px_40px_rgba(15,23,42,0.13)] transition-shadow duration-300 overflow-visible"
+      className="group rounded-3xl border border-ds-border bg-ds-card shadow-[0_4px_20px_rgba(15,23,42,0.07)] hover:shadow-[0_14px_40px_rgba(15,23,42,0.13)] transition-shadow duration-300 overflow-visible"
     >
       {/* ── IMAGE ZONE (overflow-hidden isolated) ── */}
       <div className="relative w-full rounded-t-3xl overflow-hidden bg-gray-100" style={{ aspectRatio: "4/3" }}>
         {hasImg ? (
           <img
-            src={imgUrl}
+            src={imgUrl!}
             alt={creation.description ?? `${creation.childName}'s creation`}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-           loading="lazy" />
+            loading="lazy"
+          />
         ) : (
+          /* Pure emoji gradient fallback */
           <div className={`w-full h-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
             <motion.span
               className="text-7xl drop-shadow-2xl"
@@ -184,15 +200,6 @@ function CreationCard({
             >
               {meta.emoji}
             </motion.span>
-            {/* Subtle sparkle floaters */}
-            {["✨","⭐","💫"].map((s, j) => (
-              <motion.span key={j}
-                className="absolute text-white/20 text-sm pointer-events-none select-none"
-                style={{ left:`${14+j*28}%`, top:`${18+j*22}%` }}
-                animate={{ opacity:[0,0.5,0], y:[0,-10,0] }}
-                transition={{ duration:2.8+j, repeat:Infinity, delay:j*0.6 }}
-              >{s}</motion.span>
-            ))}
           </div>
         )}
 
@@ -228,8 +235,12 @@ function CreationCard({
       <div className="px-4 pb-4">
         {/* Avatar + name row — avatar overlaps the image boundary */}
         <div className="flex items-end gap-3 -mt-5 mb-3 relative z-10">
-          <div className={`w-11 h-11 rounded-full border-[3px] border-ds-surface bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-base font-black text-white shadow-md shrink-0`}>
-            {avatarContent}
+          <div className={`w-11 h-11 rounded-full border-[3px] border-ds-surface bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-base font-black text-white shadow-md shrink-0 overflow-hidden`}>
+            {isAvatarPhoto
+              ? <img src={creation.childAvatar!} alt={creation.childName} className="w-full h-full object-cover" />
+              : isAvatarEmoji
+              ? <span className="text-[19px] leading-none">{creation.childAvatar}</span>
+              : avatarInitial}
           </div>
           <div className="pb-0.5 min-w-0">
             <p className="font-black text-ds-text text-[14px] leading-tight truncate">{creation.childName}</p>
@@ -239,7 +250,7 @@ function CreationCard({
 
         {/* Description */}
         {creation.description && (
-          <p className="text-ds-muted text-[12px] leading-relaxed mb-3 line-clamp-2">
+          <p className="text-ds-text/70 text-[12.5px] leading-relaxed mb-3 line-clamp-2 font-medium">
             {creation.description}
           </p>
         )}
@@ -304,7 +315,7 @@ function ReportModal({ onSubmit, onCancel }: { onSubmit: (r: string) => void; on
         <motion.div
           initial={{ opacity:0, y:60 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:40 }}
           transition={{ type:"spring", stiffness:340, damping:30 }}
-          className="w-full sm:max-w-sm bg-ds-surface shadow-2xl p-6 pb-8 sm:pb-6 border border-ds-border rounded-t-3xl sm:rounded-3xl sm:mx-4"
+          className="w-full sm:max-w-sm bg-ds-card shadow-2xl p-6 pb-8 sm:pb-6 border border-ds-border rounded-t-3xl sm:rounded-3xl sm:mx-4"
         >
           <div className="w-10 h-1 bg-ds-border rounded-full mx-auto mb-5 sm:hidden" />
           <div className="text-center mb-5">
@@ -352,9 +363,205 @@ function ReportModal({ onSubmit, onCancel }: { onSubmit: (r: string) => void; on
   );
 }
 
+// ── Shimmer skeleton ─────────────────────────────────────────────
+function PickerSkeleton() {
+  return (
+    <div className="flex items-center gap-3 px-3 py-3 rounded-2xl border border-ds-border overflow-hidden relative bg-ds-card">
+      <div className="w-12 h-12 rounded-xl shrink-0 bg-gray-200" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3.5 w-2/3 rounded-lg bg-gray-200" />
+        <div className="h-2.5 w-2/5 rounded-lg bg-gray-200 opacity-60" />
+      </div>
+      <div className="w-20 h-8 rounded-xl shrink-0 bg-gray-200" />
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(90deg,transparent 20%,rgba(255,255,255,0.25) 50%,transparent 80%)" }}
+        animate={{ x: ["-100%", "200%"] }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: "linear", repeatDelay: 0.5 }}
+      />
+    </div>
+  );
+}
+
+// ── Share Picker Sheet ───────────────────────────────────────────
+function SharePickerSheet({
+  open, onClose, items, loading, sharingKey, onShare,
+}: {
+  open: boolean;
+  onClose: () => void;
+  items: PickerItem[];
+  loading: boolean;
+  sharingKey: string | null;
+  onShare: (item: PickerItem) => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/65 z-50 backdrop-blur-sm"
+            onClick={onClose}
+          />
+
+          {/* Sheet */}
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 320, damping: 34 }}
+            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-[28px] overflow-hidden shadow-[0_-12px_48px_rgba(0,0,0,0.22)]"
+            style={{ maxHeight: "85vh", background: "var(--ds-surface-card)" }}
+          >
+            {/* Gradient header band */}
+            <div className="relative shrink-0 overflow-hidden" style={{ background: "linear-gradient(135deg,#059669 0%,#10b981 55%,#34d399 100%)" }}>
+              {/* Decorative circles */}
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+              <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-white/8 pointer-events-none" />
+
+              {/* Pull handle */}
+              <div className="w-10 h-1.5 bg-white/40 rounded-full mx-auto mt-3 mb-0" />
+
+              <div className="flex items-center justify-between px-5 pt-4 pb-5">
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    animate={{ rotate: [0, -8, 8, 0], scale: [1, 1.1, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-12 h-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-[26px] shadow-md"
+                  >🚀</motion.div>
+                  <div>
+                    <h3 className="font-baloo font-black text-white text-[20px] leading-tight drop-shadow-sm">
+                      Share an Adventure
+                    </h3>
+                    <p className="text-white/70 text-[12px] font-semibold mt-0.5">
+                      Pick a story to celebrate with your community
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white text-[14px] font-black hover:bg-white/30 transition-colors shrink-0"
+                >✕</button>
+              </div>
+            </div>
+
+            {/* Scrollable list */}
+            <div className="flex-1 overflow-y-auto px-4 pt-4 pb-8 space-y-3 bg-ds-page" style={{ scrollbarWidth: "none" }}>
+              {loading ? (
+                <>
+                  <PickerSkeleton />
+                  <PickerSkeleton />
+                  <PickerSkeleton />
+                </>
+              ) : items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-14 text-center">
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                    className="text-7xl mb-5"
+                  >📖</motion.div>
+                  <p className="font-baloo font-black text-ds-text text-[20px]">No adventures yet!</p>
+                  <p className="text-ds-muted text-[13px] mt-2 leading-relaxed max-w-[240px]">
+                    Complete a story mission and your achievements will appear here to share 🌟
+                  </p>
+                </div>
+              ) : (
+                items.map((item, i) => {
+                  const isSharing = sharingKey === item.key;
+                  const coverSrc = item.coverUrl ? getStorageUrl(item.coverUrl) : null;
+                  const pct = Math.round(item.progress * 100);
+                  const done = item.complete;
+
+                  return (
+                    <motion.div
+                      key={item.key}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.055, type: "spring", stiffness: 300, damping: 26 }}
+                      className="rounded-2xl overflow-hidden shadow-[0_2px_8px_rgba(15,23,42,0.07)] bg-white" style={{ border: "1px solid #E5E7EB" }}
+                    >
+                      {/* Top row: cover + info + button */}
+                      <div className="flex items-center gap-3 p-3">
+                        {/* Square cover */}
+                        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 flex items-center justify-center text-2xl shadow-sm"
+                          style={{ background: done ? "linear-gradient(135deg,#a7f3d0,#6ee7b7)" : "linear-gradient(135deg,#fde68a,#fcd34d)" }}>
+                          {coverSrc
+                            ? <img src={coverSrc} alt={item.storyTitle} className="w-full h-full object-cover" />
+                            : <span>{item.themeEmoji ?? "📖"}</span>
+                          }
+                        </div>
+
+                        {/* Text info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-baloo font-black text-ds-text text-[14px] leading-snug truncate">
+                            {item.storyTitle}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-ds-muted text-[11px] font-semibold truncate">{item.childName}</span>
+                            <span className="text-gray-300 text-[9px]">•</span>
+                            <span className="text-[10px] font-black text-sky-500">📖 Story</span>
+                          </div>
+                        </div>
+
+                        {/* Post button */}
+                        <motion.button
+                          whileTap={{ scale: 0.92 }}
+                          onClick={() => onShare(item)}
+                          disabled={!!sharingKey}
+                          className="shrink-0 flex items-center justify-center gap-1.5 font-baloo font-black text-[12px] text-white px-3.5 py-2 rounded-xl shadow-sm disabled:opacity-40 min-w-[68px]"
+                          style={{ background: done ? "linear-gradient(135deg,#059669,#10b981)" : "linear-gradient(135deg,#d97706,#f59e0b)" }}
+                        >
+                          {isSharing
+                            ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            : <>{done ? "🏆" : "⭐"} Post</>
+                          }
+                        </motion.button>
+                      </div>
+
+                    </motion.div>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ── Floating Share FAB ───────────────────────────────────────────
+function ShareFAB({ onClick }: { onClick: () => void }) {
+  return (
+    <motion.button
+      initial={{ scale: 0, opacity: 0, y: 20 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 380, damping: 22, delay: 0.7 }}
+      whileHover={{ scale: 1.06, y: -2 }}
+      whileTap={{ scale: 0.93 }}
+      onClick={onClick}
+      className="fixed bottom-[88px] right-4 z-40 flex items-center gap-2.5 pl-4 pr-5 py-3.5 rounded-2xl text-white font-baloo font-black text-[14px] shadow-[0_8px_28px_rgba(5,150,105,0.45)]"
+      style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+      aria-label="Share your adventure"
+    >
+      {/* Pulse ring */}
+      <motion.span
+        className="absolute inset-0 rounded-2xl pointer-events-none"
+        animate={{ scale: [1, 1.22, 1.22], opacity: [0.55, 0, 0] }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+        style={{ background: "#10b981" }}
+      />
+      <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+        <Plus className="w-4 h-4" strokeWidth={3} />
+      </div>
+      <span className="relative">Share</span>
+      <span className="text-[17px] leading-none">⭐</span>
+    </motion.button>
+  );
+}
+
 // ── Main ─────────────────────────────────────────────────────────
 export default function CommunityPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -370,6 +577,12 @@ export default function CommunityPage() {
   const [filter, setFilter]           = useState<FilterType>("all");
   const [totalCount, setTotalCount]   = useState(0);
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Share picker
+  const [pickerOpen, setPickerOpen]     = useState(false);
+  const [pickerItems, setPickerItems]   = useState<PickerItem[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [sharingKey, setSharingKey]     = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -436,6 +649,81 @@ export default function CommunityPage() {
     await supabase.from("creations").update({ status:"reported" }).eq("id", reportingId);
     setCreations(prev => prev.filter(c => c.id !== reportingId));
     setReportingId(null);
+  };
+
+  const openPicker = async () => {
+    setPickerOpen(true);
+    setPickerLoading(true);
+    try {
+      const [{ data: kids }, { data: storiesRaw }] = await Promise.all([
+        supabase.from("children").select("id, name, avatar_url, language"),
+        supabase.from("stories")
+          .select("id, title, cover_url, theme_emoji")
+          .eq("is_active", true)
+          .order("sort_order"),
+      ]);
+
+      const all: PickerItem[] = [];
+      for (const kid of (kids ?? []) as { id: string; name: string | null; avatar_url: string | null; language: string | null }[]) {
+        for (const s of (storiesRaw ?? []) as { id: string; title: string; cover_url: string | null; theme_emoji: string | null }[]) {
+          all.push({
+            key: `${kid.id}-${s.id}`,
+            childId: kid.id,
+            childName: kid.name ?? "Friend",
+            childAvatar: kid.avatar_url ?? "🌟",
+            childLanguage: kid.language ?? "en",
+            storyTitle: s.title,
+            coverUrl: s.cover_url,
+            themeEmoji: s.theme_emoji,
+            complete: false,
+            progress: 0,
+          });
+        }
+      }
+      setPickerItems(all);
+    } catch (err) {
+      console.error("[openPicker]", err);
+      setPickerItems([]);
+    }
+    setPickerLoading(false);
+  };
+
+  const sharePickerItem = async (item: PickerItem) => {
+    if (sharingKey) return;
+    setSharingKey(item.key);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSharingKey(null); return; }
+
+    const shareType = item.complete ? "certificate" : "sticker";
+
+    // For certificates: generate personalized image from the admin-configured template
+    let shareImg = "";
+    if (shareType === "certificate") {
+      const certUrl = await generateCertificateImageUrl(item.childName, item.childLanguage);
+      if (certUrl) shareImg = certUrl;
+    } else {
+      const raw = item.coverUrl ? getStorageUrl(item.coverUrl) : null;
+      shareImg = (raw && raw.startsWith("http")) ? raw : "";
+    }
+
+    const { error } = await supabase.from("creations").insert({
+      parent_id: user.id,
+      child_id: item.childId,
+      child_name: item.childName,
+      description: item.complete
+        ? `${item.childName} completed the story: ${item.storyTitle}! 🏆`
+        : `${item.childName} is ${Math.round(item.progress * 100)}% through: ${item.storyTitle}! 📖`,
+      type: shareType,
+      status: "approved",
+      is_public: true,
+      image_url: shareImg,
+    });
+
+    if (error) console.error("[sharePickerItem]", error.message);
+    setSharingKey(null);
+    setPickerOpen(false);
+    setPage(0);
+    void fetchCreations(0, true);
   };
 
   const filterConfig = FILTERS.find(f => f.id === filter)!;
@@ -552,7 +840,7 @@ export default function CommunityPage() {
         </HeroBanner>
 
         {/* ── FILTER TABS ───────────────────────────────────────── */}
-        <div className="mb-5 p-1 rounded-2xl bg-ds-surface border border-ds-border shadow-sm">
+        <div className="mb-5 p-1 rounded-2xl bg-ds-card border border-ds-border shadow-sm">
           <FilterTabs active={filter} onChange={f => { setFilter(f); }} />
         </div>
 
@@ -564,7 +852,7 @@ export default function CommunityPage() {
         ) : visible.length === 0 ? (
           <motion.div
             initial={{ opacity:0, scale:0.96 }} animate={{ opacity:1, scale:1 }}
-            className="border border-ds-border bg-ds-surface rounded-3xl px-6 py-20 text-center"
+            className="border border-ds-border bg-ds-card rounded-3xl px-6 py-20 text-center"
           >
             <motion.div
               animate={{ y:[0,-10,0] }} transition={{ duration:2.4, repeat:Infinity }}
@@ -614,26 +902,50 @@ export default function CommunityPage() {
                 ))}
               </AnimatePresence>
 
-              {/* "Share your adventure" CTA card */}
+              {/* "Be next!" CTA card */}
               {!hasMore && (
                 <motion.div
                   initial={{ opacity:0, scale:0.9 }}
                   animate={{ opacity:1, scale:1 }}
                   transition={{ delay: Math.min(visible.length * 0.05, 0.4) + 0.1 }}
-                  onClick={() => router.push("/stories")}
-                  className="rounded-3xl border-2 border-dashed border-ds-border hover:border-emerald-300 hover:bg-emerald-50/40 transition-all duration-300 flex flex-col items-center justify-center gap-4 p-8 cursor-pointer group"
-                  style={{ minHeight: "280px" }}
+                  onClick={openPicker}
+                  className="relative rounded-3xl overflow-hidden cursor-pointer group"
+                  style={{ minHeight: "280px",
+                    background: "linear-gradient(135deg,#ecfdf5,#d1fae5)",
+                    border: "2px dashed #6ee7b7",
+                  }}
+                  whileHover={{ scale: 1.02, transition: { type:"spring", stiffness:340, damping:26 } }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-gray-100 group-hover:bg-emerald-100 flex items-center justify-center transition-colors">
-                    <Plus className="w-7 h-7 text-ds-muted group-hover:text-emerald-500 transition-colors" />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-baloo font-black text-ds-muted group-hover:text-emerald-600 text-[14px] transition-colors">
-                      Share your adventure!
-                    </p>
-                    <p className="font-nunito text-ds-muted text-[11px] mt-1 leading-relaxed">
-                      Complete a story or challenge<br/>to post here
-                    </p>
+                  {/* Floating bg emojis */}
+                  {["🌟","🎨","💪","📖"].map((e, i) => (
+                    <motion.span key={i}
+                      className="absolute text-2xl opacity-10 pointer-events-none select-none"
+                      style={{ top:`${15+i*20}%`, left:`${10+i*22}%` }}
+                      animate={{ y:[0,-8,0], rotate:[0,15,-15,0] }}
+                      transition={{ duration:3+i*0.5, repeat:Infinity, delay:i*0.4 }}
+                    >{e}</motion.span>
+                  ))}
+
+                  <div className="relative z-10 h-full flex flex-col items-center justify-center gap-4 p-8 text-center">
+                    <motion.div
+                      animate={{ y:[0,-6,0] }}
+                      transition={{ duration:2.4, repeat:Infinity, ease:"easeInOut" }}
+                      className="w-16 h-16 rounded-2xl bg-emerald-400/20 border-2 border-emerald-300/40 flex items-center justify-center"
+                    >
+                      <span className="text-3xl">🚀</span>
+                    </motion.div>
+                    <div>
+                      <p className="font-baloo font-black text-emerald-700 text-[16px]">
+                        Your turn!
+                      </p>
+                      <p className="font-nunito text-emerald-600/70 text-[12px] mt-1 leading-relaxed">
+                        Finish a story or challenge<br/>and your post appears here ✨
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-emerald-500 group-hover:bg-emerald-600 transition-colors text-white font-black text-[12px] px-4 py-2 rounded-full shadow-md">
+                      <Plus className="w-3.5 h-3.5" strokeWidth={3} /> Start a Story
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -651,6 +963,19 @@ export default function CommunityPage() {
           )}
         </div>
       </main>
+
+      {/* ── Floating share button ───────────────────────────────── */}
+      <ShareFAB onClick={openPicker} />
+
+      {/* ── Share picker sheet ──────────────────────────────────── */}
+      <SharePickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        items={pickerItems}
+        loading={pickerLoading}
+        sharingKey={sharingKey}
+        onShare={sharePickerItem}
+      />
 
       {/* ── Report modal ────────────────────────────────────────── */}
       <AnimatePresence>

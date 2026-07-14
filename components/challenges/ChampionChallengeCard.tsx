@@ -100,11 +100,11 @@ export default function ChampionChallengeCard({
       )}
 
       <div className="flex items-center gap-4 p-5 pt-3">
-        {/* Trophy SVG — hide when visual example shown */}
+        {/* Trophy — hide when visual example shown */}
         {!imgUrl && !vidUrl && (
           <motion.div animate={m.floatSoft.animate} transition={m.floatSoft.transition}
-            className="shrink-0">
-            <Image src={assets.trophy} alt="Trophy" width={96} height={96} className="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" />
+            className="shrink-0 text-[72px] sm:text-[88px] leading-none drop-shadow-lg select-none">
+            🏆
           </motion.div>
         )}
 

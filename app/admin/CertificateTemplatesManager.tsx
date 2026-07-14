@@ -200,8 +200,9 @@ export default function CertificateTemplatesManager({ onNavigate, onOpenSidebar 
       showToast('ok', `${activeLang.toUpperCase()} certificate template saved`)
     } catch (err) {
       showToast('err', err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   const showToast = (type: 'ok' | 'err', msg: string) => {
