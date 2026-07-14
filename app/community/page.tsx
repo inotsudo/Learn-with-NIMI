@@ -3,14 +3,16 @@
 import React, { useState, useEffect, useCallback, useRef, RefObject } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { ArrowLeft, Loader2, Flame, Plus, Sparkles } from "lucide-react";
+import ChildAvatar from "@/components/avatar/ChildAvatar";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import supabase from "@/lib/supabaseClient";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { getStorageUrl } from "@/lib/queries";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import { getComponentVariant, type ComponentVariant } from "@/lib/design-system/componentVariants";
 import { HeroBanner } from "@/components/layout/primitives";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { Creation } from "@/components/community/types";
@@ -66,12 +68,13 @@ function mapCreation(c: CreationRow, uid: string): Creation {
 
 // ── Type metadata ───────────────────────────────────────────────
 const TYPE_META: Record<string, { emoji: string; label: string; pill: string; gradient: string }> = {
-  certificate: { emoji:"🏆", label:"Story Complete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
-  story:       { emoji:"📖", label:"Story Complete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
-  challenge:   { emoji:"💪", label:"Challenge Done",  pill:"bg-blue-500",   gradient:"from-blue-500 to-indigo-600"    },
-  sticker:     { emoji:"⭐", label:"Star Earned",     pill:"bg-yellow-500", gradient:"from-yellow-400 to-amber-500"   },
-  art:         { emoji:"🎨", label:"Artwork",         pill:"bg-fuchsia-500",gradient:"from-fuchsia-500 to-violet-600" },
-  coloring:    { emoji:"🖍️", label:"Coloring Page",   pill:"bg-purple-500", gradient:"from-purple-500 to-pink-500"   },
+  certificate:   { emoji:"🏆", label:"Story Complete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
+  story:         { emoji:"🏆", label:"Story Complete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
+  story_progress:{ emoji:"📖", label:"On Adventure",    pill:"bg-sky-500",    gradient:"from-sky-400 to-blue-500"       },
+  challenge:     { emoji:"💪", label:"Challenge Done",  pill:"bg-blue-500",   gradient:"from-blue-500 to-indigo-600"    },
+  sticker:       { emoji:"⭐", label:"Star Earned",     pill:"bg-yellow-500", gradient:"from-yellow-400 to-amber-500"   },
+  art:           { emoji:"🎨", label:"Artwork",         pill:"bg-fuchsia-500",gradient:"from-fuchsia-500 to-violet-600" },
+  coloring:      { emoji:"🖍️", label:"Coloring Page",   pill:"bg-purple-500", gradient:"from-purple-500 to-pink-500"   },
 };
 const fallbackMeta = { emoji:"✨", label:"Moment", pill:"bg-gray-400", gradient:"from-gray-400 to-slate-500" };
 
@@ -79,7 +82,7 @@ const fallbackMeta = { emoji:"✨", label:"Moment", pill:"bg-gray-400", gradient
 type FilterType = "all" | "stories" | "art" | "challenges" | "stars";
 const FILTERS: { id: FilterType; label: string; emoji: string; types: string[] }[] = [
   { id:"all",        label:"All",        emoji:"✨", types:[] },
-  { id:"stories",    label:"Stories",    emoji:"🏆", types:["certificate","story"] },
+  { id:"stories",    label:"Stories",    emoji:"🏆", types:["certificate","story","story_progress"] },
   { id:"art",        label:"Art",        emoji:"🎨", types:["art","coloring"] },
   { id:"challenges", label:"Challenges", emoji:"💪", types:["challenge"] },
   { id:"stars",      label:"Stars",      emoji:"⭐", types:["sticker"] },
@@ -163,8 +166,6 @@ function CreationCard({
     "from-amber-500 to-orange-600",  "from-teal-500 to-cyan-600",
   ];
   const avatarGrad = AVATAR_GRADIENTS[(creation.childName?.charCodeAt(0) ?? 0) % AVATAR_GRADIENTS.length];
-  const isAvatarPhoto = !!(creation.childAvatar?.startsWith("http"));
-  const isAvatarEmoji = !isAvatarPhoto && !!(creation.childAvatar && creation.childAvatar.length <= 2);
   const avatarInitial = creation.childName?.[0]?.toUpperCase() ?? "?";
 
   const handleCheer = () => {
@@ -235,14 +236,13 @@ function CreationCard({
       <div className="px-4 pb-4">
         {/* Avatar + name row — avatar overlaps the image boundary */}
         <div className="flex items-end gap-3 -mt-5 mb-3 relative z-10">
-          <div className={`w-11 h-11 rounded-full border-[3px] border-ds-surface bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-base font-black text-white shadow-md shrink-0 overflow-hidden`}>
-            {isAvatarPhoto
-              ? <img src={creation.childAvatar!} alt={creation.childName} className="w-full h-full object-cover" />
-              : isAvatarEmoji
-              ? <span className="text-[19px] leading-none">{creation.childAvatar}</span>
-              : avatarInitial}
+          <div className={`w-12 h-12 rounded-full border-[3px] border-ds-card bg-gradient-to-br ${avatarGrad} flex items-center justify-center font-black text-white shadow-lg shrink-0 overflow-hidden`}>
+            {creation.childAvatar
+              ? <ChildAvatar avatarUrl={creation.childAvatar} name={creation.childName} size={48} className="w-full h-full" />
+              : <span className="text-[18px]">{avatarInitial}</span>
+            }
           </div>
-          <div className="pb-0.5 min-w-0">
+          <div className="pb-0.5 min-w-0 flex-1">
             <p className="font-black text-ds-text text-[14px] leading-tight truncate">{creation.childName}</p>
             <p className="text-ds-muted text-[11px] font-semibold">{timeAgo(creation.createdAt)}</p>
           </div>
@@ -250,7 +250,7 @@ function CreationCard({
 
         {/* Description */}
         {creation.description && (
-          <p className="text-ds-text/70 text-[12.5px] leading-relaxed mb-3 line-clamp-2 font-medium">
+          <p className="text-ds-text text-[12.5px] leading-relaxed mb-3 line-clamp-2 font-medium opacity-75">
             {creation.description}
           </p>
         )}
@@ -263,11 +263,12 @@ function CreationCard({
           <motion.button
             whileTap={{ scale:0.92 }}
             onClick={handleCheer}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-[13px] font-black transition-colors duration-200"
-            style={creation.likedByUser
-              ? { background:"var(--nimi-green)", color:"white" }
-              : { background:"var(--ds-border-primary)", color:"var(--ds-text-muted)" }
-            }
+            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-[13px] font-black transition-all duration-200 ${
+              creation.likedByUser
+                ? "text-white shadow-md"
+                : "bg-ds-card border border-ds-border text-ds-muted hover:border-[var(--nimi-green)] hover:text-[var(--nimi-green)]"
+            }`}
+            style={creation.likedByUser ? { background:"var(--nimi-green)" } : {}}
           >
             <motion.span
               className="text-[16px] leading-none"
@@ -285,7 +286,7 @@ function CreationCard({
                 className="text-[11px] font-black px-1.5 py-0.5 rounded-full"
                 style={creation.likedByUser
                   ? { background:"rgba(255,255,255,0.25)", color:"white" }
-                  : { background:"var(--ds-border)", color:"var(--ds-text-muted)" }
+                  : { background:"var(--ds-border-primary)", color:"var(--ds-text-muted)" }
                 }
               >
                 {creation.likes}
@@ -385,7 +386,7 @@ function PickerSkeleton() {
 
 // ── Share Picker Sheet ───────────────────────────────────────────
 function SharePickerSheet({
-  open, onClose, items, loading, sharingKey, onShare,
+  open, onClose, items, loading, sharingKey, onShare, cv,
 }: {
   open: boolean;
   onClose: () => void;
@@ -393,6 +394,7 @@ function SharePickerSheet({
   loading: boolean;
   sharingKey: string | null;
   onShare: (item: PickerItem) => void;
+  cv: ComponentVariant;
 }) {
   return (
     <AnimatePresence>
@@ -413,7 +415,7 @@ function SharePickerSheet({
             style={{ maxHeight: "85vh", background: "var(--ds-surface-card)" }}
           >
             {/* Gradient header band */}
-            <div className="relative shrink-0 overflow-hidden" style={{ background: "linear-gradient(135deg,#059669 0%,#10b981 55%,#34d399 100%)" }}>
+            <div className={`relative shrink-0 overflow-hidden bg-gradient-to-br ${cv.zoneGradients.communitySquare}`}>
               {/* Decorative circles */}
               <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
               <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-white/8 pointer-events-none" />
@@ -482,8 +484,7 @@ function SharePickerSheet({
                       {/* Top row: cover + info + button */}
                       <div className="flex items-center gap-3 p-3">
                         {/* Square cover */}
-                        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 flex items-center justify-center text-2xl shadow-sm"
-                          style={{ background: done ? "linear-gradient(135deg,#a7f3d0,#6ee7b7)" : "linear-gradient(135deg,#fde68a,#fcd34d)" }}>
+                        <div className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 flex items-center justify-center text-2xl shadow-sm bg-gradient-to-br ${done ? "from-emerald-100 to-teal-200" : "from-amber-100 to-yellow-200"}`}>
                           {coverSrc
                             ? <img src={coverSrc} alt={item.storyTitle} className="w-full h-full object-cover" />
                             : <span>{item.themeEmoji ?? "📖"}</span>
@@ -495,11 +496,20 @@ function SharePickerSheet({
                           <p className="font-baloo font-black text-ds-text text-[14px] leading-snug truncate">
                             {item.storyTitle}
                           </p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                             <span className="text-ds-muted text-[11px] font-semibold truncate">{item.childName}</span>
-                            <span className="text-gray-300 text-[9px]">•</span>
-                            <span className="text-[10px] font-black text-sky-500">📖 Story</span>
+                            {done ? (
+                              <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">🏆 Complete</span>
+                            ) : (
+                              <span className="text-[10px] font-black text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded-full">📖 {pct}% done</span>
+                            )}
                           </div>
+                          {/* Progress bar */}
+                          {!done && (
+                            <div className="mt-1.5 h-1.5 bg-gray-100 rounded-full overflow-hidden w-full">
+                              <div className="h-full bg-gradient-to-r from-sky-400 to-blue-500 rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                          )}
                         </div>
 
                         {/* Post button */}
@@ -507,8 +517,7 @@ function SharePickerSheet({
                           whileTap={{ scale: 0.92 }}
                           onClick={() => onShare(item)}
                           disabled={!!sharingKey}
-                          className="shrink-0 flex items-center justify-center gap-1.5 font-baloo font-black text-[12px] text-white px-3.5 py-2 rounded-xl shadow-sm disabled:opacity-40 min-w-[68px]"
-                          style={{ background: done ? "linear-gradient(135deg,#059669,#10b981)" : "linear-gradient(135deg,#d97706,#f59e0b)" }}
+                          className={`shrink-0 flex items-center justify-center gap-1.5 font-baloo font-black text-[12px] px-3.5 py-2 rounded-xl shadow-sm disabled:opacity-40 min-w-[68px] bg-gradient-to-r ${done ? `${cv.zoneGradients.communitySquare} text-white` : "from-amber-400 to-amber-500 text-amber-950"}`}
                         >
                           {isSharing
                             ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -530,7 +539,7 @@ function SharePickerSheet({
 }
 
 // ── Floating Share FAB ───────────────────────────────────────────
-function ShareFAB({ onClick }: { onClick: () => void }) {
+function ShareFAB({ onClick, cv }: { onClick: () => void; cv: ComponentVariant }) {
   return (
     <motion.button
       initial={{ scale: 0, opacity: 0, y: 20 }}
@@ -539,16 +548,14 @@ function ShareFAB({ onClick }: { onClick: () => void }) {
       whileHover={{ scale: 1.06, y: -2 }}
       whileTap={{ scale: 0.93 }}
       onClick={onClick}
-      className="fixed bottom-[88px] right-4 z-40 flex items-center gap-2.5 pl-4 pr-5 py-3.5 rounded-2xl text-white font-baloo font-black text-[14px] shadow-[0_8px_28px_rgba(5,150,105,0.45)]"
-      style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+      className={`fixed bottom-[88px] right-4 z-40 flex items-center gap-2.5 pl-4 pr-5 py-3.5 rounded-2xl text-white font-baloo font-black text-[14px] shadow-[0_8px_28px_rgba(5,150,105,0.45)] bg-gradient-to-br ${cv.zoneGradients.communitySquare}`}
       aria-label="Share your adventure"
     >
       {/* Pulse ring */}
       <motion.span
-        className="absolute inset-0 rounded-2xl pointer-events-none"
+        className={`absolute inset-0 rounded-2xl pointer-events-none bg-gradient-to-br ${cv.zoneGradients.communitySquare}`}
         animate={{ scale: [1, 1.22, 1.22], opacity: [0.55, 0, 0] }}
         transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
-        style={{ background: "#10b981" }}
       />
       <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
         <Plus className="w-4 h-4" strokeWidth={3} />
@@ -565,6 +572,7 @@ export default function CommunityPage() {
   const router = useRouter();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
+  const v = getComponentVariant(themeId);
 
   const [creations, setCreations]     = useState<Creation[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -611,7 +619,7 @@ export default function CommunityPage() {
       })
       .map(c => mapCreation(c as CreationRow, userId));
     setCreations(prev => refresh ? mapped : [...prev, ...mapped]);
-    setTotalCount(prev => refresh ? mapped.length : prev + mapped.length);
+    if (refresh) setTotalCount(count ?? 0);
     setHasMore((count || 0) > to + 1);
     setLoading(false);
   }, [userId]);
@@ -655,31 +663,36 @@ export default function CommunityPage() {
     setPickerOpen(true);
     setPickerLoading(true);
     try {
-      const [{ data: kids }, { data: storiesRaw }] = await Promise.all([
-        supabase.from("children").select("id, name, avatar_url, language"),
-        supabase.from("stories")
-          .select("id, title, cover_url, theme_emoji")
-          .eq("is_active", true)
-          .order("sort_order"),
-      ]);
+      const { data: kids } = await supabase
+        .from("children")
+        .select("id, name, avatar_url, language");
 
       const all: PickerItem[] = [];
       for (const kid of (kids ?? []) as { id: string; name: string | null; avatar_url: string | null; language: string | null }[]) {
-        for (const s of (storiesRaw ?? []) as { id: string; title: string; cover_url: string | null; theme_emoji: string | null }[]) {
+        const lang = (kid.language ?? "en") as Language;
+        const lib = await getStoryLibrary(kid.id, lang);
+        // Only show stories the child has actually started
+        const started = lib.filter(s => s.complete || s.progress > 0);
+        for (const s of started) {
           all.push({
-            key: `${kid.id}-${s.id}`,
+            key: `${kid.id}-${s.sid}`,
             childId: kid.id,
             childName: kid.name ?? "Friend",
             childAvatar: kid.avatar_url ?? "🌟",
-            childLanguage: kid.language ?? "en",
+            childLanguage: lang,
             storyTitle: s.title,
             coverUrl: s.cover_url,
             themeEmoji: s.theme_emoji,
-            complete: false,
-            progress: 0,
+            complete: s.complete,
+            progress: s.progress,
           });
         }
       }
+      // Completed stories first, then by progress descending
+      all.sort((a, b) => {
+        if (a.complete !== b.complete) return a.complete ? -1 : 1;
+        return b.progress - a.progress;
+      });
       setPickerItems(all);
     } catch (err) {
       console.error("[openPicker]", err);
@@ -694,25 +707,30 @@ export default function CommunityPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSharingKey(null); return; }
 
-    const shareType = item.complete ? "certificate" : "sticker";
+    const shareType = item.complete ? "certificate" : "story_progress";
+    const pct = Math.round(item.progress * 100);
 
     // For certificates: generate personalized image from the admin-configured template
     let shareImg = "";
     if (shareType === "certificate") {
       const certUrl = await generateCertificateImageUrl(item.childName, item.childLanguage);
       if (certUrl) shareImg = certUrl;
-    } else {
-      const raw = item.coverUrl ? getStorageUrl(item.coverUrl) : null;
-      shareImg = (raw && raw.startsWith("http")) ? raw : "";
     }
+    // For in-progress: use the story cover
+    if (!shareImg) {
+      const raw = item.coverUrl ? getStorageUrl(item.coverUrl) : null;
+      if (raw && raw.startsWith("http")) shareImg = raw;
+    }
+
+    const description = item.complete
+      ? `${item.childName} just completed "${item.storyTitle}"! 🏆 What an adventure!`
+      : `${item.childName} is ${pct}% through "${item.storyTitle}" — cheering them on helps! 📖`;
 
     const { error } = await supabase.from("creations").insert({
       parent_id: user.id,
       child_id: item.childId,
       child_name: item.childName,
-      description: item.complete
-        ? `${item.childName} completed the story: ${item.storyTitle}! 🏆`
-        : `${item.childName} is ${Math.round(item.progress * 100)}% through: ${item.storyTitle}! 📖`,
+      description,
       type: shareType,
       status: "approved",
       is_public: true,
@@ -909,11 +927,8 @@ export default function CommunityPage() {
                   animate={{ opacity:1, scale:1 }}
                   transition={{ delay: Math.min(visible.length * 0.05, 0.4) + 0.1 }}
                   onClick={openPicker}
-                  className="relative rounded-3xl overflow-hidden cursor-pointer group"
-                  style={{ minHeight: "280px",
-                    background: "linear-gradient(135deg,#ecfdf5,#d1fae5)",
-                    border: "2px dashed #6ee7b7",
-                  }}
+                  className="relative rounded-3xl overflow-hidden cursor-pointer group bg-ds-card border-2 border-dashed border-ds-border"
+                  style={{ minHeight: "280px" }}
                   whileHover={{ scale: 1.02, transition: { type:"spring", stiffness:340, damping:26 } }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -931,19 +946,19 @@ export default function CommunityPage() {
                     <motion.div
                       animate={{ y:[0,-6,0] }}
                       transition={{ duration:2.4, repeat:Infinity, ease:"easeInOut" }}
-                      className="w-16 h-16 rounded-2xl bg-emerald-400/20 border-2 border-emerald-300/40 flex items-center justify-center"
+                      className="w-16 h-16 rounded-2xl bg-ds-card border-2 border-ds-border flex items-center justify-center shadow-ds-card"
                     >
                       <span className="text-3xl">🚀</span>
                     </motion.div>
                     <div>
-                      <p className="font-baloo font-black text-emerald-700 text-[16px]">
+                      <p className="font-baloo font-black text-ds-text text-[16px]">
                         Your turn!
                       </p>
-                      <p className="font-nunito text-emerald-600/70 text-[12px] mt-1 leading-relaxed">
+                      <p className="font-nunito text-ds-muted text-[12px] mt-1 leading-relaxed">
                         Finish a story or challenge<br/>and your post appears here ✨
                       </p>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-emerald-500 group-hover:bg-emerald-600 transition-colors text-white font-black text-[12px] px-4 py-2 rounded-full shadow-md">
+                    <div className={`flex items-center gap-1.5 bg-gradient-to-r ${v.zoneGradients.communitySquare} text-white font-black text-[12px] px-4 py-2 rounded-full shadow-md`}>
                       <Plus className="w-3.5 h-3.5" strokeWidth={3} /> Start a Story
                     </div>
                   </div>
@@ -965,7 +980,7 @@ export default function CommunityPage() {
       </main>
 
       {/* ── Floating share button ───────────────────────────────── */}
-      <ShareFAB onClick={openPicker} />
+      <ShareFAB onClick={openPicker} cv={v} />
 
       {/* ── Share picker sheet ──────────────────────────────────── */}
       <SharePickerSheet
@@ -975,6 +990,7 @@ export default function CommunityPage() {
         loading={pickerLoading}
         sharingKey={sharingKey}
         onShare={sharePickerItem}
+        cv={v}
       />
 
       {/* ── Report modal ────────────────────────────────────────── */}
