@@ -36,6 +36,7 @@ export default function MissionCategoryPage() {
   const [levelComplete, setLevelComplete] = useState(false);
   const [saving, setSaving]               = useState(false);
   const [loading, setLoading]             = useState(true);
+  const [pagesLoading, setPagesLoading]   = useState(false);
   const [loadError, setLoadError]         = useState(false);
   const [childId, setChildId]             = useState<string | null>(null);
   const [coloringPages, setColoringPages] = useState<ColoringPage[]>([]);
@@ -62,18 +63,26 @@ export default function MissionCategoryPage() {
         setLevelComplete(!!m?.level_complete);
         setCompletedCount(curriculumMissions.filter(x => x.completed).length);
 
+        // Show mission UI immediately — pages load in the background
+        setLoading(false);
+
         if (m?.story_id) {
-          if (m.type === "color") {
-            setColoringPages(await getColoringPages(m.story_id));
-          } else if (m.type === "story" || m.type === "listen") {
-            setStoryPages(await getStoryPages(m.story_id, language));
+          setPagesLoading(true);
+          try {
+            if (m.type === "color") {
+              setColoringPages(await getColoringPages(m.story_id));
+            } else if (m.type === "story" || m.type === "listen") {
+              setStoryPages(await getStoryPages(m.story_id, language));
+            }
+          } finally {
+            setPagesLoading(false);
           }
         }
       } catch (err) {
         console.error("[MissionCategoryPage]", err);
         setLoadError(true);
-      } finally {
         setLoading(false);
+        setPagesLoading(false);
       }
     };
     void load();
@@ -162,10 +171,10 @@ export default function MissionCategoryPage() {
       case "read":
         return <ReadContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} />;
       case "color":
-        return <ColoringContent mission={mission} coloringPages={coloringPages} onComplete={handleComplete} completed={completed} saving={saving} />;
+        return <ColoringContent mission={mission} coloringPages={coloringPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} />;
       case "story":
       case "listen":
-        return <StoryContent mission={mission} storyPages={storyPages} onComplete={handleComplete} completed={completed} saving={saving} />;
+        return <StoryContent mission={mission} storyPages={storyPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} />;
       default:
         return (
           <ContentSurface className="p-6 text-center">

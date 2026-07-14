@@ -20,9 +20,39 @@ interface StoryContentProps {
   onComplete: () => void;
   completed: boolean;
   saving?: boolean;
+  pagesLoading?: boolean;
 }
 
-export default function StoryContent({ mission, storyPages, onComplete, completed }: StoryContentProps) {
+// Book-shaped skeleton shown while pages fetch — matches the real StoryBook layout
+function BookSkeleton() {
+  return (
+    <div className="flex flex-col gap-3 animate-pulse">
+      {/* toolbar row */}
+      <div className="leaf border border-emerald-100 bg-white/80 px-3 py-2.5 flex items-center gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="h-3 rounded-full bg-gray-200 w-2/3" />
+          <div className="h-1.5 rounded-full bg-gray-100 w-full" />
+        </div>
+        <div className="h-3 w-8 rounded-full bg-gray-200 shrink-0" />
+      </div>
+      {/* page area — same 3/4 aspect ratio as MobilePageViewer */}
+      <div
+        className="w-full leaf-lg border border-amber-100 bg-[#faf6ee] flex items-center justify-center"
+        style={{ aspectRatio: "3/4" }}
+      >
+        <div className="w-12 h-12 border-[3px] border-amber-200 border-t-amber-500 rounded-full animate-spin" />
+      </div>
+      {/* controls row */}
+      <div className="flex items-center justify-center gap-3 leaf border border-emerald-100 bg-white/80 py-3">
+        {[48, 40, 64, 40, 48].map((s, i) => (
+          <div key={i} className="rounded-full bg-gray-200" style={{ width: s, height: s }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function StoryContent({ mission, storyPages, onComplete, completed, pagesLoading }: StoryContentProps) {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -42,24 +72,10 @@ export default function StoryContent({ mission, storyPages, onComplete, complete
     };
   }, [mission, storyPages, t]);
 
-  if (storyPages.length === 0) {
-    return (
-      <div className="leaf-lg border border-amber-100 bg-gradient-to-br from-amber-50/80 via-yellow-50/40 to-[#fffdf8] p-8 text-center shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
-        <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 2.5, repeat: Infinity }}
-          className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm text-2xl select-none">
-          📚
-        </motion.div>
-        <p className="font-baloo font-bold text-ds-text text-[18px]">{t("noPagesTitle")}</p>
-        <p className="text-gray-500 text-[13px] mt-1">{t("noPagesHint")}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-4" style={{ minHeight: "70vh" }}>
-      {/* Story Time header — amber/parchment, Nimi + open book feel */}
+    <div className="flex flex-col gap-4">
+      {/* Story Time header — always visible, even while pages load */}
       <div className="relative overflow-hidden leaf border border-amber-200/60 bg-gradient-to-r from-amber-50/80 via-yellow-50/40 to-[#fffdf8] p-5 text-center shadow-sm">
-        {/* Subtle page-line decorations in corners */}
         <div className="pointer-events-none absolute left-3 top-3 space-y-[5px] opacity-[0.12]">
           {[28, 22, 28, 20, 24].map((w, i) => (
             <div key={i} className="h-[1.5px] rounded-full bg-amber-700" style={{ width: w }} />
@@ -71,7 +87,6 @@ export default function StoryContent({ mission, storyPages, onComplete, complete
           ))}
         </div>
 
-        {/* Nimi */}
         <motion.img
           src={assets.nimiHappy}
           alt="NIMI"
@@ -93,11 +108,26 @@ export default function StoryContent({ mission, storyPages, onComplete, complete
           <p className="relative z-10 mt-1 text-center text-[13px] text-gray-500">{mission.subtitle}</p>
         )}
       </div>
-      <StoryBook
-        story={storyData}
-        onComplete={onComplete}
-        completed={completed}
-      />
+
+      {pagesLoading ? (
+        <BookSkeleton />
+      ) : storyPages.length === 0 ? (
+        <div className="leaf-lg border border-amber-100 bg-gradient-to-br from-amber-50/80 via-yellow-50/40 to-[#fffdf8] p-8 text-center shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
+          <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 2.5, repeat: Infinity }}
+            className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm text-2xl select-none">
+            📚
+          </motion.div>
+          <p className="font-baloo font-bold text-ds-text text-[18px]">{t("noPagesTitle")}</p>
+          <p className="text-gray-500 text-[13px] mt-1">{t("noPagesHint")}</p>
+        </div>
+      ) : (
+        <StoryBook
+          story={storyData}
+          onComplete={onComplete}
+          completed={completed}
+        />
+      )}
+
       {completed && <MissionCompleteBanner />}
     </div>
   );

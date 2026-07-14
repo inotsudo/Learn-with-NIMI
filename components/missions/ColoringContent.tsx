@@ -17,6 +17,7 @@ interface ColoringContentProps {
   onComplete: () => void;
   completed: boolean;
   saving: boolean;
+  pagesLoading?: boolean;
 }
 
 const CRAYON_COLORS = ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF6FC8", "#FF9F45"];

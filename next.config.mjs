@@ -25,6 +25,17 @@ const CSP = [
   "form-action 'self'",
 ].join("; ");
 
+// For diagnostics: report-only copy of the CSP that sends violation reports
+const CSP_REPORT_ONLY = CSP + "; report-to csp-endpoint";
+
+// Report-To header config (must be JSON-stringified in header value)
+const REPORT_TO = JSON.stringify({
+  group: "csp-endpoint",
+  max_age: 10886400,
+  endpoints: [{ url: "/api/csp-report" }],
+  include_subdomains: true,
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Security headers on all responses
@@ -34,6 +45,8 @@ const nextConfig = {
         source: "/(.*)",
         headers: [
           { key: "Content-Security-Policy",    value: CSP },
+          { key: "Content-Security-Policy-Report-Only", value: CSP_REPORT_ONLY },
+          { key: "Report-To", value: REPORT_TO },
           // frame-ancestors in CSP supersedes X-Frame-Options in modern browsers;
           // keep X-Frame-Options for legacy browsers that predate CSP frame-ancestors.
           { key: "X-Frame-Options",           value: "DENY" },
