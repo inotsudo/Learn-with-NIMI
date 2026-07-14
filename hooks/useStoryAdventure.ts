@@ -48,7 +48,7 @@ export function useCurrentStory(childId: string | null, language: string) {
   useEffect(() => {
     let active = true;
 
-    const loadCurrentStory = async () => {
+    void (async () => {
       if (!childId) {
         if (active) setLoading(false);
         return;
@@ -65,9 +65,8 @@ export function useCurrentStory(childId: string | null, language: string) {
       } finally {
         if (active) setLoading(false);
       }
-    };
+    })();
 
-    void loadCurrentStory();
     return () => {
       active = false;
     };
@@ -99,7 +98,7 @@ export function useStoryLibrary(childId: string | null, language: string) {
   useEffect(() => {
     let active = true;
 
-    const loadStoryLibrary = async () => {
+    void (async () => {
       if (!childId) {
         if (active) setLoading(false);
         return;
@@ -116,9 +115,8 @@ export function useStoryLibrary(childId: string | null, language: string) {
       } finally {
         if (active) setLoading(false);
       }
-    };
+    })();
 
-    void loadStoryLibrary();
     return () => {
       active = false;
     };
@@ -137,7 +135,7 @@ export function useStoryDetails(storyId: string | null, language: string) {
   useEffect(() => {
     let active = true;
 
-    const loadStoryDetails = async () => {
+    void (async () => {
       if (!storyId) {
         if (active) setLoading(false);
         return;
@@ -154,9 +152,8 @@ export function useStoryDetails(storyId: string | null, language: string) {
       } finally {
         if (active) setLoading(false);
       }
-    };
+    })();
 
-    void loadStoryDetails();
     return () => {
       active = false;
     };
@@ -190,8 +187,31 @@ export function useStorySlots(
   }, [childId, storyId, language]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let active = true;
+
+    void (async () => {
+      if (!childId || !storyId) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await fetchStorySlots(childId, storyId, language);
+        if (active) setSlots(result);
+      } catch (e: any) {
+        if (active) setError(e.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [childId, storyId, language]);
 
   const complete = useCallback(async (missionId: string): Promise<CompleteSlotResult | null> => {
     if (!childId) return null;
@@ -236,7 +256,7 @@ export function useStoryProgress(
   useEffect(() => {
     let active = true;
 
-    const loadStoryProgress = async () => {
+    void (async () => {
       if (!childId || !storyId) {
         if (active) setLoading(false);
         return;
@@ -253,9 +273,8 @@ export function useStoryProgress(
       } finally {
         if (active) setLoading(false);
       }
-    };
+    })();
 
-    void loadStoryProgress();
     return () => {
       active = false;
     };
@@ -277,7 +296,7 @@ export function useStoryCertificate(
   useEffect(() => {
     let active = true;
 
-    const loadStoryCertificate = async () => {
+    void (async () => {
       if (!childId || !storyId) {
         if (active) setLoading(false);
         return;
@@ -293,9 +312,8 @@ export function useStoryCertificate(
       } finally {
         if (active) setLoading(false);
       }
-    };
+    })();
 
-    void loadStoryCertificate();
     return () => {
       active = false;
     };
@@ -331,7 +349,7 @@ export function useWeeklyChallenges(
   useEffect(() => {
     let active = true;
 
-    const loadWeeklyChallenges = async () => {
+    void (async () => {
       if (!childId || !storyId) {
         if (active) setLoading(false);
         return;
@@ -348,9 +366,8 @@ export function useWeeklyChallenges(
       } finally {
         if (active) setLoading(false);
       }
-    };
+    })();
 
-    void loadWeeklyChallenges();
     return () => {
       active = false;
     };
@@ -397,7 +414,7 @@ export function useStoryIntroProgress(
   useEffect(() => {
     let active = true;
 
-    const loadStoryIntroProgress = async () => {
+    void (async () => {
       if (!childId || !storyId) {
         if (active) setLoading(false);
         return;
@@ -412,9 +429,8 @@ export function useStoryIntroProgress(
       } finally {
         if (active) setLoading(false);
       }
-    };
+    })();
 
-    void loadStoryIntroProgress();
     return () => {
       active = false;
     };
