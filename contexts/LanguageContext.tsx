@@ -2988,6 +2988,7 @@ const dict: Record<Language, Record<string, string>> = {
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  setLanguageSilent: (lang: Language) => void;
   t: (key: string) => string;
 }
 
@@ -3035,6 +3036,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(
         new CustomEvent("app:languageChange", { detail: { language: lang } })
       );
+    },
+    setLanguageSilent: (lang: Language) => {
+      localStorage.setItem(LANGUAGE_KEY, lang);
+      setLanguage(lang);
     },
     t: (key: string) => {
       const table = dict[language] || dict.rw;

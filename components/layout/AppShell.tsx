@@ -50,7 +50,7 @@ export default function AppShell({ children }: AppShellProps) {
   const { user, loading: authLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, setLanguageSilent, t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
   const variants = getComponentVariant(themeId);
@@ -108,7 +108,7 @@ export default function AppShell({ children }: AppShellProps) {
       activeChildRef.current = child;
       setActiveChild(child);
       if (child) {
-        setLanguage(child.language);
+        setLanguageSilent(child.language);
         // Shields (getStreakShieldsPurchased + getUsedShieldDates) now run in
         // parallel with everything else. resolveShields below hits the warm
         // qcached results — zero extra network round-trips.
@@ -157,7 +157,7 @@ export default function AppShell({ children }: AppShellProps) {
       if (!child) return;
       activeChildRef.current = child;
       setActiveChild(child);
-      setLanguage(child.language as Language);
+      setLanguageSilent(child.language as Language);
       const [ws, dates, , , achievements, cos] = await Promise.all([
         getWeekStreak(child.id, child.language),
         getActivityDates(child.id, child.language),
