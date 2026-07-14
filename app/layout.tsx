@@ -9,6 +9,7 @@ import { AppThemeProvider } from "@/contexts/AppThemeProvider";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import NavigationProgress from "@/components/layout/NavigationProgress";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const baloo  = Baloo_2({ subsets: ["latin"], variable: "--font-baloo",  weight: ["400","500","600","700","800"] });
 const nunito = Nunito ({  subsets: ["latin"], variable: "--font-nunito", weight: ["400","600","700","800","900"] });
