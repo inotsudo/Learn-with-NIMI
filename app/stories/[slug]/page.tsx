@@ -11,7 +11,7 @@ import { DURATION, EASE, SPRING } from "@/lib/design-system/motion";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getChildren, getStorageUrl, getConsecutiveStreak, awardMilestoneBadges, createNotification } from "@/lib/queries";
+import { getChildren, getStorageUrl, getConsecutiveStreak, awardMilestoneBadges, createNotification, getStoryPages } from "@/lib/queries";
 import { getMilestoneBadgeMeta } from "@/lib/milestoneBadges";
 import { getStoryBySlug, getStoryDetails, getStorySlots, getStoryLibrary } from "@/lib/storyRepository";
 import type { StoryLibraryItem } from "@/lib/story-types";
@@ -131,6 +131,9 @@ export default function StoryDetailPage() {
       setSlots(sl);
       setIntroProgress(intro);
       setCertificate(cert);
+
+      // Prefetch story pages in background so the flipflop_audio slot opens instantly
+      void getStoryPages(story.id, child.language as "en" | "fr" | "rw");
 
       // Auto-detect phase based on progress
       const doneSlots = sl.filter(s => s.completed).length;

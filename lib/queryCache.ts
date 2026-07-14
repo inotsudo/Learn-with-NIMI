@@ -44,10 +44,19 @@ export function qcached<T>(key: string, fn: () => Promise<T>, ttl = TTL_SHORT): 
   return promise;
 }
 
-/** Remove all cache entries whose key starts with `prefix`. */
+/** Remove all in-memory cache entries whose key starts with `prefix`. */
 export function qinvalidate(prefix: string): void {
   for (const key of store.keys())   { if (key.startsWith(prefix)) store.delete(key); }
   for (const key of pending.keys()) { if (key.startsWith(prefix)) pending.delete(key); }
+}
+
+/** Remove all localStorage cache entries whose key starts with `prefix`. */
+export function lsinvalidate(prefix: string): void {
+  if (typeof window === "undefined") return;
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(prefix)) localStorage.removeItem(k);
+  }
 }
 
 /**

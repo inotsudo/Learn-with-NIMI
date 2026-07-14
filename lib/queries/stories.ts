@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabaseClient";
-import { qcached, TTL_LONG } from "@/lib/queryCache";
+import { qcached, lscached, TTL_LONG } from "@/lib/queryCache";
 import type { Story, StoryPage, ColoringPage } from "./types";
 
 export function getActiveStories(): Promise<Story[]> {
@@ -29,7 +29,7 @@ export function getStoryPages(
   storyId: string,
   language: "en" | "fr" | "rw" = "en"
 ): Promise<StoryPage[]> {
-  return qcached(`storyPages:${storyId}:${language}`, async () => {
+  return lscached(`storyPages:${storyId}:${language}`, TTL_LONG, async () => {
     const { data } = await supabase
       .from("story_pages")
       .select("id, story_id, page_number, image_url, story_page_versions(language, text, audio_url, published)")
@@ -50,16 +50,16 @@ export function getStoryPages(
         text: version?.text ?? null,
       } as StoryPage;
     });
-  }, TTL_LONG);
+  });
 }
 
 export function getColoringPages(storyId: string): Promise<ColoringPage[]> {
-  return qcached(`coloringPages:${storyId}`, async () => {
+  return lscached(`coloringPages:${storyId}`, TTL_LONG, async () => {
     const { data } = await supabase
       .from("coloring_pages")
       .select("*")
       .eq("story_id", storyId)
       .order("page_number");
     return (data ?? []) as ColoringPage[];
-  }, TTL_LONG);
+  });
 }

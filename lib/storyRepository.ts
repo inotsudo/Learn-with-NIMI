@@ -8,7 +8,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import supabase from "./supabaseClient";
-import { qcached, TTL_LONG } from "./queryCache";
+import { qcached, lscached, TTL_LONG } from "./queryCache";
 import type {
   StoryLibraryItem,
   StoryDetails,
@@ -88,21 +88,23 @@ export async function getStoryDetails(
   return rows?.[0] ?? null;
 }
 
-export async function getStorySlots(
+export function getStorySlots(
   childId: string,
   storyId: string,
   language: string
 ): Promise<StorySlot[]> {
-  const { data, error } = await supabase.rpc("get_story_slots", {
-    p_child_id: childId,
-    p_story_id: storyId,
-    p_language: language,
-  });
-  if (error) {
-    console.error("[getStorySlots]", error);
-    return [];
-  }
-  return (data ?? []) as StorySlot[];
+  return qcached(`storySlots:${childId}:${storyId}:${language}`, async () => {
+    const { data, error } = await supabase.rpc("get_story_slots", {
+      p_child_id: childId,
+      p_story_id: storyId,
+      p_language: language,
+    });
+    if (error) {
+      console.error("[getStorySlots]", error);
+      return [];
+    }
+    return (data ?? []) as StorySlot[];
+  }); // TTL_SHORT (20s) — slot completion status changes during a session
 }
 
 export async function getStoryRecommendations(
@@ -120,14 +122,16 @@ export async function getStoryRecommendations(
   return (data ?? []) as StoryRecommendation[];
 }
 
-export async function getStoryBySlug(slug: string): Promise<{ id: string; slug: string; title: string; cover_url: string | null; theme_emoji: string | null; sort_order: number } | null> {
-  const { data } = await supabase
-    .from("stories")
-    .select("id, slug, title, cover_url, theme_emoji, sort_order")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .maybeSingle();
-  return data ?? null;
+export function getStoryBySlug(slug: string): Promise<{ id: string; slug: string; title: string; cover_url: string | null; theme_emoji: string | null; sort_order: number } | null> {
+  return lscached(`storyBySlug:${slug}`, TTL_LONG, async () => {
+    const { data } = await supabase
+      .from("stories")
+      .select("id, slug, title, cover_url, theme_emoji, sort_order")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle();
+    return data ?? null;
+  });
 }
 
 // Public, no-auth teaser list for the marketing landing page — no childId/progress

@@ -9,6 +9,7 @@ interface StoryBookCtx {
   totalPages: number;
   isPlaying: boolean;
   reachedEnd: boolean;
+  pageHasAudio: boolean;
   play: () => void;
   pause: () => void;
   replay: () => void;
@@ -16,7 +17,7 @@ interface StoryBookCtx {
 }
 
 const Ctx = createContext<StoryBookCtx>({
-  currentPage: 0, totalPages: 0, isPlaying: false, reachedEnd: false,
+  currentPage: 0, totalPages: 0, isPlaying: false, reachedEnd: false, pageHasAudio: false,
   play: () => {}, pause: () => {}, replay: () => {}, onPageChange: () => {},
 });
 
@@ -45,12 +46,17 @@ export function StoryBookProvider({ pages, children }: {
     const page = pages[pageIdx];
     if (!page?.narrationAudio) return;
 
-    const au = new Audio(getStorageUrl(page.narrationAudio));
+    const url = getStorageUrl(page.narrationAudio);
+    const au = new Audio(url);
     audioRef.current = au;
     setIsPlaying(true);
     au.onended = () => { setIsPlaying(false); audioRef.current = null; };
     au.onerror = () => { setIsPlaying(false); audioRef.current = null; };
-    au.play().catch(() => { setIsPlaying(false); audioRef.current = null; });
+    au.play().catch((error) => {
+      console.warn("StoryBook audio play failed", { error, pageIdx: pageIdx, url, page });
+      setIsPlaying(false);
+      audioRef.current = null;
+    });
   }, [pages, stopAudio]);
 
   const onPageChange = useCallback((pageIdx: number) => {
@@ -60,9 +66,25 @@ export function StoryBookProvider({ pages, children }: {
     setTimeout(() => playPageAudio(pageIdx), 400);
   }, [totalPages, stopAudio, playPageAudio]);
 
-  const play = useCallback(() => playPageAudio(currentPage), [currentPage, playPageAudio]);
+  const pageHasAudio = Boolean(pages[currentPage]?.narrationAudio);
+
+  const play = useCallback(() => {
+    if (!pageHasAudio) {
+      console.warn("StoryBook play requested but current page has no narration audio", currentPage, pages[currentPage]);
+      return;
+    }
+    playPageAudio(currentPage);
+  }, [currentPage, pageHasAudio, pages, playPageAudio]);
+
   const pause = useCallback(() => stopAudio(), [stopAudio]);
-  const replay = useCallback(() => { stopAudio(); playPageAudio(currentPage); }, [currentPage, stopAudio, playPageAudio]);
+  const replay = useCallback(() => {
+    if (!pageHasAudio) {
+      console.warn("StoryBook replay requested but current page has no narration audio", currentPage, pages[currentPage]);
+      return;
+    }
+    stopAudio();
+    playPageAudio(currentPage);
+  }, [currentPage, pageHasAudio, pages, stopAudio, playPageAudio]);
 
   // Always point to the latest playPageAudio so the auto-play timeout below isn't stale.
   // Without this, the [] effect captures an empty-pages closure (pages load async after mount).
@@ -98,7 +120,7 @@ export function StoryBookProvider({ pages, children }: {
   useEffect(() => () => stopAudio(), [stopAudio]);
 
   return (
-    <Ctx.Provider value={{ currentPage, totalPages, isPlaying, reachedEnd, play, pause, replay, onPageChange }}>
+    <Ctx.Provider value={{ currentPage, totalPages, isPlaying, reachedEnd, pageHasAudio, play, pause, replay, onPageChange }}>
       {children}
     </Ctx.Provider>
   );

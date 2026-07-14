@@ -9,6 +9,7 @@ import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getChildren, getStoryPages, getColoringPages, createNotification } from "@/lib/queries";
+import { lscached, TTL_LONG } from "@/lib/queryCache";
 import type { Mission, StoryPage, ColoringPage } from "@/lib/queries";
 import { getStoryBySlug, getStorySlots } from "@/lib/storyRepository";
 import { completeStorySlot } from "@/lib/storyProgressRepository";
@@ -123,6 +124,7 @@ export default function StoryMissionPage() {
   const assets = getThemeAssets(themeId);
 
   const [loading, setLoading] = useState(true);
+  const [pagesLoading, setPagesLoading] = useState(false);
   const [childId, setChildId] = useState<string | null>(null);
   const [childName, setChildName] = useState<string>("");
   const [storyId, setStoryId] = useState<string | null>(null);
@@ -140,16 +142,19 @@ export default function StoryMissionPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setParentId(user?.id ?? null);
-      const list = await getChildren();
+      // auth + children + story slug are independent — fetch all three in parallel
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
+      const [{ data: { user } }, list, story] = await Promise.all([
+        supabase.auth.getUser(),
+        getChildren(),
+        getStoryBySlug(slug),
+      ]);
+      setParentId(user?.id ?? null);
       const child = list.find(c => c.id === savedId) ?? list[0];
       if (!child) { setLoading(false); return; }
       setChildId(child.id);
       setChildName(child.name ?? "");
 
-      const story = await getStoryBySlug(slug);
       if (!story) { setLoading(false); return; }
       setStoryId(story.id);
 
@@ -160,12 +165,15 @@ export default function StoryMissionPage() {
       setAllSlots([...slots].sort((a, b) => (a.slot_order ?? 0) - (b.slot_order ?? 0)));
       setCompleted(currentSlot.completed);
 
-      // Fetch mission data
-      const { data: missionData } = await supabase
-        .from("missions")
-        .select("*, mission_versions(*)")
-        .eq("id", currentSlot.mission_id)
-        .maybeSingle();
+      // lscached — survives page reload; mission content only changes when admin publishes
+      const missionData = await lscached(`mission:${currentSlot.mission_id}`, TTL_LONG, async () => {
+        const { data } = await supabase
+          .from("missions")
+          .select("*, mission_versions(*)")
+          .eq("id", currentSlot.mission_id)
+          .maybeSingle();
+        return data ?? null;
+      });
 
       if (missionData) {
         // Resolve language-specific version
@@ -193,16 +201,23 @@ export default function StoryMissionPage() {
         setMission(resolved);
       }
 
-      // Load slot-specific data
-      if (slotKey === "flipflop_audio") {
-        const pages = await getStoryPages(story.id, child.language);
-        setStoryPages(pages.map(p => ({ ...p, text: personalize(p.text, child.name) })));
-      }
-      if (slotKey === "coloring") {
-        setColoringPages(await getColoringPages(story.id));
-      }
-
+      // Show header immediately after mission meta is resolved
       setLoading(false);
+
+      // Load slot-specific page data in background
+      if (slotKey === "flipflop_audio" || slotKey === "coloring") {
+        setPagesLoading(true);
+        try {
+          if (slotKey === "flipflop_audio") {
+            const pages = await getStoryPages(story.id, child.language);
+            setStoryPages(pages.map(p => ({ ...p, text: personalize(p.text, child.name) })));
+          } else {
+            setColoringPages(await getColoringPages(story.id));
+          }
+        } finally {
+          setPagesLoading(false);
+        }
+      }
     })();
   }, [slug, slotKey, language]);
 
@@ -367,13 +382,13 @@ export default function StoryMissionPage() {
           {mission && (
             <div className="bg-white border border-ds-border shadow-[0_16px_34px_rgba(15,23,42,0.08)] overflow-hidden p-4 sm:p-5" style={{ borderRadius: 'var(--leaf-r)' }}>
               {mission.type === "story" && (
-                <StoryContent mission={mission} storyPages={storyPages} onComplete={handleComplete} completed={completed} saving={saving} />
+                <StoryContent mission={mission} storyPages={storyPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} />
               )}
               {mission.type === "read" && (
                 <ReadContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} />
               )}
               {mission.type === "color" && (
-                <ColoringContent mission={mission} coloringPages={coloringPages} onComplete={handleComplete} completed={completed} saving={saving} />
+                <ColoringContent mission={mission} coloringPages={coloringPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} />
               )}
               {mission.type === "move" && (
                 <MoveGrooveContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} />

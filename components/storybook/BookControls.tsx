@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function BookControls({ onPrev, onNext, bookRef, showText, onToggleText, hasText }: Props) {
-  const { currentPage, totalPages, isPlaying, play, pause, replay } = useStoryBook();
+  const { currentPage, totalPages, isPlaying, pageHasAudio, play, pause, replay } = useStoryBook();
   const m = useThemeMotion();
   useAppTheme(); // subscribe so CSS vars are live for themed buttons
   const isFirst = currentPage <= 0;
@@ -35,11 +35,13 @@ export default function BookControls({ onPrev, onNext, bookRef, showText, onTogg
       </motion.button>
 
       {/* Play/Pause — world-themed idle state */}
-      <motion.button whileTap={m.buttonPress} onClick={isPlaying ? pause : play}
+      <motion.button whileTap={m.buttonPress} onClick={isPlaying ? pause : play} disabled={!pageHasAudio}
         className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all ${
-          isPlaying
-            ? "bg-[image:linear-gradient(to_bottom_right,var(--ds-brand-primary),var(--ds-brand-hover))] shadow-ds-cta ring-4 ring-[var(--ds-brand-primary)]/20"
-            : "bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] shadow-[var(--ds-brand-primary)]/30 ring-4 ring-[var(--ds-brand-primary)]/20"
+          !pageHasAudio
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed ring-0"
+            : isPlaying
+              ? "bg-[image:linear-gradient(to_bottom_right,var(--ds-brand-primary),var(--ds-brand-hover))] shadow-ds-cta ring-4 ring-[var(--ds-brand-primary)]/20"
+              : "bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] shadow-[var(--ds-brand-primary)]/30 ring-4 ring-[var(--ds-brand-primary)]/20"
         }`}>
         {isPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white ml-1" />}
       </motion.button>
