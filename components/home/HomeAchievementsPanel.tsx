@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Trophy } from "lucide-react";
 import type { ChildAchievement } from "@/lib/queries";
 
 interface BadgeDisplay {
@@ -53,23 +53,27 @@ interface Props {
 
 export default function HomeAchievementsPanel({ achievements }: Props) {
   return (
-    <div className="overflow-hidden leaf-lg border border-white/80 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-      <div className="relative flex items-center justify-between px-5 pt-5 pb-3 overflow-hidden"
-        style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b,#f97316)" }}>
-        <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
-        <div>
-          <p className="font-nunito text-white/60 text-[9px] uppercase tracking-widest mb-0.5">Trophy Room</p>
-          <h3 className="font-baloo font-black text-white text-[18px]">My Treasures</h3>
+    <div className="overflow-hidden leaf-lg border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.07)]">
+
+      {/* Flat header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm shrink-0">
+            <Trophy className="w-5 h-5 text-amber-600" />
+          </div>
+          <div>
+            <p className="font-nunito text-amber-500 text-[10px] uppercase tracking-widest leading-none mb-0.5">Trophy Room</p>
+            <h3 className="font-baloo font-black text-gray-900 text-[17px] leading-tight">My Treasures</h3>
+          </div>
         </div>
-        <Link href="/user-profile" className="flex items-center gap-0.5 font-nunito font-bold text-white/80 text-[11px] hover:text-white">
+        <Link href="/user-profile" className="flex items-center gap-0.5 font-nunito font-bold text-gray-400 text-[11px] hover:text-amber-600 transition-colors">
           All <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <svg viewBox="0 0 300 16" preserveAspectRatio="none" className="w-full h-4 block"
-        style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b,#f97316)" }}>
-        <path d="M0,8 C50,0 100,16 150,8 C200,0 250,16 300,8 L300,16 L0,16 Z" fill="#fffbeb" />
-      </svg>
-      <div className="bg-gradient-to-b from-amber-50 to-orange-50 px-4 py-4">
+      <div className="h-px bg-gray-100 mx-4" />
+
+      {/* Badges */}
+      <div className="px-4 py-4">
         <div className="flex justify-around gap-2">
           {Array.from({ length: 3 }).map((_, i) => {
             const ach    = achievements[achievements.length - 1 - i];
@@ -92,11 +96,6 @@ export default function HomeAchievementsPanel({ achievements }: Props) {
               </div>
             );
           })}
-        </div>
-        <div className="flex justify-center gap-4 mt-3 opacity-20 pointer-events-none select-none" aria-hidden>
-          <motion.span className="text-[13px]" animate={{ y: [0, -3, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}>🎀</motion.span>
-          <motion.span className="text-[15px]" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>⭐</motion.span>
-          <motion.span className="text-[13px]" animate={{ y: [0, -3, 0] }} transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1.0 }}>✨</motion.span>
         </div>
       </div>
     </div>

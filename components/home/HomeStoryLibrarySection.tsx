@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
-import { Star, ChevronRight, Play, Lock } from "lucide-react";
+import { ChevronRight, Play, Lock, Star } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
 import { ZoneDecorations } from "@/components/campus/ZoneDecorations";
 import type { StoryLibraryItem } from "@/lib/story-types";
@@ -43,6 +43,8 @@ export default function HomeStoryLibrarySection({ stories, curStory, up, stagger
       <div className="leaf-lg border border-white/80 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/60 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] sm:p-5">
         <ZoneDecorations zone="library" />
         <CampusConnector />
+
+        {/* Section header */}
         <motion.div variants={up} className="flex items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-sky-100 flex items-center justify-center text-[22px] shrink-0 shadow-sm">📚</div>
@@ -55,74 +57,107 @@ export default function HomeStoryLibrarySection({ stories, curStory, up, stagger
             See all <ChevronRight className="w-4 h-4" />
           </Link>
         </motion.div>
-        <motion.div variants={stagger} className="flex gap-4 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
+
+        {/* Card scroll row */}
+        <motion.div variants={stagger} className="flex gap-3.5 overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
           {stories.map((story) => {
             const isActive = !story.complete && story.unlocked && story.sid === curStory?.sid;
             const pctDone  = Math.round((story.progress ?? 0) * 100);
+
             return (
-              <motion.div key={story.sid} variants={pop} className="shrink-0 w-[155px] sm:w-[172px]">
+              <motion.div key={story.sid} variants={pop} className="shrink-0 w-[148px] sm:w-[164px]">
                 {story.unlocked ? (
                   <Link href={`/stories/${story.slug}`}
-                    className="group block leaf overflow-hidden shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(15,23,42,0.12)]"
-                    style={{ border: isActive ? "2px solid rgba(5,150,105,0.45)" : "1px solid rgba(219,234,254,0.8)" }}>
-                    <div className="relative w-full overflow-hidden" style={{ aspectRatio: "1/1" }}>
+                    className="group block rounded-2xl overflow-hidden bg-white transition-all hover:-translate-y-1.5"
+                    style={{
+                      boxShadow: isActive
+                        ? "0 8px 28px rgba(5,150,105,0.25), 0 0 0 2px rgba(5,150,105,0.4)"
+                        : "0 4px 16px rgba(15,23,42,0.08)",
+                    }}>
+
+                    {/* Portrait cover image — 3:4 book ratio */}
+                    <div className="relative w-full overflow-hidden" style={{ aspectRatio: "3/4" }}>
                       {story.cover_url
                         ? <Image src={getStorageUrl(story.cover_url)} alt={story.title} fill
                             className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                        : <div className="w-full h-full flex items-center justify-center text-5xl"
+                        : <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
                             style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}>
-                            {story.theme_emoji ?? "📖"}
+                            <span className="text-5xl">{story.theme_emoji ?? "📖"}</span>
                           </div>
                       }
-                      {story.complete && (
-                        <div className="absolute inset-0 flex items-end justify-center pb-2 bg-emerald-600/20">
-                          <span className="bg-emerald-500 text-white font-baloo font-black text-[10px] px-3 py-1 rounded-full shadow-md">✓ Complete!</span>
-                        </div>
-                      )}
-                      {isActive && !story.complete && (
-                        <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-md">
-                          <Play className="w-3.5 h-3.5 fill-white text-white ml-0.5" />
-                        </div>
-                      )}
+
+                      {/* Gradient fade for text legibility */}
+                      <div className="absolute inset-0"
+                        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 40%, transparent 70%)" }} />
+
+                      {/* Top-left status chip */}
+                      <div className="absolute top-2.5 left-2.5">
+                        {story.complete ? (
+                          <span className="flex items-center gap-1 font-baloo font-black text-[9px] bg-emerald-500 text-white px-2 py-0.5 rounded-full shadow-md">
+                            <Star className="w-2.5 h-2.5 fill-white" /> Done
+                          </span>
+                        ) : isActive ? (
+                          <span className="flex items-center gap-1 font-baloo font-black text-[9px] bg-white/90 text-emerald-700 px-2 py-0.5 rounded-full shadow-md backdrop-blur-sm">
+                            <Play className="w-2 h-2 fill-emerald-600" /> Reading
+                          </span>
+                        ) : story.is_free ? (
+                          <span className="font-baloo font-black text-[9px] bg-sky-500 text-white px-2 py-0.5 rounded-full shadow-md">
+                            Free
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Bottom overlay — title + progress */}
+                      <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2.5 pt-6">
+                        <p className="font-baloo font-black text-white text-[12px] leading-tight line-clamp-2 mb-1.5 drop-shadow">
+                          {story.title}
+                        </p>
+                        {pctDone > 0 && !story.complete && (
+                          <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${pctDone}%`, background: "#34d399" }} />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="bg-white px-3 pt-2 pb-3">
-                      <p className="font-baloo font-black text-gray-800 text-[13px] leading-tight line-clamp-2 mb-2 group-hover:text-emerald-600 transition-colors">
-                        {story.title}
-                      </p>
-                      {pctDone > 0 && !story.complete ? (
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all"
-                            style={{ width: `${pctDone}%`, background: "linear-gradient(90deg,#34d399,#059669)" }} />
-                        </div>
-                      ) : story.complete ? (
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          <span className="font-nunito font-bold text-emerald-600 text-[11px]">All done!</span>
-                        </div>
+
+                    {/* Bottom pill row */}
+                    <div className="flex items-center justify-between px-2.5 py-2 bg-white border-t border-gray-50">
+                      {story.category ? (
+                        <span className="font-nunito font-bold text-[9px] text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full capitalize truncate max-w-[75px]">
+                          {story.category}
+                        </span>
                       ) : (
-                        <span className="font-nunito font-bold text-sky-500 text-[11px]">Start reading →</span>
+                        <span className="font-nunito font-bold text-[9px] text-gray-400">Story</span>
+                      )}
+                      {story.complete ? (
+                        <span className="font-nunito font-bold text-[9px] text-emerald-600">✓ All done</span>
+                      ) : pctDone > 0 ? (
+                        <span className="font-nunito font-bold text-[9px] text-gray-400">{pctDone}%</span>
+                      ) : (
+                        <span className="font-nunito font-bold text-[9px] text-sky-500">Start →</span>
                       )}
                     </div>
                   </Link>
                 ) : (
-                  <div className="leaf overflow-hidden border border-gray-100 opacity-55">
-                    <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
+                  /* Locked card */
+                  <div className="rounded-2xl overflow-hidden bg-white opacity-55 shadow-[0_4px_12px_rgba(15,23,42,0.06)]">
+                    <div className="relative w-full" style={{ aspectRatio: "3/4" }}>
                       {story.cover_url
                         ? <Image src={getStorageUrl(story.cover_url)} alt={story.title} fill
                             className="object-cover grayscale" />
-                        : <div className="w-full h-full flex items-center justify-center text-5xl bg-gray-100">
+                        : <div className="absolute inset-0 flex items-center justify-center text-5xl bg-gray-100">
                             {story.theme_emoji ?? "📖"}
                           </div>
                       }
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center gap-2">
                         <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                          <Lock className="w-5 h-5 text-gray-600" />
+                          <Lock className="w-5 h-5 text-gray-500" />
                         </div>
                       </div>
                     </div>
-                    <div className="bg-gray-50 px-3 pt-2 pb-3">
-                      <p className="font-baloo font-black text-gray-400 text-[12px] leading-tight line-clamp-2 mb-1">{story.title}</p>
-                      <p className="font-nunito text-gray-400 text-[10px]">Finish the previous story to unlock</p>
+                    <div className="flex items-center justify-between px-2.5 py-2 bg-gray-50 border-t border-gray-100">
+                      <p className="font-baloo font-black text-gray-400 text-[10px] leading-tight line-clamp-1 flex-1">{story.title}</p>
+                      <Lock className="w-3 h-3 text-gray-300 shrink-0 ml-1" />
                     </div>
                   </div>
                 )}

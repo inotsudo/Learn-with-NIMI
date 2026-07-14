@@ -321,11 +321,11 @@ export default function LandingPage() {
       </section>
 
       {/* ══ WHY NIMIPIKO ════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-gray-50">
+      <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-white">
         <div className="max-w-6xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-14">
-              <span className="eyebrow inline-block text-green-800 mb-4 bg-green-200 px-4 py-1.5 rounded-full">
+              <span className="eyebrow inline-block text-green-800 mb-4 bg-green-100 px-4 py-1.5 rounded-full border border-green-200">
                 🏰 Why families choose us
               </span>
               <h2 className="font-baloo font-black text-gray-900 text-[28px] sm:text-[42px] leading-tight">
@@ -336,53 +336,66 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            <div className="grid sm:grid-cols-3 gap-6 lg:gap-8">
-              <motion.div variants={fadeUp}>
-                <motion.div whileHover={{y:-8,rotate:-0.5}} transition={{type:"spring",stiffness:260,damping:20}}
-                  className="relative overflow-hidden shadow-lg flex flex-col h-full"
-                  style={{background:"linear-gradient(145deg,#FDF2F8,#FCE7F3)", borderRadius:'var(--leaf-r-lg)'}}>
-                  <div className="p-7 flex flex-col flex-1">
+            {/* Bento grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-5 lg:gap-6">
+
+              {/* Stories — large featured card */}
+              <motion.div variants={fadeUp} className="lg:row-span-2">
+                <motion.div whileHover={{y:-6}} transition={{type:"spring",stiffness:260,damping:20}}
+                  className="relative overflow-hidden shadow-xl flex flex-col h-full min-h-[340px] lg:min-h-[540px]"
+                  style={{background:"linear-gradient(160deg,#fce7f3 0%,#fdf2f8 50%,#fce7f3 100%)", borderRadius:'var(--leaf-r-lg)'}}>
+                  <div className="absolute -bottom-6 -right-6 text-[160px] opacity-[0.06] select-none pointer-events-none leading-none" aria-hidden>📚</div>
+                  <div className="p-8 flex flex-col flex-1 relative z-10">
                     <div className="flex items-center gap-3 mb-5">
-                      <Image src="/themes/default/quick-actions/btn-read.png" alt="" width={56} height={56} className="object-contain drop-shadow-sm" />
+                      <Image src="/themes/default/quick-actions/btn-read.png" alt="" width={56} height={56} className="object-contain drop-shadow" />
                       <div>
-                        <div className="w-8 h-1.5 rounded-full bg-pink-400 mb-1" />
-                        <h3 className="font-baloo font-black text-gray-900 text-[20px]">Stories</h3>
+                        <div className="w-10 h-1.5 rounded-full bg-pink-400 mb-1.5" />
+                        <h3 className="font-baloo font-black text-gray-900 text-[24px]">Stories</h3>
                       </div>
                     </div>
-                    <Image src="/themes/default/characters/nimi.png" alt="Nimi" width={112} height={112} className="object-contain self-center mb-4 drop-shadow" />
-                    <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-5">
-                      Beautifully illustrated stories that build reading, vocabulary and imagination — in 3 languages.
+                    <p className="font-nunito text-gray-600 text-[15px] leading-relaxed mb-6 max-w-[34ch]">
+                      Beautifully illustrated stories that build reading, vocabulary and imagination. Each story is read aloud in 3 languages so children learn to read as they listen.
                     </p>
-                    <ul className="flex flex-col gap-2 mt-auto">
-                      {["Read-along narration","Vocabulary highlights","Comprehension activities"].map(b => (
-                        <li key={b} className="flex items-center gap-2 font-nunito text-[13px] text-gray-600">
+                    <ul className="flex flex-col gap-3 mb-8">
+                      {["Read-along narration in EN / FR / RW","Vocabulary word spotlights","Comprehension activities after each chapter"].map(b => (
+                        <li key={b} className="flex items-center gap-2.5 font-nunito text-[14px] text-gray-600">
                           <CheckCircle2 className="w-4 h-4 text-pink-500 shrink-0" />{b}
                         </li>
                       ))}
                     </ul>
+                    <div className="mt-auto flex items-end justify-between gap-4">
+                      <Image src="/themes/default/characters/nimi.png" alt="Nimi" width={120} height={120} className="object-contain drop-shadow-lg" />
+                      <div className="bg-white/75 backdrop-blur-sm border border-pink-100 rounded-2xl px-5 py-4 shadow-sm text-right">
+                        <p className="font-baloo font-black text-[18px] leading-tight text-pink-600">3 languages</p>
+                        <p className="font-nunito text-gray-500 text-[12px]">EN · FR · RW</p>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               </motion.div>
 
+              {/* Missions */}
               <motion.div variants={fadeUp}>
-                <motion.div whileHover={{y:-8,rotate:0.5}} transition={{type:"spring",stiffness:260,damping:20}}
+                <motion.div whileHover={{y:-5}} transition={{type:"spring",stiffness:260,damping:20}}
                   className="relative overflow-hidden shadow-lg flex flex-col h-full"
-                  style={{background:"linear-gradient(145deg,#FFF7ED,#FFEDD5)", borderRadius:'var(--leaf-r-lg)'}}>
-                  <div className="p-7 flex flex-col flex-1">
-                    <div className="flex items-center gap-3 mb-5">
-                      <Image src="/themes/default/quick-actions/btn-create.png" alt="" width={56} height={56} className="object-contain drop-shadow-sm" />
-                      <div>
-                        <div className="w-8 h-1.5 rounded-full bg-orange-400 mb-1" />
-                        <h3 className="font-baloo font-black text-gray-900 text-[20px]">Missions</h3>
+                  style={{background:"linear-gradient(145deg,#fff7ed,#ffedd5)", borderRadius:'var(--leaf-r-lg)'}}>
+                  <div className="absolute -bottom-4 -right-4 text-[100px] opacity-[0.07] select-none pointer-events-none leading-none" aria-hidden>🎨</div>
+                  <div className="p-7 flex flex-col flex-1 relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Image src="/themes/default/quick-actions/btn-create.png" alt="" width={52} height={52} className="object-contain drop-shadow-sm" />
+                        <div>
+                          <div className="w-8 h-1.5 rounded-full bg-orange-400 mb-1" />
+                          <h3 className="font-baloo font-black text-gray-900 text-[20px]">Missions</h3>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <Image src="/themes/default/quick-actions/btn-move.png" alt="" width={34} height={34} className="object-contain opacity-80" />
+                        <Image src="/themes/default/quick-actions/btn-sing.png" alt="" width={34} height={34} className="object-contain opacity-80" />
                       </div>
                     </div>
-                    <div className="flex justify-center gap-2 mb-4">
-                      <Image src="/themes/default/quick-actions/btn-move.png" alt="" width={48} height={48} className="object-contain" />
-                      <Image src="/themes/default/characters/piko.png" alt="Piko" width={96} height={96} className="object-contain drop-shadow -mt-2" />
-                      <Image src="/themes/default/quick-actions/btn-sing.png" alt="" width={48} height={48} className="object-contain" />
-                    </div>
-                    <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-5">
-                      Hands-on activities: drawing, singing, moving and exploring. Learning through play, not passive screens.
+                    <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-4">
+                      Hands-on activities: drawing, singing, moving and exploring. 6 creative missions per story — learning through play, not passive screens.
                     </p>
                     <ul className="flex flex-col gap-2 mt-auto">
                       {["Drawing & colouring","Songs & karaoke","Movement activities"].map(b => (
@@ -395,27 +408,28 @@ export default function LandingPage() {
                 </motion.div>
               </motion.div>
 
+              {/* Progress */}
               <motion.div variants={fadeUp}>
-                <motion.div whileHover={{y:-8,rotate:-0.5}} transition={{type:"spring",stiffness:260,damping:20}}
+                <motion.div whileHover={{y:-5}} transition={{type:"spring",stiffness:260,damping:20}}
                   className="relative overflow-hidden shadow-lg flex flex-col h-full"
-                  style={{background:"linear-gradient(145deg,#EFF6FF,#DBEAFE)", borderRadius:'var(--leaf-r-lg)'}}>
-                  <div className="p-7 flex flex-col flex-1">
-                    <div className="flex items-center gap-3 mb-5">
-                      <Image src="/themes/default/rewards/trophy.png" alt="" width={56} height={56} className="object-contain drop-shadow-sm" />
-                      <div>
-                        <div className="w-8 h-1.5 rounded-full bg-blue-500 mb-1" />
-                        <h3 className="font-baloo font-black text-gray-900 text-[20px]">Progress</h3>
+                  style={{background:"linear-gradient(145deg,#eff6ff,#dbeafe)", borderRadius:'var(--leaf-r-lg)'}}>
+                  <div className="absolute -bottom-4 -right-4 text-[100px] opacity-[0.07] select-none pointer-events-none leading-none" aria-hidden>🏆</div>
+                  <div className="p-7 flex flex-col flex-1 relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Image src="/themes/default/rewards/trophy.png" alt="" width={52} height={52} className="object-contain drop-shadow-sm" />
+                        <div>
+                          <div className="w-8 h-1.5 rounded-full bg-blue-500 mb-1" />
+                          <h3 className="font-baloo font-black text-gray-900 text-[20px]">Progress</h3>
+                        </div>
                       </div>
+                      <Image src="/themes/default/characters/zilo.png" alt="Zilo" width={52} height={52} className="object-contain drop-shadow -mt-2" />
                     </div>
-                    <div className="flex justify-center items-end gap-2 mb-4">
-                      <Image src="/themes/default/characters/zilo.png" alt="Zilo" width={96} height={96} className="object-contain drop-shadow" />
-                      <Image src="/themes/default/rewards/ribbon.png" alt="" width={56} height={56} className="object-contain" />
-                    </div>
-                    <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-5">
-                      Every milestone is celebrated. Parents track achievements while kids earn badges and certificates.
+                    <p className="font-nunito text-gray-600 text-[14px] leading-relaxed mb-4">
+                      Every milestone celebrated. Kids earn stars, badges and real printable certificates — parents follow every achievement from the dashboard.
                     </p>
                     <ul className="flex flex-col gap-2 mt-auto">
-                      {["Stars & badges","Achievement certificates","Parent dashboard"].map(b => (
+                      {["Stars & badges","Printable certificates","Parent progress dashboard"].map(b => (
                         <li key={b} className="flex items-center gap-2 font-nunito text-[13px] text-gray-600">
                           <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />{b}
                         </li>
@@ -424,6 +438,7 @@ export default function LandingPage() {
                   </div>
                 </motion.div>
               </motion.div>
+
             </div>
           </motion.div>
         </div>
@@ -440,7 +455,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-16">
-              <span className="eyebrow inline-block text-amber-800 mb-4 bg-amber-200 px-4 py-1.5 rounded-full">
+              <span className="eyebrow inline-block text-amber-800 mb-4 bg-amber-100 border border-amber-200 px-4 py-1.5 rounded-full">
                 🗺️ Your Journey Begins Here
               </span>
               <h2 className="font-baloo font-black text-gray-900 text-[28px] sm:text-[42px] leading-tight">
@@ -452,28 +467,35 @@ export default function LandingPage() {
             </motion.div>
 
             <div className="relative grid sm:grid-cols-3 gap-8 sm:gap-6">
-              <div className="hidden sm:block absolute top-14 left-[calc(16.67%+20px)] right-[calc(16.67%+20px)] h-0.5 bg-gradient-to-r from-amber-400 via-green-400 to-amber-400" />
+              {/* Dashed connector */}
+              <div className="hidden sm:block absolute top-[52px] left-[calc(16.67%+32px)] right-[calc(16.67%+32px)] h-px"
+                style={{backgroundImage:"repeating-linear-gradient(90deg,#86efac 0px,#86efac 12px,transparent 12px,transparent 22px)"}} />
               {([
                 {step:"1",char:"/themes/default/characters/nimi.png",alt:"Nimi",
                  title:"Create your child's profile",
-                 desc:"Add your child's name and age. Manage multiple children under one family account."},
+                 desc:"Add your child's name and age. Manage multiple children under one family account.",
+                 accent:"bg-amber-400"},
                 {step:"2",char:"/themes/default/characters/piko.png",alt:"Piko",
                  title:"Pick a language & start a story",
-                 desc:"Choose English, French or Kinyarwanda — then dive into the first adventure together."},
+                 desc:"Choose English, French or Kinyarwanda — then dive into the first adventure together.",
+                 accent:"bg-[var(--ds-brand-primary)]"},
                 {step:"3",char:"/themes/default/characters/zilo.png",alt:"Zilo",
                  title:"Watch them learn & grow",
-                 desc:"Kids earn stars, badges and certificates. You follow every milestone from your dashboard."},
-              ] as const).map(({step,char,alt,title,desc}) => (
+                 desc:"Kids earn stars, badges and certificates. You follow every milestone from your dashboard.",
+                 accent:"bg-sky-500"},
+              ] as const).map(({step,char,alt,title,desc,accent}) => (
                 <motion.div key={step} variants={fadeUp} className="flex flex-col items-center text-center gap-3">
                   <div className="relative z-10">
-                    <div className="w-16 h-16 rounded-full text-white font-baloo font-black text-[26px] flex items-center justify-center shadow-lg shadow-green-300/50 border-4 border-[#FEF9C3]" style={{backgroundColor:'var(--nimi-green)'}}>
+                    <div className={`w-[52px] h-[52px] rounded-full text-white font-baloo font-black text-[22px] flex items-center justify-center shadow-lg ring-4 ring-white ${accent}`}>
                       {step}
                     </div>
                   </div>
                   <motion.img src={char} alt={alt} className="w-24 h-24 object-contain drop-shadow-md"
                     animate={{y:[0,-8,0]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut",delay:Number(step)*0.5}} />
-                  <h3 className="font-baloo font-black text-gray-900 text-[17px] leading-snug">{title}</h3>
-                  <p className="font-nunito text-gray-600 text-[13px] sm:text-[14px] leading-relaxed max-w-[230px] mx-auto">{desc}</p>
+                  <div className="bg-white border border-gray-100 rounded-2xl px-5 py-4 shadow-sm w-full max-w-[240px]">
+                    <h3 className="font-baloo font-black text-gray-900 text-[16px] leading-snug mb-2">{title}</h3>
+                    <p className="font-nunito text-gray-500 text-[13px] leading-relaxed">{desc}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -594,36 +616,39 @@ export default function LandingPage() {
       </section>
 
       {/* ══ SAFE FOR KIDS ════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28 bg-white border-t border-gray-100">
+      <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-20 sm:py-28"
+        style={{background:"linear-gradient(150deg,#f0fdf4 0%,#dcfce7 45%,#f0fdf4 100%)"}}>
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{backgroundImage:"radial-gradient(circle,#15803d 1.5px,transparent 1.5px)",backgroundSize:"36px 36px"}} />
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
             <motion.div variants={fadeUp} className="text-center mb-14">
-              <span className="eyebrow inline-block text-[var(--ds-brand-primary)] mb-4 bg-[var(--ds-brand-subtle)] px-4 py-1.5 rounded-full">
+              <span className="eyebrow inline-block text-[var(--ds-brand-primary)] mb-4 bg-white/80 backdrop-blur-sm border border-green-200 px-4 py-1.5 rounded-full shadow-sm">
                 🛡️ Built for Families
               </span>
               <h2 className="font-baloo font-black text-gray-900 text-[28px] sm:text-[42px] leading-tight">
                 Built for kids.<br /><span className="text-nimi-green">Trusted by parents.</span>
               </h2>
-              <p className="font-nunito text-gray-500 mt-4 text-[15px] max-w-xl mx-auto">
+              <p className="font-nunito text-gray-600 mt-4 text-[15px] max-w-xl mx-auto">
                 Every decision we make puts your child&apos;s safety and wellbeing first — no exceptions.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
               {([
-                {emoji:"🚫",title:"Zero Ads",       desc:"No ads. No distractions. Ever.",         grad:"from-red-400 to-rose-500"},
-                {emoji:"🔒",title:"100% Private",    desc:"We never share your child's data.",       grad:"from-blue-400 to-indigo-500"},
-                {emoji:"👨‍👩‍👧",title:"Parent Control", desc:"You manage your child's whole account.", grad:"from-purple-400 to-violet-500"},
-                {emoji:"✅",title:"Safe Content",    desc:"Every story reviewed by educators.",       grad:"from-green-400 to-emerald-500"},
+                {emoji:"🚫",title:"Zero Ads",       desc:"No ads. No distractions. Ever.",          grad:"from-red-500 to-rose-400"},
+                {emoji:"🔒",title:"100% Private",    desc:"We never share your child's data.",        grad:"from-blue-500 to-indigo-500"},
+                {emoji:"👨‍👩‍👧",title:"Parent Control", desc:"You manage your child's whole account.",  grad:"from-purple-500 to-violet-500"},
+                {emoji:"✅",title:"Safe Content",    desc:"Every story reviewed by educators.",        grad:"from-[var(--ds-brand-primary)] to-emerald-600"},
               ] as const).map(({emoji,title,desc,grad}) => (
                 <motion.div key={title} variants={fadeUp}>
-                  <motion.div whileHover={{y:-6,scale:1.03}} transition={{type:"spring",stiffness:300,damping:20}}
-                    className="overflow-hidden shadow-md flex flex-col h-full"
-                    style={{ borderRadius: 'var(--leaf-r)' }}>
+                  <motion.div whileHover={{y:-7,scale:1.02}} transition={{type:"spring",stiffness:300,damping:20}}
+                    className="overflow-hidden shadow-lg flex flex-col h-full bg-white/80 backdrop-blur-sm border border-white"
+                    style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                     <div className={`bg-gradient-to-br ${grad} p-5 flex items-center justify-center`}>
                       <span className="text-[44px]">{emoji}</span>
                     </div>
-                    <div className="bg-white border border-gray-100 p-4 flex flex-col gap-1 flex-1">
+                    <div className="p-4 flex flex-col gap-1 flex-1">
                       <p className="font-baloo font-black text-gray-900 text-[15px]">{title}</p>
                       <p className="font-nunito text-gray-500 text-[12px] leading-snug">{desc}</p>
                     </div>

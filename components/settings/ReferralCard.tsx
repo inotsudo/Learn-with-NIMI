@@ -73,7 +73,7 @@ export default function ReferralCard() {
           </div>
 
           <button onClick={shareLink}
-            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-baloo font-black text-[13px] py-2.5 rounded-xl transition-colors">
+            className="w-full flex items-center justify-center gap-2 bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] text-white font-baloo font-black text-[13px] py-2.5 rounded-xl transition-colors">
             <Share2 className="w-4 h-4" /> Share via WhatsApp
           </button>
 

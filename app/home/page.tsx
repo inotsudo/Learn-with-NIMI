@@ -105,27 +105,6 @@ const LOCKED_BADGE_PLACEHOLDERS = [
 
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// Ambient campus decorations — pushed to page edges so they never compete with content.
-// World Bible §11: opacity 0.15–0.55, pointer-events-none. Fewer, better-placed.
-const NATURE_ELEMENTS = [
-  /* ── Stars ── */
-  { emoji: "⭐", top: "8%",  left: "5%",  size: 17, delay: 0,   dur: 3.2, spin: false },
-  { emoji: "✨", top: "28%", left: "96%", size: 15, delay: 0.7, dur: 2.8, spin: false },
-  { emoji: "⭐", top: "50%", left: "4%",  size: 16, delay: 1.1, dur: 3.6, spin: false },
-  { emoji: "✨", top: "70%", left: "94%", size: 14, delay: 0.4, dur: 3.0, spin: false },
-  { emoji: "⭐", top: "88%", left: "8%",  size: 15, delay: 1.3, dur: 2.9, spin: false },
-  /* ── Flowers ── */
-  { emoji: "🌸", top: "14%", left: "3%",  size: 17, delay: 0.5, dur: 3.8, spin: true  },
-  { emoji: "🌺", top: "38%", left: "96%", size: 19, delay: 1.0, dur: 4.1, spin: true  },
-  { emoji: "🌼", top: "60%", left: "4%",  size: 15, delay: 0.3, dur: 3.4, spin: true  },
-  { emoji: "🌷", top: "80%", left: "95%", size: 17, delay: 1.2, dur: 3.9, spin: true  },
-  /* ── Butterflies ── */
-  { emoji: "🦋", top: "22%", left: "95%", size: 18, delay: 0.8, dur: 3.5, spin: true  },
-  { emoji: "🦋", top: "55%", left: "5%",  size: 20, delay: 1.5, dur: 4.0, spin: true  },
-  /* ── Leaves ── */
-  { emoji: "🍃", top: "44%", left: "97%", size: 15, delay: 0.6, dur: 3.3, spin: true  },
-  { emoji: "🍀", top: "74%", left: "3%",  size: 16, delay: 1.1, dur: 3.6, spin: true  },
-];
 
 
 function greeting() {
@@ -286,7 +265,13 @@ export default function HomePage() {
       .limit(3)
       .then(({ data }) => {
         if (data) setCommunityCreations(
-          data.map(r => ({ id: r.id as string, imageUrl: (r.image_url as string | null) ?? "", childName: (r.child_name as string | null) ?? "", type: (r.type as string | null) ?? "art" }))
+          data
+            // Only keep rows with a real storage URL (not blank, not a local /assets/ path)
+            .filter(r => {
+              const url = (r.image_url as string | null) ?? "";
+              return url.length > 0 && !url.startsWith("/") && !url.startsWith("assets/");
+            })
+            .map(r => ({ id: r.id as string, imageUrl: (r.image_url as string | null) ?? "", childName: (r.child_name as string | null) ?? "", type: (r.type as string | null) ?? "art" }))
         );
       });
 
@@ -316,12 +301,20 @@ export default function HomePage() {
   const totalSlots = slots.length;
   const pct        = totalSlots > 0 ? Math.round((doneSlots / totalSlots) * 100) : 0;
   const xp         = totalStars * 10;
-  const lvlIdx     = Math.min(level - 1, LEVELS.length - 1);
-  const levelInfo  = LEVELS[lvlIdx];
-  const prevMax    = lvlIdx > 0 ? LEVELS[lvlIdx - 1].maxXp : 0;
+  // Derive the XP-bar level from XP directly so the bracket always matches the earned XP.
+  // The DB `level` value (story-completion based) is kept for the footer stat only.
+  const xpLvlIdx  = Math.min(
+    Math.max(0, LEVELS.findIndex(l => xp <= l.maxXp)),
+    LEVELS.length - 1,
+  );
+  // findIndex returns -1 when xp > all maxXp thresholds → clamp to last level
+  const xpLvlIdxFinal = xp > LEVELS[LEVELS.length - 1].maxXp ? LEVELS.length - 1 : xpLvlIdx;
+  const levelInfo  = LEVELS[xpLvlIdxFinal];
+  const prevMax    = xpLvlIdxFinal > 0 ? LEVELS[xpLvlIdxFinal - 1].maxXp : 0;
   const xpIn       = Math.max(0, xp - prevMax);
   const xpNeeded   = levelInfo.maxXp - prevMax;
   const xpPct      = Math.min(100, Math.round((xpIn / xpNeeded) * 100));
+  const xpLevel    = xpLvlIdxFinal + 1;
   // 0 = Mon … 6 = Sun, matching the weekStreak array order
   const todayIdx  = (new Date().getDay() + 6) % 7;
 
@@ -561,32 +554,55 @@ export default function HomePage() {
 
                   {/* Greeting */}
                   <motion.div variants={up}
-                    className="mb-4 px-6 py-3.5 rounded-2xl border border-white/50 shadow-2xl text-center"
-                    style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(18px)" }}>
-                    <h1 className="font-baloo font-black text-sky-900"
-                      style={{ fontSize: "clamp(1.6rem,4vw,2.4rem)", lineHeight: 1.1 }}>
-                      Hi there, {activeChild?.name ?? "Explorer"}! 👋
-                    </h1>
-                    {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] && (
-                      <span className={`inline-flex items-center gap-1.5 text-[13px] font-black px-3 py-1 rounded-full mt-1 mb-0.5 shadow-sm ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-gray-100 text-gray-600"}`}>
-                        {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
-                      </span>
-                    )}
-                    <p className="font-nunito font-bold text-sky-800 text-[14px] mt-0.5">
-                      Ready for today&apos;s{" "}
-                      <span className="font-extrabold text-emerald-600">story adventure?</span>
-                    </p>
-                    {/* Streak + Stars strip */}
-                    <div className="flex items-center justify-center gap-4 mt-2.5">
-                      <span className="flex items-center gap-1.5 font-baloo font-black text-orange-500 text-[13px]">
-                        <Flame className="w-4 h-4 fill-orange-400 text-orange-400" />
-                        {consecutiveStreak} day streak
-                      </span>
-                      <span className="w-px h-4 bg-sky-200" />
-                      <span className="flex items-center gap-1.5 font-baloo font-black text-amber-500 text-[13px]">
-                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                        {totalStars} stars
-                      </span>
+                    className="mb-4 w-full max-w-[360px] rounded-2xl border border-white/50 shadow-2xl overflow-hidden text-center"
+                    style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)" }}>
+
+                    {/* Name + XP section */}
+                    <div className="px-5 pt-4 pb-3">
+                      <p className="font-nunito font-semibold text-sky-600 text-[11px] tracking-wide mb-0.5 uppercase">
+                        {greeting()} ✨
+                      </p>
+                      <h1 className="font-baloo font-black text-gray-900"
+                        style={{ fontSize: "clamp(1.4rem,3.8vw,2rem)", lineHeight: 1.15 }}>
+                        {activeChild?.name ?? "Explorer"}!
+                      </h1>
+                      {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] && (
+                        <span className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-0.5 rounded-full mt-1 shadow-sm ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-gray-100 text-gray-600"}`}>
+                          {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
+                        </span>
+                      )}
+                      {/* XP bar */}
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-nunito font-bold text-gray-400 text-[10px]">{levelInfo?.icon} Lv.{xpLevel} · {levelInfo?.label}</span>
+                          <span className="font-baloo font-black text-emerald-600 text-[10px]">{xpIn}/{xpNeeded} XP</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <motion.div className="h-full rounded-full"
+                            style={{ background: "linear-gradient(90deg,#34d399,#059669)" }}
+                            initial={{ width: 0 }} animate={{ width: `${xpPct}%` }}
+                            transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats footer — 3-cell divided bar */}
+                    <div className="flex items-stretch divide-x divide-gray-100 bg-gray-50/70 border-t border-gray-100">
+                      <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5">
+                        <Flame className="w-[15px] h-[15px] fill-orange-400 text-orange-400" />
+                        <span className="font-baloo font-black text-orange-500 text-[14px] leading-none">{consecutiveStreak}</span>
+                        <span className="font-nunito text-gray-400 text-[9px] leading-none">streak</span>
+                      </div>
+                      <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5">
+                        <Star className="w-[15px] h-[15px] fill-amber-400 text-amber-400" />
+                        <span className="font-baloo font-black text-amber-500 text-[14px] leading-none">{totalStars}</span>
+                        <span className="font-nunito text-gray-400 text-[9px] leading-none">stars</span>
+                      </div>
+                      <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5">
+                        <Heart className="w-[15px] h-[15px] fill-rose-400 text-rose-400" />
+                        <span className="font-baloo font-black text-rose-500 text-[14px] leading-none">{level}</span>
+                        <span className="font-nunito text-gray-400 text-[9px] leading-none">level</span>
+                      </div>
                     </div>
                   </motion.div>
 
@@ -759,6 +775,24 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* ════════════════════════ QUICK ACTIONS ═════════════════════════ */}
+          <div className="relative z-10 px-4 sm:px-6 pt-3 pb-1 max-w-[1400px] mx-auto">
+            <motion.div
+              initial="hidden" animate="visible" variants={stagger}
+              className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3">
+              {ACTIVITIES.map(({ img, label, sub, href }) => (
+                <motion.div key={label} variants={pop}>
+                  <Link href={href}
+                    className="group flex flex-col items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-white hover:border-emerald-200 rounded-2xl px-2 py-3 sm:py-4 shadow-sm hover:shadow-md hover:-translate-y-1 active:scale-95 transition-all">
+                    <img src={img} alt={label} className="w-10 h-10 sm:w-11 sm:h-11 object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-200" />
+                    <p className="font-baloo font-black text-gray-800 text-[12px] sm:text-[13px] leading-tight text-center">{label}</p>
+                    <p className="font-nunito text-gray-400 text-[9px] sm:text-[10px] text-center hidden sm:block leading-tight">{sub}</p>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+
           {/* ════════════════════════════ BELOW HERO ════════════════════════ */}
           <div className="relative">
 
@@ -774,23 +808,9 @@ export default function HomePage() {
               }}
             />
 
-            {/* ── Nature elements scattered across below-hero ── */}
-            {NATURE_ELEMENTS.map((el, i) => (
-              <motion.div key={`ne-${i}`}
-                className="absolute pointer-events-none z-0 select-none leading-none"
-                style={{ top: el.top, left: el.left, fontSize: el.size, opacity: 0.22 }}
-                animate={{
-                  y: [0, -12, 0],
-                  rotate: el.spin ? [0, 14, -10, 0] : [0, 0, 0],
-                  scale: [1, 1.08, 1],
-                }}
-                transition={{ duration: el.dur, repeat: Infinity, ease: "easeInOut", delay: el.delay }}>
-                {el.emoji}
-              </motion.div>
-            ))}
 
             {/* ── Main flex grid ──────────────────────────────────────────── */}
-            <div className="relative z-10 flex flex-col xl:flex-row gap-6 px-4 lg:px-6 py-6 max-w-[1400px] mx-auto">
+            <div className="relative z-10 flex flex-col xl:flex-row xl:items-start gap-6 px-4 lg:px-6 py-6 max-w-[1400px] mx-auto">
 
               {/* ══ MAIN COLUMN ══════════════════════════════════════════════ */}
               <main className="flex-1 min-w-0 space-y-10">
@@ -818,8 +838,8 @@ export default function HomePage() {
               </main>
 
               {/* ══ RIGHT PANEL ════════════════════════════════════════════════ */}
-              <aside className="flex flex-col gap-5 w-full xl:w-[284px] xl:shrink-0">
-                <div className="xl:sticky xl:top-[80px] flex flex-col gap-5">
+              <aside className="w-full xl:w-[284px] xl:shrink-0 xl:self-start xl:sticky xl:top-[80px]">
+                <div className="flex flex-col gap-5 xl:max-h-[calc(100vh-100px)] xl:overflow-y-auto" style={{ scrollbarWidth: "none" }}>
 
                   {/* ── Story Journey ───────────────────────────────────────── */}
                   <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} />

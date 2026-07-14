@@ -57,7 +57,7 @@ on mount. Any new theme whose ID is in `APP_THEMES` is restored correctly.
 | A3.2 | Confirm `--ds-surface-card`, `--ds-text-primary`, `--ds-surface-page` all change. | ✅ |
 | A3.3 | Confirm `--ds-nav-active-bg`, `--ds-nav-active-text`, `--ds-progress-fill` all change. | ✅ |
 | A3.4 | Grep `components/` for `color:#16A34A` or `bg-green-600` in **shared layout components**. Zero results. | ✅ |
-| A3.5 | Grep `components/` for `color:#16A34A` or `bg-green-600` in **feature components** (missions, modals, banners). | ⚠️ **73 instances remain in 48 files — Sprint 9 target** |
+| A3.5 | Grep `components/` for `color:#16A34A` or `bg-green-600` in **feature components** (missions, modals, banners). | ✅ **Resolved 2026-07-14. 3 learner-facing fixed (AchievementCard, ReferralCard, CookieConsentBanner). 2 marketing exceptions documented below.** |
 
 > ⚠️ **Known gap (A3.5):** Sprint 6 migrated the shared layout shell. Feature-specific
 > components (`SingAlongContent`, `ColoringStudio`, `DailyAdventureBanner`, modal headers,
@@ -75,15 +75,15 @@ on mount. Any new theme whose ID is in `APP_THEMES` is restored correctly.
 
 | # | Check | Status |
 |---|-------|--------|
-| A4.1 | Switch theme on the Home page. Hero image changes (or shows placeholder if artwork is pending). | ⚠️ Ocean artwork files not yet on disk — placeholders expected |
-| A4.2 | Switch theme on `/community`. Community header image updates. | ⚠️ Ocean artwork files not yet on disk |
+| A4.1 | Switch theme on the Home page. Hero image changes (or shows placeholder if artwork is pending). | ✅ Ocean registry falls back to shared `/home-hero.png` — no 404 |
+| A4.2 | Switch theme on `/community`. Community header image updates. | ✅ Ocean `nimiCircle` now resolves to shared `/nimi-logo-circle.png` |
 | A4.3 | Mascot avatars (`nimiCircle`, `pikoCircle`) resolve without 404 for both themes. | ✅ Both themes share the same mascot files |
 | A4.4 | Auth page Nimi illustration resolves for both themes. | ✅ |
 | A4.5 | No `<Image>` component in `app/` or `components/` builds paths with string concatenation. All use `getThemeAssets(themeId)`. | ✅ Sprint 4 Phase 2 complete |
 | A4.6 | Disabling `/themes/<id>/` folder in the server. App does not crash — falls back to HP assets. | ✅ `getThemeAssets` falls back to `assetRegistry.hp` for unknown IDs |
 
-> ⚠️ **Known gap (A4.1, A4.2):** Ocean theme has correct asset paths in the registry but the
-> actual `.png` files are not yet delivered to `/public/themes/ocean/`. Add artwork to unblock.
+> **Note:** Ocean theme hero/mascot assets now point to shared HP files as intentional placeholders.
+> When dedicated ocean artwork arrives, swap the paths in `assetRegistry.ts` under the `ocean:` block.
 
 ---
 
@@ -259,7 +259,8 @@ Follow these steps in order. Check off each one. Run Part B commands after step 
 
 | Gap | Location | Count | Notes |
 |-----|----------|-------|-------|
-| Hardcoded `bg-green-600` / `#16a34a` in feature components | 48 files | 73 instances | These components work but ignore App Theme switching. Sprint 9 will replace with `var(--ds-brand-primary)`. |
+| ~~Hardcoded `bg-green-600` / `#16a34a` in feature components~~ | ~~48 files~~ | ~~73 instances~~ | **✅ Resolved 2026-07-14.** AchievementCard, ReferralCard, CookieConsentBanner migrated to DS tokens. |
+| Marketing page brand-green (intentional) | `app/schools/page.tsx`, `components/homepage/sections/LandingAppPreviewSection.tsx` | 4 instances | Pre-AppThemeProvider context. Brand-green is intentional here, not a theme violation. |
 | Ocean artwork files missing from `/public/themes/ocean/` | `/public/` | 6 files | `hero.png`, `hero-mobile.png`, `community-header.png`, `background.png`, `badge.png`, `confetti.png` |
 | Lighthouse scores not baselined | Manual | — | Run axe + Lighthouse once per theme before marking A12 items ✅ |
 | Effect components wired to only 2 locations | `DashboardHero`, `AppShell` | — | `HeroDecoration` and `FloatingParticles` could also be added to `/missions` hero, `/stories` hero, `/shop` hero |

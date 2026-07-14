@@ -44,7 +44,7 @@ export default function CookieConsentBanner() {
         </p>
         <button
           onClick={accept}
-          className="shrink-0 bg-[var(--nimi-green,#15803D)] hover:bg-green-600 active:bg-green-700 text-white font-baloo font-bold text-[13px] px-5 py-2 rounded-xl transition-colors whitespace-nowrap"
+          className="shrink-0 bg-[var(--nimi-green,#15803D)] hover:bg-[var(--ds-brand-primary,#15803d)] active:bg-[var(--ds-brand-hover,#166534)] text-white font-baloo font-bold text-[13px] px-5 py-2 rounded-xl transition-colors whitespace-nowrap"
         >
           Got it
         </button>

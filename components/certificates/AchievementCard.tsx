@@ -56,7 +56,7 @@ export default function AchievementCard({ item, earnedAt, childName }: Props) {
           <div className="flex gap-2 justify-center mt-2">
             <button
               onClick={() => shareCertificate(childName, title)}
-              className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold text-[11px] px-3 py-1.5 rounded-full transition"
+              className="flex items-center gap-1.5 bg-[var(--ds-brand-primary)] hover:bg-[var(--ds-brand-hover)] text-white font-bold text-[11px] px-3 py-1.5 rounded-full transition"
             >
               <Share2 className="w-3 h-3" /> Share
             </button>

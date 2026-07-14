@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, RefObject } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { ArrowLeft, Loader2, Flame } from "lucide-react";
+import { ArrowLeft, Loader2, Flame, Plus, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
@@ -11,7 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getStorageUrl } from "@/lib/queries";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import { HeroBanner } from "@/components/layout/primitives";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { Creation } from "@/components/community/types";
 
@@ -146,6 +146,13 @@ function CreationCard({
     ? creation.childAvatar
     : creation.childName?.[0]?.toUpperCase() ?? "?";
 
+  const AVATAR_GRADIENTS = [
+    "from-violet-500 to-purple-600", "from-pink-500 to-rose-600",
+    "from-blue-500 to-indigo-600",   "from-emerald-500 to-teal-600",
+    "from-amber-500 to-orange-600",  "from-teal-500 to-cyan-600",
+  ];
+  const avatarGrad = AVATAR_GRADIENTS[(creation.childName?.charCodeAt(0) ?? 0) % AVATAR_GRADIENTS.length];
+
   const handleCheer = () => {
     if (!creation.likedByUser) setBursting(true);
     onCheer(creation.id);
@@ -161,12 +168,12 @@ function CreationCard({
       className="group rounded-3xl border border-ds-border bg-ds-surface shadow-[0_4px_20px_rgba(15,23,42,0.07)] hover:shadow-[0_14px_40px_rgba(15,23,42,0.13)] transition-shadow duration-300 overflow-visible"
     >
       {/* ── IMAGE ZONE (overflow-hidden isolated) ── */}
-      <div className="relative h-48 rounded-t-3xl overflow-hidden">
+      <div className="relative w-full rounded-t-3xl overflow-hidden bg-gray-100" style={{ aspectRatio: "4/3" }}>
         {hasImg ? (
           <img
             src={imgUrl}
             alt={creation.description ?? `${creation.childName}'s creation`}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
            loading="lazy" />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
@@ -221,8 +228,7 @@ function CreationCard({
       <div className="px-4 pb-4">
         {/* Avatar + name row — avatar overlaps the image boundary */}
         <div className="flex items-end gap-3 -mt-5 mb-3 relative z-10">
-          <div className="w-11 h-11 rounded-full border-[3px] border-ds-surface bg-ds-border flex items-center justify-center text-base font-black text-ds-text shadow-md shrink-0"
-            style={{ background: "var(--ds-surface)" }}>
+          <div className={`w-11 h-11 rounded-full border-[3px] border-ds-surface bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-base font-black text-white shadow-md shrink-0`}>
             {avatarContent}
           </div>
           <div className="pb-0.5 min-w-0">
@@ -385,9 +391,14 @@ export default function CommunityPage() {
       .eq("status", "approved")
       .order("created_at", { ascending: false })
       .range(from, to);
-    const mapped = (data ?? []).map(c => mapCreation(c as CreationRow, userId));
+    const mapped = (data ?? [])
+      .filter(c => {
+        const url = (c.image_url as string | null) ?? "";
+        return !url.startsWith("/") && !url.startsWith("assets/");
+      })
+      .map(c => mapCreation(c as CreationRow, userId));
     setCreations(prev => refresh ? mapped : [...prev, ...mapped]);
-    setTotalCount(count ?? 0);
+    setTotalCount(prev => refresh ? mapped.length : prev + mapped.length);
     setHasMore((count || 0) > to + 1);
     setLoading(false);
   }, [userId]);
@@ -432,117 +443,164 @@ export default function CommunityPage() {
 
   return (
     <AppShell>
-      <PageSurface>
-        <main className="max-w-4xl mx-auto px-3 py-4 sm:px-4 lg:px-6 pb-28 w-full content-enter">
+      <main className="max-w-4xl mx-auto px-3 py-4 sm:px-4 lg:px-6 pb-24 w-full content-enter">
 
-          {/* ── HERO ──────────────────────────────────────────── */}
-          <HeroBanner zone="communitySquare" className="mb-5">
-            <button
-              onClick={() => router.back()}
-              className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-[13px] font-bold transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
+        {/* ── HERO ──────────────────────────────────────────────── */}
+        <HeroBanner zone="communitySquare" className="mb-5">
+          <button
+            onClick={() => router.back()}
+            className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-[13px] font-bold transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
 
-            {/* Decorative circles */}
-            <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-white/10 pointer-events-none" />
-            <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+          {/* Decorative blobs */}
+          <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full bg-white/10 pointer-events-none" />
+          <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
+          <div className="absolute top-1/2 right-16 w-20 h-20 rounded-full bg-white/8 pointer-events-none" />
 
-            {/* Floating stars */}
-            {([ {t:"13%",l:"4%",d:0},{t:"71%",l:"8%",d:0.55},{t:"18%",r:"5%",d:0.3},{t:"67%",r:"8%",d:0.95} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i) => (
-              <motion.span key={i}
-                className="absolute text-xl pointer-events-none select-none"
-                style={{ top:s.t, left:s.l, right:s.r }}
-                animate={{ opacity:[0.25,0.9,0.25], y:[0,-7,0] }}
-                transition={{ duration:2.6, repeat:Infinity, delay:s.d }}
-                aria-hidden
-              >⭐</motion.span>
-            ))}
+          {/* Floating stars */}
+          {([ {t:"12%",l:"5%",d:0},{t:"70%",l:"9%",d:0.55},{t:"15%",r:"6%",d:0.3},{t:"65%",r:"9%",d:0.95} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i) => (
+            <motion.span key={i}
+              className="absolute text-xl pointer-events-none select-none"
+              style={{ top:s.t, left:s.l, right:s.r }}
+              animate={{ opacity:[0.25,0.9,0.25], y:[0,-8,0] }}
+              transition={{ duration:2.6, repeat:Infinity, delay:s.d }}
+              aria-hidden
+            >⭐</motion.span>
+          ))}
 
-            <div className="relative z-10 px-5 pt-12 pb-5 sm:px-7 sm:pb-6">
-              {/* Title row */}
-              <div className="flex items-center gap-4 mb-4">
-                <motion.img src={assets.nimiCircle} alt="NIMI"
-                  className="w-14 h-14 rounded-full border-2 border-white/40 shadow-xl shrink-0"
-                  animate={{ y:[0,-5,0] }} transition={{ duration:2.8, repeat:Infinity }} />
-                <div className="min-w-0">
-                  <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.15em] mb-0.5">
-                    Community Square
-                  </p>
-                  <h1 className="font-baloo font-black text-white text-[22px] sm:text-[28px] leading-tight drop-shadow-md">
-                    Friends Hub 👥
-                  </h1>
-                  {totalCount > 0 && (
-                    <motion.p
-                      initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}
-                      className="text-white/75 text-[12px] font-semibold mt-0.5"
-                    >
-                      {totalCount.toLocaleString()} adventure{totalCount !== 1 ? "s" : ""} shared ✨
-                    </motion.p>
-                  )}
-                </div>
+          <div className="relative z-10 px-5 pt-12 pb-6 sm:px-8 sm:pb-7">
+            {/* Title row */}
+            <div className="flex items-center gap-4 mb-5">
+              <motion.img src={assets.nimiCircle} alt="NIMI"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-white/50 shadow-2xl shrink-0"
+                animate={{ y:[0,-6,0] }} transition={{ duration:2.8, repeat:Infinity }} />
+              <div className="min-w-0">
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.18em] mb-1">
+                  Community Square
+                </p>
+                <h1 className="font-baloo font-black text-white text-[26px] sm:text-[32px] leading-tight drop-shadow-lg">
+                  Friends Hub 👥
+                </h1>
+                <p className="text-white/70 text-[12px] font-semibold mt-0.5">
+                  Where every adventure gets celebrated
+                </p>
               </div>
+            </div>
 
-              {/* Friend bubbles */}
+            {/* Stats row */}
+            <div className="flex items-center gap-2 mb-5 flex-wrap">
+              {totalCount > 0 && (
+                <motion.div
+                  initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}
+                  className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-3 py-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-white/90" />
+                  <span className="text-white text-[12px] font-black">
+                    {totalCount} adventure{totalCount !== 1 ? "s" : ""}
+                  </span>
+                </motion.div>
+              )}
               {friends.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-2.5">
-                    {friends.slice(0, 8).map((f, i) => (
-                      <motion.div key={f.name + i}
-                        initial={{ scale:0, opacity:0 }}
-                        animate={{ scale:1, opacity:1 }}
-                        transition={{ delay:0.06 + i * 0.045, type:"spring", stiffness:380 }}
-                        className="w-9 h-9 rounded-full bg-white/25 border-2 border-white/60 flex items-center justify-center text-base font-bold text-white shadow-sm backdrop-blur-sm"
-                        title={f.name}
-                      >
-                        {f.avatar.length <= 2 ? f.avatar : f.name[0]}
-                      </motion.div>
-                    ))}
-                    {friends.length > 8 && (
-                      <div className="w-9 h-9 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-[10px] font-black text-white">
-                        +{friends.length - 8}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-white/70 text-[12px] font-semibold">
+                <motion.div
+                  initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}
+                  className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-3 py-1.5"
+                >
+                  <span className="text-white/90 text-[13px]">👥</span>
+                  <span className="text-white text-[12px] font-black">
                     {friends.length} learner{friends.length !== 1 ? "s" : ""}
-                  </p>
-                </div>
+                  </span>
+                </motion.div>
               )}
             </div>
-          </HeroBanner>
 
-          {/* ── FILTER TABS ────────────────────────────────────── */}
-          <div className="mb-4 p-1 rounded-2xl bg-ds-surface border border-ds-border">
-            <FilterTabs active={filter} onChange={f => { setFilter(f); }} />
+            {/* Friend bubbles */}
+            {friends.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2.5">
+                  {friends.slice(0, 8).map((f, i) => {
+                    const isEmoji = f.avatar.length <= 2;
+                    const FRIEND_GRADS = [
+                      "from-violet-400 to-purple-500","from-pink-400 to-rose-500",
+                      "from-blue-400 to-indigo-500","from-emerald-400 to-teal-500",
+                      "from-amber-400 to-orange-500","from-cyan-400 to-sky-500",
+                    ];
+                    const grad = FRIEND_GRADS[f.name.charCodeAt(0) % FRIEND_GRADS.length];
+                    return (
+                    <motion.div key={f.name + i}
+                      initial={{ scale:0, opacity:0 }}
+                      animate={{ scale:1, opacity:1 }}
+                      transition={{ delay:0.06 + i * 0.045, type:"spring", stiffness:380 }}
+                      className={`w-9 h-9 rounded-full border-2 border-white/70 flex items-center justify-center text-[15px] font-bold text-white shadow-md ${isEmoji ? "bg-white/25 backdrop-blur-sm" : `bg-gradient-to-br ${grad}`}`}
+                      title={f.name}
+                    >
+                      {isEmoji ? f.avatar : f.name[0]}
+                    </motion.div>
+                    );
+                  })}
+                  {friends.length > 8 && (
+                    <div className="w-9 h-9 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-[10px] font-black text-white">
+                      +{friends.length - 8}
+                    </div>
+                  )}
+                </div>
+                <p className="text-white/70 text-[12px] font-semibold">Active now</p>
+              </div>
+            )}
           </div>
+        </HeroBanner>
 
-          {/* ── FEED ───────────────────────────────────────────── */}
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
-              {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-64 leaf-lg" />)}
-            </div>
-          ) : visible.length === 0 ? (
+        {/* ── FILTER TABS ───────────────────────────────────────── */}
+        <div className="mb-5 p-1 rounded-2xl bg-ds-surface border border-ds-border shadow-sm">
+          <FilterTabs active={filter} onChange={f => { setFilter(f); }} />
+        </div>
+
+        {/* ── FEED ──────────────────────────────────────────────── */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+            {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-64 leaf-lg" />)}
+          </div>
+        ) : visible.length === 0 ? (
+          <motion.div
+            initial={{ opacity:0, scale:0.96 }} animate={{ opacity:1, scale:1 }}
+            className="border border-ds-border bg-ds-surface rounded-3xl px-6 py-20 text-center"
+          >
             <motion.div
-              initial={{ opacity:0, scale:0.96 }} animate={{ opacity:1, scale:1 }}
-              className="border border-ds-border bg-ds-surface rounded-3xl px-6 py-16 text-center"
+              animate={{ y:[0,-10,0] }} transition={{ duration:2.4, repeat:Infinity }}
+              className="text-7xl mb-5"
             >
-              <motion.div
-                animate={{ y:[0,-10,0] }} transition={{ duration:2.4, repeat:Infinity }}
-                className="text-6xl mb-4"
-              >
-                {filter === "all" ? "🏆" : filterConfig.emoji}
-              </motion.div>
-              <h2 className="font-black text-ds-text text-[19px]">
-                {filter === "all" ? "No adventures yet!" : `No ${filterConfig.label.toLowerCase()} posts yet`}
-              </h2>
-              <p className="text-ds-muted text-[13px] mt-2 max-w-[240px] mx-auto leading-relaxed">
-                {filter === "all"
-                  ? "Complete a story and share your first adventure!"
-                  : "Try a different filter or check back soon."}
-              </p>
+              {filter === "all" ? "🌟" : filterConfig.emoji}
             </motion.div>
-          ) : (
+            <h2 className="font-baloo font-black text-ds-text text-[20px] mb-2">
+              {filter === "all" ? "Nothing shared yet!" : `No ${filterConfig.label.toLowerCase()} posts yet`}
+            </h2>
+            <p className="text-ds-muted text-[13px] max-w-[240px] mx-auto leading-relaxed mb-6">
+              {filter === "all"
+                ? "Complete a story or challenge to share your first adventure!"
+                : "Try a different filter or come back soon — someone's working on it! 🎨"}
+            </p>
+            <motion.button
+              whileTap={{ scale:0.95 }}
+              onClick={() => router.push("/stories")}
+              className="inline-flex items-center gap-2 font-baloo font-black text-white text-[13px] px-5 py-2.5 rounded-2xl shadow-md"
+              style={{ background:"var(--nimi-green)" }}
+            >
+              <span>Start a Story</span> <span className="text-[15px]">📖</span>
+            </motion.button>
+          </motion.div>
+        ) : (
+          <>
+            {/* Section label */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-nunito font-bold text-ds-muted text-[12px] uppercase tracking-widest">
+                Recently Shared
+              </p>
+              <p className="font-nunito font-bold text-ds-muted text-[11px]">
+                {visible.length} post{visible.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <AnimatePresence mode="popLayout">
                 {visible.map((c, i) => (
@@ -555,31 +613,55 @@ export default function CommunityPage() {
                   />
                 ))}
               </AnimatePresence>
+
+              {/* "Share your adventure" CTA card */}
+              {!hasMore && (
+                <motion.div
+                  initial={{ opacity:0, scale:0.9 }}
+                  animate={{ opacity:1, scale:1 }}
+                  transition={{ delay: Math.min(visible.length * 0.05, 0.4) + 0.1 }}
+                  onClick={() => router.push("/stories")}
+                  className="rounded-3xl border-2 border-dashed border-ds-border hover:border-emerald-300 hover:bg-emerald-50/40 transition-all duration-300 flex flex-col items-center justify-center gap-4 p-8 cursor-pointer group"
+                  style={{ minHeight: "280px" }}
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-gray-100 group-hover:bg-emerald-100 flex items-center justify-center transition-colors">
+                    <Plus className="w-7 h-7 text-ds-muted group-hover:text-emerald-500 transition-colors" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-baloo font-black text-ds-muted group-hover:text-emerald-600 text-[14px] transition-colors">
+                      Share your adventure!
+                    </p>
+                    <p className="font-nunito text-ds-muted text-[11px] mt-1 leading-relaxed">
+                      Complete a story or challenge<br/>to post here
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Infinite scroll sentinel */}
+        <div ref={observerTarget} className="h-10 flex items-center justify-center mt-3">
+          {!loading && hasMore && (
+            <div className="flex items-center gap-2 text-ds-muted text-[12px] font-semibold">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading more...
             </div>
           )}
+        </div>
+      </main>
 
-          {/* Infinite scroll sentinel */}
-          <div ref={observerTarget} className="h-12 flex items-center justify-center mt-2">
-            {!loading && hasMore && (
-              <div className="flex items-center gap-2 text-ds-muted text-[12px] font-semibold">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading more...
-              </div>
-            )}
-          </div>
-        </main>
-
-        {/* ── Report modal ──────────────────────────────────────── */}
-        <AnimatePresence>
-          {reportingId && (
-            <ReportModal
-              key="report"
-              onSubmit={submitReport}
-              onCancel={() => setReportingId(null)}
-            />
-          )}
-        </AnimatePresence>
-      </PageSurface>
+      {/* ── Report modal ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {reportingId && (
+          <ReportModal
+            key="report"
+            onSubmit={submitReport}
+            onCancel={() => setReportingId(null)}
+          />
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 }

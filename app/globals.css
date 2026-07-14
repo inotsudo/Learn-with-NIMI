@@ -698,9 +698,9 @@ body::after {
   scroll-behavior: smooth;
 }
 
-/* Full-height reset for the PWA / app shell */
+/* Full-height reset — min-height so short pages fill screen, tall pages can scroll */
 html, body, #root, #root > div {
-  height: 100% !important;
+  min-height: 100%;
 }
 
 /* Prevent image dragging on iOS */
