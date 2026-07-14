@@ -10,6 +10,9 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   // Supabase storage images; Google avatar thumbnails; data/blob URIs for canvas/PDF.
   "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
+  // Supabase storage audio/video for story narration (new Audio() uses media-src, not connect-src).
+  // Without this, default-src 'self' would block all Supabase audio.
+  "media-src 'self' https://*.supabase.co blob:",
   "font-src 'self' data:",
   // All API calls from the browser — Supabase client (HTTP + WebSocket realtime).
   // OpenRouter and Resend are server-side only and do not need client-side connect-src.
