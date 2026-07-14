@@ -4,11 +4,15 @@ function loadImage(src: string, timeoutMs = 10_000): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("Image load timeout")), timeoutMs);
     const img = new window.Image();
-    img.crossOrigin = "anonymous";
     img.onload  = () => { clearTimeout(timer); resolve(img); };
     img.onerror = () => { clearTimeout(timer); reject(new Error(`Failed to load: ${src}`)); };
     img.src = src;
   });
+}
+
+/** Route a Supabase Storage URL through our own proxy so canvas stays un-tainted. */
+function proxied(url: string): string {
+  return `/api/img-proxy?url=${encodeURIComponent(url)}`;
 }
 
 /**
@@ -48,7 +52,7 @@ export async function generateCertificateImageUrl(
 
   let img: HTMLImageElement;
   try {
-    img = await loadImage(fullUrl);
+    img = await loadImage(proxied(fullUrl));
   } catch {
     console.error("[generateCertificateImageUrl] template image failed to load");
     return null;
@@ -121,7 +125,7 @@ export async function generateCertificateDataUrl(
     : `${baseUrl}/storage/v1/object/public/${tpl.image_url}`;
 
   let img: HTMLImageElement;
-  try { img = await loadImage(fullUrl); }
+  try { img = await loadImage(proxied(fullUrl)); }
   catch { return null; }
 
   const canvas = document.createElement("canvas");
