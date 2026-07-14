@@ -228,11 +228,13 @@ export default function StoryDetailPage() {
 
   const handleShare = async () => {
     setSharingCert(true);
+    // Safety net: never stay stuck longer than 20 s
+    const safety = setTimeout(() => setSharingCert(false), 20_000);
     try {
       const storyUrl = window.location.href;
 
       // 1. Try native file share (Android Chrome / iOS Safari)
-      const dataUrl = await generateCertificateDataUrl(childName, language);
+      const dataUrl = await generateCertificateDataUrl(childName, language).catch(() => null);
       if (dataUrl) {
         const blob = await fetch(dataUrl).then(r => r.blob());
         const file = new File([blob], `${childName}-certificate.jpg`, { type: "image/jpeg" });
@@ -242,18 +244,18 @@ export default function StoryDetailPage() {
         }
       }
 
-      // 2. Upload cert to storage → public URL → send via WhatsApp with image link
-      const certPublicUrl = await generateCertificateImageUrl(childName, language);
+      // 2. Upload cert → public URL → WhatsApp message with image link
+      const certPublicUrl = await generateCertificateImageUrl(childName, language).catch(() => null);
       const message = certPublicUrl
         ? `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n📜 View certificate:\n${certPublicUrl}\n\n🔗 Start learning:\n${storyUrl}`
         : `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n🔗 ${storyUrl}`;
 
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
     } catch {
-      // Fallback — text only
       const message = `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n🔗 ${window.location.href}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
     } finally {
+      clearTimeout(safety);
       setSharingCert(false);
     }
   };

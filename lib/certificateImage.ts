@@ -1,11 +1,12 @@
 import supabase from "./supabaseClient";
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+function loadImage(src: string, timeoutMs = 10_000): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Image load timeout")), timeoutMs);
     const img = new window.Image();
     img.crossOrigin = "anonymous";
-    img.onload  = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.onload  = () => { clearTimeout(timer); resolve(img); };
+    img.onerror = () => { clearTimeout(timer); reject(new Error(`Failed to load: ${src}`)); };
     img.src = src;
   });
 }
