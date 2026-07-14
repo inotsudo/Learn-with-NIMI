@@ -26,7 +26,7 @@ import ShareAchievementFlow from "@/components/community/ShareAchievementFlow";
 import StoryVideoPlayer from "@/components/media/StoryVideoPlayer";
 import StoryAudioPlayer from "@/components/media/StoryAudioPlayer";
 import { playTap, playSuccess, playCelebration, playUnlock, playStar } from "@/lib/sounds";
-import { generateCertificateDataUrl } from "@/lib/certificateImage";
+import { generateCertificateDataUrl, generateCertificateImageUrl } from "@/lib/certificateImage";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
@@ -230,29 +230,28 @@ export default function StoryDetailPage() {
     setSharingCert(true);
     try {
       const storyUrl = window.location.href;
-      const message = `🎉 ${childName} just completed "${storyTitle}" on NIMI!\n\n🎓 Check it out and start your own learning adventure:\n${storyUrl}`;
 
-      // Try to include the certificate image
+      // 1. Try native file share (Android Chrome / iOS Safari)
       const dataUrl = await generateCertificateDataUrl(childName, language);
       if (dataUrl) {
         const blob = await fetch(dataUrl).then(r => r.blob());
         const file = new File([blob], `${childName}-certificate.jpg`, { type: "image/jpeg" });
         if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], text: message });
+          await navigator.share({ files: [file], text: `🎉 ${childName} just completed "${storyTitle}" on NIMI!\n🔗 ${storyUrl}` });
           return;
         }
       }
 
-      // Fallback: share text + URL via Web Share API or WhatsApp
-      if (navigator.share) {
-        await navigator.share({ title: `${childName} completed ${storyTitle}!`, text: message });
-      } else {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-      }
-    } catch (e) {
-      // User cancelled or error — open WhatsApp directly
-      const storyUrl = window.location.href;
-      const message = `🎉 ${childName} just completed "${storyTitle}" on NIMI!\n\n🎓 ${storyUrl}`;
+      // 2. Upload cert to storage → public URL → send via WhatsApp with image link
+      const certPublicUrl = await generateCertificateImageUrl(childName, language);
+      const message = certPublicUrl
+        ? `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n📜 View certificate:\n${certPublicUrl}\n\n🔗 Start learning:\n${storyUrl}`
+        : `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n🔗 ${storyUrl}`;
+
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } catch {
+      // Fallback — text only
+      const message = `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n🔗 ${window.location.href}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
     } finally {
       setSharingCert(false);
