@@ -101,7 +101,7 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
   const [activeSticker, setActiveSticker] = useState("⭐");
   const [showSaved, setShowSaved] = useState(false);
   const [showAdvancedPalette, setShowAdvancedPalette] = useState(false);
-  const [, setHistVer] = useState(0);
+  const [histVer, setHistVer] = useState(0);
 
   const STICKERS = ["⭐", "🌈", "🦋", "🌸", "❤️", "🌟", "🎀", "🐸", "🦁", "🎵", "✨", "🌺"];
 
