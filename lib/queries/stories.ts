@@ -3,14 +3,14 @@ import { qcached, lscached, TTL_LONG } from "@/lib/queryCache";
 import type { Story, StoryPage, ColoringPage } from "./types";
 
 export function getActiveStories(): Promise<Story[]> {
-  return qcached("activeStories", async () => {
+  return lscached("activeStories", TTL_LONG, async () => {
     const { data } = await supabase
       .from("stories")
       .select("*")
       .eq("is_active", true)
       .order("sort_order");
     return (data ?? []) as Story[];
-  }, TTL_LONG);
+  });
 }
 
 export async function getStoryBySlug(slug: string): Promise<Story | null> {

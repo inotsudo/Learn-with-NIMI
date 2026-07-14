@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabaseClient";
-import { qcached, qinvalidate } from "@/lib/queryCache";
+import { qcached, qinvalidate, lsinvalidate } from "@/lib/queryCache";
 import type { CurriculumMission, CompleteCurriculumMissionResult, LevelMissionRow } from "./types";
 
 function curriculumCacheKey(childId: string): string {
@@ -72,8 +72,8 @@ export async function completeCurriculumMission(
     return null;
   }
   // Bust per-child progress caches so AppShell + home page see fresh data.
-  qinvalidate(`progressRows:${childId}`);       // shared base — must bust first
-  qinvalidate(`bonusStars:${childId}`);
+  qinvalidate(`progressRows:${childId}`);  lsinvalidate(`progressRows:${childId}`);
+  qinvalidate(`bonusStars:${childId}`);    lsinvalidate(`bonusStars:${childId}`);
   qinvalidate(`weekStreak:${childId}`);
   qinvalidate(`weekCounts:${childId}`);
   qinvalidate(`totalStars:${childId}`);

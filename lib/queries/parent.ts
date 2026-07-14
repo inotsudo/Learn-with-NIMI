@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabaseClient";
-import { qcached, qinvalidate } from "@/lib/queryCache";
+import { qcached, qinvalidate, lscached, lsinvalidate } from "@/lib/queryCache";
 import type { Parent, Child } from "./types";
 
 // Skip the upsert if we've already ensured a parent row this browser session.
@@ -70,7 +70,7 @@ export async function updateParent(name: string): Promise<void> {
 export async function getChildren(): Promise<Child[]> {
   const user = await getCachedUser();
   if (!user) { console.warn("[getChildren] no session"); return []; }
-  return qcached(`children:${user.id}`, async () => {
+  return lscached(`children:${user.id}`, 5 * 60_000, async () => {
     const { data, error } = await supabase
       .from("children")
       .select("*")
@@ -94,7 +94,7 @@ export async function createChild(
     .select()
     .single();
   if (error) console.error("[createChild]", error);
-  else qinvalidate(`children:${user.id}`);
+  else { qinvalidate(`children:${user.id}`); lsinvalidate(`children:${user.id}`); }
   return { data: (data ?? null) as Child | null, error: error?.message ?? null };
 }
 
@@ -119,7 +119,7 @@ export async function updateChildLanguage(
 
   await supabase.from("children").update({ language }).eq("id", childId);
 
-  if (user) qinvalidate(`children:${user.id}`);
+  if (user) { qinvalidate(`children:${user.id}`); lsinvalidate(`children:${user.id}`); }
 
   const fromLanguage = current?.language as "en" | "fr" | "rw" | undefined;
   if (fromLanguage && fromLanguage !== language) {

@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabaseClient";
-import { qcached, qinvalidate } from "@/lib/queryCache";
+import { qcached, qinvalidate, lscached, lsinvalidate, TTL_SHORT } from "@/lib/queryCache";
 import { computeStreaks } from "@/lib/parentInsights";
 import { getUsedShieldDates } from "./shop";
 import type { ProgressRow } from "./types";
@@ -11,7 +11,7 @@ import type { ProgressRow } from "./types";
 type BaseRow = { mission_id: string; completed_at: string; missions: { stars: number } | null };
 
 function rawProgressRows(childId: string, language: "en" | "fr" | "rw"): Promise<BaseRow[]> {
-  return qcached(`progressRows:${childId}:${language}`, async () => {
+  return lscached(`progressRows:${childId}:${language}`, TTL_SHORT, async () => {
     const { data } = await supabase
       .from("child_progress")
       .select("mission_id, completed_at, missions(stars)")
@@ -24,7 +24,7 @@ function rawProgressRows(childId: string, language: "en" | "fr" | "rw"): Promise
 // challenge_bonus_stars is a separate table — cache it independently so
 // getTotalStars doesn't re-fetch it on every call.
 function bonusStarsTotal(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
-  return qcached(`bonusStars:${childId}:${language}`, async () => {
+  return lscached(`bonusStars:${childId}:${language}`, TTL_SHORT, async () => {
     const { data } = await supabase
       .from("challenge_bonus_stars")
       .select("stars")

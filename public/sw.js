@@ -1,8 +1,8 @@
 // NIMIPIKO — service worker: web push + offline media/static caching
 
 const MEDIA_CACHE  = "nimi-media-v1";
-const STATIC_CACHE = "nimi-static-v5";
-const PAGE_CACHE   = "nimi-pages-v5";
+const STATIC_CACHE = "nimi-static-v6";
+const PAGE_CACHE   = "nimi-pages-v6";
 const CURRENT_CACHES = [MEDIA_CACHE, STATIC_CACHE, PAGE_CACHE];
 const OFFLINE_PAGE = "/offline.html";
 
@@ -56,11 +56,12 @@ self.addEventListener("fetch", (event) => {
 
   const url = event.request.url;
   const isSupabaseMedia = url.includes("/storage/v1/object/public/");
-  // Only cache media assets — never cache _next/static JS/CSS chunks
-  // because Turbopack HMR and code changes cause stale module errors
-  if (!isSupabaseMedia) return;
+  // Cache _next/static/ chunks in production only — content-hashed filenames
+  // are immutable, so cache-first is safe. Skip on localhost to avoid HMR conflicts.
+  const isStaticChunk = url.includes("/_next/static/") && !url.includes("localhost");
+  if (!isSupabaseMedia && !isStaticChunk) return;
 
-  const cacheName = isSupabaseMedia ? MEDIA_CACHE : STATIC_CACHE;
+  const cacheName = isStaticChunk ? STATIC_CACHE : MEDIA_CACHE;
   event.respondWith(
     caches.open(cacheName).then(async (cache) => {
       const cached = await cache.match(event.request);
