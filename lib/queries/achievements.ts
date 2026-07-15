@@ -2,12 +2,13 @@ import supabase from "@/lib/supabaseClient";
 import { qcached, qinvalidate } from "@/lib/queryCache";
 import type { ChildBadge, ChildAchievement } from "./types";
 
-export function getChildBadges(childId: string): Promise<ChildBadge[]> {
-  return qcached(`childBadges:${childId}`, async () => {
+export function getChildBadges(childId: string, language: string): Promise<ChildBadge[]> {
+  return qcached(`childBadges:${childId}:${language}`, async () => {
     const { data } = await supabase
       .from("child_badges")
       .select("*")
       .eq("child_id", childId)
+      .eq("language", language)
       .order("earned_at");
     return (data ?? []) as ChildBadge[];
   });
@@ -15,12 +16,13 @@ export function getChildBadges(childId: string): Promise<ChildBadge[]> {
 
 export async function awardBadge(
   childId: string,
+  language: string,
   badgeSlug: string
 ): Promise<void> {
   await supabase
     .from("child_badges")
-    .upsert({ child_id: childId, badge_slug: badgeSlug });
-  qinvalidate(`childBadges:${childId}`);
+    .upsert({ child_id: childId, language, badge_slug: badgeSlug });
+  qinvalidate(`childBadges:${childId}:${language}`);
 }
 
 // Calls the DB function that checks story-count and star-count milestones
@@ -37,8 +39,7 @@ export async function awardMilestoneBadges(
     console.error("[awardMilestoneBadges]", error.message);
     return [];
   }
-  // RPC writes to child_badges; bust both caches in case it also touches child_achievements.
-  qinvalidate(`childBadges:${childId}`);
+  qinvalidate(`childBadges:${childId}:${language}`);
   qinvalidate(`childAchievements:${childId}`);
   return (data as string[]) ?? [];
 }
@@ -55,6 +56,34 @@ export function getChildAchievements(childId: string): Promise<ChildAchievement[
       console.error("[getChildAchievements]", error.message);
       return [];
     }
+    return (data ?? []) as ChildAchievement[];
+  });
+}
+
+// All badge slug → image_url mappings (cached; rarely changes).
+export function getBadgeImages(): Promise<Record<string, string>> {
+  return qcached("badgeImages", async () => {
+    const { data } = await supabase
+      .from("badge_images")
+      .select("slug, image_url");
+    const map: Record<string, string> = {};
+    for (const row of (data ?? []) as { slug: string; image_url: string | null }[]) {
+      if (row.image_url) map[row.slug] = row.image_url;
+    }
+    return map;
+  });
+}
+
+// All earned certificates for a child+language (type='certificate' rows in child_achievements).
+export function getChildCertificates(childId: string, language: string): Promise<ChildAchievement[]> {
+  return qcached(`childCerts:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("child_achievements")
+      .select("*")
+      .eq("child_id", childId)
+      .eq("language", language)
+      .eq("type", "certificate")
+      .order("earned_at", { ascending: false });
     return (data ?? []) as ChildAchievement[];
   });
 }

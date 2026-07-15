@@ -11,7 +11,7 @@ import { DURATION, EASE, SPRING } from "@/lib/design-system/motion";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getChildren, getStorageUrl, getConsecutiveStreak, awardMilestoneBadges, createNotification, getStoryPages } from "@/lib/queries";
+import { getChildren, getStorageUrl, getConsecutiveStreak, awardMilestoneBadges, awardBadge, getBadgeImages, createNotification, getStoryPages } from "@/lib/queries";
 import { getMilestoneBadgeMeta } from "@/lib/milestoneBadges";
 import { getStoryBySlug, getStoryDetails, getStorySlots, getStoryLibrary } from "@/lib/storyRepository";
 import type { StoryLibraryItem } from "@/lib/story-types";
@@ -218,6 +218,7 @@ export default function StoryDetailPage() {
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [treasureAnimating, setTreasureAnimating] = useState(false);
   const [earnedBadgeSlug, setEarnedBadgeSlug] = useState<string | null>(null);
+  const [earnedBadgeImageUrl, setEarnedBadgeImageUrl] = useState<string | null>(null);
   const [nextStory, setNextStory] = useState<StoryLibraryItem | null>(null);
   const [streak, setStreak] = useState(0);
   const [feeling, setFeeling] = useState<string | null>(null);
@@ -390,17 +391,30 @@ export default function StoryDetailPage() {
     );
   };
 
-  // On certificate phase: award milestone badges, fire notifications, show badge.
+  // On certificate phase: award story badge + milestone badges, show badge with image.
   useEffect(() => {
     if (phase !== "certificate" || !childId) return;
     void (async () => {
-      const newSlugs = await awardMilestoneBadges(childId, language);
+      // 1. Award this story's specific badge (e.g. "emotion-detective-en")
+      const storyBadgeSlug = `${slug}-${language}`;
+      await awardBadge(childId, language, storyBadgeSlug);
 
-      // Notify parent for each newly earned badge
-      if (newSlugs.length > 0 && parentId) {
+      // 2. Award any newly qualifying milestone badges
+      const newMilestoneSlugs = await awardMilestoneBadges(childId, language);
+
+      // 3. Resolve image URLs from DB for all badge slugs
+      const imageMap = await getBadgeImages();
+
+      // 4. Show the story badge first (it has a custom image), then milestone if any
+      const displaySlug = storyBadgeSlug;
+      setEarnedBadgeSlug(displaySlug);
+      setEarnedBadgeImageUrl(imageMap[displaySlug] ?? null);
+
+      // 5. Notify parent for newly earned milestone badges
+      if (newMilestoneSlugs.length > 0 && parentId) {
         const { getMilestoneBadgeMeta: getMeta } = await import("@/lib/milestoneBadges");
-        for (const slug of newSlugs) {
-          const meta = getMeta(slug);
+        for (const mSlug of newMilestoneSlugs) {
+          const meta = getMeta(mSlug);
           await createNotification(parentId, {
             title: `${meta?.emoji ?? "🏅"} Badge Earned!`,
             body: meta ? `${childName} earned "${meta.label}" — ${meta.desc}` : `${childName} earned a new badge!`,
@@ -408,21 +422,9 @@ export default function StoryDetailPage() {
             url: "/user-profile",
           });
         }
-        setEarnedBadgeSlug(newSlugs[0]);
-        return;
       }
-
-      // Fallback: show most recently earned badge (admin-awarded or prior milestone)
-      const { data } = await supabase
-        .from("child_badges")
-        .select("badge_slug")
-        .eq("child_id", childId)
-        .order("earned_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data?.badge_slug) setEarnedBadgeSlug(data.badge_slug);
     })();
-  }, [phase, childId, language, parentId, childName]);
+  }, [phase, childId, language, parentId, childName, slug]);
 
   // Detect premium lock for this story
   useEffect(() => {
@@ -1194,7 +1196,7 @@ export default function StoryDetailPage() {
                                   initial={{ scale: 0, rotate: -30 }}
                                   animate={{ scale: 1, rotate: 0 }}
                                   transition={{ type: "spring", stiffness: 220, damping: 18, delay: 0.1 }}>
-                                  <BadgeCircle slug={earnedBadgeSlug} size="xl" />
+                                  <BadgeCircle slug={earnedBadgeSlug} size="xl" imageUrl={earnedBadgeImageUrl} />
                                 </motion.div>
                                 {/* Shine streak */}
                                 <motion.div
@@ -1291,7 +1293,7 @@ export default function StoryDetailPage() {
                               animate={{ x: 0, y: -100, scale: 0.3, opacity: 0 }}
                               transition={{ duration: DURATION.loopFast, ease: EASE.exit, delay: DURATION.base }}
                               className="mx-auto mb-4 flex justify-center">
-                              <BadgeCircle slug={earnedBadgeSlug} size="sm" />
+                              <BadgeCircle slug={earnedBadgeSlug} size="sm" imageUrl={earnedBadgeImageUrl} />
                             </motion.div>
 
                             {/* Treasure chest receiving */}

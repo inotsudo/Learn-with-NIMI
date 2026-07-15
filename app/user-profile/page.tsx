@@ -6,12 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   getChildren,
   getWeekStreak, getWeekActivityCounts, getTotalStars,
-  getActivityDates, getChildBadges, updateChild,
+  getActivityDates, getChildBadges, getChildCertificates, updateChild,
   getConsecutiveStreak, getCompletedStoriesCount, awardMilestoneBadges,
+  getBadgeImages,
   type Child,
 } from "@/lib/queries";
-
-import { MILESTONE_BADGES } from "@/lib/milestoneBadges";
+import type { ChildAchievement } from "@/lib/queries/types";
+import { getMilestoneBadgeMeta } from "@/lib/milestoneBadges";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
@@ -58,79 +59,128 @@ function ChildSwitcher({
   );
 }
 
-// ── Milestone badges card ─────────────────────────────────────────────
-function MilestoneBadgesCard({ earnedSlugs }: { earnedSlugs: string[] }) {
+// ── Badge image: Supabase Storage URL → emoji fallback ───────────────
+function BadgeImg({ slug, emoji, imageUrl, size = "w-full h-full" }: {
+  slug: string; emoji: string; imageUrl?: string; size?: string
+}) {
+  const [imgOk, setImgOk] = useState(true);
+
+  if (imageUrl && imgOk) {
+    return <img src={imageUrl} alt={slug} className={`${size} object-contain`} onError={() => setImgOk(false)} />;
+  }
+  return <span className="text-2xl leading-none">{emoji}</span>;
+}
+
+// ── Helpers for earned achievements ──────────────────────────────────
+function slugToTitle(s: string) {
+  return s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function badgeLabelFromSlug(slug: string) {
+  const meta = getMilestoneBadgeMeta(slug);
+  if (meta) return meta.label;
+  const parts = slug.split("-");
+  const lang = parts[parts.length - 1];
+  const stripped = ["en", "fr", "rw"].includes(lang) ? parts.slice(0, -1).join("-") : slug;
+  return slugToTitle(stripped);
+}
+
+function certLabelFromSlug(slug: string) {
+  // story-emotion-detective-certificate-en → Emotion Detective
+  const withoutLang = slug.replace(/-(?:en|fr|rw)$/, "");
+  const withoutCert = withoutLang.replace(/-certificate$/, "");
+  const withoutStory = withoutCert.replace(/^story-/, "");
+  return slugToTitle(withoutStory);
+}
+
+// ── Earned achievements card ──────────────────────────────────────────
+function EarnedAchievementsCard({
+  earnedSlugs,
+  imageMap,
+  certificates,
+}: {
+  earnedSlugs: string[];
+  imageMap: Record<string, string>;
+  certificates: ChildAchievement[];
+}) {
   const { t } = useLanguage();
-  const earnedCount = MILESTONE_BADGES.filter(b => earnedSlugs.includes(b.slug)).length;
-  const allLocked = earnedCount === 0;
+  const hasAny = earnedSlugs.length > 0 || certificates.length > 0;
 
   return (
-    <div className="bg-ds-card border border-ds-border shadow-ds-card p-5" style={{ borderRadius: 'var(--leaf-r)' }}>
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="font-baloo font-black text-ds-text text-[17px]">🏅 {t("myBadgesTitle") || "My Badges"}</h2>
-        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-          earnedCount > 0
-            ? "text-amber-600 bg-amber-50 border border-amber-200"
-            : "text-ds-muted"
-        }`}>
-          {earnedCount} / {MILESTONE_BADGES.length}
-        </span>
-      </div>
+    <div className="bg-ds-card border border-ds-border shadow-ds-card p-5" style={{ borderRadius: "var(--leaf-r)" }}>
+      <h2 className="font-baloo font-black text-ds-text text-[17px] mb-4">
+        🏅 {t("myBadgesTitle") || "Badges & Certificates"}
+      </h2>
 
-      {/* Progress strip */}
-      <div className="w-full h-1.5 bg-ds-border rounded-full mb-4 overflow-hidden">
-        <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-500"
-          initial={{ width: 0 }}
-          animate={{ width: `${(earnedCount / MILESTONE_BADGES.length) * 100}%` }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        />
-      </div>
-
-      <div className="grid grid-cols-5 gap-2">
-        {MILESTONE_BADGES.map((badge, i) => {
-          const earned = earnedSlugs.includes(badge.slug);
-          return (
-            <motion.div
-              key={badge.slug}
-              initial={{ opacity: 0, scale: 0.7, y: 6 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: i * 0.07, type: "spring", stiffness: 300, damping: 20 }}
-              className="flex flex-col items-center gap-1.5 text-center"
-              title={badge.desc}
-            >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ring-2 transition-all relative ${
-                earned
-                  ? "ring-amber-400 bg-gradient-to-b from-amber-300 to-yellow-500 shadow-[0_4px_14px_rgba(251,191,36,0.4)]"
-                  : "ring-ds-border bg-ds-page opacity-40 grayscale"
-              }`}>
-                {badge.emoji}
-                {earned && (
-                  <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
-                    <span className="text-[7px] text-white font-black">✓</span>
-                  </div>
-                )}
-              </div>
-              <p className={`font-nunito font-bold text-[10px] leading-tight ${earned ? "text-ds-text" : "text-ds-muted"}`}>
-                {badge.label}
-              </p>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* Zero-state prompt */}
-      {allLocked && (
-        <motion.div
+      {!hasAny && (
+        <motion.p
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-4 pt-3 border-t border-ds-border text-center"
+          className="text-ds-muted text-[12px] font-semibold text-center py-4"
         >
-          <p className="text-ds-muted text-[11px] font-semibold">
-            🚀 {t("badgesHintMsg") || "Complete stories to unlock your first badge!"}
+          🚀 {t("badgesHintMsg") || "Complete stories to earn your first badge!"}
+        </motion.p>
+      )}
+
+      {earnedSlugs.length > 0 && (
+        <div className="mb-4">
+          <p className="text-ds-muted font-bold text-[11px] uppercase tracking-wider mb-3">
+            {t("badgesLabel") || "Badges"} · {earnedSlugs.length}
           </p>
-        </motion.div>
+          <div className="flex flex-wrap gap-3">
+            {earnedSlugs.map((slug, i) => {
+              const meta = getMilestoneBadgeMeta(slug);
+              const imageUrl = imageMap[slug];
+              const label = badgeLabelFromSlug(slug);
+              return (
+                <motion.div
+                  key={slug}
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
+                  className="flex flex-col items-center gap-1.5 w-16 text-center"
+                  title={meta?.desc ?? label}
+                >
+                  <div className="w-14 h-14 rounded-full ring-2 ring-amber-400 shadow-[0_4px_14px_rgba(251,191,36,0.35)] flex items-center justify-center overflow-hidden bg-gradient-to-b from-amber-400/20 to-yellow-500/10">
+                    <BadgeImg slug={slug} emoji={meta?.emoji ?? "🏅"} imageUrl={imageUrl} />
+                  </div>
+                  <p className="font-nunito font-bold text-[10px] leading-tight text-ds-text">{label}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {certificates.length > 0 && (
+        <div>
+          {earnedSlugs.length > 0 && <div className="border-t border-ds-border my-3" />}
+          <p className="text-ds-muted font-bold text-[11px] uppercase tracking-wider mb-3">
+            {t("certificatesLabel") || "Certificates"} · {certificates.length}
+          </p>
+          <div className="space-y-2">
+            {certificates.map((cert, i) => (
+              <motion.div
+                key={cert.slug}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.07 }}
+                className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 px-3 py-2.5 rounded-xl"
+              >
+                <span className="text-2xl leading-none">🎓</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-nunito font-black text-ds-text text-[13px] leading-tight truncate">
+                    {certLabelFromSlug(cert.slug)}
+                  </p>
+                  <p className="text-ds-muted text-[10px] font-medium mt-0.5">
+                    {cert.earned_at ? new Date(cert.earned_at).toLocaleDateString() : ""}
+                  </p>
+                </div>
+                <span className="text-amber-500 font-black text-[11px] shrink-0">✓ Earned</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -153,6 +203,8 @@ export default function UserProfilePage() {
   const [storiesCompleted, setStoriesCompleted] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [earnedBadgeSlugs, setEarnedBadgeSlugs] = useState<string[]>([]);
+  const [badgeImageMap, setBadgeImageMap] = useState<Record<string, string>>({});
+  const [certificates, setCertificates] = useState<ChildAchievement[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const activeChildRef = useRef<Child | null>(null);
@@ -177,14 +229,16 @@ export default function UserProfilePage() {
     // This is idempotent — safe to call on every profile load.
     await awardMilestoneBadges(child.id, child.language);
 
-    const [wStreak, wCounts, stars, dates, badges, streak, stories] = await Promise.all([
+    const [wStreak, wCounts, stars, dates, badges, streak, stories, imageMap, certs] = await Promise.all([
       getWeekStreak(child.id, child.language),
       getWeekActivityCounts(child.id, child.language),
       getTotalStars(child.id, child.language),
       getActivityDates(child.id, child.language),
-      getChildBadges(child.id),
+      getChildBadges(child.id, child.language),
       getConsecutiveStreak(child.id, child.language),
       getCompletedStoriesCount(child.id, child.language),
+      getBadgeImages(),
+      getChildCertificates(child.id, child.language),
     ]);
 
     if (silent && gen !== switchGenRef.current) return;
@@ -200,6 +254,8 @@ export default function UserProfilePage() {
     setActivityDates(dates);
     setBadgeCount(badges.length);
     setEarnedBadgeSlugs(badges.map(b => b.badge_slug));
+    setBadgeImageMap(imageMap);
+    setCertificates(certs);
     setCurrentStreak(streak);
     setStoriesCompleted(stories);
     if (silent) setRefreshing(false); else setLoading(false);
@@ -350,7 +406,7 @@ export default function UserProfilePage() {
                   currentStreak={currentStreak}
                 />
                 <WeeklyActivityChart weekCounts={weekCounts} />
-                <MilestoneBadgesCard earnedSlugs={earnedBadgeSlugs} />
+                <EarnedAchievementsCard earnedSlugs={earnedBadgeSlugs} imageMap={badgeImageMap} certificates={certificates} />
               </motion.div>
             )}
 

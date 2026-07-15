@@ -8,6 +8,7 @@ type Size = "sm" | "md" | "lg" | "xl";
 interface Props {
   slug: string | null;
   size?: Size;
+  imageUrl?: string | null;
 }
 
 const SIZE_CLS: Record<Size, { outer: string; ring: string; icon: string; label: number }> = {
@@ -17,11 +18,26 @@ const SIZE_CLS: Record<Size, { outer: string; ring: string; icon: string; label:
   xl: { outer: "w-32 h-32",  ring: "ring-[5px]", icon: "text-6xl", label: 8 },
 };
 
-export default function BadgeCircle({ slug, size = "md" }: Props) {
-  const [imgFailed, setImgFailed] = useState(false);
+export default function BadgeCircle({ slug, size = "md", imageUrl }: Props) {
+  const [imgOk, setImgOk] = useState(true);
   const cls = SIZE_CLS[size];
-
   const milestoneMeta = slug ? getMilestoneBadgeMeta(slug) : null;
+
+  // 1. Supabase Storage URL from badge_images table (admin-uploaded)
+  if (imageUrl && imgOk) {
+    return (
+      <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 shadow-lg overflow-hidden`}>
+        <img
+          src={imageUrl}
+          alt={milestoneMeta?.label ?? slug ?? "badge"}
+          onError={() => setImgOk(false)}
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
+
+  // 2. Milestone emoji fallback (no image uploaded yet)
   if (milestoneMeta) {
     return (
       <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 bg-gradient-to-b from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg`}>
@@ -30,13 +46,7 @@ export default function BadgeCircle({ slug, size = "md" }: Props) {
     );
   }
 
-  if (slug && !imgFailed) {
-    return (
-      <img src={`/badges/${slug}.png`} alt="badge" onError={() => setImgFailed(true)}
-        className={`${cls.outer} object-contain rounded-full`} />
-    );
-  }
-
+  // 3. Generic placeholder for non-milestone badges with no image yet
   return (
     <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 bg-gradient-to-b from-blue-600 to-blue-900 flex flex-col items-center justify-center shadow-lg overflow-hidden`}>
       <span className="text-yellow-300 leading-none" style={{ fontSize: cls.label }}>⭐</span>

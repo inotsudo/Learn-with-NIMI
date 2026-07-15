@@ -110,6 +110,7 @@ export interface ColoringSave {
 export interface ChildBadge {
   id: string;
   child_id: string;
+  language: string;
   badge_slug: string;
   earned_at: string;
 }

@@ -23,6 +23,7 @@ const NAV = [
   { icon: Palette,         label: 'Content Library',    table: 'content_library' },
   { icon: Trophy,          label: 'Weekly Challenges',  table: 'weekly_challenges' },
   { icon: Star,            label: 'Rewards',            table: 'child_badges' },
+  { icon: Award,           label: 'Badge Images',       table: 'badge_images' },
   { icon: Users,           label: 'Families',           table: 'families' },
   { icon: Globe,           label: 'Community',          table: 'creations' },
   { icon: Award,           label: 'Certificates',       table: 'child_achievements' },

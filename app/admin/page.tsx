@@ -38,6 +38,7 @@ const ChildrenManager = dynamicView(() => import('./ChildrenManager'))
 const ParentsManager = dynamicView(() => import('./ParentsManager'))
 const CertificatesManager = dynamicView(() => import('./CertificatesManager'))
 const RewardsManager = dynamicView(() => import('./RewardsManager'))
+const BadgesManager  = dynamicView(() => import('./BadgesManager'))
 const AnalyticsManager = dynamicView(() => import('./AnalyticsManager'))
 const SettingsManager = dynamicView(() => import('./SettingsManager'))
 const AdministratorsManager = dynamicView(() => import('./AdministratorsManager'))
@@ -240,6 +241,7 @@ export default function AdminPanel() {
   const isCertTemplatesView        = currentTable === 'certificate_templates'
 
   const isRewardsView = currentTable === 'child_badges' || currentTable.startsWith('child_badges:')
+  const isBadgeImagesView = currentTable === 'badge_images'
   const initialRewardChildId = isRewardsView ? currentTable.split(':')[1] : undefined
 
   const isAnalyticsView = currentTable === 'child_progress'
@@ -326,6 +328,9 @@ export default function AdminPanel() {
           {isRewardsView && (
             <RewardsManager initialChildId={initialRewardChildId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
+          {isBadgeImagesView && (
+            <BadgesManager onOpenSidebar={() => setSidebarOpen(true)} />
+          )}
           {isAnalyticsView && (
             <AnalyticsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
@@ -361,7 +366,7 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
+          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
             <TableView table={currentTable} />
           )}
           </ErrorBoundary>
