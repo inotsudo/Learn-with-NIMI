@@ -91,25 +91,28 @@ const FILTERS: { id: FilterType; label: string; emoji: string; types: string[] }
 function FilterTabs({ active, onChange }: { active: FilterType; onChange: (f: FilterType) => void }) {
   return (
     <LayoutGroup>
-      <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
         {FILTERS.map(f => {
           const on = active === f.id;
           return (
             <button
               key={f.id}
               onClick={() => onChange(f.id)}
-              className="relative shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-black transition-colors duration-150 focus:outline-none"
-              style={{ color: on ? "white" : "var(--ds-text-muted)" }}
+              className="relative shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-black transition-colors duration-150 focus:outline-none border"
+              style={{
+                color: on ? "white" : "var(--ds-text-muted)",
+                borderColor: on ? "transparent" : "var(--ds-border-primary)",
+              }}
             >
               {on && (
                 <motion.div
                   layoutId="cp-filter-pill"
-                  className="absolute inset-0 rounded-xl"
+                  className="absolute inset-0 rounded-full"
                   style={{ background: "var(--nimi-green)" }}
                   transition={{ type:"spring", stiffness:400, damping:34 }}
                 />
               )}
-              <span className="relative z-10 text-[15px] leading-none">{f.emoji}</span>
+              <span className="relative z-10 text-[14px] leading-none">{f.emoji}</span>
               <span className="relative z-10">{f.label}</span>
             </button>
           );
@@ -175,105 +178,97 @@ function CreationCard({
 
   return (
     <motion.div
-      initial={{ opacity:0, y:32, scale:0.94 }}
+      initial={{ opacity:0, y:24, scale:0.96 }}
       animate={{ opacity:1, y:0,  scale:1 }}
-      exit={{ opacity:0, scale:0.94 }}
-      transition={{ type:"spring", stiffness:280, damping:26, delay: Math.min(index * 0.05, 0.35) }}
-      whileHover={{ y:-4, transition:{ type:"spring", stiffness:360, damping:28 } }}
-      className="group rounded-3xl border border-ds-border bg-ds-card shadow-[0_4px_20px_rgba(15,23,42,0.07)] hover:shadow-[0_14px_40px_rgba(15,23,42,0.13)] transition-shadow duration-300 overflow-visible"
+      exit={{ opacity:0, scale:0.96 }}
+      transition={{ type:"spring", stiffness:300, damping:28, delay: Math.min(index * 0.05, 0.3) }}
+      whileHover={{ y:-3, transition:{ type:"spring", stiffness:400, damping:30 } }}
+      className="group rounded-2xl border border-ds-border bg-ds-card shadow-ds-card hover:shadow-[0_12px_36px_rgba(15,23,42,0.12)] transition-shadow duration-300 overflow-hidden"
     >
-      {/* ── IMAGE ZONE (overflow-hidden isolated) ── */}
-      <div className="relative w-full rounded-t-3xl overflow-hidden bg-gray-100" style={{ aspectRatio: "4/3" }}>
+      {/* ── CARD HEADER: avatar + name + type badge ── */}
+      <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-ds-border">
+        {/* Avatar */}
+        <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${avatarGrad} flex items-center justify-center font-black text-white shrink-0 overflow-hidden shadow-sm`}>
+          {creation.childAvatar
+            ? <ChildAvatar avatarUrl={creation.childAvatar} name={creation.childName} size={44} className="w-full h-full" />
+            : <span className="text-[16px]">{avatarInitial}</span>
+          }
+        </div>
+
+        {/* Name + timestamp */}
+        <div className="flex-1 min-w-0">
+          <p className="font-black text-ds-text text-[14px] leading-tight truncate">{creation.childName}</p>
+          <p className="text-ds-muted text-[11px] font-medium mt-0.5">{timeAgo(creation.createdAt)}</p>
+        </div>
+
+        {/* Type badge */}
+        <span className={`shrink-0 flex items-center gap-1.5 ${meta.pill} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm`}>
+          <span className="text-[11px] leading-none">{meta.emoji}</span>
+          {meta.label}
+        </span>
+
+        {/* Report */}
+        <button
+          onClick={e => { e.stopPropagation(); onReport(creation.id); }}
+          title="Report post"
+          className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[11px] text-ds-muted opacity-0 group-hover:opacity-100 hover:bg-ds-border transition-all ml-1"
+        >🚩</button>
+      </div>
+
+      {/* ── IMAGE ── */}
+      <div className="relative w-full overflow-hidden bg-ds-border" style={{ aspectRatio:"3/4" }}>
         {hasImg ? (
           <img
             src={imgUrl!}
             alt={creation.description ?? `${creation.childName}'s creation`}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
             loading="lazy"
           />
         ) : (
-          /* Pure emoji gradient fallback */
           <div className={`w-full h-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
             <motion.span
-              className="text-7xl drop-shadow-2xl"
-              animate={{ scale:[1, 1.08, 1] }}
-              transition={{ duration:3.2, repeat:Infinity, ease:"easeInOut", delay: index * 0.18 }}
-            >
-              {meta.emoji}
-            </motion.span>
+              className="text-6xl drop-shadow-xl"
+              animate={{ scale:[1,1.07,1] }}
+              transition={{ duration:3, repeat:Infinity, ease:"easeInOut", delay: index * 0.2 }}
+            >{meta.emoji}</motion.span>
           </div>
         )}
 
-        {/* scrim for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-
-        {/* Type badge — top right */}
-        <div className={`absolute top-3 right-3 flex items-center gap-1.5 ${meta.pill} text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-md`}>
-          <span className="text-sm leading-none">{meta.emoji}</span>
-          {meta.label}
-        </div>
-
-        {/* HOT badge — top left */}
         {isHot && (
-          <div className="absolute top-3 left-3 flex items-center gap-1 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
+          <div className="absolute top-2 left-2 flex items-center gap-1 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
             <Flame className="w-3 h-3 fill-white" strokeWidth={0} /> HOT
           </div>
         )}
-
-        {/* Report — top left, replaces HOT on hover */}
-        <button
-          onClick={e => { e.stopPropagation(); onReport(creation.id); }}
-          title="Report post"
-          className={`absolute top-3 left-3 w-7 h-7 rounded-full bg-black/35 backdrop-blur-sm flex items-center justify-center text-[12px] transition-opacity ${
-            isHot ? "opacity-0 group-hover:opacity-100" : "opacity-0 group-hover:opacity-100"
-          }`}
-        >
-          🚩
-        </button>
       </div>
 
-      {/* ── INFO ZONE (no overflow-hidden — allows burst to escape) ── */}
-      <div className="px-4 pb-4">
-        {/* Avatar + name row — avatar overlaps the image boundary */}
-        <div className="flex items-end gap-3 -mt-5 mb-3 relative z-10">
-          <div className={`w-12 h-12 rounded-full border-[3px] border-ds-card bg-gradient-to-br ${avatarGrad} flex items-center justify-center font-black text-white shadow-lg shrink-0 overflow-hidden`}>
-            {creation.childAvatar
-              ? <ChildAvatar avatarUrl={creation.childAvatar} name={creation.childName} size={48} className="w-full h-full" />
-              : <span className="text-[18px]">{avatarInitial}</span>
-            }
-          </div>
-          <div className="pb-0.5 min-w-0 flex-1">
-            <p className="font-black text-ds-text text-[14px] leading-tight truncate">{creation.childName}</p>
-            <p className="text-ds-muted text-[11px] font-semibold">{timeAgo(creation.createdAt)}</p>
-          </div>
-        </div>
-
-        {/* Description */}
+      {/* ── CONTENT ── */}
+      <div className="px-4 pt-3 pb-4">
         {creation.description && (
-          <p className="text-ds-text text-[12.5px] leading-relaxed mb-3 line-clamp-2 font-medium opacity-75">
+          <p className="text-ds-text text-[13px] leading-relaxed line-clamp-2 mb-3">
             {creation.description}
           </p>
         )}
 
-        {/* Cheer button */}
-        <div className="relative">
+        {/* Cheer row */}
+        <div className="relative flex items-center gap-2">
           <AnimatePresence>
             {bursting && <CheerBurst key="burst" onDone={() => setBursting(false)} />}
           </AnimatePresence>
+
           <motion.button
-            whileTap={{ scale:0.92 }}
+            whileTap={{ scale:0.93 }}
             onClick={handleCheer}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-[13px] font-black transition-all duration-200 ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-black transition-all duration-200 ${
               creation.likedByUser
-                ? "text-white shadow-md"
-                : "bg-ds-card border border-ds-border text-ds-muted hover:border-[var(--nimi-green)] hover:text-[var(--nimi-green)]"
+                ? "text-white shadow-md shadow-emerald-500/20"
+                : "bg-ds-page border border-ds-border text-ds-muted hover:border-[var(--nimi-green)] hover:text-[var(--nimi-green)]"
             }`}
             style={creation.likedByUser ? { background:"var(--nimi-green)" } : {}}
           >
             <motion.span
-              className="text-[16px] leading-none"
-              animate={creation.likedByUser ? { scale:[1,1.6,1], rotate:[0,-18,18,0] } : {}}
-              transition={{ duration:0.4 }}
+              className="text-[15px] leading-none"
+              animate={creation.likedByUser ? { scale:[1,1.5,1], rotate:[0,-15,15,0] } : {}}
+              transition={{ duration:0.35 }}
             >
               {creation.likedByUser ? "🎉" : "👏"}
             </motion.span>
@@ -281,11 +276,11 @@ function CreationCard({
             {creation.likes > 0 && (
               <motion.span
                 key={creation.likes}
-                initial={{ scale:1.5, opacity:0.6 }}
+                initial={{ scale:1.4, opacity:0 }}
                 animate={{ scale:1,   opacity:1 }}
                 className="text-[11px] font-black px-1.5 py-0.5 rounded-full"
                 style={creation.likedByUser
-                  ? { background:"rgba(255,255,255,0.25)", color:"white" }
+                  ? { background:"rgba(255,255,255,0.22)", color:"white" }
                   : { background:"var(--ds-border-primary)", color:"var(--ds-text-muted)" }
                 }
               >
@@ -386,14 +381,14 @@ function PickerSkeleton() {
 
 // ── Share Picker Sheet ───────────────────────────────────────────
 function SharePickerSheet({
-  open, onClose, items, loading, sharingKey, onShare, cv,
+  open, onClose, items, loading, sharingKey, onSelect: onShare, cv,
 }: {
   open: boolean;
   onClose: () => void;
   items: PickerItem[];
   loading: boolean;
   sharingKey: string | null;
-  onShare: (item: PickerItem) => void;
+  onSelect: (item: PickerItem) => void;
   cv: ComponentVariant;
 }) {
   return (
@@ -538,6 +533,110 @@ function SharePickerSheet({
   );
 }
 
+// ── Caption editor sheet ─────────────────────────────────────────
+const CAPTION_MAX = 280;
+
+function CaptionSheet({
+  item, caption, onCaptionChange, onPost, onBack, posting, cv,
+}: {
+  item: PickerItem | null;
+  caption: string;
+  onCaptionChange: (v: string) => void;
+  onPost: () => void;
+  onBack: () => void;
+  posting: boolean;
+  cv: ComponentVariant;
+}) {
+  const coverSrc = item?.coverUrl ? getStorageUrl(item.coverUrl) : null;
+  const remaining = CAPTION_MAX - caption.length;
+
+  return (
+    <AnimatePresence>
+      {item && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-[60] backdrop-blur-sm"
+            onClick={onBack}
+          />
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 340, damping: 36 }}
+            className="fixed bottom-0 left-0 right-0 z-[60] flex flex-col rounded-t-[28px] overflow-hidden shadow-[0_-12px_48px_rgba(0,0,0,0.28)]"
+            style={{ maxHeight: "90vh", background: "var(--ds-surface-card)" }}
+          >
+            {/* Pull handle */}
+            <div className="w-10 h-1.5 bg-ds-border rounded-full mx-auto mt-3 shrink-0" />
+
+            {/* Header row */}
+            <div className="flex items-center gap-3 px-5 pt-4 pb-4 border-b border-ds-border shrink-0">
+              <button
+                onClick={onBack}
+                className="w-9 h-9 rounded-full bg-ds-card border border-ds-border flex items-center justify-center text-ds-muted hover:text-ds-text hover:bg-ds-border transition-all shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-black text-ds-text text-[17px] leading-tight">Write a caption</h3>
+                <p className="text-ds-muted text-[12px] font-medium mt-0.5">Tell the community about this adventure</p>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 pt-4 pb-6 space-y-4 bg-ds-page" style={{ scrollbarWidth: "none" }}>
+              {/* Story preview card */}
+              <div className="flex items-center gap-3 bg-ds-card border border-ds-border rounded-2xl p-3">
+                <div className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 flex items-center justify-center text-2xl shadow-sm bg-gradient-to-br ${item.complete ? "from-emerald-100 to-teal-200" : "from-amber-100 to-yellow-200"}`}>
+                  {coverSrc
+                    ? <img src={coverSrc} alt={item.storyTitle} className="w-full h-full object-cover" />
+                    : <span>{item.themeEmoji ?? "📖"}</span>
+                  }
+                </div>
+                <div className="min-w-0">
+                  <p className="font-black text-ds-text text-[14px] truncate">{item.storyTitle}</p>
+                  <p className="text-ds-muted text-[12px] font-medium">{item.childName}</p>
+                  <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-black px-2 py-0.5 rounded-full ${item.complete ? "bg-amber-50 text-amber-700" : "bg-sky-50 text-sky-700"}`}>
+                    {item.complete ? "🏆 Story Complete" : `📖 ${Math.round(item.progress * 100)}% done`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Caption textarea */}
+              <div>
+                <label className="block text-ds-text font-black text-[13px] mb-2">Caption</label>
+                <textarea
+                  value={caption}
+                  onChange={e => onCaptionChange(e.target.value.slice(0, CAPTION_MAX))}
+                  rows={4}
+                  placeholder="Write something about this achievement…"
+                  className="w-full bg-ds-card border border-ds-border rounded-2xl px-4 py-3 text-ds-text text-[14px] leading-relaxed resize-none focus:outline-none focus:border-[var(--nimi-green)] transition-colors placeholder:text-ds-muted"
+                />
+                <div className="flex justify-end mt-1">
+                  <span className={`text-[11px] font-semibold ${remaining < 30 ? "text-orange-500" : "text-ds-muted"}`}>
+                    {remaining} left
+                  </span>
+                </div>
+              </div>
+
+              {/* Post button */}
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={onPost}
+                disabled={posting || caption.trim().length === 0}
+                className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-[15px] text-white shadow-lg disabled:opacity-50 bg-gradient-to-r ${cv.zoneGradients.communitySquare}`}
+              >
+                {posting
+                  ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Posting…</>
+                  : <><span className="text-[17px]">🚀</span> Post to Community</>
+                }
+              </motion.button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ── Floating Share FAB ───────────────────────────────────────────
 function ShareFAB({ onClick, cv }: { onClick: () => void; cv: ComponentVariant }) {
   return (
@@ -591,6 +690,10 @@ export default function CommunityPage() {
   const [pickerItems, setPickerItems]   = useState<PickerItem[]>([]);
   const [pickerLoading, setPickerLoading] = useState(false);
   const [sharingKey, setSharingKey]     = useState<string | null>(null);
+
+  // Caption editor
+  const [captionItem, setCaptionItem]   = useState<PickerItem | null>(null);
+  const [captionText, setCaptionText]   = useState("");
 
   useEffect(() => {
     void (async () => {
@@ -701,36 +804,42 @@ export default function CommunityPage() {
     setPickerLoading(false);
   };
 
-  const sharePickerItem = async (item: PickerItem) => {
-    if (sharingKey) return;
+  const defaultCaption = (item: PickerItem) => {
+    const pct = Math.round(item.progress * 100);
+    return item.complete
+      ? `${item.childName} just completed "${item.storyTitle}"! 🏆 What an adventure!`
+      : `${item.childName} is ${pct}% through "${item.storyTitle}" — cheering them on helps! 📖`;
+  };
+
+  const handleSelectForCaption = (item: PickerItem) => {
+    setCaptionText(defaultCaption(item));
+    setCaptionItem(item);
+  };
+
+  const sharePickerItem = async () => {
+    if (!captionItem || sharingKey) return;
+    const item = captionItem;
     setSharingKey(item.key);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSharingKey(null); return; }
 
     const shareType = item.complete ? "certificate" : "story_progress";
-    const pct = Math.round(item.progress * 100);
 
-    // For certificates: generate personalized image from the admin-configured template
     let shareImg = "";
     if (shareType === "certificate") {
       const certUrl = await generateCertificateImageUrl(item.childName, item.childLanguage);
       if (certUrl) shareImg = certUrl;
     }
-    // For in-progress: use the story cover
     if (!shareImg) {
       const raw = item.coverUrl ? getStorageUrl(item.coverUrl) : null;
       if (raw && raw.startsWith("http")) shareImg = raw;
     }
 
-    const description = item.complete
-      ? `${item.childName} just completed "${item.storyTitle}"! 🏆 What an adventure!`
-      : `${item.childName} is ${pct}% through "${item.storyTitle}" — cheering them on helps! 📖`;
-
     const { error } = await supabase.from("creations").insert({
       parent_id: user.id,
       child_id: item.childId,
       child_name: item.childName,
-      description,
+      description: captionText.trim() || defaultCaption(item),
       type: shareType,
       status: "approved",
       is_public: true,
@@ -739,6 +848,8 @@ export default function CommunityPage() {
 
     if (error) console.error("[sharePickerItem]", error.message);
     setSharingKey(null);
+    setCaptionItem(null);
+    setCaptionText("");
     setPickerOpen(false);
     setPage(0);
     void fetchCreations(0, true);
@@ -858,14 +969,14 @@ export default function CommunityPage() {
         </HeroBanner>
 
         {/* ── FILTER TABS ───────────────────────────────────────── */}
-        <div className="mb-5 p-1 rounded-2xl bg-ds-card border border-ds-border shadow-sm">
+        <div className="mb-5">
           <FilterTabs active={filter} onChange={f => { setFilter(f); }} />
         </div>
 
         {/* ── FEED ──────────────────────────────────────────────── */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
-            {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-64 leaf-lg" />)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 py-2">
+            {Array.from({ length: 4 }).map((_, i) => <Bone key={i} className="h-[520px] rounded-2xl" />)}
           </div>
         ) : visible.length === 0 ? (
           <motion.div
@@ -899,15 +1010,18 @@ export default function CommunityPage() {
           <>
             {/* Section label */}
             <div className="flex items-center justify-between mb-4">
-              <p className="font-nunito font-bold text-ds-muted text-[12px] uppercase tracking-widest">
-                Recently Shared
-              </p>
-              <p className="font-nunito font-bold text-ds-muted text-[11px]">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 rounded-full" style={{ background:"var(--nimi-green)" }} />
+                <p className="font-black text-ds-text text-[13px] uppercase tracking-wider">
+                  Recently Shared
+                </p>
+              </div>
+              <span className="text-ds-muted text-[12px] font-semibold bg-ds-card border border-ds-border px-2.5 py-1 rounded-full">
                 {visible.length} post{visible.length !== 1 ? "s" : ""}
-              </p>
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <AnimatePresence mode="popLayout">
                 {visible.map((c, i) => (
                   <CreationCard
@@ -927,8 +1041,8 @@ export default function CommunityPage() {
                   animate={{ opacity:1, scale:1 }}
                   transition={{ delay: Math.min(visible.length * 0.05, 0.4) + 0.1 }}
                   onClick={openPicker}
-                  className="relative rounded-3xl overflow-hidden cursor-pointer group bg-ds-card border-2 border-dashed border-ds-border"
-                  style={{ minHeight: "280px" }}
+                  className="relative rounded-2xl overflow-hidden cursor-pointer group bg-ds-card border-2 border-dashed border-ds-border"
+                  style={{ minHeight: "520px" }}
                   whileHover={{ scale: 1.02, transition: { type:"spring", stiffness:340, damping:26 } }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -989,7 +1103,18 @@ export default function CommunityPage() {
         items={pickerItems}
         loading={pickerLoading}
         sharingKey={sharingKey}
-        onShare={sharePickerItem}
+        onSelect={handleSelectForCaption}
+        cv={v}
+      />
+
+      {/* ── Caption editor sheet ────────────────────────────────── */}
+      <CaptionSheet
+        item={captionItem}
+        caption={captionText}
+        onCaptionChange={setCaptionText}
+        onPost={sharePickerItem}
+        onBack={() => setCaptionItem(null)}
+        posting={!!sharingKey}
         cv={v}
       />
 
