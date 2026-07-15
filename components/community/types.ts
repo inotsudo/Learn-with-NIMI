@@ -28,6 +28,7 @@ export type ModerationStatus = "pending" | "approved" | "rejected";
 
 export interface Creation {
   id: string;
+  parentId?: string;
   childName: string;
   childAvatar?: string;
   age: number;
