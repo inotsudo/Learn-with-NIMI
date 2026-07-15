@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import { HeroBanner } from "@/components/layout/primitives";
 
-export type ProgressTab = "overview" | "activity" | "skills" | "streaks";
+export type ProgressTab = "overview" | "streaks";
 
 interface Props {
   activeTab:       ProgressTab;
@@ -17,8 +17,6 @@ interface Props {
 
 const TAB_META: { id: ProgressTab; emoji: string; labelKey: string }[] = [
   { id: "overview",  emoji: "🏠", labelKey: "overview" },
-  { id: "activity",  emoji: "⚡", labelKey: "tabActivityProgress" },
-  { id: "skills",    emoji: "🧠", labelKey: "tabSkills" },
   { id: "streaks",   emoji: "🔥", labelKey: "tabStreaks" },
 ];
 
@@ -133,23 +131,23 @@ export default function ProgressHeader({
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                Tap avatar to edit
+                {t("tapAvatarToEdit") || "Tap avatar to edit"}
               </motion.button>
             )}
           </div>
         </div>
       </HeroBanner>
 
-      {/* ── Tab pills ─────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-2">
+      {/* ── Tab pills — horizontally scrollable, never wrap ──────────── */}
+      <div className="flex gap-2 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {TAB_META.map(tab => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] sm:text-[13px] font-baloo font-black transition-all ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] sm:text-[13px] font-baloo font-black transition-all whitespace-nowrap shrink-0 ${
               activeTab === tab.id
                 ? "bg-ds-action text-white shadow-sm"
-                : "bg-white border border-ds-border text-gray-500 hover:text-ds-text hover:bg-gray-50"
+                : "bg-ds-card border border-ds-border text-ds-muted hover:text-ds-text hover:bg-ds-page"
             }`}
           >
             <span>{tab.emoji}</span>

@@ -4,43 +4,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  getChildren, getCurriculumMissions, getCurrentLevel,
-  getWeekStreak, getWeekActivityCounts, getChildAchievements, getTotalStars,
+  getChildren,
+  getWeekStreak, getWeekActivityCounts, getTotalStars,
   getActivityDates, getChildBadges, updateChild,
+  getConsecutiveStreak, getCompletedStoriesCount, awardMilestoneBadges,
   type Child,
 } from "@/lib/queries";
+
 import { MILESTONE_BADGES } from "@/lib/milestoneBadges";
-import { type ActivityCategory } from "@/app/_activityData";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ProgressHeader, { type ProgressTab } from "@/components/profile/ProgressHeader";
 import StatsRow from "@/components/profile/StatsRow";
-import TodaysProgressCard from "@/components/profile/TodaysProgressCard";
-import WeekStreakCard from "@/components/profile/WeekStreakCard";
 import WeeklyActivityChart from "@/components/profile/WeeklyActivityChart";
-import ActivityProgressTab from "@/components/profile/ActivityProgressTab";
-import SkillsTab from "@/components/profile/SkillsTab";
 import StreaksTab from "@/components/profile/StreaksTab";
 import { PageSurface } from "@/components/layout/primitives";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
-
-function emptyCategoryProgress(): Record<ActivityCategory, { completed: number; total: number }> {
-  return {
-    morning: { completed: 0, total: 0 },
-    movement: { completed: 0, total: 0 },
-    artistic: { completed: 0, total: 0 },
-    histoire: { completed: 0, total: 0 },
-    zoom: { completed: 0, total: 0 },
-    discovery: { completed: 0, total: 0 },
-    flipflop: { completed: 0, total: 0 },
-    coloring: { completed: 0, total: 0 },
-  };
-}
 
 // ── Child switcher ─────────────────────────────────────────────────────
 function ChildSwitcher({
@@ -76,13 +60,23 @@ function ChildSwitcher({
 
 // ── Milestone badges card ─────────────────────────────────────────────
 function MilestoneBadgesCard({ earnedSlugs }: { earnedSlugs: string[] }) {
+  const { t } = useLanguage();
   const earnedCount = MILESTONE_BADGES.filter(b => earnedSlugs.includes(b.slug)).length;
+  const allLocked = earnedCount === 0;
+
   return (
     <div className="bg-ds-card border border-ds-border shadow-ds-card p-5" style={{ borderRadius: 'var(--leaf-r)' }}>
       <div className="flex items-center justify-between mb-1">
-        <h2 className="font-baloo font-black text-ds-text text-[17px]">🏅 My Badges</h2>
-        <span className="text-[11px] font-bold text-ds-muted">{earnedCount} / {MILESTONE_BADGES.length}</span>
+        <h2 className="font-baloo font-black text-ds-text text-[17px]">🏅 {t("myBadgesTitle") || "My Badges"}</h2>
+        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+          earnedCount > 0
+            ? "text-amber-600 bg-amber-50 border border-amber-200"
+            : "text-ds-muted"
+        }`}>
+          {earnedCount} / {MILESTONE_BADGES.length}
+        </span>
       </div>
+
       {/* Progress strip */}
       <div className="w-full h-1.5 bg-ds-border rounded-full mb-4 overflow-hidden">
         <motion.div
@@ -92,36 +86,52 @@ function MilestoneBadgesCard({ earnedSlugs }: { earnedSlugs: string[] }) {
           transition={{ duration: 0.8, ease: "easeOut" }}
         />
       </div>
-      <div className="grid grid-cols-4 gap-4">
+
+      <div className="grid grid-cols-5 gap-2">
         {MILESTONE_BADGES.map((badge, i) => {
           const earned = earnedSlugs.includes(badge.slug);
           return (
             <motion.div
               key={badge.slug}
-              initial={{ opacity: 0, scale: 0.75 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05, type: "spring", stiffness: 280, damping: 20 }}
-              className="flex flex-col items-center gap-2 text-center"
+              initial={{ opacity: 0, scale: 0.7, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: i * 0.07, type: "spring", stiffness: 300, damping: 20 }}
+              className="flex flex-col items-center gap-1.5 text-center"
+              title={badge.desc}
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl ring-[3px] transition-all relative ${
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ring-2 transition-all relative ${
                 earned
-                  ? "ring-amber-400 bg-gradient-to-b from-amber-300 to-yellow-500 shadow-[0_6px_20px_rgba(251,191,36,0.45)]"
-                  : "ring-gray-200 bg-gray-100 opacity-35 grayscale"
+                  ? "ring-amber-400 bg-gradient-to-b from-amber-300 to-yellow-500 shadow-[0_4px_14px_rgba(251,191,36,0.4)]"
+                  : "ring-ds-border bg-ds-page opacity-40 grayscale"
               }`}>
                 {badge.emoji}
                 {earned && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
-                    <span className="text-[8px] text-white font-black">✓</span>
+                  <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
+                    <span className="text-[7px] text-white font-black">✓</span>
                   </div>
                 )}
               </div>
-              <p className={`font-nunito font-bold text-[11px] leading-tight ${earned ? "text-ds-text" : "text-ds-muted"}`}>
+              <p className={`font-nunito font-bold text-[10px] leading-tight ${earned ? "text-ds-text" : "text-ds-muted"}`}>
                 {badge.label}
               </p>
             </motion.div>
           );
         })}
       </div>
+
+      {/* Zero-state prompt */}
+      {allLocked && (
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-4 pt-3 border-t border-ds-border text-center"
+        >
+          <p className="text-ds-muted text-[11px] font-semibold">
+            🚀 {t("badgesHintMsg") || "Complete stories to unlock your first badge!"}
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -135,14 +145,13 @@ export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState<ProgressTab>("overview");
   const [childName, setChildName] = useState("Explorer");
   const [activeChild, setActiveChild] = useState<Child | null>(null);
-  const [completedCategories, setCompletedCategories] = useState<Set<ActivityCategory>>(new Set());
-  const [categoryProgress, setCategoryProgress] = useState<Record<ActivityCategory, { completed: number; total: number }>>(emptyCategoryProgress());
   const [weekStreak, setWeekStreak] = useState<boolean[]>(Array(7).fill(false));
   const [weekCounts, setWeekCounts] = useState<number[]>(Array(7).fill(0));
   const [activityDates, setActivityDates] = useState<Set<string>>(new Set());
   const [badgeCount, setBadgeCount] = useState(0);
   const [totalStars, setTotalStars] = useState(0);
-  const [certificates, setCertificates] = useState(0);
+  const [storiesCompleted, setStoriesCompleted] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
   const [earnedBadgeSlugs, setEarnedBadgeSlugs] = useState<string[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -164,16 +173,18 @@ export default function UserProfilePage() {
     const child = list.find(c => c.id === savedId) ?? list[0];
     if (typeof window !== "undefined") localStorage.setItem(ACTIVE_CHILD_KEY, child.id);
 
-    // All queries fire in parallel — previously 2 sequential awaits before this block.
-    const [curriculumMissions, level, wStreak, wCounts, stars, dates, achievements, badges] = await Promise.all([
-      getCurriculumMissions(child.id),
-      getCurrentLevel(child.id, child.language),
+    // Ensure milestone badges are up-to-date before reading child_badges.
+    // This is idempotent — safe to call on every profile load.
+    await awardMilestoneBadges(child.id, child.language);
+
+    const [wStreak, wCounts, stars, dates, badges, streak, stories] = await Promise.all([
       getWeekStreak(child.id, child.language),
       getWeekActivityCounts(child.id, child.language),
       getTotalStars(child.id, child.language),
       getActivityDates(child.id, child.language),
-      getChildAchievements(child.id),
       getChildBadges(child.id),
+      getConsecutiveStreak(child.id, child.language),
+      getCompletedStoriesCount(child.id, child.language),
     ]);
 
     if (silent && gen !== switchGenRef.current) return;
@@ -182,26 +193,15 @@ export default function UserProfilePage() {
     setChildName(child.name);
     setActiveChild(child);
     activeChildRef.current = child;
-    setCertificates(Math.max(0, level - 1));
-
-    const completedInLevel = new Set(
-      curriculumMissions.filter(m => m.completed).map(m => m.category)
-    );
-    setCompletedCategories(completedInLevel);
-
-    const progress = emptyCategoryProgress();
-    for (const m of curriculumMissions) {
-      progress[m.category].total = 1;
-      if (m.completed) progress[m.category].completed = 1;
-    }
-    setCategoryProgress(progress);
 
     setWeekStreak(wStreak);
     setWeekCounts(wCounts);
     setTotalStars(stars);
     setActivityDates(dates);
-    setBadgeCount(achievements.filter(a => a.type === "badge" && a.language === child.language).length);
+    setBadgeCount(badges.length);
     setEarnedBadgeSlugs(badges.map(b => b.badge_slug));
+    setCurrentStreak(streak);
+    setStoriesCompleted(stories);
     if (silent) setRefreshing(false); else setLoading(false);
   }, []);
 
@@ -346,24 +346,11 @@ export default function UserProfilePage() {
                 <StatsRow
                   starsCollected={totalStars}
                   badgesEarned={badgeCount}
-                  certificates={certificates}
+                  storiesCompleted={storiesCompleted}
+                  currentStreak={currentStreak}
                 />
-                <TodaysProgressCard completedCategories={completedCategories} />
-                <WeekStreakCard weekStreak={weekStreak} activityDates={activityDates} />
                 <WeeklyActivityChart weekCounts={weekCounts} />
                 <MilestoneBadgesCard earnedSlugs={earnedBadgeSlugs} />
-              </motion.div>
-            )}
-
-            {activeTab === "activity" && (
-              <motion.div key="activity" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-                <ActivityProgressTab categoryProgress={categoryProgress} />
-              </motion.div>
-            )}
-
-            {activeTab === "skills" && (
-              <motion.div key="skills" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-                <SkillsTab categoryProgress={categoryProgress} />
               </motion.div>
             )}
 

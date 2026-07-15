@@ -30,7 +30,7 @@ export default function ActivityProgressTab({ categoryProgress }: Props) {
       </div>
 
       {/* Overall progress bar */}
-      <div className="bg-ds-card border border-ds-border rounded-2xl p-4 shadow-ds-card">
+      <div className="bg-ds-card border border-ds-border p-4 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-[13px] font-black text-ds-text">{t("profileOverallProgressLabel")}</span>
           <span className="text-[13px] font-black text-[var(--ds-brand-primary)]">{totalDone}/{totalActivities}</span>
@@ -68,7 +68,7 @@ export default function ActivityProgressTab({ categoryProgress }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="font-baloo font-black text-ds-text text-[14px] truncate">{t(activity.titleKey)}</p>
                   <p className="text-ds-muted text-[11px]">
-                    {total > 0
+                    {completed > 0
                       ? `${completed}/${total} ${t("progressDaysCompleted")}`
                       : t("notStartedYet")}
                   </p>

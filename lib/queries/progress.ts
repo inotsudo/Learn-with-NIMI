@@ -156,6 +156,28 @@ export function getConsecutiveStreak(childId: string, language: "en" | "fr" | "r
   });
 }
 
+// Count of fully-completed stories for this child+language.
+// A story is "complete" when every one of its story_slots has a matching
+// child_progress row. Reuses the cached rawProgressRows scan + one small
+// story_slots fetch (cached separately, table rarely changes).
+export function getCompletedStoriesCount(childId: string, language: "en" | "fr" | "rw"): Promise<number> {
+  return qcached(`completedStoriesCount:${childId}:${language}`, async () => {
+    const [rows, { data: slots }] = await Promise.all([
+      rawProgressRows(childId, language),
+      supabase.from("story_slots").select("story_id, mission_id"),
+    ]);
+    if (!slots?.length) return 0;
+    const done = new Set(rows.map(r => r.mission_id));
+    const byStory: Record<string, string[]> = {};
+    for (const s of slots as { story_id: string; mission_id: string }[]) {
+      (byStory[s.story_id] ??= []).push(s.mission_id);
+    }
+    return Object.values(byStory).filter(
+      ids => ids.length > 0 && ids.every(id => done.has(id))
+    ).length;
+  });
+}
+
 // Per-story star totals derived from child_progress, used by the stories page
 // to render the star count on each story card without a raw DB query in the page.
 export function getStoryProgressStars(childId: string, language: "en" | "fr" | "rw"): Promise<Record<string, number>> {

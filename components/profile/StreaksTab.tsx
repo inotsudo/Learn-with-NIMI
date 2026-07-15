@@ -82,8 +82,8 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
   return (
     <div className="space-y-4 mt-4">
       <div>
-        <p className="font-black text-ds-text text-lg">{t("streaksPageTitle")}</p>
-        <p className="text-gray-500 text-sm">{t("streaksPageSubtitle")}</p>
+        <p className="font-baloo font-black text-ds-text text-[18px]">{t("streaksPageTitle")}</p>
+        <p className="text-ds-muted text-[13px] mt-0.5">{t("streaksPageSubtitle")}</p>
       </div>
 
       {/* Shield status */}
@@ -91,17 +91,18 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-indigo-200 bg-indigo-50"
+          className="flex items-center gap-3 px-4 py-3 border-2 border-indigo-500/25 bg-indigo-500/8"
+          style={{ borderRadius: 'var(--leaf-r)' }}
         >
           <span className="text-2xl">🛡️</span>
           <div className="flex-1">
-            <p className="font-black text-indigo-700 text-sm">
+            <p className="font-black text-ds-text text-sm">
               {t("shieldsAvailableLabel").replace("{n}", String(shieldsAvailable))}
             </p>
-            <p className="text-indigo-500 text-xs">{t("rewardStreakShieldDesc")}</p>
+            <p className="text-ds-muted text-xs">{t("rewardStreakShieldDesc")}</p>
           </div>
           {shieldsAvailable > 0 && (
-            <span className="font-black text-indigo-600 text-xl">{shieldsAvailable}</span>
+            <span className="font-black text-indigo-500 text-xl">{shieldsAvailable}</span>
           )}
         </motion.div>
       )}
@@ -110,42 +111,42 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white border border-ds-border shadow-ds-card p-4 text-center" style={{ borderRadius: 'var(--leaf-r)' }}
+          className="bg-ds-card border border-ds-border shadow-ds-card p-4 text-center" style={{ borderRadius: 'var(--leaf-r)' }}
         >
           <p className="font-black text-4xl">
             <span className={`${current > 0 ? "drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]" : ""}`}>🔥</span>
             <span className="text-orange-500 ml-1">{current}</span>
           </p>
-          <p className="text-gray-500 text-xs font-bold mt-1">{t("currentStreakLabel")}</p>
+          <p className="text-ds-muted text-xs font-bold mt-1">{t("currentStreakLabel")}</p>
         </motion.div>
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-white border border-ds-border shadow-ds-card p-4 text-center" style={{ borderRadius: 'var(--leaf-r)' }}
+          className="bg-ds-card border border-ds-border shadow-ds-card p-4 text-center" style={{ borderRadius: 'var(--leaf-r)' }}
         >
           <p className="font-black text-4xl">
             <span>🏆</span>
             <span className="text-ds-text ml-1">{longest}</span>
           </p>
-          <p className="text-gray-500 text-xs font-bold mt-1">{t("longestStreakLabel")}</p>
+          <p className="text-ds-muted text-xs font-bold mt-1">{t("longestStreakLabel")}</p>
         </motion.div>
       </div>
 
       {/* Milestone badges */}
       <div className="flex gap-2 justify-center">
-        {MILESTONES.map(m => {
+        {MILESTONES.map((m, i) => {
           const earned = longest >= m.days;
           return (
             <motion.div
               key={m.days}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              initial={{ scale: 0.8, opacity: 0, y: 6 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 + 0.1, type: "spring", stiffness: 320, damping: 22 }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 transition ${
                 earned
                   ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-brand-primary)]/30 text-[var(--ds-brand-primary)]"
-                  : "bg-gray-50 border-gray-200 text-gray-400"
+                  : "bg-ds-page border-ds-border text-ds-muted"
               }`}
             >
               <span className={earned ? "" : "grayscale opacity-50"}>{m.emoji}</span>
@@ -158,11 +159,11 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
       <WeekStreakCard weekStreak={weekStreak} activityDates={activityDates} usedShieldDates={usedShieldDates} />
 
       {/* Activity calendar */}
-      <div className="bg-white border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>
+      <div className="bg-ds-card border border-ds-border shadow-ds-card p-4" style={{ borderRadius: 'var(--leaf-r)' }}>
         <p className="font-black text-ds-text mb-3">{t("activityCalendarTitle")}</p>
         <div className="grid grid-cols-7 gap-1.5 mb-1.5">
           {dayKeys.map((key, i) => (
-            <span key={i} className="text-[10px] font-bold text-gray-500 text-center">{t(key)}</span>
+            <span key={i} className="text-[10px] font-bold text-ds-muted text-center">{t(key)}</span>
           ))}
         </div>
         <div className="space-y-1.5">
@@ -173,12 +174,12 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
                   key={di}
                   className={`aspect-square rounded-md relative flex items-center justify-center ${
                     day.future
-                      ? "bg-gray-50"
+                      ? "bg-ds-page"
                       : day.active
                         ? "bg-[var(--ds-brand-primary)]"
                         : day.shielded
-                          ? "bg-indigo-300"
-                          : "bg-gray-100"
+                          ? "bg-indigo-500/40"
+                          : "bg-ds-border/60"
                   } ${day.today ? "ring-2 ring-[var(--ds-brand-primary)] ring-offset-1" : ""}`}
                 >
                   {day.shielded && (
@@ -192,15 +193,15 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
         <div className="flex items-center gap-4 mt-3 justify-center flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-[var(--ds-brand-primary)]" />
-            <span className="text-[10px] text-gray-500 font-semibold">{t("streakKeepItUp")}</span>
+            <span className="text-[10px] text-ds-muted font-semibold">{t("streakKeepItUp")}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-indigo-300 flex items-center justify-center text-[7px]">🛡️</div>
-            <span className="text-[10px] text-gray-500 font-semibold">{t("streakShieldedDay")}</span>
+            <div className="w-3 h-3 rounded-sm bg-indigo-500/40 flex items-center justify-center text-[7px]">🛡️</div>
+            <span className="text-[10px] text-ds-muted font-semibold">{t("streakShieldedDay")}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm ring-2 ring-[var(--ds-brand-primary)]" />
-            <span className="text-[10px] text-gray-500 font-semibold">{t("todayLabel")}</span>
+            <span className="text-[10px] text-ds-muted font-semibold">{t("todayLabel")}</span>
           </div>
         </div>
       </div>
@@ -211,11 +212,12 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
           href="/shop"
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="block border-2 border-dashed border-indigo-200 rounded-2xl p-4 text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition"
+          className="block border-2 border-dashed border-indigo-500/30 p-4 text-center hover:border-indigo-500/60 hover:bg-indigo-500/5 transition"
+          style={{ borderRadius: 'var(--leaf-r)' }}
         >
           <p className="text-2xl mb-1">🛡️</p>
-          <p className="font-black text-indigo-700 text-sm">{t("getStreakShieldCTA")}</p>
-          <p className="text-indigo-500 text-xs mt-0.5">{t("rewardStreakShieldDesc")}</p>
+          <p className="font-black text-ds-text text-sm">{t("getStreakShieldCTA")}</p>
+          <p className="text-ds-muted text-xs mt-0.5">{t("rewardStreakShieldDesc")}</p>
         </motion.a>
       )}
     </div>

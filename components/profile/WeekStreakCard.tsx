@@ -24,7 +24,7 @@ export default function WeekStreakCard({ weekStreak, activityDates, usedShieldDa
     : t("streakGoingMsg");
 
   return (
-    <div className="relative overflow-hidden border border-[var(--ds-border-primary)]/60 bg-gradient-to-br from-white via-[var(--ds-brand-soft)]/35 to-white p-4 text-center shadow-[0_16px_34px_rgba(15,23,42,0.08)]" style={{ borderRadius: 'var(--leaf-r)' }}>
+    <div className="relative overflow-hidden border border-[var(--ds-border-primary)]/60 bg-ds-card p-4 text-center shadow-ds-card" style={{ borderRadius: 'var(--leaf-r)' }}>
       <div className="absolute inset-x-3 top-3 h-1 rounded-full bg-gradient-to-r from-[var(--ds-brand-primary)]/80 via-[var(--ds-brand-hover)]/70 to-transparent" />
       <motion.p
         className="font-black text-4xl"
@@ -38,14 +38,14 @@ export default function WeekStreakCard({ weekStreak, activityDates, usedShieldDa
       <p className="font-black text-ds-text text-sm mt-1">
         {t("dayStreak").replace("{count}", String(current))}
       </p>
-      <p className="text-gray-500 text-xs mt-0.5">{motivationMsg}</p>
+      <p className="text-ds-muted text-xs mt-0.5">{motivationMsg}</p>
 
       <div className="flex items-center justify-between mt-4 gap-1">
         {dayKeys.map((key, i) => {
           const done = weekStreak[i];
           return (
             <div key={i} className="flex flex-col items-center gap-1 flex-1">
-              <span className="text-[10px] font-bold text-gray-500">{t(key)}</span>
+              <span className="text-[10px] font-bold text-ds-muted">{t(key)}</span>
               <motion.div
                 initial={done ? { scale: 0 } : {}}
                 animate={done ? { scale: 1 } : {}}
@@ -53,7 +53,7 @@ export default function WeekStreakCard({ weekStreak, activityDates, usedShieldDa
                 className={`w-7 h-7 rounded-full flex items-center justify-center transition ${
                   done
                     ? "bg-[var(--ds-brand-primary)] shadow-ds-card"
-                    : "bg-gray-100 border border-gray-200"
+                    : "bg-ds-page border border-ds-border"
                 }`}
               >
                 {done && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}

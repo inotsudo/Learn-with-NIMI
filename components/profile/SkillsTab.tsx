@@ -54,7 +54,7 @@ export default function SkillsTab({ categoryProgress }: Props) {
           <p className="text-ds-muted text-[13px] mt-0.5">{t("skillsPageSubtitle")}</p>
         </div>
         {masteredCount > 0 && (
-          <span className="text-[11px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shrink-0 mt-1">
+          <span className="text-[11px] font-black text-[var(--ds-brand-primary)] bg-[var(--ds-brand-soft)] border border-[var(--ds-border-brand)]/40 px-2.5 py-1 rounded-full shrink-0 mt-1">
             👑 {t("skillsMasteredCount").replace("{count}", String(masteredCount))}
           </span>
         )}
@@ -89,7 +89,9 @@ export default function SkillsTab({ categoryProgress }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="font-baloo font-black text-ds-text text-[14px]">{t(group.titleKey)}</p>
                   <p className="text-ds-muted text-[11px]">
-                    {completed}/{total} {t("skillsActivitiesLabel")}
+                    {total > 0
+                      ? `${completed}/${total} ${t("skillsActivitiesLabel")}`
+                      : t("notStartedYet")}
                   </p>
                 </div>
                 <span className={`flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-full ring-1 ${level.bg} ${level.text} ${level.ring} shrink-0`}>
