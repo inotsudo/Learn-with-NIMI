@@ -2,6 +2,9 @@
 // Caller must be authenticated. The gift is activated on their account.
 
 import { NextRequest, NextResponse } from "next/server";
+
+type GiftProduct = { name: string | null; tier: string | null; billing_interval: string | null };
+type GiftGiver = { name: string | null };
 import { createRouteClient } from "@/lib/supabaseRouteClient";
 
 export async function POST(req: NextRequest) {
@@ -36,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "This gift has not been paid yet" }, { status: 402 });
   }
 
-  const product = gift.products as any;
+  const product = gift.products as GiftProduct | null;
   const billingInterval = (product?.billing_interval ?? "month") as "month" | "year";
   const periodEnd = new Date();
   if (billingInterval === "year") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
@@ -96,8 +99,8 @@ export async function GET(req: NextRequest) {
 
   if (!gift) return NextResponse.json({ error: "Invalid code" }, { status: 404 });
 
-  const giver = (gift.parents as any);
-  const product = (gift.products as any);
+  const giver = (gift.parents as unknown as GiftGiver | null);
+  const product = (gift.products as unknown as GiftProduct | null);
 
   return NextResponse.json({
     valid: !gift.redeemed_at,

@@ -1,4 +1,5 @@
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -47,45 +48,47 @@ export async function GET(req: NextRequest) {
 
       if (!children?.length) continue;
 
+      // Fetch all data for all children in parallel — one Promise.all per parent
+      // instead of 4 sequential queries per child (which causes timeouts at scale).
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const childIds = children.map(c => c.id);
+
+      const [missionsRes, actDatesRes, feelingsRes] = await Promise.all([
+        sb.from("child_progress")
+          .select("child_id, mission_id, stars_earned, language")
+          .in("child_id", childIds)
+          .gte("completed_at", weekAgo),
+        sb.from("child_progress")
+          .select("child_id, completed_at, language")
+          .in("child_id", childIds)
+          .gte("completed_at", thirtyDaysAgo),
+        sb.from("story_feelings")
+          .select("child_id, feeling")
+          .in("child_id", childIds)
+          .gte("felt_at", weekAgo),
+      ]);
+
+      // Collect all mission_ids this week to batch-fetch story_slots
+      const weekMissions = missionsRes.data ?? [];
+      const allMissionIds = [...new Set(weekMissions.map(m => m.mission_id))];
+      const { data: storySlotRows } = allMissionIds.length > 0
+        ? await sb.from("story_slots").select("mission_id, story_id").in("mission_id", allMissionIds)
+        : { data: [] };
+      const missionToStory = new Map((storySlotRows ?? []).map(r => [r.mission_id, r.story_id]));
+
+      const today = new Date();
       const childDigests: WeeklyDigestChild[] = [];
 
       for (const child of children) {
-        // Missions completed this week
-        const { data: missions } = await sb
-          .from("child_progress")
-          .select("mission_id, stars_earned")
-          .eq("child_id", child.id)
-          .eq("language", child.language)
-          .gte("completed_at", weekAgo);
+        const missions = weekMissions.filter(m => m.child_id === child.id && m.language === child.language);
+        const missionsThisWeek = missions.length;
+        const starsThisWeek = missions.reduce((s, m) => s + (m.stars_earned ?? 0), 0);
+        const storiesThisWeek = new Set(missions.map(m => missionToStory.get(m.mission_id)).filter(Boolean)).size;
 
-        const missionsThisWeek = missions?.length ?? 0;
-        const starsThisWeek = missions?.reduce((s, m) => s + (m.stars_earned ?? 0), 0) ?? 0;
-
-        // Stories that had at least one mission completed this week
-        const { data: storySlots } = missionsThisWeek > 0
-          ? await sb
-              .from("story_slots")
-              .select("story_id")
-              .in("mission_id", missions!.map(m => m.mission_id))
-          : { data: [] };
-
-        const storiesThisWeek = new Set(storySlots?.map(s => s.story_id) ?? []).size;
-
-        // Streak — count distinct active days in last 30 days
-        const { data: actDates } = await sb
-          .from("child_progress")
-          .select("completed_at")
-          .eq("child_id", child.id)
-          .eq("language", child.language)
-          .gte("completed_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-          .order("completed_at", { ascending: false });
-
-        // Compute current streak from activity dates
-        const daySet = new Set(
-          (actDates ?? []).map(r => new Date(r.completed_at).toISOString().slice(0, 10))
-        );
+        const actDates = (actDatesRes.data ?? [])
+          .filter(r => r.child_id === child.id && r.language === child.language);
+        const daySet = new Set(actDates.map(r => new Date(r.completed_at).toISOString().slice(0, 10)));
         let streak = 0;
-        const today = new Date();
         for (let i = 0; i < 30; i++) {
           const d = new Date(today);
           d.setDate(today.getDate() - i);
@@ -93,24 +96,11 @@ export async function GET(req: NextRequest) {
           else if (i > 0) break;
         }
 
-        // Feelings this week
-        const { data: feelingRows } = await sb
-          .from("story_feelings")
-          .select("feeling")
-          .eq("child_id", child.id)
-          .gte("felt_at", weekAgo);
+        const feelings = (feelingsRes.data ?? [])
+          .filter(r => r.child_id === child.id)
+          .map(r => r.feeling);
 
-        const feelings = feelingRows?.map(r => r.feeling) ?? [];
-
-        childDigests.push({
-          name: child.name,
-          language: child.language,
-          missionsThisWeek,
-          storiesThisWeek,
-          streak,
-          starsThisWeek,
-          feelings,
-        });
+        childDigests.push({ name: child.name, language: child.language, missionsThisWeek, storiesThisWeek, streak, starsThisWeek, feelings });
       }
 
       if (!childDigests.length) continue;

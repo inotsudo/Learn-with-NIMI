@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     if (!name || !email || !school) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+    }
 
     // Store inquiry in DB
     await supabase.from("school_inquiries").insert({

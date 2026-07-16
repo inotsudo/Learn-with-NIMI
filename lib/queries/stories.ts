@@ -32,20 +32,21 @@ export function getStoryPages(
   return lscached(`storyPages:${storyId}:${language}`, TTL_LONG, async () => {
     const { data } = await supabase
       .from("story_pages")
-      .select("id, story_id, page_number, image_url, story_page_versions(language, text, audio_url, published)")
+      .select("id, story_id, page_number, image_url, story_page_versions(language, text, audio_url, image_url, published)")
       .eq("story_id", storyId)
       .order("page_number");
 
     return (data ?? []).map((page: any) => {
       const versions = (page.story_page_versions ?? []) as
-        { language: string; text: string | null; audio_url: string | null; published: boolean }[];
+        { language: string; text: string | null; audio_url: string | null; image_url: string | null; published: boolean }[];
       const version = versions.find(v => v.language === language && v.published)
         ?? versions.find(v => v.language === "en" && v.published);
       return {
         id: page.id,
         story_id: page.story_id,
         page_number: page.page_number,
-        image_url: page.image_url,
+        // Per-language image takes precedence; shared image is the backwards-compat fallback
+        image_url: version?.image_url ?? page.image_url,
         audio_url: version?.audio_url ?? null,
         text: version?.text ?? null,
       } as StoryPage;

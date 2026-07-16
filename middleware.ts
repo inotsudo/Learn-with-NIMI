@@ -84,6 +84,7 @@ const LIMITS: [string, number][] = [
   ["/api/checkout",              10], // CyberSource capture context
   ["/api/payments",              10], // payment initiation
   ["/api/account/cancel",        10], // cancel sub
+  ["/api/account/delete",        3],  // account deletion — very low to prevent abuse
   ["/api/account/welcome-email", 5],  // welcome trigger
   ["/api/confirm-payment",       10], // payment confirmation
   ["/api/push",                  20], // push subscription ops

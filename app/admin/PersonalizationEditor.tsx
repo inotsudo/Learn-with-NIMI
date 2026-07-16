@@ -167,6 +167,7 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const pages = story.story_pages.slice().sort((a, b) => a.page_number - b.page_number)
 
@@ -187,6 +188,7 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
 
   const handleSave = async () => {
     setSaving(true)
+    setSaveError(null)
     try {
       const personalizationConfig: PersonalizationConfig = { pages: pageConfigs }
       const { error } = await supabase.from('stories').update({
@@ -199,6 +201,7 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
       onSaved()
     } catch (err) {
       console.error('[PersonalizationEditor] save failed:', err)
+      setSaveError(err instanceof Error ? err.message : 'Save failed. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -270,7 +273,10 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
           )}
 
           {/* Save button */}
-          <div className="flex justify-end pt-2">
+          <div className="flex flex-col items-end gap-2 pt-2">
+            {saveError && (
+              <p className="text-[11px] font-bold text-red-500">{saveError}</p>
+            )}
             <button onClick={handleSave} disabled={saving}
               className="flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-white font-black text-[13px] px-5 py-2.5 rounded-xl shadow transition disabled:opacity-60">
               {saved
@@ -293,6 +299,9 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
             className="mt-3 text-[12px] font-bold text-amber-500 hover:text-amber-700 transition">
             Save disabled state →
           </button>
+          {saveError && (
+            <p className="text-[11px] font-bold text-red-500 mt-2">{saveError}</p>
+          )}
         </div>
       )}
     </div>

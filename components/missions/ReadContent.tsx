@@ -19,9 +19,10 @@ interface ReadContentProps {
   onComplete: () => void;
   completed: boolean;
   saving: boolean;
+  storySlug?: string;
 }
 
-export default function ReadContent({ mission, onComplete, completed, saving }: ReadContentProps) {
+export default function ReadContent({ mission, onComplete, completed, saving, storySlug }: ReadContentProps) {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -170,7 +171,7 @@ export default function ReadContent({ mission, onComplete, completed, saving }: 
           )}
         </div>
       ) : (
-        <MissionCompleteBanner />
+        <MissionCompleteBanner storySlug={storySlug} />
       )}
 
       {/* In-app PDF viewer overlay */}

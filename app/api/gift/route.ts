@@ -3,8 +3,14 @@
 // Returns { giftId, orderId } so the confirm-payment flow can finalize it.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { createClient } from "@supabase/supabase-js";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import crypto from "crypto";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 function randomCode(len = 12): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -13,9 +19,7 @@ function randomCode(len = 12): string {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = await createRouteClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: {

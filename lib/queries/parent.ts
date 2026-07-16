@@ -88,6 +88,24 @@ export async function createChild(
   if (!user) return { data: null, error: "Not signed in" };
   const parentOk = await ensureParentRow();
   if (!parentOk) return { data: null, error: "Could not create parent profile" };
+
+  // First child is free; any additional child requires an active subscription.
+  const { count } = await supabase
+    .from("children")
+    .select("id", { count: "exact", head: true })
+    .eq("parent_id", user.id);
+
+  if ((count ?? 0) >= 1) {
+    const { data: sub } = await supabase
+      .from("nimipiko_subscriptions")
+      .select("id")
+      .eq("parent_id", user.id)
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString())
+      .maybeSingle();
+    if (!sub) return { data: null, error: "subscription_required" };
+  }
+
   const { data, error } = await supabase
     .from("children")
     .insert({ ...child, parent_id: user.id })

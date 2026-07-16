@@ -193,7 +193,9 @@ export default function StoryHero({ childName, childAvatar, story, slots, introV
               {story.title}
             </h2>
             <p className="font-nunito text-white/80 text-[14px] sm:text-[16px] mt-2 sm:mt-3 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
-              Join {childName}, Nimi and Piko on a magical journey to understand feelings!
+              {isComplete
+                ? `Amazing work, ${childName}! You've completed this story.`
+                : `Join ${childName}, Nimi and Piko on an adventure with ${story.title}!`}
             </p>
             <motion.div whileHover={m.buttonHover} whileTap={m.buttonPress} className="mt-4 sm:mt-5 w-fit">
               <img

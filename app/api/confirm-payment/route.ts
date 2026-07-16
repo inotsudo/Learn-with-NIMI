@@ -1,7 +1,10 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
+
+type OrderProduct = { tier: string | null; story_id: string | null; billing_interval: string | null; product_type: string | null; name: string | null };
+type PersonalizationData = { discount_code_id?: string; gift?: boolean };
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { verifyCybersourceTransaction } from "@/lib/cybersource/verify";
 import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
 
@@ -13,8 +16,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     // Auth check — caller must be the parent who owns the order
-    const authClient = await createRouteClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
         completed_at: new Date().toISOString(),
       }).eq("id", orderId);
 
-      const product = order.products as any;
+      const product = order.products as OrderProduct | null;
       if (product) {
         const accessType = product.tier === "club" ? "club"
           : product.tier === "personalized" ? "personalized"
@@ -159,7 +161,7 @@ export async function POST(req: NextRequest) {
 
           // Track discount code redemption — atomic CAS update prevents over-redemption
           // if two orders with the same code reached payment simultaneously.
-          const discountCodeId = (order.personalization_data as any)?.discount_code_id;
+          const discountCodeId = (order.personalization_data as PersonalizationData | null)?.discount_code_id;
           if (discountCodeId) {
             const [, { data: incremented }] = await Promise.all([
               supabase.from("discount_redemptions").insert({
@@ -186,7 +188,7 @@ export async function POST(req: NextRequest) {
             .eq("id", order.parent_id)
             .maybeSingle();
 
-          const isGift = (order.personalization_data as any)?.gift === true;
+          const isGift = (order.personalization_data as PersonalizationData | null)?.gift === true;
           if (isGift) {
             const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
             const { data: giftRecord } = await supabase

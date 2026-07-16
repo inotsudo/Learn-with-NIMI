@@ -37,6 +37,7 @@ export default function StoryMissionGrid({ storySlug, slots }: Props) {
   const m = useThemeMotion();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
+  const total = slots.length;
   const done = slots.filter(s => s.completed).length;
 
   return (
@@ -48,15 +49,18 @@ export default function StoryMissionGrid({ storySlug, slots }: Props) {
         </div>
         <div>
           <h2 className="font-black text-white text-base">Story Missions</h2>
-          <p className="text-gray-500 text-[11px] font-semibold">Complete all 6 to earn your certificate! · {done}/6 done</p>
+          <p className="text-gray-500 text-[11px] font-semibold">Complete all {total} to earn your certificate! · {done}/{total} done</p>
         </div>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {MISSIONS.map((mission, i) => {
-          const slot = slots.find(s => s.slot_key === mission.key);
+          const slotIdx = slots.findIndex(s => s.slot_key === mission.key);
+          const slot = slotIdx !== -1 ? slots[slotIdx] : undefined;
           const completed = slot?.completed ?? false;
+          const isNext = !completed && (slotIdx === 0 || slots[slotIdx - 1]?.completed);
+          const isLocked = !completed && !isNext;
           const title = slot?.title || mission.title.split("\n")[0];
 
           return (
@@ -66,8 +70,14 @@ export default function StoryMissionGrid({ storySlug, slots }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07, duration: DURATION.moderate }}
             >
-              <Link href={`/stories/${storySlug}/mission/${mission.key}`}>
-                <div className={`relative leaf overflow-hidden shadow-xl ${mission.glow} hover:scale-[1.05] hover:shadow-2xl ${m.transitionSlow} cursor-pointer h-full flex flex-col group`}>
+              <Link
+                href={isLocked ? "#" : `/stories/${storySlug}/mission/${mission.key}`}
+                onClick={e => { if (isLocked) e.preventDefault(); }}
+                aria-disabled={isLocked}
+              >
+                <div className={`relative leaf overflow-hidden shadow-xl h-full flex flex-col group ${
+                  isLocked ? "opacity-50 cursor-not-allowed" : `${mission.glow} hover:scale-[1.05] hover:shadow-2xl ${m.transitionSlow} cursor-pointer`
+                }`}>
 
                   {/* Background gradient */}
                   <div className={`absolute inset-0 bg-gradient-to-b ${mission.gradient}`} />
@@ -111,6 +121,11 @@ export default function StoryMissionGrid({ storySlug, slots }: Props) {
                         <div className="flex items-center justify-center gap-1.5 bg-[var(--nimi-green)] rounded-full py-1.5 shadow-lg">
                           <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                           <span className="text-white text-[10px] font-black tracking-wide">COMPLETED</span>
+                        </div>
+                      ) : isLocked ? (
+                        <div className="flex items-center justify-center gap-1.5 bg-gray-400/60 rounded-full py-1.5">
+                          <span className="text-white text-[12px]">🔒</span>
+                          <span className="text-white text-[10px] font-black tracking-wide">LOCKED</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-1.5 bg-[var(--nimi-green)] text-white rounded-full py-1.5 shadow-md group-hover:bg-[var(--ds-brand-hover)] transition">

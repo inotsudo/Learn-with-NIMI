@@ -92,13 +92,15 @@ export default function DiscountCodesManager({ onOpenSidebar }: { onOpenSidebar?
   }
 
   const toggleActive = async (id: string, current: boolean) => {
-    await supabase.from('discount_codes').update({ is_active: !current }).eq('id', id)
+    const { error } = await supabase.from('discount_codes').update({ is_active: !current }).eq('id', id)
+    if (error) { showToast(error.message, false); return }
     setCodes(cs => cs.map(c => c.id === id ? { ...c, is_active: !current } : c))
   }
 
   const deleteCode = async (id: string) => {
     if (!confirm('Delete this discount code? This cannot be undone.')) return
-    await supabase.from('discount_codes').delete().eq('id', id)
+    const { error } = await supabase.from('discount_codes').delete().eq('id', id)
+    if (error) { showToast(error.message, false); return }
     setCodes(cs => cs.filter(c => c.id !== id))
     showToast('Code deleted')
   }

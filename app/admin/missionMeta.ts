@@ -194,6 +194,7 @@ export interface StoryVersionRow {
   story_id: string
   language: Lang
   title: string
+  description: string | null
   cover_url: string | null
   intro_video_url: string | null
   theme_song_url: string | null

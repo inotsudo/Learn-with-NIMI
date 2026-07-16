@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import type { Currency } from "@/lib/payments/types";
 
 const supabase = createClient(
@@ -27,8 +27,7 @@ function applyDiscount(amount: number, type: "percent" | "fixed", value: number)
 }
 
 export async function POST(req: NextRequest) {
-  const authClient = await createRouteClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: {

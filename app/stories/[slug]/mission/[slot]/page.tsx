@@ -304,7 +304,7 @@ export default function StoryMissionPage() {
                   {slot?.title || t(SLOT_T_KEYS[slotKey] ?? '') || slotKey}
                 </h1>
                 <p className="text-gray-500 text-[13px] mt-1">
-                  Activity {slot?.slot_order} of 6 · {slot?.subtitle}
+                  Activity {slot?.slot_order} of {allSlots.length || 6} · {slot?.subtitle}
                 </p>
               </div>
               {completed ? (
@@ -384,19 +384,19 @@ export default function StoryMissionPage() {
           {mission && (
             <div className="bg-white border border-ds-border shadow-[0_16px_34px_rgba(15,23,42,0.08)] overflow-hidden p-4 sm:p-5" style={{ borderRadius: 'var(--leaf-r)' }}>
               {mission.type === "story" && (
-                <StoryContent mission={mission} storyPages={storyPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} />
+                <StoryContent mission={mission} storyPages={storyPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} storySlug={slug} />
               )}
               {mission.type === "read" && (
-                <ReadContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} />
+                <ReadContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} storySlug={slug} />
               )}
               {mission.type === "color" && (
-                <ColoringContent mission={mission} coloringPages={coloringPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} />
+                <ColoringContent mission={mission} coloringPages={coloringPages} onComplete={handleComplete} completed={completed} saving={saving} pagesLoading={pagesLoading} storySlug={slug} />
               )}
               {mission.type === "move" && (
-                <MoveGrooveContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} />
+                <MoveGrooveContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} storySlug={slug} />
               )}
               {mission.type === "sing" && (
-                <SingAlongContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} />
+                <SingAlongContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} storySlug={slug} />
               )}
               {mission.type === "watch" && (
                 <WatchContent mission={mission} onComplete={handleComplete} completed={completed} saving={saving} storySlug={slug} />

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +45,7 @@ interface ChildData {
 }
 
 export default function ParentsZonePage() {
+  const router = useRouter();
   const { themeId } = useAppTheme();
   const m = useThemeMotion();
   const assets = getThemeAssets(themeId);
@@ -79,6 +81,14 @@ export default function ParentsZonePage() {
     setSwitched(true);
     setTimeout(() => setSwitched(false), 2500);
   };
+
+  const handleAddKid = useCallback(() => {
+    if (childrenData.length >= 1 && !hasSubscription) {
+      router.push("/pricing?reason=add-child");
+      return;
+    }
+    setShowAddChild(true);
+  }, [childrenData.length, hasSubscription, router]);
 
   const handleSaveName = async () => {
     const trimmed = nameInput.trim();
@@ -426,10 +436,11 @@ export default function ParentsZonePage() {
             })}
             <motion.button
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: childrenData.length * 0.07 }}
-              onClick={() => setShowAddChild(true)}
+              onClick={handleAddKid}
               className="flex items-center gap-2 px-3.5 py-2.5 font-black text-[13px] bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] border-2 border-dashed border-[var(--ds-border-brand)]/40 transition shrink-0 self-start"
               style={{ borderRadius: 'var(--leaf-r)' }}>
-              <Plus className="w-4 h-4" /> Add Kid
+              {childrenData.length >= 1 && !hasSubscription ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              Add Kid
             </motion.button>
           </div>
 
@@ -529,10 +540,11 @@ export default function ParentsZonePage() {
                 </div>
                 <div className="px-2 pb-3">
                   <button
-                    onClick={() => setShowAddChild(true)}
+                    onClick={handleAddKid}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-[var(--ds-border-brand)]/40 text-[var(--ds-brand-primary)] font-black text-[12px] hover:bg-[var(--ds-brand-subtle)] transition"
                   >
-                    <Plus className="w-4 h-4" /> Add Kid
+                    {childrenData.length >= 1 && !hasSubscription ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                    Add Kid
                   </button>
                 </div>
               </div>

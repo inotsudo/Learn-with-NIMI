@@ -5,6 +5,13 @@ import { createRouteClient } from "@/lib/supabaseRouteClient";
 import { v4 as uuidv4 } from "uuid";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png":  "png",
+  "image/gif":  "gif",
+  "image/webp": "webp",
+  "image/svg+xml": "svg",
+};
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const STORAGE_BUCKET = "creations";
 
@@ -40,8 +47,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unsupported file type", allowedTypes: ALLOWED_MIME_TYPES, receivedType: file.type }, { status: 415 });
     }
 
-    // 3. Upload to Supabase Storage
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    // 3. Upload to Supabase Storage — derive extension from verified MIME type, not filename
+    const ext = MIME_TO_EXT[file.type] ?? "jpg";
     const storagePath = `${user.id}/${uuidv4()}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 

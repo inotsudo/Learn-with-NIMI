@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Handshake, Plus, Pencil, Trash2, ChevronUp, ChevronDown, Menu } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface PartnersManagerProps { onOpenSidebar?: () => void }
 
@@ -23,6 +24,7 @@ export default function PartnersManager({ onOpenSidebar }: PartnersManagerProps)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const { error: toastErr } = useToast()
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -66,20 +68,26 @@ export default function PartnersManager({ onOpenSidebar }: PartnersManagerProps)
   }
 
   const toggleActive = async (r: Partner) => {
-    await supabase.from('partners').update({ active: !r.active }).eq('id', r.id); void load()
+    const { error } = await supabase.from('partners').update({ active: !r.active }).eq('id', r.id)
+    if (error) { setError(error.message); return }
+    void load()
   }
   const remove = async (id: string) => {
     if (!confirm('Delete this partner?')) return
-    await supabase.from('partners').delete().eq('id', id); void load()
+    const { error } = await supabase.from('partners').delete().eq('id', id)
+    if (error) { toastErr(`Delete failed: ${error.message}`); return }
+    void load()
   }
   const move = async (r: Partner, dir: 'up' | 'down') => {
     const idx = rows.findIndex(x => x.id === r.id)
     const swap = dir === 'up' ? rows[idx - 1] : rows[idx + 1]
     if (!swap) return
-    await Promise.all([
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
       supabase.from('partners').update({ sort_order: swap.sort_order }).eq('id', r.id),
       supabase.from('partners').update({ sort_order: r.sort_order }).eq('id', swap.id),
-    ]); void load()
+    ])
+    if (e1 || e2) { toastErr('Reorder failed'); return }
+    void load()
   }
 
   const categoryLabel: Record<string, string> = {

@@ -78,20 +78,23 @@ export default function FlipFlopImporter({ storyId, storyTitle, language, onDone
 
       if (imgResult.error) throw new Error(`Failed to upload: ${img.name}`)
 
+      // Upsert the master page row — safe to call repeatedly across language imports
       const { data: page, error: pageErr } = await supabase
         .from('story_pages')
-        .insert({ story_id: storyId, page_number: pageNum, image_url: imgResult.storagePath })
-        .select().single()
-      if (pageErr) throw new Error(`Failed to create page ${pageNum}`)
+        .upsert({ story_id: storyId, page_number: pageNum }, { onConflict: 'story_id,page_number' })
+        .select('id').single()
+      if (pageErr) throw new Error(`Failed to upsert page ${pageNum}: ${pageErr.message}`)
 
-      const { error: versionErr } = await supabase.from('story_page_versions').insert({
+      // Image is per-language — stored on story_page_versions, not story_pages
+      const { error: versionErr } = await supabase.from('story_page_versions').upsert({
         story_page_id: page.id,
         language,
         text: '',
+        image_url: imgResult.storagePath,
         audio_url: (audioResult && !audioResult.error) ? audioResult.storagePath : null,
         published: true,
-      })
-      if (versionErr) throw new Error(`Failed to create version for page ${pageNum}: ${versionErr.message}`)
+      }, { onConflict: 'story_page_id,language' })
+      if (versionErr) throw new Error(`Failed to save version for page ${pageNum}: ${versionErr.message}`)
 
       completed++
       setProgress(Math.round((completed / total) * 100))

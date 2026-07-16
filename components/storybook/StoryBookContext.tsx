@@ -62,7 +62,7 @@ export function StoryBookProvider({ pages, children }: {
   const onPageChange = useCallback((pageIdx: number) => {
     stopAudio();
     setCurrentPage(pageIdx);
-    if (pageIdx >= totalPages - 2) setReachedEnd(true);
+    if (pageIdx >= totalPages - 1) setReachedEnd(true);
     // Play immediately — setTimeout breaks the browser's user-gesture chain
     // on iOS/Safari, causing audio.play() to be rejected.
     playPageAudio(pageIdx);

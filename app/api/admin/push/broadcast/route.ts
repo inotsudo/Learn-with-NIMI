@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendPushToParent } from "@/lib/push";
 
+// Service-role client used exclusively for the admins-table lookup so the
+// check does not depend on RLS being correctly configured.
+const adminCheck = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
 interface BroadcastBody {
   title: string;
   body: string;
@@ -26,7 +34,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 
-  const { data: admin } = await sb.from("admins").select("id").eq("id", user.id).maybeSingle();
+  const { data: admin } = await adminCheck.from("admins").select("id").eq("id", user.id).maybeSingle();
   if (!admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

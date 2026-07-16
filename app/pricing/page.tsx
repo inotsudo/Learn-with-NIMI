@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Crown, Sparkles, Shield, CreditCard, Phone, Star, CheckCircle2, Tag } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
@@ -51,6 +52,8 @@ function formatAmount(amount: number, currency: Currency): string {
 
 export default function PricingPage() {
   const m = useThemeMotion();
+  const searchParams = useSearchParams();
+  const addChildReason = searchParams.get("reason") === "add-child";
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<Currency>("USD");
@@ -149,6 +152,22 @@ export default function PricingPage() {
     <AppShell>
       <PageSurface>
         <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-28 w-full content-enter">
+
+          {/* Contextual upsell banner — shown when redirected from "Add Kid" paywall */}
+          {addChildReason && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="mb-6 flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3.5"
+            >
+              <span className="text-2xl shrink-0">👨‍👩‍👧‍👦</span>
+              <div>
+                <p className="font-black text-ds-text text-[14px]">Your free plan includes 1 explorer</p>
+                <p className="text-gray-500 text-[13px] mt-0.5">
+                  Subscribe to Nimipiko Club and add unlimited children to the same account.
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           {/* Header */}
           <HeroBanner zone="familyHub" className="mb-8 overflow-hidden">

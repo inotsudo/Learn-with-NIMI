@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
-import { X, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Star, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import Link from "next/link";
 import { createChild } from "@/lib/queries";
 import type { Child } from "@/lib/queries";
 import AvatarBuilder from "@/components/avatar/AvatarBuilder";
@@ -46,6 +47,7 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
       avatar_url: serializeAvatar(avatarCfg),
     });
     setSaving(false);
+    if (err === "subscription_required") { setError("subscription_required"); return; }
     if (err || !child) { setError(err ?? "Something went wrong. Please try again."); return; }
     onCreated(child);
   };
@@ -170,7 +172,24 @@ export default function CreateChildModal({ onCreated, onClose }: Props) {
                   </div>
                 </div>
 
-                {error && <p className="text-red-500 text-xs font-semibold text-center">{error}</p>}
+                {error === "subscription_required" ? (
+                  <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 flex flex-col items-center gap-3 text-center">
+                    <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="font-black text-ds-text text-[14px]">Free plan: 1 child included</p>
+                      <p className="text-gray-500 text-[12px] mt-0.5">Upgrade to Nimipiko Club to add unlimited explorers.</p>
+                    </div>
+                    <Link href="/pricing?reason=add-child"
+                      className="w-full text-center text-white font-black text-[13px] py-2.5 rounded-xl transition"
+                      style={{ backgroundColor: 'var(--nimi-green)' }}>
+                      See Plans →
+                    </Link>
+                  </div>
+                ) : error ? (
+                  <p className="text-red-500 text-xs font-semibold text-center">{error}</p>
+                ) : null}
 
                 <div className="flex gap-3 pt-1">
                   <button

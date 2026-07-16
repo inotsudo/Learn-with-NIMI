@@ -7,6 +7,9 @@ import * as crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { sendRenewalConfirmation } from "@/lib/email";
 
+type CyberSourceResult = { ok: boolean; transactionId: string | null; error: string | null };
+type MoMoResult        = { ok: boolean; referenceId: string | null;   error: string | null };
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -147,7 +150,7 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      let chargeResult;
+      let chargeResult: CyberSourceResult | MoMoResult;
       if (pm.provider === "cybersource" && pm.token) {
         chargeResult = await chargeCybersource(pm.token, Number(sub.amount), sub.currency, sub.id);
       } else if (pm.provider === "mtn_momo" && pm.phone_number) {
@@ -170,7 +173,9 @@ export async function GET(req: NextRequest) {
         amount: sub.amount,
         currency: sub.currency,
         status: chargeResult.ok ? "completed" : (pm.provider === "mtn_momo" ? "pending" : "failed"),
-        provider_transaction_id: (chargeResult as any).transactionId || (chargeResult as any).referenceId,
+        provider_transaction_id: pm.provider === "cybersource"
+          ? (chargeResult as CyberSourceResult).transactionId
+          : (chargeResult as MoMoResult).referenceId,
         attempt_number: (sub.renewal_attempts ?? 0) + 1,
         error_message: chargeResult.error,
       });

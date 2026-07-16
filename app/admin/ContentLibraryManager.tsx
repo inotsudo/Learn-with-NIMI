@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
 import { Menu, Search, Headphones, FileText, Video, Music, Palette, Image as ImageIcon, Upload, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface Props {
   onNavigate: (table: string) => void
@@ -38,6 +39,7 @@ export default function ContentLibraryManager({ onNavigate, onOpenSidebar }: Pro
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<ContentTab>('all')
   const [search, setSearch] = useState('')
+  const { error: toastErr } = useToast()
 
   useEffect(() => {
     void (async () => {
@@ -76,10 +78,12 @@ export default function ContentLibraryManager({ onNavigate, onOpenSidebar }: Pro
 
   const handleSaveUrl = async (id: string, url: string) => {
     try {
-      await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', id)
+      const { error } = await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', id)
+      if (error) throw error
       setItems(prev => prev.map(i => i.id === id ? { ...i, media_url: url || null } : i))
     } catch (err) {
       console.error('[ContentLibraryManager] handleSaveUrl failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Save failed')
     }
   }
 

@@ -18,11 +18,12 @@ interface ColoringContentProps {
   completed: boolean;
   saving: boolean;
   pagesLoading?: boolean;
+  storySlug?: string;
 }
 
 const CRAYON_COLORS = ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF6FC8", "#FF9F45"];
 
-export default function ColoringContent({ mission, coloringPages, onComplete, completed, saving }: ColoringContentProps) {
+export default function ColoringContent({ mission, coloringPages, onComplete, completed, saving, storySlug }: ColoringContentProps) {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -206,7 +207,7 @@ export default function ColoringContent({ mission, coloringPages, onComplete, co
           </motion.button>
         )
       ) : (
-        <MissionCompleteBanner />
+        <MissionCompleteBanner storySlug={storySlug} />
       )}
 
       {showStudio && (

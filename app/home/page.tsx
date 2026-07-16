@@ -17,6 +17,7 @@ import {
 } from "@/lib/queries";
 import type { Child, ChildAchievement } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots, getPopularStories, type PopularStory } from "@/lib/storyRepository";
+import { getActiveSubscription } from "@/lib/payments/products";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -127,6 +128,7 @@ export default function HomePage() {
   const [showPicker,      setShowPicker]      = useState(false);
   const [noChildrenYet,   setNoChildrenYet]   = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [stories,          setStories]          = useState<StoryLibraryItem[]>([]);
   const [slots,            setSlots]            = useState<StorySlot[]>([]);
   const [popularStories,   setPopularStories]   = useState<PopularStory[]>([]);
@@ -212,6 +214,7 @@ export default function HomePage() {
     ]);
     if (!user) { router.replace("/loginpage"); return; }
     setChildren(list);
+    getActiveSubscription(user.id).then(sub => setHasSubscription(!!sub));
     if (list.length === 0) { router.replace("/onboarding"); return; }
     const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
     const saved   = list.find(c => c.id === savedId);
@@ -317,7 +320,11 @@ export default function HomePage() {
   if (showPicker) return (
     <>
       <WhoIsPlaying children={children} onSelect={c => select(c)}
-        onAddChild={() => { setShowPicker(false); setShowCreateModal(true); }} />
+        onAddChild={() => {
+          if (children.length >= 1 && !hasSubscription) { router.push("/pricing?reason=add-child"); return; }
+          setShowPicker(false);
+          setShowCreateModal(true);
+        }} />
       {showCreateModal && (
         <CreateChildModal onCreated={handleCreated} onClose={() => { setShowCreateModal(false); setShowPicker(true); }} />
       )}

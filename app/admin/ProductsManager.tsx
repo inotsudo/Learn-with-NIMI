@@ -38,6 +38,7 @@ export default function ProductsManager() {
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState<Omit<Product, 'id'>>(EMPTY)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [featInput, setFeatInput] = useState('')
 
   const load = async () => {
@@ -72,16 +73,24 @@ export default function ProductsManager() {
 
   const save = async () => {
     setSaving(true)
-    if (creating) {
-      const slug = form.slug || form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-      await supabase.from('products').insert({ ...form, slug })
-    } else if (editing) {
-      const { slug, ...rest } = form
-      await supabase.from('products').update(rest).eq('id', editing.id)
+    setSaveError(null)
+    try {
+      if (creating) {
+        const slug = form.slug || form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        const { error } = await supabase.from('products').insert({ ...form, slug })
+        if (error) throw error
+      } else if (editing) {
+        const { slug, ...rest } = form
+        const { error } = await supabase.from('products').update(rest).eq('id', editing.id)
+        if (error) throw error
+      }
+      cancel()
+      void load()
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed. Please try again.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    cancel()
-    load()
   }
 
   const toggleActive = async (p: Product) => {
@@ -317,7 +326,10 @@ export default function ProductsManager() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 mt-6">
+            {saveError && (
+              <p className="mt-4 text-xs font-bold text-red-500 bg-red-50 rounded-xl px-3 py-2">{saveError}</p>
+            )}
+            <div className="flex gap-3 mt-3">
               <button onClick={cancel} className="flex-1 py-2.5 rounded-xl border text-gray-500 font-bold text-sm">Cancel</button>
               <button onClick={save} disabled={saving || !form.name.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">

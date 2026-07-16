@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import * as crypto from "crypto";
 
 const supabase = createClient(
@@ -12,8 +12,7 @@ const supabase = createClient(
 export async function POST(request: NextRequest) {
   try {
     // Auth check — caller must be logged in and own the order
-    const authClient = await createRouteClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    const user = await getAuthUser(request);
     if (!user) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }

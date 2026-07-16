@@ -6,6 +6,7 @@ import { Shield, CreditCard } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, EASE, SPRING } from "@/lib/design-system/motion";
 import supabase from "@/lib/supabaseClient";
+import { authedFetch } from "@/lib/authedFetch";
 import { getPrice } from "@/lib/payments/types";
 import type { Product, Currency } from "@/lib/payments/types";
 
@@ -77,7 +78,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
 
         // Rwanda card payments must use USD — CyberSource card processing doesn't support RWF.
         const cardCurrency = isRwanda ? "USD" : currency;
-        const orderRes = await fetch("/api/orders", {
+        const orderRes = await authedFetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -93,7 +94,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         const orderId = orderData.orderId as string;
         pendingCsOrderId.current = orderId;
 
-        const ctxRes = await fetch("/api/checkout", {
+        const ctxRes = await authedFetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId }),
@@ -139,7 +140,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         const completionJwt = await up.complete(transientToken);
         setStep("processing");
 
-        const confirmRes = await fetch("/api/confirm-payment", {
+        const confirmRes = await authedFetch("/api/confirm-payment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ response: completionJwt, orderId }),
@@ -193,7 +194,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/loginpage"; return; }
 
-      const orderRes = await fetch("/api/orders", {
+      const orderRes = await authedFetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -205,7 +206,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
       if (!orderRes.ok || !orderData.orderId) { setStep("error"); setErrorMsg(orderData.error ?? "Failed to create order"); return; }
       const momoOrderId = orderData.orderId as string;
 
-      const res = await fetch("/api/payments/mtn-momo", {
+      const res = await authedFetch("/api/payments/mtn-momo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: momoOrderId, phoneNumber: cleanPhone }),
@@ -216,7 +217,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
           await new Promise(r => setTimeout(r, 5000));
           if (momoAbort.current) return;
           setMomoAttempt(i + 1);
-          const s = await fetch(`/api/payments/mtn-momo?orderId=${momoOrderId}&referenceId=${result.referenceId}`);
+          const s = await authedFetch(`/api/payments/mtn-momo?orderId=${momoOrderId}&referenceId=${result.referenceId}`);
           const d = await s.json();
           if (momoAbort.current) return;
           if (d.status === "completed") { setStep("success"); return; }

@@ -27,7 +27,7 @@ interface MissionVersionData {
 
 interface FlipFlopPage {
   id: string; page_number: number; image_url: string | null;
-  story_page_versions: { id: string; language: string; audio_url: string | null }[];
+  story_page_versions: { id: string; language: string; audio_url: string | null; image_url: string | null }[];
 }
 
 interface ColoringPage {
@@ -205,7 +205,7 @@ export default function StoryEditor({ story, onSaved, defaultLang }: StoryEditor
     for (const sv of (svs ?? [])) { svMap[sv.language as Lang] = sv as { id: string } & Record<string, unknown> }
     setAllStoryVersions(svMap)
 
-    const { data: pages } = await supabase.from('story_pages').select('id, page_number, image_url, story_page_versions(id, language, audio_url)').eq('story_id', story.id).order('page_number')
+    const { data: pages } = await supabase.from('story_pages').select('id, page_number, image_url, story_page_versions(id, language, audio_url, image_url)').eq('story_id', story.id).order('page_number')
     setFlipflopPages(pages ?? [])
 
     const { data: cpages } = await supabase.from('coloring_pages').select('id, page_number, template_image_url').eq('story_id', story.id).order('page_number')
@@ -273,7 +273,9 @@ export default function StoryEditor({ story, onSaved, defaultLang }: StoryEditor
         await supabase.from('mission_versions').update({ status: 'published' }).eq('id', langVer.id)
       }
     }
-    if (version?.id) await supabase.from('story_versions').update({ status: 'published', published: true }).eq('id', version.id)
+    // Ensure a story_versions row exists before publishing (gap fix: was silently skipped if no content had been uploaded yet)
+    const svId = await getOrCreateVersion(activeLang)
+    if (svId) await supabase.from('story_versions').update({ status: 'published', published: true }).eq('id', svId)
     await loadContent()
     onSaved()
     toastOk(`${LANGUAGE_META[activeLang].label} version published!`)
@@ -385,8 +387,27 @@ export default function StoryEditor({ story, onSaved, defaultLang }: StoryEditor
       </Section>
 
       {/* 2. Intro Media — per language */}
-      <Section number={2} title={`Story Introduction — ${LANGUAGE_META[activeLang].label}`} subtitle="Welcome videos, songs, characters" done={introCount === 4}
+      <Section number={2} title={`Story Introduction — ${LANGUAGE_META[activeLang].label}`} subtitle="Title, description & welcome media" done={introCount === 4}
         badge={`${introCount}/4`}>
+        {/* Per-language title + description */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+          <AutoSaveInput
+            label={`Title (${LANGUAGE_META[activeLang].label})`}
+            value={(versionRecord?.title as string) ?? story.title}
+            onSave={async (v) => {
+              const vid = await getOrCreateVersion(activeLang)
+              if (vid) { await supabase.from('story_versions').update({ title: v }).eq('id', vid); await loadContent() }
+            }}
+          />
+          <AutoSaveInput
+            label={`Description (${LANGUAGE_META[activeLang].label})`}
+            value={(versionRecord?.description as string) ?? ''}
+            onSave={async (v) => {
+              const vid = await getOrCreateVersion(activeLang)
+              if (vid) { await supabase.from('story_versions').update({ description: v || null }).eq('id', vid); await loadContent() }
+            }}
+          />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {INTRO_FIELDS.map(field => {
             const url = (versionRecord?.[field.key] as string) ?? ''
@@ -602,15 +623,20 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
   const imgRef = useRef<HTMLInputElement>(null)
   const audioRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState('')
+  const { error: toastErr } = useToast()
   const langVer = (page.story_page_versions ?? []).find(v => v.language === lang)
   const hasAudio = !!langVer?.audio_url
+  // Per-language image; fall back to shared image for pre-095 pages
+  const displayImage = langVer?.image_url ?? page.image_url
 
   const uploadImage = async (f: File) => {
     setBusy('image')
-    const { error, storagePath } = await smartUpload('storyBook', `pages/${page.id}-${Date.now()}.${f.name.split('.').pop()}`, f)
+    const { error, storagePath } = await smartUpload('storyBook', `pages/${page.id}-${lang}-${Date.now()}.${f.name.split('.').pop()}`, f)
     if (!error) {
-      await supabase.from('story_pages').update({ image_url: storagePath }).eq('id', page.id)
-      onUpdated()
+      const dbErr = langVer
+        ? (await supabase.from('story_page_versions').update({ image_url: storagePath }).eq('id', langVer.id)).error
+        : (await supabase.from('story_page_versions').insert({ story_page_id: page.id, language: lang, text: '', image_url: storagePath, audio_url: null, published: true })).error
+      if (dbErr) { toastErr(`Save failed: ${dbErr.message}`) } else { onUpdated() }
     }
     setBusy('')
   }
@@ -620,28 +646,27 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
     const ext = f.name.split('.').pop()
     const { error, storagePath } = await smartUpload('storyBook', `pages/audio-${page.id}-${Date.now()}.${ext}`, f)
     if (!error) {
-      if (langVer) {
-        await supabase.from('story_page_versions').update({ audio_url: storagePath }).eq('id', langVer.id)
-      } else {
-        await supabase.from('story_page_versions').insert({
-          story_page_id: page.id, language: lang, text: '', audio_url: storagePath, published: true,
-        })
-      }
-      onUpdated()
+      const { error: dbErr } = langVer
+        ? await supabase.from('story_page_versions').update({ audio_url: storagePath }).eq('id', langVer.id)
+        : await supabase.from('story_page_versions').insert({ story_page_id: page.id, language: lang, text: '', audio_url: storagePath, published: true })
+      if (dbErr) { toastErr(`Save failed: ${dbErr.message}`) } else { onUpdated() }
     }
     setBusy('')
   }
 
   const deletePage = async () => {
     if (!confirm(`Delete page #${page.page_number}? This cannot be undone.`)) return
-    await supabase.from('story_page_versions').delete().eq('story_page_id', page.id)
-    await supabase.from('story_pages').delete().eq('id', page.id)
+    const { error: e1 } = await supabase.from('story_page_versions').delete().eq('story_page_id', page.id)
+    if (e1) { toastErr(`Delete failed: ${e1.message}`); return }
+    const { error: e2 } = await supabase.from('story_pages').delete().eq('id', page.id)
+    if (e2) { toastErr(`Delete failed: ${e2.message}`); return }
     onUpdated()
   }
 
   const removeAudio = async () => {
     if (!langVer) return
-    await supabase.from('story_page_versions').update({ audio_url: null }).eq('id', langVer.id)
+    const { error } = await supabase.from('story_page_versions').update({ audio_url: null }).eq('id', langVer.id)
+    if (error) { toastErr(`Remove failed: ${error.message}`); return }
     onUpdated()
   }
 
@@ -651,9 +676,9 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
       <div className="aspect-[3/4] bg-gray-100 relative cursor-pointer" onClick={() => imgRef.current?.click()}>
         {busy === 'image' ? (
           <div className="w-full h-full flex items-center justify-center"><div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" /></div>
-        ) : page.image_url ? (
+        ) : displayImage ? (
           <>
-            <img src={getStorageUrl(page.image_url)} alt={`Page ${page.page_number}`} className="w-full h-full object-cover"  loading="lazy" />
+            <img src={getStorageUrl(displayImage)} alt={`Page ${page.page_number}`} className="w-full h-full object-cover"  loading="lazy" />
             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
               <span className="text-white text-[11px] font-bold bg-black/50 rounded-lg px-3 py-1.5">Replace</span>
             </div>
@@ -707,20 +732,22 @@ function FlipFlopPageCard({ page, storyId, lang, onUpdated }: { page: FlipFlopPa
 function ColoringPageCard({ page, onUpdated }: { page: ColoringPage; onUpdated: () => void }) {
   const imgRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const { error: toastErr } = useToast()
 
   const replaceImage = async (f: File) => {
     setBusy(true)
     const { error, storagePath } = await smartUpload('storyBook', `coloring/${page.story_id ?? 'x'}/page-${page.page_number}-${Date.now()}.${f.name.split('.').pop()}`, f)
     if (!error) {
-      await supabase.from('coloring_pages').update({ template_image_url: storagePath }).eq('id', page.id)
-      onUpdated()
+      const { error: dbErr } = await supabase.from('coloring_pages').update({ template_image_url: storagePath }).eq('id', page.id)
+      if (dbErr) { toastErr(`Save failed: ${dbErr.message}`) } else { onUpdated() }
     }
     setBusy(false)
   }
 
   const deletePage = async () => {
     if (!confirm('Delete this coloring template? This cannot be undone.')) return
-    await supabase.from('coloring_pages').delete().eq('id', page.id)
+    const { error } = await supabase.from('coloring_pages').delete().eq('id', page.id)
+    if (error) { toastErr(`Delete failed: ${error.message}`); return }
     onUpdated()
   }
 

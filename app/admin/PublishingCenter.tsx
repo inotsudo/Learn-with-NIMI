@@ -210,11 +210,11 @@ export default function PublishingCenter({ onNavigate }: PublishingCenterProps) 
         const { error } = await supabase.rpc('publish_mission_version_revision', { p_version_id: en.id })
         if (error) throw error
       }
-      await fetchData()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to publish lessons.')
     } finally {
       setBulkPublishing(false)
+      await fetchData()
     }
   }
 

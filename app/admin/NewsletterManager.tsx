@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Mail, Download, Search, Users } from 'lucide-react'
+import { Mail, Download, Search } from 'lucide-react'
 
 interface Row {
   id: string
@@ -9,14 +9,18 @@ interface Row {
   name: string | null
   source: string | null
   created_at: string
+  unsubscribed_at: string | null
 }
 
 interface Props { onOpenSidebar: () => void }
+
+type Filter = 'all' | 'active' | 'unsubscribed'
 
 export default function NewsletterManager({ onOpenSidebar }: Props) {
   const [rows, setRows]   = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch]   = useState('')
+  const [filter, setFilter]   = useState<Filter>('active')
 
   useEffect(() => {
     void (async () => {
@@ -34,14 +38,20 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
     })()
   }, [])
 
-  const filtered = rows.filter(r =>
-    r.email.toLowerCase().includes(search.toLowerCase()) ||
-    (r.name ?? '').toLowerCase().includes(search.toLowerCase()),
-  )
+  const activeRows = rows.filter(r => !r.unsubscribed_at)
+  const unsubRows  = rows.filter(r => r.unsubscribed_at)
+
+  const filtered = rows
+    .filter(r => filter === 'active' ? !r.unsubscribed_at : filter === 'unsubscribed' ? !!r.unsubscribed_at : true)
+    .filter(r =>
+      r.email.toLowerCase().includes(search.toLowerCase()) ||
+      (r.name ?? '').toLowerCase().includes(search.toLowerCase()),
+    )
 
   function exportCsv() {
-    const header = 'email,name,source,signed_up_at'
-    const lines  = filtered.map(r => `${r.email},${r.name ?? ''},${r.source ?? ''},${r.created_at}`)
+    const header = 'email,name,source,signed_up_at,unsubscribed_at'
+    const lines  = filtered.map(r =>
+      `${r.email},${r.name ?? ''},${r.source ?? ''},${r.created_at},${r.unsubscribed_at ?? ''}`)
     const blob   = new Blob([[header, ...lines].join('\n')], { type: 'text/csv' })
     const url    = URL.createObjectURL(blob)
     const a      = Object.assign(document.createElement('a'), { href: url, download: 'newsletter-subscribers.csv' })
@@ -58,7 +68,7 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="font-black text-gray-900 text-[17px]">Newsletter</h1>
-          <p className="text-gray-500 text-[12px]">{rows.length} subscriber{rows.length !== 1 ? 's' : ''}</p>
+          <p className="text-gray-500 text-[12px]">{activeRows.length} active · {unsubRows.length} unsubscribed</p>
         </div>
         <button onClick={exportCsv}
           className="flex items-center gap-1.5 text-[12px] font-bold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">
@@ -68,16 +78,29 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
 
       <div className="flex-1 overflow-y-auto p-6 lg:p-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Total subscribers', value: rows.length, icon: Users, color: 'bg-green-50 text-green-700' },
-            { label: 'This month', value: rows.filter(r => new Date(r.created_at) > new Date(Date.now() - 30 * 86400000)).length, icon: Mail, color: 'bg-blue-50 text-blue-700' },
-            { label: 'Via landing page', value: rows.filter(r => r.source === 'landing_footer' || r.source === 'landing_page').length, icon: Mail, color: 'bg-purple-50 text-purple-700' },
+            { label: 'Active subscribers', value: activeRows.length, color: 'bg-green-50 text-green-700' },
+            { label: 'Unsubscribed', value: unsubRows.length, color: 'bg-red-50 text-red-600' },
+            { label: 'New this month', value: rows.filter(r => new Date(r.created_at) > new Date(Date.now() - 30 * 86400000)).length, color: 'bg-blue-50 text-blue-700' },
+            { label: 'Via landing page', value: rows.filter(r => r.source === 'landing_footer' || r.source === 'landing_page').length, color: 'bg-purple-50 text-purple-700' },
           ].map(s => (
             <div key={s.label} className={`${s.color} rounded-2xl p-4`}>
               <p className="text-[11px] font-bold uppercase tracking-wide opacity-70">{s.label}</p>
               <p className="text-[28px] font-black mt-1">{s.value}</p>
             </div>
+          ))}
+        </div>
+
+        {/* Filter tabs */}
+        <div className="flex gap-1 mb-4">
+          {(['active', 'all', 'unsubscribed'] as Filter[]).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-bold capitalize transition ${
+                filter === f ? 'bg-green-600 text-white' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+              }`}>
+              {f === 'active' ? `Active (${activeRows.length})` : f === 'unsubscribed' ? `Unsubscribed (${unsubRows.length})` : `All (${rows.length})`}
+            </button>
           ))}
         </div>
 
@@ -110,6 +133,7 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide hidden sm:table-cell">Name</th>
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide hidden md:table-cell">Source</th>
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Signed up</th>
+                  <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,6 +150,13 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
                     </td>
                     <td className="px-4 py-3 text-gray-400">
                       {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.unsubscribed_at ? (
+                        <span className="bg-red-50 text-red-500 text-[11px] font-bold px-2 py-0.5 rounded-full" title={new Date(r.unsubscribed_at).toLocaleString()}>Unsubscribed</span>
+                      ) : (
+                        <span className="bg-green-50 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded-full">Active</span>
+                      )}
                     </td>
                   </tr>
                 ))}

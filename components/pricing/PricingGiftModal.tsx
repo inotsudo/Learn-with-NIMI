@@ -6,6 +6,7 @@ import { Shield, CreditCard } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { SPRING } from "@/lib/design-system/motion";
 import supabase from "@/lib/supabaseClient";
+import { authedFetch } from "@/lib/authedFetch";
 import { getPrice } from "@/lib/payments/types";
 import type { Product, Currency } from "@/lib/payments/types";
 
@@ -56,7 +57,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
 
     // Rwanda card payments are charged in USD — CyberSource card processing doesn't support RWF.
     const giftCurrency = isRwanda && paymentProvider === "cybersource" ? "USD" : currency;
-    const res = await fetch("/api/gift", {
+    const res = await authedFetch("/api/gift", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -83,7 +84,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/loginpage"; return; }
 
-      const ctxRes = await fetch("/api/checkout", {
+      const ctxRes = await authedFetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: data.orderId }),
@@ -118,7 +119,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       const completionJwt = await up.complete(transientToken);
       setStep("processing");
 
-      const confirmRes = await fetch("/api/confirm-payment", {
+      const confirmRes = await authedFetch("/api/confirm-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ response: completionJwt, orderId: data.orderId }),
@@ -150,7 +151,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     setStep("processing");
     momoAbort.current = false;
     try {
-      const res = await fetch("/api/payments/mtn-momo", {
+      const res = await authedFetch("/api/payments/mtn-momo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: orderIdRef.current, phoneNumber: cleanPhone }),
@@ -160,7 +161,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
         for (let i = 0; i < 30; i++) {
           await new Promise(r => setTimeout(r, 5000));
           if (momoAbort.current) return;
-          const s = await fetch(`/api/payments/mtn-momo?orderId=${orderIdRef.current}&referenceId=${result.referenceId}`);
+          const s = await authedFetch(`/api/payments/mtn-momo?orderId=${orderIdRef.current}&referenceId=${result.referenceId}`);
           const d = await s.json();
           if (momoAbort.current) return;
           if (d.status === "completed") { setStep("success"); return; }

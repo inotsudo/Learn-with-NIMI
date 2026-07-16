@@ -16,11 +16,12 @@ interface SingAlongContentProps {
   onComplete: () => void;
   completed: boolean;
   saving: boolean;
+  storySlug?: string;
 }
 
 const SPEECH_LANG: Record<string, string> = { en: "en-US", fr: "fr-FR" };
 
-export default function SingAlongContent({ mission, onComplete, completed, saving }: SingAlongContentProps) {
+export default function SingAlongContent({ mission, onComplete, completed, saving, storySlug }: SingAlongContentProps) {
   const { t, language } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -216,7 +217,7 @@ export default function SingAlongContent({ mission, onComplete, completed, savin
           </button>
         )
       ) : (
-        <MissionCompleteBanner />
+        <MissionCompleteBanner storySlug={storySlug} />
       )}
     </div>
   );

@@ -66,14 +66,15 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
         .insert({ sort_order: maxSort + 1, type: 'kindness', stars: 50 })
         .select().single()
       if (error || !newCh) { toastErr('Failed to create challenge'); return }
-      await supabase.from('weekly_challenge_versions').insert([
+      const { error: vErr } = await supabase.from('weekly_challenge_versions').insert([
         { challenge_id: newCh.id, language: 'en', title: 'New Challenge', description: 'Description here...', status: 'draft' },
         { challenge_id: newCh.id, language: 'fr', title: 'Nouveau défi', description: 'Description ici...', status: 'draft' },
         { challenge_id: newCh.id, language: 'rw', title: 'Ikibazo gishya', description: 'Ibisobanuro hano...', status: 'draft' },
       ])
       await load()
       setExpandedId(newCh.id)
-      toastOk('Challenge created')
+      if (vErr) { toastErr('Challenge created but language versions failed to save'); }
+      else { toastOk('Challenge created') }
     } catch (err) {
       toastErr('Failed to create challenge')
     } finally {
@@ -83,7 +84,8 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
 
   const handleDelete = async (id: string) => {
     try {
-      await supabase.from('weekly_challenges').delete().eq('id', id)
+      const { error } = await supabase.from('weekly_challenges').delete().eq('id', id)
+      if (error) throw error
       await load()
       toastOk('Challenge deleted')
     } catch (err) {
@@ -93,7 +95,8 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
 
   const handleVersionSave = async (versionId: string, field: string, value: string) => {
     try {
-      await supabase.from('weekly_challenge_versions').update({ [field]: value || null }).eq('id', versionId)
+      const { error } = await supabase.from('weekly_challenge_versions').update({ [field]: value || null }).eq('id', versionId)
+      if (error) throw error
     } catch (err) {
       console.error('[WeeklyChallengesManager] handleVersionSave failed:', err)
     }
@@ -101,7 +104,8 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
 
   const handlePublish = async (versionId: string, publish: boolean) => {
     try {
-      await supabase.from('weekly_challenge_versions').update({ status: publish ? 'published' : 'draft' }).eq('id', versionId)
+      const { error } = await supabase.from('weekly_challenge_versions').update({ status: publish ? 'published' : 'draft' }).eq('id', versionId)
+      if (error) throw error
       await load()
       toastOk(publish ? 'Version published' : 'Version unpublished')
     } catch (err) {
@@ -111,7 +115,8 @@ export default function WeeklyChallengesManager({ onNavigate, onOpenSidebar }: P
 
   const handleChallengeSave = async (id: string, field: string, value: string | number) => {
     try {
-      await supabase.from('weekly_challenges').update({ [field]: value }).eq('id', id)
+      const { error } = await supabase.from('weekly_challenges').update({ [field]: value }).eq('id', id)
+      if (error) throw error
       await load()
     } catch (err) {
       console.error('[WeeklyChallengesManager] handleChallengeSave failed:', err)
@@ -305,22 +310,23 @@ function ChallengeMediaUpload({ label, icon, accept, url, challengeId, field, on
 }) {
   const [uploading, setUploading] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
-  const { success: toastOk } = useToast()
+  const { success: toastOk, error: toastErr } = useToast()
 
   const handleUpload = async (f: File) => {
     setUploading(true)
     const path = `challenges/${challengeId}-${field}-${Date.now()}.${f.name.split('.').pop()}`
     const { error, storagePath } = await smartUpload('storyBook', path, f)
     if (!error) {
-      await supabase.from('weekly_challenges').update({ [field]: storagePath }).eq('id', challengeId)
-      toastOk(`${label} uploaded`)
-      onSaved()
+      const { error: dbErr } = await supabase.from('weekly_challenges').update({ [field]: storagePath }).eq('id', challengeId)
+      if (dbErr) { toastErr(`Save failed: ${dbErr.message}`) }
+      else { toastOk(`${label} uploaded`); onSaved() }
     }
     setUploading(false)
   }
 
   const handleRemove = async () => {
-    await supabase.from('weekly_challenges').update({ [field]: null }).eq('id', challengeId)
+    const { error } = await supabase.from('weekly_challenges').update({ [field]: null }).eq('id', challengeId)
+    if (error) { toastErr(`Remove failed: ${error.message}`); return }
     onSaved()
   }
 
@@ -356,20 +362,23 @@ function VersionAudioUpload({ versionId, audioUrl, language, onSaved }: {
 }) {
   const [uploading, setUploading] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
+  const { error: toastErr } = useToast()
 
   const handleUpload = async (f: File) => {
     setUploading(true)
     const path = `challenges/audio-${versionId}-${language}-${Date.now()}.${f.name.split('.').pop()}`
     const { error, storagePath } = await smartUpload('storyBook', path, f)
     if (!error) {
-      await supabase.from('weekly_challenge_versions').update({ content_json: { audio_url: storagePath } }).eq('id', versionId)
-      onSaved()
+      const { error: dbErr } = await supabase.from('weekly_challenge_versions').update({ content_json: { audio_url: storagePath } }).eq('id', versionId)
+      if (dbErr) { toastErr(`Save failed: ${dbErr.message}`) }
+      else { onSaved() }
     }
     setUploading(false)
   }
 
   const handleRemove = async () => {
-    await supabase.from('weekly_challenge_versions').update({ content_json: {} }).eq('id', versionId)
+    const { error } = await supabase.from('weekly_challenge_versions').update({ content_json: {} }).eq('id', versionId)
+    if (error) { toastErr(`Remove failed: ${error.message}`); return }
     onSaved()
   }
 

@@ -21,6 +21,7 @@ interface StoryContentProps {
   completed: boolean;
   saving?: boolean;
   pagesLoading?: boolean;
+  storySlug?: string;
 }
 
 // Book-shaped skeleton shown while pages fetch — matches the real StoryBook layout
@@ -52,7 +53,7 @@ function BookSkeleton() {
   );
 }
 
-export default function StoryContent({ mission, storyPages, onComplete, completed, pagesLoading }: StoryContentProps) {
+export default function StoryContent({ mission, storyPages, onComplete, completed, pagesLoading, storySlug }: StoryContentProps) {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -128,7 +129,7 @@ export default function StoryContent({ mission, storyPages, onComplete, complete
         />
       )}
 
-      {completed && <MissionCompleteBanner />}
+      {completed && <MissionCompleteBanner storySlug={storySlug} />}
     </div>
   );
 }

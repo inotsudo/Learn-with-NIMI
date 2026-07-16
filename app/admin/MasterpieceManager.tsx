@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Crown, Check, Eye, Download, RefreshCw, Upload, Award } from 'lucide-react'
+import { Crown, Check, Download, RefreshCw, Upload, Award } from 'lucide-react'
 import supabase from '@/lib/supabaseClient'
+import { useToast } from './Toast'
 
 interface Story { id: string; title: string; slug: string; theme_emoji: string | null; is_personalizable: boolean; personalization_config: any; certificate_config: any }
 interface MasterpieceOrder { id: string; child_name: string; child_photo_url: string | null; status: string; pdf_url: string | null; created_at: string; stories: { title: string } }
@@ -11,6 +12,7 @@ export default function MasterpieceManager() {
   const [stories, setStories] = useState<Story[]>([])
   const [orders, setOrders] = useState<MasterpieceOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const { error: toastErr } = useToast()
 
   const load = async () => {
     setLoading(true)
@@ -32,20 +34,48 @@ export default function MasterpieceManager() {
 
   const togglePersonalizable = async (story: Story) => {
     try {
-      await supabase.from('stories').update({ is_personalizable: !story.is_personalizable }).eq('id', story.id)
+      const { error } = await supabase.from('stories').update({ is_personalizable: !story.is_personalizable }).eq('id', story.id)
+      if (error) throw error
       void load()
     } catch (err) {
       console.error('[MasterpieceManager] togglePersonalizable failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Update failed')
     }
   }
 
   const updateConfig = async (storyId: string, config: any) => {
     try {
-      await supabase.from('stories').update({ personalization_config: config }).eq('id', storyId)
+      const { error } = await supabase.from('stories').update({ personalization_config: config }).eq('id', storyId)
+      if (error) throw error
       void load()
     } catch (err) {
       console.error('[MasterpieceManager] updateConfig failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Update failed')
     }
+  }
+
+  const removeCertImage = async (storyId: string, certConfig: Record<string, any>, lang: string) => {
+    const updated = { ...certConfig }
+    delete updated[lang]
+    const { error } = await supabase.from('stories').update({ certificate_config: updated }).eq('id', storyId)
+    if (error) { toastErr(`Remove failed: ${error.message}`); return }
+    void load()
+  }
+
+  const uploadCertImage = async (storyId: string, slug: string, certConfig: Record<string, any>, lang: string, file: File) => {
+    const path = `certificates/${slug}_${lang}.${file.name.split('.').pop()}`
+    await supabase.storage.from('story-assets').upload(path, file, { upsert: true })
+    const updated = { ...certConfig, [lang]: { image_url: `story-assets/${path}`, nameX: 420, nameY: 100, nameSize: 48, nameColor: '#1a1a5e' } }
+    const { error } = await supabase.from('stories').update({ certificate_config: updated }).eq('id', storyId)
+    if (error) { toastErr(`Save failed: ${error.message}`); return }
+    void load()
+  }
+
+  const updateCertField = async (storyId: string, certConfig: Record<string, any>, field: string, value: number | string) => {
+    const updated = { ...certConfig }
+    for (const l of Object.keys(updated)) updated[l][field] = value
+    const { error } = await supabase.from('stories').update({ certificate_config: updated }).eq('id', storyId)
+    if (error) toastErr(error.message)
   }
 
   const retryGenerate = async (orderId: string) => {
@@ -164,31 +194,14 @@ export default function MasterpieceManager() {
                       {lc?.image_url ? (
                         <div className="flex items-center gap-2 flex-1">
                           <span className="text-green-500 text-[11px] font-bold">✅ Uploaded</span>
-                          <button onClick={async () => {
-                            const updated = { ...certConfig };
-                            delete updated[lang];
-                            await supabase.from('stories').update({ certificate_config: updated }).eq('id', story.id);
-                            load();
-                          }} className="text-red-400 text-[10px] hover:underline">Remove</button>
+                          <button onClick={() => removeCertImage(story.id, certConfig, lang)}
+                            className="text-red-400 text-[10px] hover:underline">Remove</button>
                         </div>
                       ) : (
                         <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-green-700 font-bold hover:underline">
                           <Upload className="w-3 h-3" /> Upload
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            const path = `certificates/${story.slug}_${lang}.${file.name.split('.').pop()}`;
-                            await supabase.storage.from('story-assets').upload(path, file, { upsert: true });
-                            const updated = {
-                              ...certConfig,
-                              [lang]: {
-                                image_url: `story-assets/${path}`,
-                                nameX: 420, nameY: 100, nameSize: 48, nameColor: '#1a1a5e',
-                              },
-                            };
-                            await supabase.from('stories').update({ certificate_config: updated }).eq('id', story.id);
-                            load();
-                          }} />
+                          <input type="file" accept="image/*" className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) uploadCertImage(story.id, story.slug, certConfig, lang, f) }} />
                         </label>
                       )}
                     </div>
@@ -201,41 +214,25 @@ export default function MasterpieceManager() {
                     <div>
                       <label className="text-[9px] font-bold text-gray-400">Name X</label>
                       <input type="number" defaultValue={certConfig[Object.keys(certConfig)[0]]?.nameX ?? 420}
-                        onBlur={e => {
-                          const updated = { ...certConfig };
-                          for (const l of Object.keys(updated)) updated[l].nameX = Number(e.target.value);
-                          supabase.from('stories').update({ certificate_config: updated }).eq('id', story.id);
-                        }}
+                        onBlur={e => updateCertField(story.id, certConfig, 'nameX', Number(e.target.value))}
                         className="w-full border rounded-lg px-2 py-1 text-sm" />
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-gray-400">Name Y</label>
                       <input type="number" defaultValue={certConfig[Object.keys(certConfig)[0]]?.nameY ?? 100}
-                        onBlur={e => {
-                          const updated = { ...certConfig };
-                          for (const l of Object.keys(updated)) updated[l].nameY = Number(e.target.value);
-                          supabase.from('stories').update({ certificate_config: updated }).eq('id', story.id);
-                        }}
+                        onBlur={e => updateCertField(story.id, certConfig, 'nameY', Number(e.target.value))}
                         className="w-full border rounded-lg px-2 py-1 text-sm" />
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-gray-400">Name Size</label>
                       <input type="number" defaultValue={certConfig[Object.keys(certConfig)[0]]?.nameSize ?? 48}
-                        onBlur={e => {
-                          const updated = { ...certConfig };
-                          for (const l of Object.keys(updated)) updated[l].nameSize = Number(e.target.value);
-                          supabase.from('stories').update({ certificate_config: updated }).eq('id', story.id);
-                        }}
+                        onBlur={e => updateCertField(story.id, certConfig, 'nameSize', Number(e.target.value))}
                         className="w-full border rounded-lg px-2 py-1 text-sm" />
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-gray-400">Name Color</label>
                       <input type="color" defaultValue={certConfig[Object.keys(certConfig)[0]]?.nameColor ?? '#1a1a5e'}
-                        onChange={e => {
-                          const updated = { ...certConfig };
-                          for (const l of Object.keys(updated)) updated[l].nameColor = e.target.value;
-                          supabase.from('stories').update({ certificate_config: updated }).eq('id', story.id);
-                        }}
+                        onChange={e => updateCertField(story.id, certConfig, 'nameColor', e.target.value)}
                         className="w-full h-8 rounded-lg cursor-pointer" />
                     </div>
                   </div>

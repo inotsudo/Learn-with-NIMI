@@ -35,6 +35,9 @@ export async function completeStorySlot(
   qinvalidate(`childBadges:${childId}`);
   qinvalidate(`completedMissionIds:${childId}`);
   qinvalidate(`storyProgressStars:${childId}`);
+  // Bust slot completion state so the story detail page reflects the new completion immediately.
+  qinvalidate(`storySlots:${childId}`);
+  qinvalidate(`storyLibrary:${childId}`);
   return data as CompleteSlotResult;
 }
 

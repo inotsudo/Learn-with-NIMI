@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
 import { Menu, ExternalLink, Upload, CheckCircle2, AlertCircle, Search } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface Props {
   title: string
@@ -28,6 +29,7 @@ export default function ContentMediaManager({ title, description, missionType, m
   const [rows, setRows] = useState<MediaRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const { error: toastErr } = useToast()
 
   useEffect(() => {
     void (async () => {
@@ -71,10 +73,12 @@ export default function ContentMediaManager({ title, description, missionType, m
 
   const handleSave = async (versionId: string, url: string) => {
     try {
-      await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', versionId)
+      const { error } = await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', versionId)
+      if (error) throw error
       setRows(prev => prev.map(r => r.version_id === versionId ? { ...r, media_url: url || null } : r))
     } catch (err) {
       console.error('[ContentMediaManager] handleSave failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Save failed')
     }
   }
 

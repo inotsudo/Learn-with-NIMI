@@ -17,6 +17,7 @@ interface MoveGrooveContentProps {
   onComplete: () => void;
   completed: boolean;
   saving: boolean;
+  storySlug?: string;
 }
 
 interface VisualPrompt {
@@ -32,7 +33,7 @@ interface VisualPrompt {
 const PROMPT_KEYS = ["moveClap", "moveJump", "moveHug", "moveSpin", "moveStretch", "moveDance"] as const;
 const PROMPT_EMOJIS = ["👏", "🦵", "🤗", "🌀", "💪", "🕺"];
 
-export default function MoveGrooveContent({ mission, onComplete, completed, saving }: MoveGrooveContentProps) {
+export default function MoveGrooveContent({ mission, onComplete, completed, saving, storySlug }: MoveGrooveContentProps) {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -247,7 +248,7 @@ export default function MoveGrooveContent({ mission, onComplete, completed, savi
           </button>
         )
       ) : (
-        <MissionCompleteBanner />
+        <MissionCompleteBanner storySlug={storySlug} />
       )}
     </div>
   );

@@ -18,11 +18,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email" }, { status: 422 });
   }
 
-  const { error } = await supabase.from("newsletter_signups").insert({
-    email: email.toLowerCase().trim(),
-    name: typeof name === "string" ? name.trim().slice(0, 80) : null,
-    source: typeof source === "string" ? source : "landing_page",
-  });
+  const { data: inserted, error } = await supabase
+    .from("newsletter_signups")
+    .insert({
+      email: email.toLowerCase().trim(),
+      name: typeof name === "string" ? name.trim().slice(0, 80) : null,
+      source: typeof source === "string" ? source : "landing_page",
+    })
+    .select("unsubscribe_token")
+    .single();
 
   if (error) {
     // 23505 = unique_violation (duplicate email) — treat as success to avoid enumeration
@@ -33,6 +37,7 @@ export async function POST(req: NextRequest) {
   // Send welcome email if Resend key present (best-effort, fire-and-forget)
   const key = process.env.RESEND_API_KEY;
   if (key) {
+    const unsubUrl = `https://nimipiko.com/unsubscribe?token=${inserted.unsubscribe_token}`;
     void fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
@@ -62,7 +67,7 @@ export async function POST(req: NextRequest) {
               </div>
               <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:20px">
                 NIMIPIKO · <a href="https://nimipiko.com/privacy" style="color:#9ca3af">Privacy Policy</a> ·
-                You're receiving this because you signed up at nimipiko.com
+                <a href="${unsubUrl}" style="color:#9ca3af">Unsubscribe</a>
               </p>
             </div>
           </div>

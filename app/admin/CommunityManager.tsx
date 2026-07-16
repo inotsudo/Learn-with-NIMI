@@ -50,7 +50,8 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
 
   const handleApprove = async (id: string) => {
     try {
-      await supabase.from('creations').update({ status: 'approved', is_public: true }).eq('id', id)
+      const { error } = await supabase.from('creations').update({ status: 'approved', is_public: true }).eq('id', id)
+      if (error) throw error
       await load()
       toastOk('Post approved')
     } catch (err) {
@@ -60,7 +61,8 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
 
   const handleReject = async (id: string) => {
     try {
-      await supabase.from('creations').update({ status: 'rejected', is_public: false }).eq('id', id)
+      const { error } = await supabase.from('creations').update({ status: 'rejected', is_public: false }).eq('id', id)
+      if (error) throw error
       await load()
       toastOk('Post rejected')
     } catch (err) {

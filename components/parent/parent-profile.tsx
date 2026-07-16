@@ -12,11 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import supabase from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { useSession } from "@supabase/auth-helpers-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export function UserProfileMenu() {
-  const session = useSession();
   const { toast } = useToast();
   const { user, profile, updateUser, updateProfile } = useUser();
   const [open, setOpen] = useState(false);
@@ -31,13 +29,13 @@ export function UserProfileMenu() {
 
   // --- Save profile ---
   const saveProfile = async () => {
-    if (!session?.user?.id || !profile) return;
+    if (!user?.id || !profile) return;
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("parents")
         .update({ name: profile.name })
-        .eq("id", session.user.id)
+        .eq("id", user?.id)
         .select()
         .single();
 
@@ -84,12 +82,12 @@ export function UserProfileMenu() {
     });
 
   const handleAvatarUpload = async (file: File) => {
-    if (!session?.user?.id || !profile) return;
+    if (!user?.id || !profile) return;
     setIsLoading(true);
     try {
       const croppedFile = await cropImageToSquare(file);
       const fileExt = croppedFile.name.split(".").pop();
-      const fileName = `${session.user.id}.${fileExt}`;
+      const fileName = `${user?.id}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(`avatars/${fileName}`, croppedFile, { upsert: true });
@@ -136,11 +134,11 @@ export function UserProfileMenu() {
 
   // --- Notification prefs (auto-save on toggle) ---
   const saveNotificationPref = async (field: "notify_email" | "notify_sms", value: boolean) => {
-    if (!session?.user?.id || !profile) return;
+    if (!user?.id || !profile) return;
     updateProfile?.({ ...profile, [field]: value });
     setNotifLoading(true);
     try {
-      const { error } = await supabase.from("parents").update({ [field]: value }).eq("id", session.user.id);
+      const { error } = await supabase.from("parents").update({ [field]: value }).eq("id", user?.id);
       if (error) throw error;
       toast({
         title: value ? "Notifications enabled" : "Notifications disabled",
@@ -173,10 +171,10 @@ export function UserProfileMenu() {
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader><DialogTitle>Profile</DialogTitle></DialogHeader>
 
-        {session?.user?.email && (
+        {user?.email && (
           <div className="mb-2">
             <Label>Email</Label>
-            <div className="text-sm text-gray-600">{session.user.email}</div>
+            <div className="text-sm text-gray-600">{user.email}</div>
           </div>
         )}
 

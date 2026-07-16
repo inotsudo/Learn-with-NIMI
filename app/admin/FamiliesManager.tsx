@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Search, Menu, ChevronDown, ChevronRight, Users, Baby, Crown, Gift, X } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface Props {
   onNavigate: (table: string) => void
@@ -37,6 +38,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
   const [grantingId, setGrantingId] = useState<string | null>(null)
   const [grantMonths, setGrantMonths] = useState(1)
   const [grantingFor, setGrantingFor] = useState<string | null>(null)
+  const { error: toastErr } = useToast()
 
   useEffect(() => {
     void (async () => {
@@ -74,7 +76,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
       const periodEnd = new Date()
       periodEnd.setMonth(periodEnd.getMonth() + months)
       const { data: clubProduct } = await supabase.from('products').select('id').eq('slug', 'nimipiko-club').maybeSingle()
-      await supabase.from('nimipiko_subscriptions').insert({
+      const { error: subErr } = await supabase.from('nimipiko_subscriptions').insert({
         parent_id: parentId,
         product_id: clubProduct?.id ?? null,
         status: 'active',
@@ -86,15 +88,18 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
         payment_provider: 'admin_grant',
         cancel_at_period_end: true,
       })
-      await supabase.from('content_access').insert({
+      if (subErr) throw subErr
+      const { error: accessErr } = await supabase.from('content_access').insert({
         parent_id: parentId,
         access_type: 'club',
         story_id: null,
       })
+      if (accessErr) throw accessErr
       const { data: newSub } = await supabase.from('nimipiko_subscriptions').select('*').eq('parent_id', parentId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle()
       setFamilies(prev => prev.map(f => f.parent_id === parentId ? { ...f, subscription: newSub } : f))
     } catch (err) {
       console.error('[FamiliesManager] handleGrantAccess failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Failed to grant access. Please try again.')
     } finally {
       setGrantingFor(null)
       setGrantingId(null)

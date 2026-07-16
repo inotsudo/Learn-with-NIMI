@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { v4 as uuidv4 } from "uuid";
+
+type OrderProduct = { tier: string | null; story_id: string | null; billing_interval: string | null; product_type: string | null; name: string | null };
+type PersonalizationData = { discount_code_id?: string; gift?: boolean; phone?: string };
 import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
 
 const supabase = createClient(
@@ -34,9 +37,7 @@ async function getAccessToken(): Promise<string> {
 // POST — initiate payment request
 export async function POST(req: NextRequest) {
   try {
-    // Verify caller is the authenticated parent who owns this order.
-    const authClient = await createRouteClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -108,9 +109,7 @@ export async function POST(req: NextRequest) {
 // GET — check payment status
 export async function GET(req: NextRequest) {
   try {
-    // Auth check — only the order owner may poll
-    const authClient = await createRouteClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -157,7 +156,7 @@ export async function GET(req: NextRequest) {
           completed_at: new Date().toISOString(),
         }).eq("id", orderId);
 
-        const product = order.products as any;
+        const product = order.products as OrderProduct | null;
         if (product) {
           const accessType = product.tier === "club" ? "club"
             : product.tier === "personalized" ? "personalized"
@@ -206,7 +205,7 @@ export async function GET(req: NextRequest) {
             }).catch(() => {});
 
             // Track discount code redemption — atomic CAS prevents over-redemption race
-            const discountCodeId = (order.personalization_data as any)?.discount_code_id;
+            const discountCodeId = (order.personalization_data as PersonalizationData | null)?.discount_code_id;
             if (discountCodeId) {
               const [, { data: incremented }] = await Promise.all([
                 supabase.from("discount_redemptions").insert({
@@ -226,7 +225,7 @@ export async function GET(req: NextRequest) {
 
             // Send email (best-effort) — gift or regular receipt
             const { data: parent } = await supabase.from("parents").select("email, name").eq("id", order.parent_id).maybeSingle();
-            const isGift = (order.personalization_data as any)?.gift === true;
+            const isGift = (order.personalization_data as PersonalizationData | null)?.gift === true;
             if (isGift) {
               const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
               const { data: giftRecord } = await supabase

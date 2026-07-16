@@ -27,6 +27,7 @@ export interface StoryDetails {
   sid: string;
   slug: string;
   title: string;
+  description: string | null;
   cover_url: string | null;
   sort_order: number;
   theme_emoji: string | null;
