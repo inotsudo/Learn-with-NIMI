@@ -9,7 +9,7 @@ import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import {
-  getChildren, getTotalStars, getChildAchievements,
+  getChildren, getTotalStars, getChildBadges,
   getShopPurchases, purchaseShopItem, getChildCosmetics, equipItem,
   type Child, type ShopPurchase, type ChildCosmetics,
 } from "@/lib/queries";
@@ -72,7 +72,7 @@ function CurrentlyWearing({ cosmetics, nimiSrc, pikoSrc, onUnequip }: {
       className="overflow-hidden"
     >
       <div className="mt-4 p-3 rounded-2xl border border-ds-border bg-ds-surface/60">
-        <p className="font-black text-ds-text text-[11px] uppercase tracking-widest mb-2.5">✨ Currently Wearing</p>
+        <p className="font-black text-ds-text text-[11px] uppercase tracking-widest mb-2.5">{t("shopCurrentlyWearing")}</p>
         <div className="flex gap-2 flex-wrap">
           {slots.map(slot => {
             const item = cosmetics[slot.key] ? SHOP_ITEM_MAP[cosmetics[slot.key]!] : null;
@@ -87,7 +87,7 @@ function CurrentlyWearing({ cosmetics, nimiSrc, pikoSrc, onUnequip }: {
                 onClick={() => onUnequip(slot.key)}
                 className="group relative flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border-2 text-xs font-bold transition-colors"
                 style={{ borderColor: "var(--nimi-green)", background: "rgba(34,197,94,0.06)", color: "var(--ds-text)" }}
-                title="Click to remove"
+                title={t("shopRemoveItem")}
               >
                 {slot.src && (
                   <Image src={slot.src} alt={slot.label} width={20} height={20} className="w-5 h-5 rounded-full object-cover shrink-0 border border-green-200" />
@@ -127,9 +127,12 @@ export default function RewardShopPage() {
   }, []);
 
   const loadStarsAndGems = useCallback(async (childId: string, language: Language) => {
-    setTotalStars(await getTotalStars(childId, language));
-    const ach = await getChildAchievements(childId);
-    setGems(ach.filter(a => a.type === "badge" && a.language === language).length);
+    const [stars, badges] = await Promise.all([
+      getTotalStars(childId, language),
+      getChildBadges(childId, language),
+    ]);
+    setTotalStars(stars);
+    setGems(badges.length);
   }, []);
 
   useEffect(() => {

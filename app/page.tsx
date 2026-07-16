@@ -231,10 +231,10 @@ export default function LandingPage() {
 
         {([
           {href:"/stories",   top:"32.69vw",label:"Lire"},
-          {href:"/missions",  top:"39.60vw",label:"Créer"},
-          {href:"/missions",  top:"46.60vw",label:"Explorer"},
-          {href:"/missions",  top:"53.60vw",label:"Bouger"},
-          {href:"/missions",  top:"60.60vw",label:"Chanter"},
+          {href:"/stories",  top:"39.60vw",label:"Créer"},
+          {href:"/stories",  top:"46.60vw",label:"Explorer"},
+          {href:"/stories",  top:"53.60vw",label:"Bouger"},
+          {href:"/stories",  top:"60.60vw",label:"Chanter"},
           {href:"/community", top:"67.61vw",label:"Grandir"},
         ] as const).map(({href,top,label}) => (
           <Link key={label} href={href} aria-label={label} className="absolute z-20 cursor-pointer"
@@ -277,10 +277,10 @@ export default function LandingPage() {
 
         {([
           {href:"/stories",   top:"10.91vw",label:"Read"},
-          {href:"/missions",  top:"16.62vw",label:"Create"},
-          {href:"/missions",  top:"21.81vw",label:"Explore"},
-          {href:"/missions",  top:"26.98vw",label:"Move"},
-          {href:"/missions",  top:"32.15vw",label:"Sing"},
+          {href:"/stories",  top:"16.62vw",label:"Create"},
+          {href:"/stories",  top:"21.81vw",label:"Explore"},
+          {href:"/stories",  top:"26.98vw",label:"Move"},
+          {href:"/stories",  top:"32.15vw",label:"Sing"},
           {href:"/community", top:"37.31vw",label:"Grow"},
         ] as const).map(({href,top,label}) => (
           <Link key={label} href={href} aria-label={label} className="absolute z-20 cursor-pointer"
@@ -969,7 +969,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-3 gap-10 text-center sm:text-left">
               <div>
                 <p className="font-baloo font-black text-white text-[13px] mb-4">Learn</p>
-                {([["Stories","/stories"],["Activities","/missions"],["Community","/community"]] as const).map(([l,h]) => (
+                {([["Stories","/stories"],["Community","/community"]] as const).map(([l,h]) => (
                   <Link key={l} href={h} className="block font-nunito text-gray-400 hover:text-white text-[13px] mb-2 transition-colors">{l}</Link>
                 ))}
               </div>

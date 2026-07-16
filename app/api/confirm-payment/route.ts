@@ -1,9 +1,7 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-// @ts-ignore
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 import { verifyCybersourceTransaction } from "@/lib/cybersource/verify";
 import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
 
@@ -15,7 +13,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     // Auth check — caller must be the parent who owns the order
-    const authClient = createRouteHandlerClient({ cookies });
+    const authClient = await createRouteClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
@@ -114,18 +112,19 @@ export async function POST(req: NextRequest) {
           }
 
           // customerToken is the reusable CyberSource customer ID for recurring charges.
-          // If null, tokenization is not enabled on the merchant profile — auto-renewal
-          // will fail for every subscriber. Fix: enable "Token Management Service" in
-          // Business Center → Payment Configuration → Tokenization.
-          const tokenToStore = customerToken ?? transactionId;
+          // Requires Token Management Service (TMS) to be enabled in Business Center →
+          // Payment Configuration → Tokenization. Without it, auto-renewal is impossible
+          // — we store null so the renewal cron skips gracefully rather than sending a
+          // useless transaction ID that CyberSource will reject.
+          const tokenToStore = customerToken ?? null;
           if (!customerToken) {
             console.error(
-              "[ConfirmPayment] CRITICAL: No customer token from CyberSource.",
+              "[ConfirmPayment] CRITICAL: No customer token from CyberSource — auto-renewal disabled.",
               JSON.stringify({
                 orderId,
                 parentId: order.parent_id,
                 transactionId,
-                action: "auto-renewal will fail — enable Token Management Service in CyberSource Business Center",
+                action: "Enable Token Management Service in CyberSource Business Center → Payment Configuration → Tokenization",
               })
             );
           }

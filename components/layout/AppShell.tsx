@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useUser } from "@/contexts/UserContext";
-import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildAchievements, getCurrentLevel, updateChildLanguage, getChildCosmetics, getCurriculumMissions, getActiveStories, getStreakShieldsPurchased, getUsedShieldDates } from "@/lib/queries";
+import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildBadges, getCurrentLevel, updateChildLanguage, getChildCosmetics, getCurriculumMissions, getActiveStories, getStreakShieldsPurchased, getUsedShieldDates } from "@/lib/queries";
 import { getStoryLibrary } from "@/lib/storyRepository";
 import { computeStreaks } from "@/lib/parentInsights";
 import { resolveShields } from "@/lib/streakShields";
@@ -112,12 +112,12 @@ export default function AppShell({ children }: AppShellProps) {
         // Shields (getStreakShieldsPurchased + getUsedShieldDates) now run in
         // parallel with everything else. resolveShields below hits the warm
         // qcached results — zero extra network round-trips.
-        const [ws, dates, , , achievements, cos] = await Promise.all([
+        const [ws, dates, , , badges, cos] = await Promise.all([
           getWeekStreak(child.id, child.language),
           getActivityDates(child.id, child.language),
           getTotalStars(child.id, child.language).then(setTotalStars),
           getCurrentLevel(child.id, child.language).then(setLevel),
-          getChildAchievements(child.id),
+          getChildBadges(child.id, child.language),
           getChildCosmetics(child.id),
           getStreakShieldsPurchased(child.id),
           getUsedShieldDates(child.id, child.language),
@@ -125,7 +125,7 @@ export default function AppShell({ children }: AppShellProps) {
         setWeekStreak(ws);
         const { usedDates } = await resolveShields(child.id, child.language, dates);
         setStreakCount(computeStreaks(dates, new Date(), usedDates).current);
-        setGems(achievements.filter((a: { type: string; language: string }) => a.type === "badge" && a.language === child.language).length);
+        setGems(badges.length);
         setCosmetics(cos);
 
         // Warm the cache for the most common navigation destinations so that
@@ -158,18 +158,18 @@ export default function AppShell({ children }: AppShellProps) {
       activeChildRef.current = child;
       setActiveChild(child);
       setLanguageSilent(child.language as Language);
-      const [ws, dates, , , achievements, cos] = await Promise.all([
+      const [ws, dates, , , badges, cos] = await Promise.all([
         getWeekStreak(child.id, child.language),
         getActivityDates(child.id, child.language),
         getTotalStars(child.id, child.language).then(setTotalStars),
         getCurrentLevel(child.id, child.language).then(setLevel),
-        getChildAchievements(child.id),
+        getChildBadges(child.id, child.language),
         getChildCosmetics(child.id),
       ]);
       setWeekStreak(ws);
       const { usedDates } = await resolveShields(child.id, child.language, dates);
       setStreakCount(computeStreaks(dates, new Date(), usedDates).current);
-      setGems(achievements.filter((a: { type: string; language: string }) => a.type === "badge" && a.language === child.language).length);
+      setGems(badges.length);
       setCosmetics(cos);
     };
     window.addEventListener("app:childSwitch", handler as EventListener);
@@ -193,9 +193,7 @@ export default function AppShell({ children }: AppShellProps) {
           getActivityDates(updated.id, lang),
           getTotalStars(updated.id, lang).then(setTotalStars),
           getCurrentLevel(updated.id, lang).then(setLevel),
-          getChildAchievements(updated.id).then(achievements =>
-            setGems(achievements.filter(a => a.type === "badge" && a.language === lang).length)
-          ),
+          getChildBadges(updated.id, lang).then(b => setGems(b.length)),
         ]);
         setWeekStreak(ws);
         const { usedDates } = await resolveShields(updated.id, lang, dates);

@@ -22,7 +22,7 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
         <div>
           <p className="font-baloo font-black text-ds-text text-[15px]">{t("weeklyActivityTitle")}</p>
           {!hasActivity && (
-            <p className="text-ds-muted text-[11px] mt-0.5">{t("noActivityThisWeek") || "No activity recorded yet"}</p>
+            <p className="text-ds-muted text-[11px] mt-0.5">{t("noActivityThisWeek")}</p>
           )}
         </div>
         {hasActivity && (
@@ -31,7 +31,7 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
             animate={{ scale: 1, opacity: 1 }}
             className="text-[11px] font-black text-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] px-2.5 py-1 rounded-full border border-[var(--ds-border-brand)]/30"
           >
-            🔥 {total} {t("thisWeekLabel") || "this week"}
+            🔥 {total} {t("thisWeekLabel")}
           </motion.span>
         )}
       </div>
@@ -94,10 +94,10 @@ export default function WeeklyActivityChart({ weekCounts }: Props) {
           className="mt-3 pt-3 border-t border-ds-border flex items-center justify-between"
         >
           <span className="text-ds-muted text-[11px]">
-            {t("bestDayLabel") || "Best day"}: <span className="font-bold text-ds-text">{t(dayKeys[best])}</span>
+            {t("bestDayLabel")}: <span className="font-bold text-ds-text">{t(dayKeys[best])}</span>
           </span>
           <span className="text-[11px] font-black text-[var(--ds-brand-primary)]">
-            {weekCounts[best]} {t("activitiesLabel") || "activities"}
+            {weekCounts[best]} {t("activitiesLabel")}
           </span>
         </motion.div>
       )}

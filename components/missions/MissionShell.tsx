@@ -32,7 +32,7 @@ export default function MissionShell({ activity, mission, completedCount, comple
   const tip = mission?.tip_text || t("defaultNimiTip");
 
   const nextActivity = ACTIVITIES.find(a => a.number === activity.number + 1);
-  const nextHref = nextActivity ? `/missions/${nextActivity.category}` : "/missions";
+  const nextHref = nextActivity ? `/missions/${nextActivity.category}` : "/stories";
   const nextLabel = nextActivity ? t("nextMissionBtn") : `← ${t("backToAdventure")}`;
 
   const progressPct = Math.min(100, (completedCount / ACTIVITIES.length) * 100);
@@ -43,7 +43,7 @@ export default function MissionShell({ activity, mission, completedCount, comple
 
           {/* Header row */}
           <div className="flex items-center gap-3">
-            <Link href="/missions"
+            <Link href="/stories"
               className="flex items-center gap-1 text-gray-500 font-bold text-sm hover:text-gray-900 transition shrink-0">
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline">{t("backToAdventure")}</span>

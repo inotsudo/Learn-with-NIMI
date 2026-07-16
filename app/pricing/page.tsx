@@ -366,11 +366,11 @@ export default function PricingPage() {
                             handlePurchase(club, effectiveAmount, discountInfo?.code_id);
                           }}
                           className="w-full py-4 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[16px] shadow-xl shadow-orange-200 flex items-center justify-center gap-2">
-                          {provider === "mtn_momo" ? <><Phone className="w-5 h-5" /> Subscribe with MoMo</>
+                          {provider === "mtn_momo" ? <><Phone className="w-5 h-5" /> Choose Payment Method</>
                             : <><CreditCard className="w-5 h-5" /> Subscribe Now</>}
                         </motion.button>
                         <p className="text-center text-gray-400 text-[10px] mt-2">
-                          {provider === "mtn_momo" ? "📱 MTN Mobile Money Rwanda" : "🔒 Visa, Mastercard & Amex"}
+                          {provider === "mtn_momo" ? "📱 MTN MoMo or 💳 Card" : "🔒 Visa, Mastercard & Amex"}
                         </p>
                       </>
                     )}
@@ -430,11 +430,11 @@ export default function PricingPage() {
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={m.buttonPress}
                       onClick={() => handlePurchase(masterpiece)}
                       className="w-full py-4 leaf bg-[var(--nimi-green)] hover:bg-[var(--ds-brand-hover)] text-white font-black text-[16px] shadow-md transition flex items-center justify-center gap-2">
-                      {provider === "mtn_momo" ? <><Phone className="w-5 h-5" /> Buy with MoMo</>
+                      {provider === "mtn_momo" ? <><Phone className="w-5 h-5" /> Choose Payment Method</>
                         : <><CreditCard className="w-5 h-5" /> Buy Masterpiece</>}
                     </motion.button>
                     <p className="text-center text-gray-400 text-[10px] mt-2">
-                      {provider === "mtn_momo" ? "📱 MTN Mobile Money Rwanda" : "🔒 Visa, Mastercard & Amex"}
+                      {provider === "mtn_momo" ? "📱 MTN MoMo or 💳 Card" : "🔒 Visa, Mastercard & Amex"}
                     </p>
                   </div>
                 </motion.div>
@@ -592,7 +592,7 @@ export default function PricingPage() {
                 { q: "Can I try before subscribing?", a: "Yes! Create a free account and explore the first story in each language before subscribing." },
                 { q: "How many children can use one subscription?", a: "The Nimipiko Club covers your whole family — add up to 5 child profiles, each with their own progress and achievements." },
                 { q: "Can I cancel anytime?", a: "Absolutely. Cancel in one click from the Parents Zone — no fees, no questions asked. Your child keeps their progress even after cancelling." },
-                { q: "Which payment methods are accepted?", a: "We accept Visa, Mastercard and Amex (via CyberSource) for USD. Rwandan families can pay with MTN Mobile Money." },
+                { q: "Which payment methods are accepted?", a: "We accept Visa, Mastercard and Amex for card payments. Rwandan families can pay with MTN Mobile Money or by card." },
                 { q: "Is the content safe for young children?", a: "Every story and activity is educator-reviewed for children aged 2–10. Zero ads, zero in-app purchases beyond what you choose here." },
               ] as const).map(({ q, a }) => (
                 <div key={q} className="border-b border-ds-border pb-4 last:border-0 last:pb-0">

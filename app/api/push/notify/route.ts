@@ -27,55 +27,60 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 
-  const body = (await req.json()) as NotifyBody;
-  const { child_id, category, stars_earned, new_badges, new_certificate } = body;
+  try {
+    const body = (await req.json()) as NotifyBody;
+    const { child_id, category, stars_earned, new_badges, new_certificate } = body;
 
-  const { data: child } = await sb
-    .from("children")
-    .select("name")
-    .eq("id", child_id)
-    .eq("parent_id", user.id)
-    .single();
+    const { data: child } = await sb
+      .from("children")
+      .select("name")
+      .eq("id", child_id)
+      .eq("parent_id", user.id)
+      .single();
 
-  if (!child) {
-    return NextResponse.json({ error: "Child not found" }, { status: 404 });
+    if (!child) {
+      return NextResponse.json({ error: "Child not found" }, { status: 404 });
+    }
+
+    const { data: settings } = await sb
+      .from("parental_settings")
+      .select("notifications_enabled")
+      .eq("parent_id", user.id)
+      .eq("child_id", child_id)
+      .maybeSingle();
+
+    if (settings?.notifications_enabled === false) {
+      return NextResponse.json({ sent: false, reason: "disabled" });
+    }
+
+    const childName = child.name as string;
+    let payload;
+
+    if (new_certificate) {
+      payload = {
+        title: "🎓 Program Completed!",
+        body: `${childName} earned the Program Completion Certificate!`,
+        url: "/certificates",
+      };
+    } else if (new_badges?.length > 0) {
+      payload = {
+        title: "🏅 New Badge!",
+        body: `${childName} earned the ${formatBadgeLabel(new_badges[0])} badge!`,
+        url: "/certificates",
+      };
+    } else {
+      const categoryLabel = CATEGORY_LABELS[category] ?? category;
+      payload = {
+        title: "✅ Mission Complete!",
+        body: `${childName} finished today's ${categoryLabel} mission! +${stars_earned}⭐`,
+        url: `/missions/${category}`,
+      };
+    }
+
+    const result = await sendPushToParent(sb, user.id, payload);
+    return NextResponse.json(result);
+  } catch (err: unknown) {
+    console.error("[push/notify] unexpected error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  const { data: settings } = await sb
-    .from("parental_settings")
-    .select("notifications_enabled")
-    .eq("parent_id", user.id)
-    .eq("child_id", child_id)
-    .maybeSingle();
-
-  if (settings?.notifications_enabled === false) {
-    return NextResponse.json({ sent: false, reason: "disabled" });
-  }
-
-  const childName = child.name as string;
-  let payload;
-
-  if (new_certificate) {
-    payload = {
-      title: "🎓 Program Completed!",
-      body: `${childName} earned the Program Completion Certificate!`,
-      url: "/certificates",
-    };
-  } else if (new_badges?.length > 0) {
-    payload = {
-      title: "🏅 New Badge!",
-      body: `${childName} earned the ${formatBadgeLabel(new_badges[0])} badge!`,
-      url: "/certificates",
-    };
-  } else {
-    const categoryLabel = CATEGORY_LABELS[category] ?? category;
-    payload = {
-      title: "✅ Mission Complete!",
-      body: `${childName} finished today's ${categoryLabel} mission! +${stars_earned}⭐`,
-      url: `/missions/${category}`,
-    };
-  }
-
-  const result = await sendPushToParent(sb, user.id, payload);
-  return NextResponse.json(result);
 }

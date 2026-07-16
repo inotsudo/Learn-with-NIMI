@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { speakText, stopSpeaking } from "@/lib/speech";
+import supabase from "@/lib/supabaseClient";
 
 export interface ChatMessage {
   from: "nimi" | "user";
@@ -70,9 +71,13 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
     };
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch("/api/nimi", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           messages: history.map(m => ({
             role: m.from === "nimi" ? "assistant" : "user",

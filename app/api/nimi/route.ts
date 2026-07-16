@@ -1,8 +1,6 @@
 // app/api/nimi/route.ts
 import { NextRequest, NextResponse } from "next/server";
-// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -111,7 +109,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
 
-  const authClient = createRouteHandlerClient({ cookies });
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -127,6 +131,12 @@ export async function POST(req: NextRequest) {
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Invalid request format" }, { status: 400 });
+    }
+    if (messages.length > 20) {
+      return NextResponse.json({ error: "Too many messages" }, { status: 400 });
+    }
+    if (messages.some((m: OpenRouterMessage) => typeof m.content !== "string" || m.content.length > 500)) {
+      return NextResponse.json({ error: "Message too long" }, { status: 400 });
     }
 
     const LANGUAGE_NAMES: Record<string, string> = {
@@ -243,7 +253,7 @@ Your style:
     if (!response.ok) {
       const text = await response.text();
       console.error("OpenRouter API error:", text);
-      return NextResponse.json({ error: "AI service error", details: text }, { status: 500 });
+      return NextResponse.json({ error: "AI service error" }, { status: 500 });
     }
 
     // ✅ Safe streaming parser
@@ -312,7 +322,7 @@ Your style:
   } catch (error) {
     console.error("Unexpected error:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

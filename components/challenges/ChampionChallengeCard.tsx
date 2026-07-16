@@ -65,7 +65,7 @@ export default function ChampionChallengeCard({
           </div>
         </div>
         <p className="font-baloo font-black text-ds-text text-[20px] sm:text-[24px] uppercase tracking-wider">
-          {t("weeklyChallenge") || "Champion Challenge"} 🌿
+          {t("weeklyChallenge")} 🌿
         </p>
       </div>
 

@@ -13,7 +13,7 @@ import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildAchievements, getStoryProgressStars, type Child } from "@/lib/queries";
+import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildBadges, type Child } from "@/lib/queries";
 import { getStoryLibrary, getCurrentStoryId } from "@/lib/storyRepository";
 import type { StoryLibraryItem } from "@/lib/story-types";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
@@ -43,7 +43,6 @@ export default function StoryLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [totalStars, setTotalStars] = useState(0);
-  const [storyStars, setStoryStars] = useState<Record<string, number>>({});
   const [weekStreak, setWeekStreak] = useState<boolean[]>([false,false,false,false,false,false,false]);
   const [streakCount, setStreakCount] = useState(0);
   const [badgeCount, setBadgeCount] = useState(0);
@@ -57,14 +56,13 @@ export default function StoryLibraryPage() {
   const loadForChild = useCallback(async (child: Child, lang: Language, silent = false) => {
     const gen = silent ? ++switchGenRef.current : 0;
     if (silent) setRefreshing(true); else setLoading(true);
-    const [lib, cur, streak, consStreak, ach, stars, perStory] = await Promise.all([
+    const [lib, cur, streak, consStreak, badges, stars] = await Promise.all([
       getStoryLibrary(child.id, lang),
       getCurrentStoryId(child.id, lang),
       getWeekStreak(child.id, lang),
       getConsecutiveStreak(child.id, lang),
-      getChildAchievements(child.id),
+      getChildBadges(child.id, lang),
       getTotalStars(child.id, lang),
-      getStoryProgressStars(child.id, lang),
     ]);
 
     if (silent && gen !== switchGenRef.current) return;
@@ -72,9 +70,8 @@ export default function StoryLibraryPage() {
     setCurrentId(cur);
     setWeekStreak(streak);
     setStreakCount(consStreak);
-    setBadgeCount(ach.filter(a => a.type === "badge" && a.language === lang).length);
+    setBadgeCount(badges.length);
     setTotalStars(stars);
-    setStoryStars(perStory);
     if (silent) setRefreshing(false); else setLoading(false);
   }, []);
 
@@ -111,6 +108,17 @@ export default function StoryLibraryPage() {
       window.removeEventListener("app:languageChange", handler as EventListener);
       if (debounceTimer) clearTimeout(debounceTimer);
     };
+  }, [loadForChild]);
+
+  // Refresh when the browser tab regains focus
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState !== "visible") return;
+      const child = activeChildRef.current;
+      if (child) void loadForChild(child, child.language, true);
+    };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
   }, [loadForChild]);
 
   // Build category tabs from actual story data
@@ -166,7 +174,7 @@ export default function StoryLibraryPage() {
                 animate={{ y:[0,-5,0] }} transition={{ duration: DURATION.loopSlow, repeat: Infinity }}
                 className="w-16 h-16 rounded-full border-2 border-white/40 shadow-lg shrink-0" draggable={false} />
               <div className="flex-1">
-                <p className="text-white/55 text-[10px] font-nunito font-bold uppercase tracking-[0.14em] mb-0.5">The Library</p>
+                <p className="text-white/55 text-[10px] font-nunito font-bold uppercase tracking-[0.14em] mb-0.5">{t("storyLibraryEyebrow")}</p>
                 <h1 className="font-baloo font-black text-white text-[26px] sm:text-[34px] leading-tight drop-shadow-md">{t("storyLibraryTitle")}</h1>
                 <p className="text-white/80 text-[13px] font-nunito font-semibold mt-0.5">{t("storyLibrarySubtitle")}</p>
               </div>
@@ -241,8 +249,8 @@ export default function StoryLibraryPage() {
 
           {/* ═══ STORY GRID ═══ */}
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
-              {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-64 leaf-lg" />)}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
+              {Array.from({ length: 8 }).map((_, i) => <Bone key={i} className="h-64 leaf-lg" />)}
             </div>
           ) : paginated.length === 0 ? (
             <div className="page-shell text-center py-16">
@@ -254,7 +262,6 @@ export default function StoryLibraryPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {paginated.map((story, i) => {
                 const isCurrent = story.sid === currentId;
-                const done = Math.round(story.progress * 6);
                 const hasCover = !!story.cover_url;
 
                 return (
@@ -301,10 +308,9 @@ export default function StoryLibraryPage() {
                           <div className="p-3">
                             <h3 className="font-baloo font-black text-ds-text text-[14px] sm:text-[15px] leading-tight truncate">{story.title}</h3>
                             <div className="flex items-center gap-0.5 mt-1.5">
-                              {Array.from({ length: 5 }).map((_, j) => {
-                                const starProgress = done / 6 * 5;
-                                return <Star key={j} className={`w-3.5 h-3.5 ${j < starProgress ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-100"}`} />;
-                              })}
+                              {Array.from({ length: 5 }).map((_, j) => (
+                                <Star key={j} className={`w-3.5 h-3.5 ${j < story.progress * 5 ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-100"}`} />
+                              ))}
                             </div>
                             {!story.complete && story.progress > 0 && (
                               <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
@@ -335,14 +341,14 @@ export default function StoryLibraryPage() {
                                 <Lock className="w-5 h-5 text-gray-500" />
                               </div>
                               <div className="bg-gray-800/80 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                                🏆 Finish Story {story.sort_order - 1} first
+                                🔒 {t("storyUnlockHint")}
                               </div>
                             </div>
                           </div>
                           <div className="p-3">
                             <h3 className="font-baloo font-black text-gray-400 text-[14px] sm:text-[15px] leading-tight truncate">{story.title}</h3>
                             <p className="text-gray-400 text-[10px] font-semibold mt-1.5 flex items-center gap-1">
-                              <Lock className="w-2.5 h-2.5" /> Complete Story {story.sort_order - 1} to unlock
+                              <Lock className="w-2.5 h-2.5" /> {t("storyUnlockHint")}
                             </p>
                           </div>
                         </motion.div>

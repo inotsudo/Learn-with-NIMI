@@ -4,10 +4,10 @@ import Link from "next/link";
 
 const ACTIONS = [
   { label: "Read",    href: "/stories",    emoji: "📖" },
-  { label: "Create",  href: "/missions",   emoji: "✏️" },
-  { label: "Explore", href: "/missions",   emoji: "🧭" },
-  { label: "Move",    href: "/missions",   emoji: "🏃" },
-  { label: "Sing",    href: "/missions",   emoji: "🎵" },
+  { label: "Create",  href: "/stories",   emoji: "✏️" },
+  { label: "Explore", href: "/stories",   emoji: "🧭" },
+  { label: "Move",    href: "/stories",   emoji: "🏃" },
+  { label: "Sing",    href: "/stories",   emoji: "🎵" },
   { label: "Grow",    href: "/community",  emoji: "🌱" },
 ] as const;
 

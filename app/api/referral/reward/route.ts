@@ -16,6 +16,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  try {
   const { referred_id } = await req.json() as { referred_id: string };
 
   // Validate referred_id is a real parent (prevents arbitrary free sub grants if secret leaks)
@@ -34,11 +35,25 @@ export async function POST(req: Request) {
   // Find the referral record for this new subscriber
   const { data: redemption } = await supabase
     .from("referral_redemptions")
-    .select("id, referrer_id, reward_granted_at")
+    .select("id, referrer_id")
     .eq("referred_id", referred_id)
     .maybeSingle();
 
-  if (!redemption || redemption.reward_granted_at) {
+  if (!redemption) {
+    return NextResponse.json({ ok: true, skipped: true });
+  }
+
+  // Atomically claim the reward slot — prevents concurrent triggers from granting twice.
+  const { data: claimed } = await supabase
+    .from("referral_redemptions")
+    .update({ reward_granted_at: new Date().toISOString() })
+    .eq("id", redemption.id)
+    .is("reward_granted_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (!claimed) {
+    // Another request already granted the reward
     return NextResponse.json({ ok: true, skipped: true });
   }
 
@@ -73,10 +88,9 @@ export async function POST(req: Request) {
     order_id: null,
   });
 
-  // Mark reward as granted
-  await supabase.from("referral_redemptions").update({
-    reward_granted_at: new Date().toISOString(),
-  }).eq("id", redemption.id);
-
   return NextResponse.json({ ok: true });
+  } catch (err: unknown) {
+    console.error("[referral/reward] unexpected error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

@@ -14,7 +14,7 @@ export default function BottomNavigation() {
   const [isFocused, setIsFocused] = useState<string | null>(null);
 
   const pathname = usePathname();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function BottomNavigation() {
 
   const navItems = [
     {
-      name: t("home") || fallbackName("home", language),
+      name: t("navHome"),
       href: "/",
       icon: Home,
       activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
@@ -40,15 +40,15 @@ export default function BottomNavigation() {
       underlineColor: "bg-[var(--ds-nav-active-text)]",
     },
     {
-      name: fallbackName("mission", language),
-      href: "/missions",
+      name: t("navStories"),
+      href: "/stories",
       icon: BookOpen,
       activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
       hoverColor: "hover:bg-gray-50 hover:text-[var(--ds-nav-active-text)]",
       underlineColor: "bg-[var(--ds-nav-active-text)]",
     },
     {
-      name: t("community") || fallbackName("community", language),
+      name: t("navCommunity"),
       href: "/community",
       icon: Users,
       activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
@@ -56,7 +56,7 @@ export default function BottomNavigation() {
       underlineColor: "bg-[var(--ds-nav-active-text)]",
     },
     {
-      name: fallbackName("Guardian", language),
+      name: t("navGuardian"),
       href: "/parents",
       icon: UserCheck,
       activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
@@ -205,37 +205,3 @@ export default function BottomNavigation() {
   );
 }
 
-function fallbackName(key: string, lang: string) {
-  const dictionary: Record<string, Record<string, string>> = {
-    home: {
-      en: "Home",
-      es: "Inicio",
-      fr: "Accueil",
-      sw: "Nyumbani",
-      rw: "Ahabanza",
-    },
-    mission: {
-      en: "Mission",
-      es: "Misión",
-      fr: "Mission",
-      sw: "Misheni",
-      rw: "Ubutumwa",
-    },
-    community: {
-      en: "Community",
-      es: "Comunidad",
-      fr: "Communauté",
-      sw: "Jumuiya",
-      rw: "Umuryango",
-    },
-    guardian: {
-      en: "Guardian",
-      es: "Tutor",
-      fr: "Tuteur",
-      sw: "Mlezi",
-      rw: "Umurera",
-    },
-  };
-
-  return dictionary[key]?.[lang] || dictionary[key]?.en || key;
-}

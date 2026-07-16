@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (error) {
-    const _emsg = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: _emsg }, { status: 500 });
+    console.error("[CancelSubscription]", error);
+    return NextResponse.json({ error: "Failed to cancel subscription" }, { status: 500 });
   }
 
   // Send cancellation confirmation email (best-effort)

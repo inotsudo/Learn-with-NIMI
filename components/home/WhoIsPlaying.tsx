@@ -8,6 +8,7 @@ import { Settings, Plus, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Child } from "@/lib/queries";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { useLanguage } from "@/contexts/LanguageContext";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getThemeEffects } from "@/lib/design-system/themeEffects";
@@ -30,6 +31,7 @@ interface Props {
 export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) {
   const router = useRouter();
   const { themeId, theme } = useAppTheme();
+  const { t } = useLanguage();
   const assets = getThemeAssets(themeId);
   const effects = getThemeEffects(themeId);
   const m = useThemeMotion();
@@ -66,7 +68,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
             NIMIPIKO
           </p>
           <p className="text-gray-500 text-[11px] font-semibold tracking-widest uppercase">
-            Where Stories Come to Life
+            {t("whoIsPlayingTagline")}
           </p>
         </div>
         <Image src={assets.pikoCircle} alt="PIKO" width={56} height={56}
@@ -80,7 +82,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
         transition={{ duration: DURATION.base, delay: 0.2 }}
         className="text-gray-900 text-2xl sm:text-3xl font-black mb-8 mt-4 tracking-wide text-center"
       >
-        Who&apos;s playing today? 🌟
+        {t("whoIsPlayingToday")}
       </motion.p>
 
       {/* Child cards */}
@@ -137,7 +139,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
           </div>
           <div className="bg-white shadow-sm px-5 py-1.5 rounded-full border border-ds-border">
             <p className="text-gray-500 font-bold text-base group-hover:text-gray-700 transition-colors">
-              Add child
+              {t("whoAddChild")}
             </p>
           </div>
         </motion.button>
@@ -152,7 +154,7 @@ export default function WhoIsPlaying({ children, onSelect, onAddChild }: Props) 
         className="flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-gray-50 border border-ds-border text-gray-500 hover:text-gray-700 text-xs font-semibold transition-all shadow-sm"
       >
         <Settings className="w-3.5 h-3.5" />
-        Parent Zone
+        {t("whoParentZone")}
       </motion.button>
     </div>
   );

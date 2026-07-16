@@ -1,9 +1,7 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-// @ts-ignore
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 import * as crypto from "crypto";
 
 const supabase = createClient(
@@ -14,7 +12,7 @@ const supabase = createClient(
 export async function POST(request: NextRequest) {
   try {
     // Auth check — caller must be logged in and own the order
-    const authClient = createRouteHandlerClient({ cookies });
+    const authClient = await createRouteClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
@@ -48,9 +46,17 @@ export async function POST(request: NextRequest) {
 
     const rawOrigin = request.headers.get("origin") || "";
     const resourcePath = "/up/v1/capture-contexts";
-    const targetOrigins = rawOrigin.startsWith("https://")
-      ? [rawOrigin]
-      : ["https://nimipiko.com", "https://www.nimipiko.com", "https://learn-with-nimi.vercel.app"];
+
+    // Allowlist only known-good origins — never reflect arbitrary origins to CyberSource.
+    const STATIC_ORIGINS = [
+      "https://nimipiko.com",
+      "https://www.nimipiko.com",
+      "https://learn-with-nimi.vercel.app",
+    ];
+    const isAllowedOrigin =
+      STATIC_ORIGINS.includes(rawOrigin) ||
+      /^https:\/\/learn-with-nimi-[a-z0-9-]+\.vercel\.app$/.test(rawOrigin);
+    const targetOrigins = isAllowedOrigin ? [rawOrigin] : STATIC_ORIGINS;
 
     const bodyObj = {
       targetOrigins,

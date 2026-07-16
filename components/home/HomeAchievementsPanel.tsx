@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight, Trophy } from "lucide-react";
 import type { ChildAchievement } from "@/lib/queries";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BadgeDisplay {
   emoji: string;
@@ -52,6 +53,7 @@ interface Props {
 }
 
 export default function HomeAchievementsPanel({ achievements }: Props) {
+  const { t } = useLanguage();
   return (
     <div className="overflow-hidden leaf-lg border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.07)]">
 
@@ -62,12 +64,12 @@ export default function HomeAchievementsPanel({ achievements }: Props) {
             <Trophy className="w-5 h-5 text-amber-600" />
           </div>
           <div>
-            <p className="font-nunito text-amber-500 text-[10px] uppercase tracking-widest leading-none mb-0.5">Trophy Room</p>
-            <h3 className="font-baloo font-black text-gray-900 text-[17px] leading-tight">My Treasures</h3>
+            <p className="font-nunito text-amber-500 text-[10px] uppercase tracking-widest leading-none mb-0.5">{t("homeTrophyRoomEyebrow")}</p>
+            <h3 className="font-baloo font-black text-gray-900 text-[17px] leading-tight">{t("homeMyTreasuresTitle")}</h3>
           </div>
         </div>
         <Link href="/user-profile" className="flex items-center gap-0.5 font-nunito font-bold text-gray-400 text-[11px] hover:text-amber-600 transition-colors">
-          All <ChevronRight className="w-3.5 h-3.5" />
+          {t("homeViewAllBadges")} <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
       <div className="h-px bg-gray-100 mx-4" />
@@ -89,8 +91,8 @@ export default function HomeAchievementsPanel({ achievements }: Props) {
                   {badge.emoji}
                 </motion.div>
                 {earned
-                  ? <span className="bg-emerald-100 text-emerald-700 font-nunito font-black text-[9px] px-2 py-0.5 rounded-full">★ Earned</span>
-                  : <span className="bg-gray-100 text-gray-400 font-nunito font-black text-[9px] px-2 py-0.5 rounded-full">🔒 Locked</span>
+                  ? <span className="bg-emerald-100 text-emerald-700 font-nunito font-black text-[9px] px-2 py-0.5 rounded-full">{t("homeBadgeEarned")}</span>
+                  : <span className="bg-gray-100 text-gray-400 font-nunito font-black text-[9px] px-2 py-0.5 rounded-full">{t("homeBadgeLocked")}</span>
                 }
                 <p className="font-nunito font-bold text-gray-600 text-[10px] text-center leading-tight">{badge.label}</p>
               </div>

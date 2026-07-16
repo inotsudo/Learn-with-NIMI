@@ -34,7 +34,7 @@ export default function ProgressHeader({
   activeTab, onTabChange, childName, avatarUrl, onEditProfile,
 }: Props) {
   const { t } = useLanguage();
-  const displayName = childName ?? "Explorer";
+  const displayName = childName || t("defaultChildName");
 
   return (
     <div>
@@ -131,7 +131,7 @@ export default function ProgressHeader({
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                {t("tapAvatarToEdit") || "Tap avatar to edit"}
+                {t("tapAvatarToEdit")}
               </motion.button>
             )}
           </div>

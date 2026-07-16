@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import type { Child } from "@/lib/queries";
+import { useLanguage } from "@/contexts/LanguageContext";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 
 interface Props {
@@ -13,10 +14,11 @@ interface Props {
 
 export default function ChildSelector({ children, activeChild, onSelect }: Props) {
   const m = useThemeMotion();
+  const { t } = useLanguage();
   return (
     <div className="flex items-center gap-2 mb-4 bg-white px-3 py-2 border border-ds-border overflow-x-auto shadow-sm" style={{ borderRadius: 'var(--leaf-r)' }}>
       <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide flex-shrink-0">
-        Playing as:
+        {t("childSelectorPlayingAs")}
       </span>
       <div className="flex items-center gap-2 flex-1">
         {children.map(child => (

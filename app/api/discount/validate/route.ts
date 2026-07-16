@@ -19,12 +19,13 @@ export async function POST(req: NextRequest) {
 
   if (!dc) return NextResponse.json({ valid: false, error: "Invalid or expired code" });
 
-  // Check max uses
+  // Check max uses — use same message as "not found" to avoid confirming code existence
   if (dc.max_uses !== null && dc.uses_count >= dc.max_uses) {
-    return NextResponse.json({ valid: false, error: "This code has been fully redeemed" });
+    return NextResponse.json({ valid: false, error: "Invalid or expired code" });
   }
 
-  // Check product applicability
+  // Check product applicability — specific message here is useful UX, not a security risk
+  // (applicability is only checked for a code that is already known to be valid)
   const slug = body.productSlug ?? "";
   if (dc.applies_to === "club" && !slug.includes("club")) {
     return NextResponse.json({ valid: false, error: "This code is only valid for Club plans" });

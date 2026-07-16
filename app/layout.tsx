@@ -1,4 +1,5 @@
 import "./globals.css";
+import type { Metadata } from "next";
 import { Baloo_2, Nunito } from "next/font/google";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { NimiReaderProvider } from "@/contexts/NimiReaderContext";
@@ -14,7 +15,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 const baloo  = Baloo_2({ subsets: ["latin"], variable: "--font-baloo",  weight: ["400","500","600","700","800"] });
 const nunito = Nunito ({  subsets: ["latin"], variable: "--font-nunito", weight: ["400","600","700","800","900"] });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "NIMIPIKO — Interactive Stories for Kids | English, French & Kinyarwanda",
   description: "Give your child a magical learning adventure through interactive stories, AI companion Nimi, songs, coloring and achievement certificates — in English, French and Kinyarwanda. Ages 2–12. Now in early access.",
   metadataBase: new URL("https://nimipiko.com"),

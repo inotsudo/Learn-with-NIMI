@@ -49,7 +49,7 @@ export default function ParentsZonePage() {
   const assets = getThemeAssets(themeId);
   const push = usePushNotifications();
   const [loading, setLoading] = useState(true);
-  const [parentName, setParentName] = useState("Parent");
+  const [parentName, setParentName] = useState("");
   const [childrenData, setChildrenData] = useState<ChildData[]>([]);
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [showAddChild, setShowAddChild] = useState(false);

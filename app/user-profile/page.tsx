@@ -109,7 +109,7 @@ function EarnedAchievementsCard({
   return (
     <div className="bg-ds-card border border-ds-border shadow-ds-card p-5" style={{ borderRadius: "var(--leaf-r)" }}>
       <h2 className="font-baloo font-black text-ds-text text-[17px] mb-4">
-        🏅 {t("myBadgesTitle") || "Badges & Certificates"}
+        🏅 {t("myBadgesTitle")}
       </h2>
 
       {!hasAny && (
@@ -118,14 +118,14 @@ function EarnedAchievementsCard({
           animate={{ opacity: 1, y: 0 }}
           className="text-ds-muted text-[12px] font-semibold text-center py-4"
         >
-          🚀 {t("badgesHintMsg") || "Complete stories to earn your first badge!"}
+          🚀 {t("badgesHintMsg")}
         </motion.p>
       )}
 
       {earnedSlugs.length > 0 && (
         <div className="mb-4">
           <p className="text-ds-muted font-bold text-[11px] uppercase tracking-wider mb-3">
-            {t("badgesLabel") || "Badges"} · {earnedSlugs.length}
+            {t("badgesLabel")} · {earnedSlugs.length}
           </p>
           <div className="flex flex-wrap gap-3">
             {earnedSlugs.map((slug, i) => {
@@ -156,7 +156,7 @@ function EarnedAchievementsCard({
         <div>
           {earnedSlugs.length > 0 && <div className="border-t border-ds-border my-3" />}
           <p className="text-ds-muted font-bold text-[11px] uppercase tracking-wider mb-3">
-            {t("certificatesLabel") || "Certificates"} · {certificates.length}
+            {t("certificatesLabel")} · {certificates.length}
           </p>
           <div className="space-y-2">
             {certificates.map((cert, i) => (
@@ -176,7 +176,7 @@ function EarnedAchievementsCard({
                     {cert.earned_at ? new Date(cert.earned_at).toLocaleDateString() : ""}
                   </p>
                 </div>
-                <span className="text-amber-500 font-black text-[11px] shrink-0">✓ Earned</span>
+                <span className="text-amber-500 font-black text-[11px] shrink-0">{t("certEarned")}</span>
               </motion.div>
             ))}
           </div>
@@ -193,7 +193,7 @@ export default function UserProfilePage() {
   const [hasChildren, setHasChildren] = useState(true);
   const [allChildren, setAllChildren] = useState<Child[]>([]);
   const [activeTab, setActiveTab] = useState<ProgressTab>("overview");
-  const [childName, setChildName] = useState("Explorer");
+  const [childName, setChildName] = useState("");
   const [activeChild, setActiveChild] = useState<Child | null>(null);
   const [weekStreak, setWeekStreak] = useState<boolean[]>(Array(7).fill(false));
   const [weekCounts, setWeekCounts] = useState<number[]>(Array(7).fill(0));
@@ -271,7 +271,8 @@ export default function UserProfilePage() {
     void loadProgress();
 
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") void loadProgress();
+      if (document.visibilityState === "visible")
+        void loadProgress(activeChildRef.current?.id, true);
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);

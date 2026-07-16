@@ -3,9 +3,7 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 import { PDFDocument, rgb } from "pdf-lib";
 import sharp from "sharp";
 
@@ -38,7 +36,7 @@ async function makeCircularPhoto(photoBuffer: Buffer, size: number): Promise<Buf
 
 export async function POST(req: NextRequest) {
   try {
-    const authClient = createRouteHandlerClient({ cookies });
+    const authClient = await createRouteClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

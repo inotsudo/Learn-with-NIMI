@@ -23,15 +23,15 @@ const PAGE_SIZE = 20;
 const HOT_THRESHOLD = 8;
 
 // ── Helpers ────────────────────────────────────────────────────
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (k: string) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1)  return "just now";
-  if (m < 60) return `${m}m ago`;
+  if (m < 1)  return t("communityJustNow");
+  if (m < 60) return `${m}${t("communityTimeMinAgo")}`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return `${h}${t("communityTimeHourAgo")}`;
   const d = Math.floor(h / 24);
-  return d < 7 ? `${d}d ago` : `${Math.floor(d / 7)}w ago`;
+  return d < 7 ? `${d}${t("communityTimeDayAgo")}` : `${Math.floor(d / 7)}${t("communityTimeWeekAgo")}`;
 }
 
 type CreationRow = { id: string; parent_id?: string | null; child_name?: string | null; child_avatar_url?: string | null; age?: number | null; description?: string | null; image_url?: string | null; likes?: { user_id: string }[] | null; type?: string | null; created_at: string };
@@ -68,16 +68,16 @@ function mapCreation(c: CreationRow, uid: string): Creation {
 }
 
 // ── Type metadata ───────────────────────────────────────────────
-const TYPE_META: Record<string, { emoji: string; label: string; pill: string; gradient: string }> = {
-  certificate:   { emoji:"🏆", label:"Story Complete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
-  story:         { emoji:"🏆", label:"Story Complete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
-  story_progress:{ emoji:"📖", label:"On Adventure",    pill:"bg-sky-500",    gradient:"from-sky-400 to-blue-500"       },
-  challenge:     { emoji:"💪", label:"Challenge Done",  pill:"bg-blue-500",   gradient:"from-blue-500 to-indigo-600"    },
-  sticker:       { emoji:"⭐", label:"Star Earned",     pill:"bg-yellow-500", gradient:"from-yellow-400 to-amber-500"   },
-  art:           { emoji:"🎨", label:"Artwork",         pill:"bg-fuchsia-500",gradient:"from-fuchsia-500 to-violet-600" },
-  coloring:      { emoji:"🖍️", label:"Coloring Page",   pill:"bg-purple-500", gradient:"from-purple-500 to-pink-500"   },
+const TYPE_META: Record<string, { emoji: string; labelKey: string; pill: string; gradient: string }> = {
+  certificate:   { emoji:"🏆", labelKey:"communityTypeStoryComplete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
+  story:         { emoji:"🏆", labelKey:"communityTypeStoryComplete",  pill:"bg-amber-500",  gradient:"from-amber-400 to-orange-500"   },
+  story_progress:{ emoji:"📖", labelKey:"communityTypeOnAdventure",    pill:"bg-sky-500",    gradient:"from-sky-400 to-blue-500"       },
+  challenge:     { emoji:"💪", labelKey:"communityTypeChallengeDone",  pill:"bg-blue-500",   gradient:"from-blue-500 to-indigo-600"    },
+  sticker:       { emoji:"⭐", labelKey:"communityTypeStarEarned",     pill:"bg-yellow-500", gradient:"from-yellow-400 to-amber-500"   },
+  art:           { emoji:"🎨", labelKey:"communityTypeArtwork",        pill:"bg-fuchsia-500",gradient:"from-fuchsia-500 to-violet-600" },
+  coloring:      { emoji:"🖍️", labelKey:"communityTypeColoring",       pill:"bg-purple-500", gradient:"from-purple-500 to-pink-500"   },
 };
-const fallbackMeta = { emoji:"✨", label:"Moment", pill:"bg-gray-400", gradient:"from-gray-400 to-slate-500" };
+const fallbackMeta = { emoji:"✨", labelKey:"communityTypeMoment", pill:"bg-gray-400", gradient:"from-gray-400 to-slate-500" };
 
 // ── Filters ─────────────────────────────────────────────────────
 
@@ -114,6 +114,7 @@ function CreationCard({
   onDelete: (id: string) => void;
   isOwn: boolean;
 }) {
+  const { t } = useLanguage();
   const [bursting, setBursting] = useState(false);
   const meta = TYPE_META[creation.type] ?? fallbackMeta;
 
@@ -164,13 +165,13 @@ function CreationCard({
         {/* Name + timestamp */}
         <div className="flex-1 min-w-0">
           <p className="font-black text-ds-text text-[14px] leading-tight truncate">{creation.childName}</p>
-          <p className="text-ds-muted text-[11px] font-medium mt-0.5">{timeAgo(creation.createdAt)}</p>
+          <p className="text-ds-muted text-[11px] font-medium mt-0.5">{timeAgo(creation.createdAt, t)}</p>
         </div>
 
         {/* Type badge */}
         <span className={`shrink-0 flex items-center gap-1.5 ${meta.pill} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm`}>
           <span className="text-[11px] leading-none">{meta.emoji}</span>
-          {meta.label}
+          {t(meta.labelKey)}
         </span>
 
         {/* Actions (report / delete) */}
@@ -221,10 +222,10 @@ function CreationCard({
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-white font-black text-[22px] leading-none">{progressPct}%</span>
-                <span className="text-white/70 text-[10px] font-semibold mt-0.5">done</span>
+                <span className="text-white/70 text-[10px] font-semibold mt-0.5">{t("communityProgressDone")}</span>
               </div>
             </div>
-            <p className="text-white font-black text-[13px] text-center drop-shadow-sm">On Adventure! 📖</p>
+            <p className="text-white font-black text-[13px] text-center drop-shadow-sm">{t("communityOnAdventureLabel")}</p>
           </div>
         ) : hasImg ? (
           <img
@@ -245,7 +246,7 @@ function CreationCard({
 
         {isHot && (
           <div className="absolute top-2 left-2 flex items-center gap-1 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
-            <Flame className="w-3 h-3 fill-white" strokeWidth={0} /> HOT
+            <Flame className="w-3 h-3 fill-white" strokeWidth={0} /> {t("communityHot")}
           </div>
         )}
       </div>
@@ -281,7 +282,7 @@ function CreationCard({
             >
               {creation.likedByUser ? "🎉" : "👏"}
             </motion.span>
-            <span>{creation.likedByUser ? "Cheered!" : "Cheer"}</span>
+            <span>{creation.likedByUser ? t("communityCheered") : t("communityCheer")}</span>
             {creation.likes > 0 && (
               <motion.span
                 key={creation.likes}
@@ -305,12 +306,13 @@ function CreationCard({
 
 // ── Report modal ─────────────────────────────────────────────────
 function ReportModal({ onSubmit, onCancel }: { onSubmit: (r: string) => void; onCancel: () => void }) {
+  const { t } = useLanguage();
   const [reason, setReason] = useState("");
   const REASONS = [
-    { emoji:"😟", label:"Not kind or respectful" },
-    { emoji:"🚫", label:"Inappropriate content"  },
-    { emoji:"😢", label:"Makes me uncomfortable" },
-    { emoji:"❓", label:"Something else"          },
+    { emoji:"😟", labelKey:"communityReportReason1" },
+    { emoji:"🚫", labelKey:"communityReportReason2" },
+    { emoji:"😢", labelKey:"communityReportReason3" },
+    { emoji:"❓", labelKey:"communityReportReason4" },
   ];
   return (
     <>
@@ -327,23 +329,23 @@ function ReportModal({ onSubmit, onCancel }: { onSubmit: (r: string) => void; on
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <span className="text-3xl">🚩</span>
             </div>
-            <h3 className="font-black text-ds-text text-[18px]">Report this post?</h3>
-            <p className="text-ds-muted text-[12px] mt-1">Tell us what's wrong</p>
+            <h3 className="font-black text-ds-text text-[18px]">{t("communityReportTitle")}</h3>
+            <p className="text-ds-muted text-[12px] mt-1">{t("communityReportSubtitle")}</p>
           </div>
           <div className="space-y-2 mb-5">
             {REASONS.map(r => (
-              <button key={r.label} onClick={() => setReason(r.label)}
+              <button key={r.labelKey} onClick={() => setReason(r.labelKey)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left ${
-                  reason === r.label
+                  reason === r.labelKey
                     ? "border-red-200 bg-red-50"
                     : "border-transparent bg-ds-border/30 hover:bg-ds-border/60"
                 }`}
               >
                 <span className="text-xl">{r.emoji}</span>
-                <span className={`font-bold text-[13px] ${reason === r.label ? "text-red-600" : "text-ds-text"}`}>
-                  {r.label}
+                <span className={`font-bold text-[13px] ${reason === r.labelKey ? "text-red-600" : "text-ds-text"}`}>
+                  {t(r.labelKey)}
                 </span>
-                {reason === r.label && (
+                {reason === r.labelKey && (
                   <motion.div initial={{ scale:0 }} animate={{ scale:1 }}
                     className="ml-auto w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shrink-0">
                     <span className="text-white text-[10px] font-black">✓</span>
@@ -355,11 +357,11 @@ function ReportModal({ onSubmit, onCancel }: { onSubmit: (r: string) => void; on
           <div className="flex gap-2.5">
             <button onClick={onCancel}
               className="flex-1 bg-ds-border/40 text-ds-muted font-black text-[14px] py-3 rounded-2xl hover:bg-ds-border/70 transition">
-              Cancel
+              {t("communityCancel")}
             </button>
             <button onClick={() => reason && onSubmit(reason)} disabled={!reason}
               className="flex-1 bg-red-500 hover:bg-red-600 text-white font-black text-[14px] py-3 rounded-2xl shadow-md disabled:opacity-30 transition">
-              Report
+              {t("communityReport")}
             </button>
           </div>
         </motion.div>
@@ -401,6 +403,7 @@ function SharePickerSheet({
   allShared: boolean;
   cv: ComponentVariant;
 }) {
+  const { t } = useLanguage();
   return (
     <AnimatePresence>
       {open && (
@@ -437,10 +440,10 @@ function SharePickerSheet({
                   >🚀</motion.div>
                   <div>
                     <h3 className="font-baloo font-black text-white text-[20px] leading-tight drop-shadow-sm">
-                      Share an Adventure
+                      {t("communityShareTitle")}
                     </h3>
                     <p className="text-white/70 text-[12px] font-semibold mt-0.5">
-                      Pick a story to celebrate with your community
+                      {t("communityShareSubtitle")}
                     </p>
                   </div>
                 </div>
@@ -467,12 +470,10 @@ function SharePickerSheet({
                     className="text-7xl mb-5"
                   >{allShared ? "🌟" : "📖"}</motion.div>
                   <p className="font-baloo font-black text-ds-text text-[20px]">
-                    {allShared ? "All caught up!" : "No adventures yet!"}
+                    {allShared ? t("communityAllCaughtUp") : t("communityNoAdventures")}
                   </p>
                   <p className="text-ds-muted text-[13px] mt-2 leading-relaxed max-w-[240px]">
-                    {allShared
-                      ? "You've shared all your adventures. Keep learning to unlock more stories to celebrate! 🚀"
-                      : "Complete a story mission and your achievements will appear here to share 🌟"}
+                    {allShared ? t("communityAllSharedDesc") : t("communityNoAdventuresDesc")}
                   </p>
                   {allShared && (
                     <motion.div
@@ -482,7 +483,7 @@ function SharePickerSheet({
                       className="mt-5 flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-ds-border bg-ds-card"
                     >
                       <span className="text-lg">🎓</span>
-                      <p className="text-ds-text text-[12px] font-black">New stories unlock as you learn</p>
+                      <p className="text-ds-text text-[12px] font-black">{t("communityNewStoriesUnlock")}</p>
                     </motion.div>
                   )}
                 </div>
@@ -539,7 +540,7 @@ function SharePickerSheet({
                           >
                             {isSharing
                               ? <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                              : <>{done ? "🏆" : "⭐"} Post</>
+                              : <>{done ? "🏆" : "⭐"} {t("communityPost")}</>
                             }
                           </motion.button>
                         </div>
@@ -570,6 +571,7 @@ function CaptionSheet({
   posting: boolean;
   cv: ComponentVariant;
 }) {
+  const { t } = useLanguage();
   const coverSrc = item?.coverUrl ? getStorageUrl(item.coverUrl) : null;
   const remaining = CAPTION_MAX - caption.length;
 
@@ -599,7 +601,7 @@ function CaptionSheet({
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <h3 className="font-black text-ds-text text-[18px] leading-tight">Add a caption</h3>
+              <h3 className="font-black text-ds-text text-[18px] leading-tight">{t("communityAddCaption")}</h3>
             </div>
 
             {/* Story preview */}
@@ -616,7 +618,7 @@ function CaptionSheet({
                   <p className="text-ds-muted text-[12px] font-medium mt-0.5">{item.childName}</p>
                 </div>
                 <span className={`self-start inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-full ${item.complete ? "bg-amber-100 text-amber-700" : "bg-sky-100 text-sky-700"}`}>
-                  {item.complete ? "🏆 Completed" : `📖 ${Math.round(item.progress * 100)}% through`}
+                  {item.complete ? t("communityCompleted") : `📖 ${Math.round(item.progress * 100)}${t("communityThrough")}`}
                 </span>
               </div>
             </div>
@@ -627,7 +629,7 @@ function CaptionSheet({
                 value={caption}
                 onChange={e => onCaptionChange(e.target.value.slice(0, CAPTION_MAX))}
                 rows={3}
-                placeholder="Write something about this achievement…"
+                placeholder={t("communityCaptionPlaceholder")}
                 className="w-full bg-ds-page border border-ds-border rounded-2xl px-4 py-3 pb-8 text-ds-text text-[14px] leading-relaxed resize-none focus:outline-none focus:border-[var(--nimi-green)] transition-colors placeholder:text-ds-muted"
               />
               <span className={`absolute bottom-3 right-4 text-[11px] font-semibold pointer-events-none ${remaining < 30 ? "text-orange-500" : "text-ds-muted"}`}>
@@ -644,8 +646,8 @@ function CaptionSheet({
                 className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[16px] text-white shadow-lg disabled:opacity-50 bg-gradient-to-r ${cv.zoneGradients.communitySquare}`}
               >
                 {posting
-                  ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Posting…</>
-                  : <><span className="text-[18px]">🚀</span> Post to Community</>
+                  ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {t("communityPosting")}</>
+                  : <><span className="text-[18px]">🚀</span> {t("communityPostToCommunity")}</>
                 }
               </motion.button>
             </div>
@@ -658,6 +660,7 @@ function CaptionSheet({
 
 // ── Floating Share FAB ───────────────────────────────────────────
 function ShareFAB({ onClick, cv }: { onClick: () => void; cv: ComponentVariant }) {
+  const { t } = useLanguage();
   return (
     <motion.button
       initial={{ scale: 0, opacity: 0, y: 20 }}
@@ -678,7 +681,7 @@ function ShareFAB({ onClick, cv }: { onClick: () => void; cv: ComponentVariant }
       <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
         <Plus className="w-4 h-4" strokeWidth={3} />
       </div>
-      <span className="relative">Share</span>
+      <span className="relative">{t("communityShareFAB")}</span>
       <span className="text-[17px] leading-none">⭐</span>
     </motion.button>
   );
@@ -765,7 +768,7 @@ export default function CommunityPage() {
         if (likerId === userId) return; // ignore own cheer
         setCreations(prev => {
           const post = prev.find(c => c.id === creationId && c.parentId === userId);
-          if (post) showToast(`Someone cheered for ${post.childName}! 🎉`);
+          if (post) showToast(t("communityToastCheered").replace("{name}", post.childName));
           return prev;
         });
       })
@@ -872,8 +875,8 @@ export default function CommunityPage() {
   const defaultCaption = (item: PickerItem) => {
     const pct = Math.round(item.progress * 100);
     return item.complete
-      ? `${item.childName} just completed "${item.storyTitle}"! 🏆 What an adventure!`
-      : `${item.childName} is ${pct}% through "${item.storyTitle}" — cheering them on helps! 📖`;
+      ? t("communityDefaultCaptionComplete").replace("{name}", item.childName).replace("{title}", item.storyTitle)
+      : t("communityDefaultCaptionProgress").replace("{name}", item.childName).replace("{pct}", String(pct)).replace("{title}", item.storyTitle);
   };
 
   const handleSelectForCaption = (item: PickerItem) => {
@@ -914,7 +917,7 @@ export default function CommunityPage() {
     });
 
     if (error) { console.error("[sharePickerItem]", error.message); }
-    else { showToast(`Posted! 🚀 Cheer for ${item.childName}!`); }
+    else { showToast(t("communityToastPosted").replace("{name}", item.childName)); }
     setSharingKey(null);
     setCaptionItem(null);
     setCaptionText("");
@@ -935,7 +938,7 @@ export default function CommunityPage() {
             onClick={() => router.back()}
             className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-[13px] font-bold transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {t("storyBackBtn")}
           </button>
 
           {/* Decorative blobs */}
@@ -962,13 +965,13 @@ export default function CommunityPage() {
                 animate={{ y:[0,-6,0] }} transition={{ duration:2.8, repeat:Infinity }} />
               <div className="min-w-0">
                 <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.18em] mb-1">
-                  Community Square
+                  {t("communityEyebrow")}
                 </p>
                 <h1 className="font-baloo font-black text-white text-[26px] sm:text-[32px] leading-tight drop-shadow-lg">
-                  Friends Hub 👥
+                  {t("communityHeroTitle")}
                 </h1>
                 <p className="text-white/70 text-[12px] font-semibold mt-0.5">
-                  Where every adventure gets celebrated
+                  {t("communityHeroSubtitle")}
                 </p>
               </div>
             </div>
@@ -982,7 +985,7 @@ export default function CommunityPage() {
                 >
                   <Sparkles className="w-3.5 h-3.5 text-white/90" />
                   <span className="text-white text-[12px] font-black">
-                    {totalCount} adventure{totalCount !== 1 ? "s" : ""}
+                    {totalCount} {t("communityAdventureCount")}
                   </span>
                 </motion.div>
               )}
@@ -993,7 +996,7 @@ export default function CommunityPage() {
                 >
                   <span className="text-white/90 text-[13px]">👥</span>
                   <span className="text-white text-[12px] font-black">
-                    {friends.length} learner{friends.length !== 1 ? "s" : ""}
+                    {friends.length} {t("communityLearnerCount")}
                   </span>
                 </motion.div>
               )}
@@ -1028,7 +1031,7 @@ export default function CommunityPage() {
                     </div>
                   )}
                 </div>
-                <p className="text-white/70 text-[12px] font-semibold">Active now</p>
+                <p className="text-white/70 text-[12px] font-semibold">{t("communityActiveNow")}</p>
               </div>
             )}
           </div>
@@ -1051,10 +1054,10 @@ export default function CommunityPage() {
               🌟
             </motion.div>
             <h2 className="font-baloo font-black text-ds-text text-[20px] mb-2">
-              Nothing shared yet!
+              {t("communityEmptyTitle")}
             </h2>
             <p className="text-ds-muted text-[13px] max-w-[240px] mx-auto leading-relaxed mb-6">
-              Complete a story or challenge to share your first adventure!
+              {t("communityEmptyDesc")}
             </p>
             <motion.button
               whileTap={{ scale:0.95 }}
@@ -1062,7 +1065,7 @@ export default function CommunityPage() {
               className="inline-flex items-center gap-2 font-baloo font-black text-white text-[13px] px-5 py-2.5 rounded-2xl shadow-md"
               style={{ background:"var(--nimi-green)" }}
             >
-              <span>Start a Story</span> <span className="text-[15px]">📖</span>
+              <span>{t("communityStartStory")}</span> <span className="text-[15px]">📖</span>
             </motion.button>
           </motion.div>
         ) : (
@@ -1092,7 +1095,7 @@ export default function CommunityPage() {
           {!loading && hasMore && (
             <div className="flex items-center gap-2 text-ds-muted text-[12px] font-semibold">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Loading more...
+              {t("communityLoadingMore")}
             </div>
           )}
         </div>

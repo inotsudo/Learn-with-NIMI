@@ -39,20 +39,20 @@ import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
 const LEVELS = [
-  { label: "Seed",      icon: "🌱", maxXp: 100  },
-  { label: "Explorer",  icon: "🚶", maxXp: 250  },
-  { label: "Creator",   icon: "✏️",  maxXp: 500  },
-  { label: "Scientist", icon: "🔬", maxXp: 800  },
-  { label: "Hero",      icon: "⭐", maxXp: 1200 },
+  { labelKey: "levelNameSeed",      icon: "🌱", maxXp: 100  },
+  { labelKey: "levelNameExplorer",  icon: "🚶", maxXp: 250  },
+  { labelKey: "levelNameCreator",   icon: "✏️",  maxXp: 500  },
+  { labelKey: "levelNameScientist", icon: "🔬", maxXp: 800  },
+  { labelKey: "levelNameHero",      icon: "⭐", maxXp: 1200 },
 ];
 
 const ACTIVITIES = [
-  { img: "/icons/story/Read.png",       label: "Read",       sub: "Stories",         href: "/stories" },
-  { img: "/icons/story/create.png",     label: "Create",     sub: "Draw & Color",    href: "/missions" },
-  { img: "/icons/story/play.png",       label: "Play",       sub: "Puzzles & Games", href: "/missions" },
-  { img: "/icons/story/sing.png",       label: "Sing",       sub: "Songs & Rhymes",  href: "/missions" },
-  { img: "/icons/story/challenges.png", label: "Challenges", sub: "Daily Missions",  href: "/treasure" },
-  { img: "/icons/story/Community.png",  label: "Community",  sub: "Share & Inspire", href: "/community" },
+  { img: "/icons/story/Read.png",       labelKey: "activityRead",       subKey: "activityReadSub",       href: "/stories" },
+  { img: "/icons/story/create.png",     labelKey: "activityCreate",     subKey: "activityCreateSub",     href: "/stories" },
+  { img: "/icons/story/play.png",       labelKey: "activityPlay",       subKey: "activityPlaySub",       href: "/stories" },
+  { img: "/icons/story/sing.png",       labelKey: "activitySing",       subKey: "activitySingSub",       href: "/stories" },
+  { img: "/icons/story/challenges.png", labelKey: "activityChallenges", subKey: "activityChallengesSub", href: "/treasure" },
+  { img: "/icons/story/Community.png",  labelKey: "activityCommunity",  subKey: "activityCommunitySub",  href: "/community" },
 ];
 
 
@@ -103,16 +103,8 @@ const LOCKED_BADGE_PLACEHOLDERS = [
   { emoji: "🔥", label: "Streak Hero", from: "#f97316", to: "#ea580c", glow: "#f97316" },
 ];
 
-const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 
-
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good Morning";
-  if (h < 17) return "Good Afternoon";
-  return "Good Evening";
-}
 
 const up      = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const } } };
 const pop     = { hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] as const } } };
@@ -200,6 +192,16 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && activeChildRef.current) {
+        void silentRefresh(activeChildRef.current);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
   async function init() {
     // Fire auth validation, parent-row upsert, and children fetch all in parallel.
     // All three internally call auth.getUser() which the Supabase client deduplicates.
@@ -278,6 +280,33 @@ export default function HomePage() {
     setLoading(false);
   }
 
+  async function silentRefresh(child: Child) {
+    setRefreshing(true);
+    const lang = child.language;
+    const [lib, lvl, stars, streak, ach, consStreak, popular, cos] = await Promise.all([
+      getStoryLibrary(child.id, lang),
+      getCurrentLevel(child.id, lang),
+      getTotalStars(child.id, lang),
+      getWeekStreak(child.id, lang),
+      getChildAchievements(child.id),
+      getConsecutiveStreak(child.id, lang),
+      getPopularStories(),
+      getChildCosmetics(child.id),
+    ]);
+    setStories(lib);
+    setLevel(lvl);
+    setTotalStars(stars);
+    setWeekStreak(streak);
+    setAchievements(ach);
+    setConsecutiveStreak(consStreak);
+    setPopularStories(popular);
+    setCosmetics(cos);
+    setRefreshing(false);
+    const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
+    if (cur) getStorySlots(child.id, cur.sid, lang).then(setSlots);
+    else setSlots([]);
+  }
+
   async function handleCreated(child: Child) {
     setShowCreateModal(false);
     setNoChildrenYet(false);
@@ -296,6 +325,16 @@ export default function HomePage() {
   );
 
   /* ─── Derived ──────────────────────────────────────────────────────────── */
+  const WEEK_DAYS = [t("dayMon"), t("dayTue"), t("dayWed"), t("dayThu"), t("dayFri"), t("daySat"), t("daySun")];
+
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return t("greetingMorning");
+    if (h < 17) return t("greetingAfternoon");
+    return t("greetingEvening");
+  })();
+  const dateLocale = activeChild?.language === "fr" ? "fr-FR" : "en-US";
+
   const curStory   = stories.find(s => s.unlocked && !s.complete) ?? stories[0];
   const doneSlots  = slots.filter(s => s.completed).length;
   const totalSlots = slots.length;
@@ -560,7 +599,7 @@ export default function HomePage() {
                     {/* Name + XP section */}
                     <div className="px-5 pt-4 pb-3">
                       <p className="font-nunito font-semibold text-sky-600 text-[11px] tracking-wide mb-0.5 uppercase">
-                        {greeting()} ✨
+                        {greeting} ✨
                       </p>
                       <h1 className="font-baloo font-black text-gray-900"
                         style={{ fontSize: "clamp(1.4rem,3.8vw,2rem)", lineHeight: 1.15 }}>
@@ -574,7 +613,7 @@ export default function HomePage() {
                       {/* XP bar */}
                       <div className="mt-3">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-nunito font-bold text-gray-400 text-[10px]">{levelInfo?.icon} Lv.{xpLevel} · {levelInfo?.label}</span>
+                          <span className="font-nunito font-bold text-gray-400 text-[10px]">{levelInfo?.icon} Lv.{xpLevel} · {levelInfo ? t(levelInfo.labelKey) : ""}</span>
                           <span className="font-baloo font-black text-emerald-600 text-[10px]">{xpIn}/{xpNeeded} XP</span>
                         </div>
                         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -591,17 +630,17 @@ export default function HomePage() {
                       <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5">
                         <Flame className="w-[15px] h-[15px] fill-orange-400 text-orange-400" />
                         <span className="font-baloo font-black text-orange-500 text-[14px] leading-none">{consecutiveStreak}</span>
-                        <span className="font-nunito text-gray-400 text-[9px] leading-none">streak</span>
+                        <span className="font-nunito text-gray-400 text-[9px] leading-none">{t("homeStatStreak")}</span>
                       </div>
                       <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5">
                         <Star className="w-[15px] h-[15px] fill-amber-400 text-amber-400" />
                         <span className="font-baloo font-black text-amber-500 text-[14px] leading-none">{totalStars}</span>
-                        <span className="font-nunito text-gray-400 text-[9px] leading-none">stars</span>
+                        <span className="font-nunito text-gray-400 text-[9px] leading-none">{t("homeStatStars")}</span>
                       </div>
                       <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5">
                         <Heart className="w-[15px] h-[15px] fill-rose-400 text-rose-400" />
                         <span className="font-baloo font-black text-rose-500 text-[14px] leading-none">{level}</span>
-                        <span className="font-nunito text-gray-400 text-[9px] leading-none">level</span>
+                        <span className="font-nunito text-gray-400 text-[9px] leading-none">{t("homeStatLevel")}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -694,10 +733,10 @@ export default function HomePage() {
                     style={{ background: "rgba(254,243,199,0.92)", backdropFilter: "blur(14px)" }}>
                     <div className="flex items-center gap-2 mb-0.5">
                       <Flame className="w-5 h-5 text-orange-500 fill-orange-500" />
-                      <span className="font-baloo font-black text-orange-600 text-[17px]">{consecutiveStreak} Day Streak!</span>
+                      <span className="font-baloo font-black text-orange-600 text-[17px]">{consecutiveStreak} {consecutiveStreak === 1 ? t("homeStreakDayLabel") : t("homeStreakDaysLabel")} {t("heroStreakLabel")}</span>
                     </div>
                     <p className="font-nunito font-bold text-amber-700 text-[12px] mb-3">
-                      {consecutiveStreak >= 7 ? "Unstoppable! 🏆" : consecutiveStreak >= 3 ? "You're on fire! 🔥" : consecutiveStreak > 0 ? "Keep it up! 💪" : "Start your streak! 🌟"}
+                      {consecutiveStreak >= 7 ? t("homeStreakUnstoppable") : consecutiveStreak >= 3 ? t("homeStreakOnFire") : consecutiveStreak > 0 ? t("homeStreakKeepItUp") : t("homeStreakStart")}
                     </p>
                     <div className="flex justify-between">
                       {WEEK_DAYS.map((day, i) => {
@@ -768,9 +807,9 @@ export default function HomePage() {
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
-              <span className="font-baloo font-black text-emerald-700 text-[12px] sm:text-[13px]">The Learning Campus is open!</span>
+              <span className="font-baloo font-black text-emerald-700 text-[12px] sm:text-[13px]">{t("homeCampusOpen")}</span>
               <span className="font-nunito text-emerald-500 text-[11px] hidden sm:inline">
-                • {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                • {new Date().toLocaleDateString(dateLocale, { weekday: "long", month: "long", day: "numeric" })}
               </span>
             </div>
           </div>
@@ -780,13 +819,13 @@ export default function HomePage() {
             <motion.div
               initial="hidden" animate="visible" variants={stagger}
               className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3">
-              {ACTIVITIES.map(({ img, label, sub, href }) => (
-                <motion.div key={label} variants={pop}>
+              {ACTIVITIES.map(({ img, labelKey, subKey, href }) => (
+                <motion.div key={labelKey} variants={pop}>
                   <Link href={href}
                     className="group flex flex-col items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-white hover:border-emerald-200 rounded-2xl px-2 py-3 sm:py-4 shadow-sm hover:shadow-md hover:-translate-y-1 active:scale-95 transition-all">
-                    <img src={img} alt={label} className="w-10 h-10 sm:w-11 sm:h-11 object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-200" />
-                    <p className="font-baloo font-black text-gray-800 text-[12px] sm:text-[13px] leading-tight text-center">{label}</p>
-                    <p className="font-nunito text-gray-400 text-[9px] sm:text-[10px] text-center hidden sm:block leading-tight">{sub}</p>
+                    <img src={img} alt={t(labelKey)} className="w-10 h-10 sm:w-11 sm:h-11 object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-200" />
+                    <p className="font-baloo font-black text-gray-800 text-[12px] sm:text-[13px] leading-tight text-center">{t(labelKey)}</p>
+                    <p className="font-nunito text-gray-400 text-[9px] sm:text-[10px] text-center hidden sm:block leading-tight">{t(subKey)}</p>
                   </Link>
                 </motion.div>
               ))}

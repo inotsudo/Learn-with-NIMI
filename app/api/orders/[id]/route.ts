@@ -1,9 +1,7 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-// @ts-ignore
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 
 const serviceSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +16,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const authClient = createRouteHandlerClient({ cookies });
+    const authClient = await createRouteClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

@@ -6,6 +6,7 @@ import { motion, type Variants } from "framer-motion";
 import { Play, ChevronRight } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   curStory: StoryLibraryItem | undefined;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, pct, slots, up, stagger }: Props) {
+  const { t } = useLanguage();
   return (
     <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="relative">
       <motion.div variants={up}
@@ -45,11 +47,11 @@ export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, 
               <div className="absolute top-3 left-3">
                 {curStory.complete ? (
                   <span className="flex items-center gap-1.5 font-baloo font-black text-[11px] text-amber-900 bg-amber-400 px-3 py-1 rounded-full shadow-md">
-                    🏆 Complete!
+                    {t("homeAdventureCompleteLabel")}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1.5 font-baloo font-black text-[11px] text-white bg-emerald-600/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-md">
-                    📖 Your Adventure
+                    {t("homeAdventureLabel")}
                   </span>
                 )}
               </div>
@@ -64,7 +66,7 @@ export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, 
               {/* Bottom title overlay */}
               <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8">
                 <p className="font-nunito text-white/70 text-[10px] uppercase tracking-widest mb-0.5">
-                  {curStory.complete ? "Finished" : `Mission ${doneSlots} of ${totalSlots || 6}`}
+                  {curStory.complete ? t("homeAdventureFinished") : t("homeAdventureMissionOf").replace("{done}", String(doneSlots)).replace("{total}", String(totalSlots || 6))}
                 </p>
                 <h2 className="font-baloo font-black text-white text-[20px] sm:text-[22px] leading-tight drop-shadow-lg line-clamp-1">
                   {curStory.title}
@@ -88,7 +90,7 @@ export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, 
                           {slot.completed ? "⭐" : i + 1}
                         </div>
                       ))}
-                      <span className="font-nunito text-gray-400 text-[11px] ml-1">{pct}% done</span>
+                      <span className="font-nunito text-gray-400 text-[11px] ml-1">{pct}{t("homeAdventurePercentDone")}</span>
                     </div>
                   )}
 
@@ -113,7 +115,7 @@ export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, 
                     ? "0 4px 18px rgba(245,158,11,0.35)"
                     : "0 4px 18px rgba(5,150,105,0.35)",
                 }}>
-                {curStory.complete ? "⭐ View My Certificate" : "Keep Going!"}
+                {curStory.complete ? t("homeAdventureViewCert") : t("homeAdventureKeepGoing")}
                 <Play className="w-4 h-4" fill="currentColor" />
               </Link>
             </div>
@@ -124,13 +126,13 @@ export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, 
             <motion.span className="text-[56px] leading-none select-none"
               animate={{ y: [0,-8,0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>🔭</motion.span>
             <div>
-              <p className="font-baloo font-black text-gray-800 text-[20px]">Your story awaits!</p>
-              <p className="font-nunito text-gray-500 text-[14px] mt-1">Zilo found some great adventures at the Library.</p>
+              <p className="font-baloo font-black text-gray-800 text-[20px]">{t("homeAdventureStoryAwaits")}</p>
+              <p className="font-nunito text-gray-500 text-[14px] mt-1">{t("homeAdventureZiloDesc")}</p>
             </div>
             <Link href="/stories"
               className="flex items-center gap-2 font-baloo font-black text-white text-[16px] px-8 py-3.5 leaf shadow-xl transition-all hover:-translate-y-0.5 active:scale-95"
               style={{ background: "linear-gradient(135deg,#059669,#047857)", boxShadow: "0 6px 22px rgba(5,150,105,0.4)" }}>
-              Start Your Journey <ChevronRight className="w-4 h-4" />
+              {t("homeAdventureStartJourney")} <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
         )}

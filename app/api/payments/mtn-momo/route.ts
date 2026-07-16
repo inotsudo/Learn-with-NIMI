@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 import { v4 as uuidv4 } from "uuid";
-import { sendPaymentReceipt } from "@/lib/email";
+import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,7 +35,7 @@ async function getAccessToken(): Promise<string> {
 export async function POST(req: NextRequest) {
   try {
     // Verify caller is the authenticated parent who owns this order.
-    const authClient = createRouteHandlerClient({ cookies });
+    const authClient = await createRouteClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -111,7 +109,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     // Auth check — only the order owner may poll
-    const authClient = createRouteHandlerClient({ cookies });
+    const authClient = await createRouteClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -226,9 +224,35 @@ export async function GET(req: NextRequest) {
               }
             }
 
-            // Send receipt email (best-effort)
+            // Send email (best-effort) — gift or regular receipt
             const { data: parent } = await supabase.from("parents").select("email, name").eq("id", order.parent_id).maybeSingle();
-            if (parent?.email) {
+            const isGift = (order.personalization_data as any)?.gift === true;
+            if (isGift) {
+              const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
+              const { data: giftRecord } = await supabase
+                .from("gift_subscriptions")
+                .select("redemption_code, recipient_email, recipient_name, message")
+                .eq("order_id", orderId)
+                .maybeSingle();
+              if (giftRecord) {
+                void sendGiftNotification({
+                  to: giftRecord.recipient_email,
+                  recipientName: giftRecord.recipient_name ?? null,
+                  giverName: parent?.name ?? "Someone special",
+                  productName: product.name ?? "Nimipiko Club",
+                  message: giftRecord.message ?? null,
+                  redeemUrl: `${siteUrl}/gift/redeem?code=${giftRecord.redemption_code}`,
+                });
+                if (parent?.email) {
+                  void sendGiftConfirmation({
+                    to: parent.email,
+                    giverName: parent.name ?? "there",
+                    recipientEmail: giftRecord.recipient_email,
+                    productName: product.name ?? "Nimipiko Club",
+                  });
+                }
+              }
+            } else if (parent?.email) {
               void sendPaymentReceipt({
                 to: parent.email,
                 parentName: parent.name ?? "there",

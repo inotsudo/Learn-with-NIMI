@@ -30,7 +30,7 @@ export default function CelebrationModal({ isOpen, onClose, message }: Celebrati
         textAlign: "center",
         maxWidth: "90vw",
       }}>
-        <h2>🎉 {t("celebrationTitle") || "Congratulations!"} 🎉</h2>
+        <h2>🎉 {t("celebrationTitle")} 🎉</h2>
         <p>{message || t("celebrationComplete")}</p>
         <button onClick={onClose} style={{ marginTop: "1rem" }}>{t("celebrationClose")}</button>
       </div>

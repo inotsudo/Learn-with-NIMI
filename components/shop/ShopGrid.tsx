@@ -18,11 +18,11 @@ interface Props {
   onEquip: (item: ShopItem) => void;
 }
 
-const CATEGORY_META: Record<ShopCategory, { label: string; emoji: string; desc: string }> = {
-  costumes: { label: "Costumes", emoji: "🦸", desc: "Dress up NIMI and PIKO" },
-  frames:   { label: "Frames",   emoji: "🖼️", desc: "Style your profile card" },
-  titles:   { label: "Titles",   emoji: "🏷️", desc: "Show off your title" },
-  powerups: { label: "Power-Ups",emoji: "⚡", desc: "Special abilities" },
+const CATEGORY_META: Record<ShopCategory, { emoji: string; descKey: string }> = {
+  costumes: { emoji: "🦸", descKey: "shopCatCostumeDesc" },
+  frames:   { emoji: "🖼️", descKey: "shopCatFrameDesc" },
+  titles:   { emoji: "🏷️", descKey: "shopCatTitleDesc" },
+  powerups: { emoji: "⚡", descKey: "shopCatPowerupDesc" },
 };
 
 export default function ShopGrid({ filter, balance, ownedIds, purchaseCounts, cosmetics, purchasingId, onBuy, onEquip }: Props) {
@@ -47,7 +47,7 @@ export default function ShopGrid({ filter, balance, ownedIds, purchaseCounts, co
                 <span className="text-xl">{meta.emoji}</span>
                 <div>
                   <p className="font-black text-ds-text text-[15px] leading-tight">{t(`filter${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
-                  <p className="text-ds-muted text-[11px]">{meta.desc}</p>
+                  <p className="text-ds-muted text-[11px]">{t(meta.descKey)}</p>
                 </div>
               </div>
               <GridRow items={items} balance={balance} ownedIds={ownedIds} purchaseCounts={purchaseCounts}

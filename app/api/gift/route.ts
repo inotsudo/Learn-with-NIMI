@@ -3,8 +3,7 @@
 // Returns { giftId, orderId } so the confirm-payment flow can finalize it.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 import crypto from "crypto";
 
 function randomCode(len = 12): string {
@@ -14,7 +13,7 @@ function randomCode(len = 12): string {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createRouteClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

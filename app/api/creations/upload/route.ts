@@ -1,10 +1,8 @@
 // app/api/creations/upload/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 import { v4 as uuidv4 } from "uuid";
-// @ts-ignore — auth-helpers-nextjs pre-dates Next.js 15 async cookies; passing the fn works at runtime
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -19,7 +17,7 @@ const adminClient = createClient(
 export async function POST(request: Request) {
   try {
     // 1. Auth — get the calling parent's user id from session cookie
-    const authClient = createRouteHandlerClient({ cookies });
+    const authClient = await createRouteClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

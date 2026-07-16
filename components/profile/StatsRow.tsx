@@ -81,15 +81,15 @@ export default function StatsRow({ starsCollected, badgesEarned, storiesComplete
       label: t("statStarsLabel"),
       gradient: "from-amber-300 to-yellow-400",
       delay: 0,
-      zeroLabel: t("statZeroStars") || "None yet",
+      zeroLabel: t("statZeroStars"),
     },
     {
       emoji: "📖",
       value: storiesCompleted,
-      label: t("statStoriesLabel") || "Stories Done",
+      label: t("statStoriesLabel"),
       gradient: "from-blue-400 to-indigo-500",
       delay: 0.07,
-      zeroLabel: t("statZeroStories") || "Start one!",
+      zeroLabel: t("statZeroStories"),
     },
     {
       emoji: "🏅",
@@ -97,16 +97,16 @@ export default function StatsRow({ starsCollected, badgesEarned, storiesComplete
       label: t("statBadgesLabel"),
       gradient: "from-violet-400 to-purple-500",
       delay: 0.14,
-      zeroLabel: t("statZeroBadges") || "Earn one!",
+      zeroLabel: t("statZeroBadges"),
     },
     {
       emoji: "🔥",
       value: currentStreak,
-      label: t("statStreakLabel") || "Day Streak",
+      label: t("statStreakLabel"),
       gradient: "from-orange-400 to-red-500",
       delay: 0.21,
       suffix: currentStreak === 1 ? "d" : "d",
-      zeroLabel: t("statZeroStreak") || "Start today!",
+      zeroLabel: t("statZeroStreak"),
     },
   ];
 

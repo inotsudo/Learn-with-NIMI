@@ -3,20 +3,17 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 
 interface Props { childName: string; }
 
-const ACTIVITIES = [
-  { emoji: "📖", label: "Read" },
-  { emoji: "🎵", label: "Sing" },
-  { emoji: "🎨", label: "Create" },
-  { emoji: "🤸", label: "Move" },
-  { emoji: "🎬", label: "Watch" },
-];
+const ACTIVITY_EMOJIS = ["📖", "🎵", "🎨", "🤸", "🎬"];
+const ACTIVITY_KEYS   = ["encourageRead", "encourageSing", "encourageCreate", "encourageMove", "encourageWatch"] as const;
 
 export default function EncouragementBanner({ childName }: Props) {
   const { themeId } = useAppTheme();
+  const { t } = useLanguage();
   const assets = getThemeAssets(themeId);
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -31,23 +28,23 @@ export default function EncouragementBanner({ childName }: Props) {
       </motion.div>
       <div className="flex-1 text-center sm:text-left">
         <h3 className="font-black text-ds-text text-[15px]">
-          You&apos;re doing amazing, {childName}!
+          {t("encourageAmazingMsg").replace("{name}", childName)}
         </h3>
         <p className="text-gray-400 text-[12px] mt-0.5">
-          Keep learning, keep smiling, and remember… you can do big things! 😊
+          {t("encourageKeepLearning")}
         </p>
       </div>
       <div className="flex gap-2.5 shrink-0">
-        {ACTIVITIES.map((a, i) => (
-          <motion.div key={a.label}
+        {ACTIVITY_KEYS.map((key, i) => (
+          <motion.div key={key}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 + i * 0.07, type: "spring", stiffness: 300 }}
             className="flex flex-col items-center gap-1">
             <div className="w-10 h-10 bg-gray-50 border border-ds-border rounded-xl flex items-center justify-center text-lg">
-              {a.emoji}
+              {ACTIVITY_EMOJIS[i]}
             </div>
-            <span className="text-[8px] font-bold text-gray-400">{a.label}</span>
+            <span className="text-[8px] font-bold text-gray-400">{t(key)}</span>
           </motion.div>
         ))}
       </div>

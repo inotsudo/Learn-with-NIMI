@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 const NAV_LINKS = [
   { label:"Home",       href:"/",          img:"/themes/default/navs/home.png"       },
   { label:"Stories",    href:"/stories",   img:"/themes/default/navs/Stories.png"    },
-  { label:"Activities", href:"/missions",  img:"/themes/default/navs/activities.png" },
   { label:"Community",  href:"/community", img:"/themes/default/navs/community.png"  },
   { label:"Parents",    href:"/parents",   img:"/themes/default/navs/parent.png"     },
   { label:"Help",       href:"/help",      img:"/themes/default/navs/about.png"      },

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Play, BookOpen } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   curStory: StoryLibraryItem | undefined;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
+  const { t } = useLanguage();
   const done    = slots.filter(s => s.completed).length;
   const total   = slots.length;
 
@@ -27,8 +29,8 @@ export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
             <BookOpen className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <p className="font-nunito text-emerald-500 text-[10px] uppercase tracking-widest leading-none mb-0.5">Your Journey</p>
-            <h3 className="font-baloo font-black text-gray-900 text-[17px] leading-tight">Story Journey</h3>
+            <p className="font-nunito text-emerald-500 text-[10px] uppercase tracking-widest leading-none mb-0.5">{t("journeyEyebrow")}</p>
+            <h3 className="font-baloo font-black text-gray-900 text-[17px] leading-tight">{t("journeyTitle")}</h3>
           </div>
         </div>
       </div>
@@ -54,7 +56,9 @@ export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
                   {curStory.title}
                 </p>
                 <p className="font-nunito text-gray-400 text-[11px] mt-0.5">
-                  {curStory.complete ? "✅ Completed!" : `${done} of ${total || 6} missions`}
+                  {curStory.complete
+                    ? t("journeyCompleted")
+                    : t("journeyMissionsOf").replace("{done}", String(done)).replace("{total}", String(total || 6))}
                 </p>
               </div>
             </div>
@@ -76,13 +80,13 @@ export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
             {/* Progress % */}
             {!curStory.complete && (
               <p className="font-nunito font-semibold text-gray-400 text-[11px] text-center mb-3">
-                {pct}% complete
+                {pct}{t("journeyPctComplete")}
               </p>
             )}
           </>
         ) : (
           <p className="text-center font-nunito text-gray-400 text-[12px] py-3 mb-2">
-            Choose a story to begin your adventure!
+            {t("journeyChooseStory")}
           </p>
         )}
 
@@ -99,14 +103,14 @@ export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
                 : "0 4px 14px rgba(5,150,105,0.3)",
             }}>
             <Play className="w-3.5 h-3.5 fill-white" />
-            {curStory.complete ? "See Certificate 🏆" : "Continue Story"}
+            {curStory.complete ? t("homeAdventureViewCert") : t("storyStatusContinue")}
           </Link>
         ) : (
           <Link href="/stories"
             className="flex items-center justify-center gap-2 w-full font-baloo font-black text-white text-[13px] py-3 rounded-xl transition-all hover:-translate-y-0.5 active:scale-95"
             style={{ background: "linear-gradient(135deg,#059669,#10b981)", boxShadow: "0 4px 14px rgba(5,150,105,0.3)" }}>
             <Play className="w-3.5 h-3.5 fill-white" />
-            Start First Story
+            {t("homeAdventureStartJourney")}
           </Link>
         )}
       </div>

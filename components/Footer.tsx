@@ -43,7 +43,7 @@ export default function Footer() {
           <div className="flex items-center text-gray-500">
             <Heart className="w-4 h-4 fill-gray-300 mr-1 animate-pulse" />
             <span className="text-xs font-semibold">
-              {t('madeWithLove') || "Made with love"}
+              {t('madeWithLove')}
             </span>
             <Heart className="w-4 h-4 fill-gray-300 ml-1 animate-pulse" />
           </div>

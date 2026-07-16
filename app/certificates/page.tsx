@@ -22,7 +22,7 @@ export default function CertificatesPage() {
   const assets = getThemeAssets(themeId);
   const [loading, setLoading] = useState(true);
   const [hasChildren, setHasChildren] = useState(true);
-  const [childName, setChildName] = useState("Explorer");
+  const [childName, setChildName] = useState("");
   const [childLanguage, setChildLanguage] = useState<Lang>("en");
   const [achievements, setAchievements] = useState<ChildAchievement[]>([]);
   const [maxLevel, setMaxLevel] = useState(3);
@@ -90,11 +90,10 @@ export default function CertificatesPage() {
               <span className="absolute -bottom-1 -right-1 text-3xl">🏆</span>
             </div>
             <div className="bg-white border border-ds-border rounded-2xl rounded-tl-none px-5 py-3 shadow-ds-card">
-              <p className="font-baloo font-black text-ds-text text-[16px] leading-snug">Add a learner to start earning certificates!</p>
+              <p className="font-baloo font-black text-ds-text text-[16px] leading-snug">{t("noChildrenCertMsg")}</p>
             </div>
-            <p className="text-gray-500 text-sm">Create a learner profile so your child can collect achievements and badges.</p>
             <Link href="/home" className="text-white font-baloo font-black px-8 py-3 shadow-md transition hover:-translate-y-0.5 active:scale-95" style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r)' }}>
-              🏠 Go to Home
+              🏠 {t("goHomeBtn")}
             </Link>
           </div>
         </PageSurface>

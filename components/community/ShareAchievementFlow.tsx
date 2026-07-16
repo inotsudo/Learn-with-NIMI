@@ -86,7 +86,7 @@ export default function ShareAchievementFlow({ childId, childName, childLanguage
             />
           </div>
           <span className="text-white text-[14px] font-baloo font-bold relative">
-            {t("sharingLabel") || "Sharing…"}
+            {t("sharingLabel")}
           </span>
         </>
       ) : (
@@ -96,7 +96,7 @@ export default function ShareAchievementFlow({ childId, childName, childLanguage
           </div>
           <div className="flex-1 text-left relative">
             <span className="text-white text-[14px] font-baloo font-black block leading-snug">
-              {t("shareToComm") || "Share to Community"}
+              {t("shareToComm")}
             </span>
             <span className="text-white/65 text-[11px] font-semibold">
               {cfg.emoji} {cfg.label}

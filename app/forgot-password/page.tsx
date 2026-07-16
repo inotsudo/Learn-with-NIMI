@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
     setError("");
     setMessage("");
 
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://learn-with-nimi.vercel.app";
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email.trim().toLowerCase(),
       { redirectTo: `${siteUrl}/reset-password` }

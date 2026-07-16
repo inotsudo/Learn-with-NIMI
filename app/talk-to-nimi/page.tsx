@@ -12,7 +12,7 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import {
   getChildren,
-  getTodayStars, getActivityDates, getChildAchievements,
+  getTodayStars, getActivityDates, getChildBadges,
   getClaimedChallenges, claimChallengeReward,
 } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots } from "@/lib/storyRepository";
@@ -32,24 +32,13 @@ const QUEST_TARGET = 3;
 
 const QUEST_STARS  = 10;
 
-const NIMI_PROMPTS = [
-  "Ask me anything! 🌟",
-  "Want to hear a joke? 😄",
-  "Tell me about your day! 💬",
-  "I know cool animal facts! 🦊",
-  "Let's talk about your story! 📖",
-  "What made you smile today? ☀️",
-];
-
-function greetingFor(name: string): ChatMessage {
-  return { from: "nimi", text: `Hello ${name}! 👋 How was your adventure today?` };
-}
 
 export default function TalkToNimiPage() {
+  const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
   const [childId, setChildId] = useState<string | null>(null);
-  const [childName, setChildName] = useState("Explorer");
+  const [childName, setChildName] = useState("");
   const [childLanguage, setChildLanguage] = useState<"en" | "fr" | "rw">("en");
   const [initialMessages, setInitialMessages] = useState<ChatMessage[] | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
@@ -58,7 +47,7 @@ export default function TalkToNimiPage() {
 
   const load = async () => {
     const list = await getChildren();
-    let name = "Explorer";
+    let name = t("defaultChildName");
     let id: string | null = null;
     let lang: "en" | "fr" | "rw" = "en";
     if (list.length > 0) {
@@ -72,7 +61,8 @@ export default function TalkToNimiPage() {
     setChildId(id);
     setChildLanguage(lang);
 
-    let initial: ChatMessage[] = [greetingFor(name)];
+    const greeting: ChatMessage = { from: "nimi", text: t("nimiGreeting").replace("{name}", name) };
+    let initial: ChatMessage[] = [greeting];
     let pending: string | null = null;
     const raw = sessionStorage.getItem(NIMI_CHAT_HANDOFF_KEY);
     if (raw) {
@@ -137,6 +127,10 @@ function NimiChatPageContent({
   const noMotion = useReducedMotion() ?? false;
   const m        = useThemeMotion();
   const { t, language } = useLanguage();
+  const NIMI_PROMPTS = [
+    t("nimiPrompt1"), t("nimiPrompt2"), t("nimiPrompt3"),
+    t("nimiPrompt4"), t("nimiPrompt5"), t("nimiPrompt6"),
+  ];
   const { themeId }     = useAppTheme();
   const assets          = getThemeAssets(themeId);
   const messagesRef     = useRef<HTMLDivElement>(null);
@@ -198,17 +192,17 @@ function NimiChatPageContent({
   }, [childId, childLanguage]);
 
   const loadStats = async (id: string, lang: "en" | "fr" | "rw") => {
-    const [stars, dates, achievements, stories, claimed] = await Promise.all([
+    const [stars, dates, badges, stories, claimed] = await Promise.all([
       getTodayStars(id, lang),
       getActivityDates(id, lang),
-      getChildAchievements(id),
+      getChildBadges(id, lang),
       getStoryLibrary(id, lang),
       getClaimedChallenges(id, lang),
     ]);
     if (claimed.has(`daily-chat-${getDayPeriod()}`)) setQuestClaimed(true);
     setTodayStars(stars);
     setChatStreakDays(computeStreaks(dates).current);
-    setBadgeCount(achievements.filter((a: { type: string; language: string }) => a.type === "badge" && a.language === lang).length);
+    setBadgeCount(badges.length);
     setActivitiesCompleted(stories.filter((s: { complete: boolean }) => s.complete).length);
 
     const curStory = stories.find((s: { unlocked: boolean; complete: boolean }) => s.unlocked && !s.complete) ?? stories[0];
@@ -243,7 +237,7 @@ function NimiChatPageContent({
             onClick={() => window.history.back()}
             className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-[13px] font-bold transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {t("storyBackBtn")}
           </button>
 
           {/* Decorative circles */}
@@ -273,7 +267,7 @@ function NimiChatPageContent({
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-white/40 shadow-lg shrink-0"
               loading="lazy" />
             <div>
-              <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.15em] mb-0.5">AI Friend</p>
+              <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.15em] mb-0.5">{t("nimiChatAIFriend")}</p>
               <h1 className="font-baloo font-black text-white text-[22px] sm:text-[28px] leading-tight drop-shadow-md">
                 {t("nimiChatPageTitle")}
               </h1>
@@ -342,8 +336,8 @@ function NimiChatPageContent({
               >
                 <span className="text-2xl leading-none">🔥</span>
                 <div>
-                  <p className="font-black text-orange-600 text-[13px] leading-tight">{chatStreakDays} day streak</p>
-                  <p className="text-[10px] text-orange-400 font-semibold">Keep going!</p>
+                  <p className="font-black text-orange-600 text-[13px] leading-tight">{chatStreakDays} {t("nimiChatStreakLabel")}</p>
+                  <p className="text-[10px] text-orange-400 font-semibold">{t("nimiChatKeepGoing")}</p>
                 </div>
               </motion.div>
             )}
@@ -353,8 +347,8 @@ function NimiChatPageContent({
               <div className="flex items-center gap-2.5 bg-yellow-50 border border-yellow-100 px-4 py-2.5 rounded-2xl w-full">
                 <span className="text-2xl leading-none">⭐</span>
                 <div>
-                  <p className="font-black text-yellow-600 text-[13px] leading-tight">{todayStars} stars today</p>
-                  <p className="text-[10px] text-yellow-500 font-semibold">Amazing work!</p>
+                  <p className="font-black text-yellow-600 text-[13px] leading-tight">{todayStars} {t("nimiChatStarsLabel")}</p>
+                  <p className="text-[10px] text-yellow-500 font-semibold">{t("nimiChatAmazingWork")}</p>
                 </div>
               </div>
             )}
@@ -391,8 +385,8 @@ function NimiChatPageContent({
                 <motion.button whileTap={m.buttonPress} onClick={toggleSpeak} disabled={isTyping}
                   className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-full transition disabled:opacity-50 shrink-0">
                   {isSpeaking
-                    ? <><VolumeX className="w-3.5 h-3.5" /> Stop</>
-                    : <><Volume2 className="w-3.5 h-3.5" /> Listen</>
+                    ? <><VolumeX className="w-3.5 h-3.5" /> {t("stopReadingLabel")}</>
+                    : <><Volume2 className="w-3.5 h-3.5" /> {t("readAloudLabel")}</>
                   }
                 </motion.button>
               )}

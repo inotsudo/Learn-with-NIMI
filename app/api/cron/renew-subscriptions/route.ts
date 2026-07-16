@@ -110,115 +110,126 @@ async function chargeMoMo(phone: string, amount: number, subId: string) {
 
 // ── Main cron handler ──────────────────────────────────────
 export async function GET(req: NextRequest) {
-  // Verify cron secret
-  const secret = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (secret !== process.env.CRON_SECRET) {
+  // Verify cron secret — use template-literal comparison so undefined secret never matches
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const now = new Date();
-  const results = { renewed: 0, failed: 0, expired: 0, momo_pending: 0 };
+  try {
+    const now = new Date();
+    const results = { renewed: 0, failed: 0, expired: 0, momo_pending: 0 };
 
-  // 1. Find subscriptions due for renewal (period ended, still active)
-  const { data: dueSubs } = await supabase
-    .from("nimipiko_subscriptions")
-    .select("*, payment_methods(*)")
-    .eq("status", "active")
-    .eq("cancel_at_period_end", false)
-    .lte("current_period_end", now.toISOString());
+    // 1. Find subscriptions due for renewal (period ended, still active)
+    const { data: dueSubs } = await supabase
+      .from("nimipiko_subscriptions")
+      .select("*, payment_methods(*)")
+      .eq("status", "active")
+      .eq("cancel_at_period_end", false)
+      .lte("current_period_end", now.toISOString());
 
-  for (const sub of dueSubs ?? []) {
-    const pm = sub.payment_methods;
-    if (!pm || !pm.is_active) {
-      // No payment method — mark past due
-      await supabase.from("nimipiko_subscriptions").update({
-        status: "past_due",
-        grace_ends_at: new Date(now.getTime() + GRACE_DAYS * 86400000).toISOString(),
-      }).eq("id", sub.id);
-      results.failed++;
-      continue;
-    }
-
-    // Check attempt limit
-    if ((sub.renewal_attempts ?? 0) >= MAX_ATTEMPTS) {
-      await supabase.from("nimipiko_subscriptions").update({ status: "past_due" }).eq("id", sub.id);
-      results.failed++;
-      continue;
-    }
-
-    let chargeResult;
-    if (pm.provider === "cybersource" && pm.token) {
-      chargeResult = await chargeCybersource(pm.token, Number(sub.amount), sub.currency, sub.id);
-    } else if (pm.provider === "mtn_momo" && pm.phone_number) {
-      chargeResult = await chargeMoMo(pm.phone_number, Number(sub.amount), sub.id);
-    } else {
-      results.failed++;
-      continue;
-    }
-
-    // Log renewal attempt
-    await supabase.from("subscription_renewals").insert({
-      subscription_id: sub.id,
-      payment_method_id: pm.id,
-      amount: sub.amount,
-      currency: sub.currency,
-      status: chargeResult.ok ? "completed" : (pm.provider === "mtn_momo" ? "pending" : "failed"),
-      provider_transaction_id: (chargeResult as any).transactionId || (chargeResult as any).referenceId,
-      attempt_number: (sub.renewal_attempts ?? 0) + 1,
-      error_message: chargeResult.error,
-    });
-
-    if (chargeResult.ok && pm.provider === "cybersource") {
-      // Card charged — extend period
-      const newEnd = new Date(sub.current_period_end);
-      newEnd.setMonth(newEnd.getMonth() + (sub.billing_interval === "year" ? 12 : 1));
-
-      await supabase.from("nimipiko_subscriptions").update({
-        current_period_start: sub.current_period_end,
-        current_period_end: newEnd.toISOString(),
-        renewal_attempts: 0,
-      }).eq("id", sub.id);
-
-      // Send renewal confirmation email (best-effort)
-      const { data: parent } = await supabase.from("parents").select("email, name").eq("id", sub.parent_id).maybeSingle();
-      if (parent?.email) {
-        void sendRenewalConfirmation({
-          to: parent.email,
-          parentName: parent.name ?? "there",
-          amount: String(sub.amount),
-          currency: sub.currency,
-          periodEnd: newEnd.toISOString(),
-        });
+    for (const sub of dueSubs ?? []) {
+      const pm = sub.payment_methods;
+      if (!pm || !pm.is_active) {
+        // No payment method — mark past due
+        await supabase.from("nimipiko_subscriptions").update({
+          status: "past_due",
+          grace_ends_at: new Date(now.getTime() + GRACE_DAYS * 86400000).toISOString(),
+        }).eq("id", sub.id);
+        results.failed++;
+        continue;
       }
-      results.renewed++;
-    } else if (pm.provider === "mtn_momo" && chargeResult.ok) {
-      // MoMo request sent — user needs to approve. Mark pending.
-      await supabase.from("nimipiko_subscriptions").update({
-        renewal_attempts: (sub.renewal_attempts ?? 0) + 1,
-      }).eq("id", sub.id);
-      results.momo_pending++;
-    } else {
-      await supabase.from("nimipiko_subscriptions").update({
-        renewal_attempts: (sub.renewal_attempts ?? 0) + 1,
-      }).eq("id", sub.id);
-      results.failed++;
+
+      // Check attempt limit
+      if ((sub.renewal_attempts ?? 0) >= MAX_ATTEMPTS) {
+        await supabase.from("nimipiko_subscriptions").update({ status: "past_due" }).eq("id", sub.id);
+        results.failed++;
+        continue;
+      }
+
+      let chargeResult;
+      if (pm.provider === "cybersource" && pm.token) {
+        chargeResult = await chargeCybersource(pm.token, Number(sub.amount), sub.currency, sub.id);
+      } else if (pm.provider === "mtn_momo" && pm.phone_number) {
+        chargeResult = await chargeMoMo(pm.phone_number, Number(sub.amount), sub.id);
+      } else {
+        // No usable payment method (CyberSource TMS not enabled → null token, or MoMo without phone).
+        // Mark past_due with grace period so the subscriber has time to re-add a payment method.
+        await supabase.from("nimipiko_subscriptions").update({
+          status: "past_due",
+          grace_ends_at: new Date(now.getTime() + GRACE_DAYS * 86400000).toISOString(),
+        }).eq("id", sub.id);
+        results.failed++;
+        continue;
+      }
+
+      // Log renewal attempt
+      await supabase.from("subscription_renewals").insert({
+        subscription_id: sub.id,
+        payment_method_id: pm.id,
+        amount: sub.amount,
+        currency: sub.currency,
+        status: chargeResult.ok ? "completed" : (pm.provider === "mtn_momo" ? "pending" : "failed"),
+        provider_transaction_id: (chargeResult as any).transactionId || (chargeResult as any).referenceId,
+        attempt_number: (sub.renewal_attempts ?? 0) + 1,
+        error_message: chargeResult.error,
+      });
+
+      if (chargeResult.ok && pm.provider === "cybersource") {
+        // Card charged — extend period
+        const newEnd = new Date(sub.current_period_end);
+        newEnd.setMonth(newEnd.getMonth() + (sub.billing_interval === "year" ? 12 : 1));
+
+        await supabase.from("nimipiko_subscriptions").update({
+          current_period_start: sub.current_period_end,
+          current_period_end: newEnd.toISOString(),
+          renewal_attempts: 0,
+        }).eq("id", sub.id);
+
+        // Send renewal confirmation email (best-effort)
+        const { data: parent } = await supabase.from("parents").select("email, name").eq("id", sub.parent_id).maybeSingle();
+        if (parent?.email) {
+          void sendRenewalConfirmation({
+            to: parent.email,
+            parentName: parent.name ?? "there",
+            amount: String(sub.amount),
+            currency: sub.currency,
+            periodEnd: newEnd.toISOString(),
+          });
+        }
+        results.renewed++;
+      } else if (pm.provider === "mtn_momo" && chargeResult.ok) {
+        // MoMo request sent — user needs to approve. Mark pending.
+        await supabase.from("nimipiko_subscriptions").update({
+          renewal_attempts: (sub.renewal_attempts ?? 0) + 1,
+        }).eq("id", sub.id);
+        results.momo_pending++;
+      } else {
+        await supabase.from("nimipiko_subscriptions").update({
+          renewal_attempts: (sub.renewal_attempts ?? 0) + 1,
+        }).eq("id", sub.id);
+        results.failed++;
+      }
     }
+
+    // 2. Expire past-due subscriptions after grace period
+    const { data: expiredSubs } = await supabase
+      .from("nimipiko_subscriptions")
+      .select("id, parent_id")
+      .eq("status", "past_due")
+      .lte("grace_ends_at", now.toISOString());
+
+    for (const sub of expiredSubs ?? []) {
+      await supabase.from("nimipiko_subscriptions").update({ status: "expired" }).eq("id", sub.id);
+      // Revoke content access
+      await supabase.from("content_access").update({ is_active: false })
+        .eq("subscription_id", sub.id);
+      results.expired++;
+    }
+
+    return NextResponse.json({ ok: true, results, timestamp: now.toISOString() });
+  } catch (err: unknown) {
+    console.error("[renew-subscriptions] unexpected error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  // 2. Expire past-due subscriptions after grace period
-  const { data: expiredSubs } = await supabase
-    .from("nimipiko_subscriptions")
-    .select("id, parent_id")
-    .eq("status", "past_due")
-    .lte("grace_ends_at", now.toISOString());
-
-  for (const sub of expiredSubs ?? []) {
-    await supabase.from("nimipiko_subscriptions").update({ status: "expired" }).eq("id", sub.id);
-    // Revoke content access
-    await supabase.from("content_access").update({ is_active: false })
-      .eq("subscription_id", sub.id);
-    results.expired++;
-  }
-
-  return NextResponse.json({ ok: true, results, timestamp: now.toISOString() });
 }

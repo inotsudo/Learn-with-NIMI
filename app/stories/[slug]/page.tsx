@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,6 +13,14 @@ import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getChildren, getStorageUrl, getConsecutiveStreak, awardMilestoneBadges, awardBadge, getBadgeImages, createNotification, getStoryPages } from "@/lib/queries";
 import { getMilestoneBadgeMeta } from "@/lib/milestoneBadges";
+
+// Strip language suffix from story badge slugs for display (emotion-detective-en → Emotion Detective)
+function badgeDisplayName(slug: string): string {
+  const parts = slug.split("-");
+  const last = parts[parts.length - 1];
+  const core = ["en", "fr", "rw"].includes(last) ? parts.slice(0, -1).join("-") : slug;
+  return core.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
 import { getStoryBySlug, getStoryDetails, getStorySlots, getStoryLibrary } from "@/lib/storyRepository";
 import type { StoryLibraryItem } from "@/lib/story-types";
 import { getStoryIntroProgress, markIntroItemConsumed } from "@/lib/storyProgressRepository";
@@ -226,6 +234,8 @@ export default function StoryDetailPage() {
   const [parentId, setParentId] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
   const [sharingCert, setSharingCert] = useState(false);
+  // Guard: prevent badge award effect from firing more than once per mount
+  const badgeAwardedRef = useRef(false);
 
   const handleShare = async () => {
     setSharingCert(true);
@@ -392,8 +402,10 @@ export default function StoryDetailPage() {
   };
 
   // On certificate phase: award story badge + milestone badges, show badge with image.
+  // Guard with a ref so navigating back and re-entering certificate never double-awards.
   useEffect(() => {
-    if (phase !== "certificate" || !childId) return;
+    if (phase !== "certificate" || !childId || badgeAwardedRef.current) return;
+    badgeAwardedRef.current = true;
     void (async () => {
       // 1. Award this story's specific badge (e.g. "emotion-detective-en")
       const storyBadgeSlug = `${slug}-${language}`;
@@ -405,16 +417,14 @@ export default function StoryDetailPage() {
       // 3. Resolve image URLs from DB for all badge slugs
       const imageMap = await getBadgeImages();
 
-      // 4. Show the story badge first (it has a custom image), then milestone if any
-      const displaySlug = storyBadgeSlug;
-      setEarnedBadgeSlug(displaySlug);
-      setEarnedBadgeImageUrl(imageMap[displaySlug] ?? null);
+      // 4. Show the story badge (it has a custom image per language)
+      setEarnedBadgeSlug(storyBadgeSlug);
+      setEarnedBadgeImageUrl(imageMap[storyBadgeSlug] ?? null);
 
       // 5. Notify parent for newly earned milestone badges
       if (newMilestoneSlugs.length > 0 && parentId) {
-        const { getMilestoneBadgeMeta: getMeta } = await import("@/lib/milestoneBadges");
         for (const mSlug of newMilestoneSlugs) {
-          const meta = getMeta(mSlug);
+          const meta = getMilestoneBadgeMeta(mSlug);
           await createNotification(parentId, {
             title: `${meta?.emoji ?? "🏅"} Badge Earned!`,
             body: meta ? `${childName} earned "${meta.label}" — ${meta.desc}` : `${childName} earned a new badge!`,
@@ -424,7 +434,8 @@ export default function StoryDetailPage() {
         }
       }
     })();
-  }, [phase, childId, language, parentId, childName, slug]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, childId]);
 
   // Detect premium lock for this story
   useEffect(() => {
@@ -631,7 +642,7 @@ export default function StoryDetailPage() {
                         onClick={() => { playTap(); setPhase(allIntrosDone ? "missions" : "intro"); }}
                         className="mt-8 w-full text-white font-baloo font-black text-[20px] px-10 py-4 shadow-2xl flex items-center justify-center gap-3" style={{ background: 'linear-gradient(to right, var(--nimi-green), #0e9d60)', borderRadius: 'var(--leaf-r-lg)', boxShadow: '0 8px 24px rgba(26,168,106,0.35)' }}>
                         <Play className="w-6 h-6 fill-white" />
-                        {doneCount > 0 ? "Continue My Journey" : "Begin the Story"}
+                        {doneCount > 0 ? t("storyContinueBtn") : t("storyBeginMyAdventure")}
                       </motion.button>
                     )}
                   </div>
@@ -780,8 +791,8 @@ export default function StoryDetailPage() {
                 <div className="mx-5 mb-4 leaf border border-white/70 bg-white/85 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.08)] backdrop-blur relative z-10">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-baloo font-black text-[15px] text-ds-text">Adventure path</p>
-                      <p className="text-[12px] text-gray-500 mt-0.5">{doneCount} / 6 Missions Completed · {totalStars} ⭐ collected</p>
+                      <p className="font-baloo font-black text-[15px] text-ds-text">{t("storyAdventureBegins")}</p>
+                      <p className="text-[12px] text-gray-500 mt-0.5">{doneCount} / {totalCount} · {totalStars} ⭐</p>
                     </div>
                     {(() => {
                       const nb = nextMission ? (SLOT_BADGE[nextMission.slot_key] ?? { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" }) : null;
@@ -966,7 +977,7 @@ export default function StoryDetailPage() {
                               {!isLocked && (
                                 <div className="flex items-center gap-0.5">
                                   <Star className={`w-3 h-3 ${slot.completed ? "text-yellow-400 fill-yellow-400" : "text-yellow-400/40 fill-yellow-400/40"}`} />
-                                  <span className={`text-[10px] font-bold ${slot.completed ? "text-yellow-600" : "text-yellow-400/40"}`}>{slot.stars}</span>
+                                  <span className={`text-[10px] font-bold ${slot.completed ? "text-yellow-600" : "text-yellow-400/40"}`}>{slot.stars ?? 10}</span>
                                 </div>
                               )}
                             </motion.div>
@@ -1038,17 +1049,30 @@ export default function StoryDetailPage() {
             {/* ═══════════════════════════════════════════ */}
             {phase === "certificate" && (
               <motion.div key="certificate" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                className="flex-1 flex flex-col items-center justify-center px-6 py-10 text-center relative overflow-hidden">
+                className="flex-1 flex flex-col items-center px-6 py-6 text-center relative overflow-hidden">
 
-                {/* Confetti stars */}
-                {Array.from({ length: 15 }).map((_, i) => (
-                  <motion.span key={i} className="absolute text-yellow-400 pointer-events-none"
-                    style={{ left: `${5 + (i * 6) % 85}%`, top: `${5 + (i * 9) % 65}%` }}
-                    animate={{ opacity: [0, 1, 0], y: [0, -30, 0], rotate: [0, 360] }}
-                    transition={{ duration: DURATION.loopBase + (i % 3), repeat: Infinity, delay: i * 0.15 }}>
-                    {["⭐", "✨", "🌟", "💫", "🎉"][i % 5]}
-                  </motion.span>
-                ))}
+                {/* Back button */}
+                <button
+                  onClick={() => setPhase("missions")}
+                  className="self-start flex items-center gap-1 text-gray-400 text-[13px] font-bold mb-2 hover:text-gray-600 transition">
+                  <ArrowLeft className="w-4 h-4" /> {t("storyBackBtn")}
+                </button>
+
+                {/* Colored confetti rain */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                  {Array.from({ length: 28 }).map((_, i) => {
+                    const cols = ["#fbbf24","#f472b6","#34d399","#60a5fa","#a78bfa","#fb923c"];
+                    const col = cols[i % cols.length];
+                    const sz = 5 + (i % 4) * 2;
+                    return (
+                      <motion.div key={i} className="absolute top-0 rounded-sm"
+                        style={{ left: `${(i * 97 + 7) % 100}%`, width: sz, height: sz * 1.5, background: col, opacity: 0.7 }}
+                        animate={{ y: ["0vh","110vh"], rotate: [0, 360 * (i % 2 === 0 ? 1 : -1)], opacity: [0, 0.8, 0.8, 0] }}
+                        transition={{ duration: 2.2 + (i % 5) * 0.3, repeat: Infinity, delay: (i * 0.2) % 3.5, ease: "linear" }}
+                      />
+                    );
+                  })}
+                </div>
 
                 {/* Nimi celebrating */}
                 <motion.img
@@ -1212,14 +1236,15 @@ export default function StoryDetailPage() {
                             <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
                               <h3 className="font-baloo font-black text-gray-900 text-[22px] leading-tight">
                                 {earnedBadgeSlug
-                                  ? (getMilestoneBadgeMeta(earnedBadgeSlug)?.label
-                                      ?? earnedBadgeSlug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "))
-                                  : "Story Explorer"}
+                                  ? (getMilestoneBadgeMeta(earnedBadgeSlug)?.label ?? badgeDisplayName(earnedBadgeSlug))
+                                  : "Story Badge"}
                               </h3>
                               <p className="font-nunito text-gray-400 text-[13px] mt-1 leading-snug">
                                 {earnedBadgeSlug && getMilestoneBadgeMeta(earnedBadgeSlug)
                                   ? <>{getMilestoneBadgeMeta(earnedBadgeSlug)!.desc} 🎉</>
-                                  : <>{childName} earned this by completing<br /><span className="font-bold text-gray-600">{storyTitle}</span></>
+                                  : earnedBadgeSlug
+                                    ? <>{childName} earned this by completing<br /><span className="font-bold text-gray-600">{storyTitle}</span></>
+                                    : <span className="text-gray-300">Awarding your badge…</span>
                                 }
                               </p>
                             </motion.div>
@@ -1262,6 +1287,7 @@ export default function StoryDetailPage() {
                                   setTimeout(() => {
                                     setTreasureAnimating(false);
                                     setShowRewardModal(false);
+                                    router.push("/treasure");
                                   }, 2000);
                                 }, 1500);
                               }}
@@ -1621,7 +1647,7 @@ export default function StoryDetailPage() {
                       <motion.div whileTap={m.buttonPress}
                         className={`w-full font-baloo font-black text-[17px] py-3.5 flex items-center justify-center gap-2 text-white ${v.buttonStyle.primary}`}
                         style={{ borderRadius: "var(--leaf-r-lg)" }}>
-                        🚀 Start Next Story
+                        🚀 {t("storyNextStory")}
                       </motion.div>
                     </Link>
                   ) : (
@@ -1629,16 +1655,6 @@ export default function StoryDetailPage() {
                       <motion.div whileTap={m.buttonPress}
                         className={`w-full font-baloo font-black text-[17px] py-3.5 flex items-center justify-center gap-2 text-white bg-gradient-to-r ${v.zoneGradients.treasureRoom}`}
                         style={{ borderRadius: "var(--leaf-r-lg)", boxShadow: "0 6px 20px rgba(245,158,11,0.30)" }}>
-                        🏆 {t("storyMyTreasure")}
-                      </motion.div>
-                    </Link>
-                  )}
-
-                  {nextStory?.unlocked && (
-                    <Link href="/treasure" className="block">
-                      <motion.div whileTap={m.buttonPress}
-                        className={`w-full font-baloo font-black text-[15px] py-3 flex items-center justify-center gap-2 text-white bg-gradient-to-r ${v.zoneGradients.treasureRoom}`}
-                        style={{ borderRadius: "var(--leaf-r)", boxShadow: "0 4px 14px rgba(245,158,11,0.25)" }}>
                         🏆 {t("storyMyTreasure")}
                       </motion.div>
                     </Link>
@@ -1657,7 +1673,7 @@ export default function StoryDetailPage() {
                     <motion.div whileTap={m.buttonPress}
                       className="w-full font-baloo font-black text-[14px] py-2.5 flex items-center justify-center gap-2 bg-ds-card border border-ds-border text-ds-text"
                       style={{ borderRadius: "var(--leaf-r)" }}>
-                      🚀 {t("storyNextStory")}
+                      📚 {t("storyBackBtn")}
                     </motion.div>
                   </Link>
                 </motion.div>

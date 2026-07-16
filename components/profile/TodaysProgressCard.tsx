@@ -90,7 +90,7 @@ export default function TodaysProgressCard({ completedCategories }: Props) {
                 href="/missions/morning"
                 className="inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full text-[11px] font-black text-white bg-[var(--ds-brand-primary)] hover:opacity-90 transition-opacity shadow-sm"
               >
-                {t("startNowLabel") || "Start now"} →
+                {t("startNowLabel")} →
               </Link>
             </motion.div>
           )}

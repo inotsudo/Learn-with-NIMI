@@ -9,6 +9,7 @@ import { Bone } from "@/components/ui/Bone";
 import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import {
   getChildren, getTotalStars, getActivityDates, getWeekStreak,
   getWeekActivityCounts, getClaimedChallenges, claimChallengeReward,
@@ -21,7 +22,6 @@ import {
   getWeekPeriod, getDayPeriod, todayWeekIndex,
   type Challenge, type ChallengeStats,
 } from "@/components/challenges/_challengeData";
-import type { Language } from "@/contexts/LanguageContext";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -81,6 +81,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 
 // ── Section-cleared banner ─────────────────────────────────────
 function SectionCleared({ label }: { label: string }) {
+  const { t } = useLanguage();
   return (
     <motion.div
       initial={{ opacity:0, scale:0.92, y:6 }}
@@ -89,7 +90,7 @@ function SectionCleared({ label }: { label: string }) {
       style={{ color:"var(--nimi-green)" }}
     >
       <motion.span animate={{ rotate:[0,15,-10,0] }} transition={{ duration:0.6, delay:0.2 }}>🎉</motion.span>
-      {label} — all complete!
+      {label} — {t("treasureAllComplete")}
       <motion.span animate={{ rotate:[0,-15,10,0] }} transition={{ duration:0.6, delay:0.3 }}>🎉</motion.span>
     </motion.div>
   );
@@ -107,9 +108,11 @@ function ChallengeCard({
   index: number;
   premium?: boolean;
 }) {
+  const { t } = useLanguage();
   const complete = challenge.isComplete(stats);
   const pct      = challenge.progress(stats);
-  const label    = challenge.progressLabel(stats);
+  const rawLabel = challenge.progressLabel(stats);
+  const label    = pct >= 1 ? t("challengeDone") : pct === 0 ? t("challengeNotYet") : rawLabel;
   const state: "locked"|"ready"|"claimed" = claimed ? "claimed" : complete ? "ready" : "locked";
 
   return (
@@ -149,7 +152,7 @@ function ChallengeCard({
           <p className={`font-black leading-tight ${
             premium ? "text-[15px]" : "text-[13px]"
           } ${state === "locked" ? "text-ds-muted" : "text-ds-text"}`}>
-            {challenge.title}
+            {t(challenge.titleKey)}
           </p>
 
           {/* READY badge */}
@@ -161,7 +164,7 @@ function ChallengeCard({
               style={{ background:"var(--nimi-green)",
                 boxShadow:"0 0 0 3px rgba(34,197,94,0.25)" }}
             >
-              READY!
+              {t("treasureReady")}
             </motion.span>
           )}
 
@@ -172,7 +175,7 @@ function ChallengeCard({
         </div>
 
         <p className={`text-[11px] leading-snug mb-2 ${state === "locked" ? "text-ds-muted/60" : "text-ds-muted"}`}>
-          {challenge.desc}
+          {t(challenge.descKey)}
         </p>
 
         {/* Progress bar */}
@@ -217,7 +220,7 @@ function ChallengeCard({
               className="text-[11px] font-black px-3 py-1.5 rounded-xl text-white shadow-md disabled:opacity-60 transition-opacity"
               style={{ background:"var(--nimi-green)" }}
             >
-              {claiming ? "…" : "Claim!"}
+              {claiming ? "…" : t("treasureClaim")}
             </motion.button>
           ) : (
             <motion.div key="lock"
@@ -245,11 +248,11 @@ function ChallengeCard({
 // ── Main page ──────────────────────────────────────────────────
 export default function ChallengesPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
 
-  const [childId, setChildId]           = useState<string | null>(null);
-  const [childName, setChildName]       = useState("Explorer");
+  const [childName, setChildName]       = useState("");
   const [language, setLanguage]         = useState<Language>("en");
   const [stats, setStats]               = useState<ChallengeStats | null>(null);
   const [totalStars, setTotalStars]     = useState(0);
@@ -298,7 +301,6 @@ export default function ChallengesPage() {
       const child = list.find(c => c.id === savedId) ?? list[0];
       if (!child) { setLoading(false); return; }
 
-      setChildId(child.id);
       setChildName(child.name);
       setLanguage(child.language);
       childRef.current = { id: child.id, name: child.name, language: child.language };
@@ -329,14 +331,26 @@ export default function ChallengesPage() {
     };
   }, [loadData]);
 
+  // Refresh when the browser tab regains focus
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState !== "visible") return;
+      const child = childRef.current;
+      if (child) void loadData(child, child.language, true);
+    };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, [loadData]);
+
   const handleClaim = useCallback(async (challenge: Challenge) => {
-    if (!childId || claimingId) return;
+    const child = childRef.current;
+    if (!child || claimingId) return;
     const period = challenge.period === "weekly" ? getWeekPeriod() : getDayPeriod();
     const slug   = `${challenge.period}-${challenge.id}-${period}`;
     if (claimed.has(slug)) return;
 
     setClaimingId(challenge.id);
-    const ok = await claimChallengeReward(childId, language, slug, challenge.stars);
+    const ok = await claimChallengeReward(child.id, language, slug, challenge.stars);
     setClaimingId(null);
     if (!ok) return;
 
@@ -344,8 +358,8 @@ export default function ChallengesPage() {
     setTotalStars(prev => prev + challenge.stars);
     setShowConfetti(true);
     toastKey.current++;
-    setToast(`+${challenge.stars} stars earned! Keep it up 🔥`);
-  }, [childId, language, claimed, claimingId]);
+    setToast(`+${challenge.stars} ${t("treasureStarsEarned")}`);
+  }, [language, claimed, claimingId, t]);
 
   const weekPeriod = getWeekPeriod();
   const dayPeriod  = getDayPeriod();
@@ -359,6 +373,7 @@ export default function ChallengesPage() {
   const allChallenges = [...WEEKLY_CHALLENGES, ...DAILY_CHALLENGES];
   const totalDone   = weeklyDone + dailyDone;
   const totalCount  = allChallenges.length;
+  const remaining   = totalCount - totalDone;
 
   return (
     <AppShell>
@@ -390,16 +405,16 @@ export default function ChallengesPage() {
                   onClick={() => router.back()}
                   className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-[13px] font-bold transition-colors"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Back
+                  <ArrowLeft className="w-4 h-4" /> {t("storyBackBtn")}
                 </button>
 
                 <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-white/10 pointer-events-none" />
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
 
-                {([ {t:"12%",l:"5%",d:0},{t:"70%",l:"7%",d:0.55},{t:"18%",r:"5%",d:0.3},{t:"66%",r:"8%",d:0.9} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i) => (
+                {([ {tp:"12%",l:"5%",d:0},{tp:"70%",l:"7%",d:0.55},{tp:"18%",r:"5%",d:0.3},{tp:"66%",r:"8%",d:0.9} ] as Array<{tp:string;d:number;l?:string;r?:string}>).map((s,i) => (
                   <motion.span key={i}
                     className="absolute text-xl pointer-events-none select-none"
-                    style={{ top:s.t, left:s.l, right:s.r }}
+                    style={{ top:s.tp, left:s.l, right:s.r }}
                     animate={{ opacity:[0.3,0.9,0.3], y:[0,-7,0], scale:[0.8,1.25,0.8] }}
                     transition={{ duration:2.5, repeat:Infinity, delay:s.d }}
                     aria-hidden
@@ -413,7 +428,7 @@ export default function ChallengesPage() {
                       animate={{ y:[0,-5,0] }} transition={{ duration:2.8, repeat:Infinity }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.14em] mb-0.5">
-                        Challenge Arena
+                        {t("treasureChallengeArena")}
                       </p>
                       <h1 className="font-baloo font-black text-white text-[22px] sm:text-[28px] leading-tight drop-shadow-md">
                         {childName}&apos;s Challenges! 🏆
@@ -428,14 +443,14 @@ export default function ChallengesPage() {
                       <span className="font-baloo font-black text-white text-[18px]">
                         <StarCount target={totalStars} />
                       </span>
-                      <span className="text-white/70 text-[11px] font-bold">Total Stars</span>
+                      <span className="text-white/70 text-[11px] font-bold">{t("treasureTotalStars")}</span>
                     </div>
 
                     {/* Progress chip */}
                     <div className="flex items-center gap-2 bg-white/20 border border-white/30 rounded-full px-4 py-2 backdrop-blur-sm">
                       <span className="text-[18px]">🏅</span>
                       <span className="font-baloo font-black text-white text-[18px]">{totalDone}</span>
-                      <span className="text-white/70 text-[11px] font-bold">/ {totalCount} done</span>
+                      <span className="text-white/70 text-[11px] font-bold">/ {totalCount} {t("treasureDone")}</span>
                     </div>
                   </div>
 
@@ -455,8 +470,8 @@ export default function ChallengesPage() {
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="font-black text-ds-text text-[16px]">📅 This Week</h2>
-                    <p className="text-ds-muted text-[11px]">Resets every Monday</p>
+                    <h2 className="font-black text-ds-text text-[16px]">📅 {t("treasureWeeklyTitle")}</h2>
+                    <p className="text-ds-muted text-[11px]">{t("treasureWeeklyReset")}</p>
                   </div>
                   <span className="text-[11px] font-black text-ds-muted bg-ds-surface border border-ds-border px-2.5 py-1 rounded-full">
                     {weeklyDone}/{WEEKLY_CHALLENGES.length}
@@ -464,7 +479,7 @@ export default function ChallengesPage() {
                 </div>
 
                 <AnimatePresence>
-                  {allWeekDone && <SectionCleared key="wc" label="This week" />}
+                  {allWeekDone && <SectionCleared key="wc" label={t("treasureWeeklyTitle")} />}
                 </AnimatePresence>
 
                 {stats && (
@@ -489,8 +504,8 @@ export default function ChallengesPage() {
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="font-black text-ds-text text-[16px]">☀️ Today</h2>
-                    <p className="text-ds-muted text-[11px]">Resets at midnight</p>
+                    <h2 className="font-black text-ds-text text-[16px]">☀️ {t("treasureDailyTitle")}</h2>
+                    <p className="text-ds-muted text-[11px]">{t("treasureDailyReset")}</p>
                   </div>
                   <span className="text-[11px] font-black text-ds-muted bg-ds-surface border border-ds-border px-2.5 py-1 rounded-full">
                     {dailyDone}/{DAILY_CHALLENGES.length}
@@ -498,7 +513,7 @@ export default function ChallengesPage() {
                 </div>
 
                 <AnimatePresence>
-                  {allDayDone && <SectionCleared key="dc" label="Today" />}
+                  {allDayDone && <SectionCleared key="dc" label={t("treasureDailyTitle")} />}
                 </AnimatePresence>
 
                 {stats && (
@@ -534,10 +549,10 @@ export default function ChallengesPage() {
                 </motion.div>
                 <p className="font-black text-ds-text text-[15px]">
                   {totalDone === totalCount
-                    ? "Outstanding! All challenges complete!"
-                    : `${totalCount - totalDone} challenge${totalCount - totalDone === 1 ? "" : "s"} left — you've got this!`}
+                    ? t("treasureFooterAllDone")
+                    : `${remaining} ${t("treasureChallengeLabel")}${remaining !== 1 ? "s" : ""} ${t("treasureFooterRemaining")}`}
                 </p>
-                <p className="text-ds-muted text-[11px] mt-1">New weekly challenges every Monday</p>
+                <p className="text-ds-muted text-[11px] mt-1">{t("treasureFooterReset")}</p>
               </motion.div>
 
             </motion.div>

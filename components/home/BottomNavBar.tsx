@@ -6,17 +6,18 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Home, BookOpen, Swords, Users, MessageCircle, ShoppingBag } from "lucide-react";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
 
-const NAV = [
-  { href: "/home",         icon: Home,          key: "home",      label: "Home"       },
-  { href: "/stories",      icon: BookOpen,      key: "stories",   label: "Stories"    },
-  { href: "/treasure",     icon: Swords,        key: "treasure",  label: "Challenges" },
-  { href: null,            icon: null,          key: "nimi",      label: ""           },
-  { href: "/community",    icon: Users,         key: "community", label: "Friends"    },
-  { href: "/shop",         icon: ShoppingBag,   key: "shop",      label: "Shop"       },
-  { href: "/talk-to-nimi", icon: MessageCircle, key: "talk",      label: "Talk"       },
+const NAV_ITEMS = [
+  { href: "/home",         icon: Home,          key: "home",      labelKey: "navHome"       },
+  { href: "/stories",      icon: BookOpen,      key: "stories",   labelKey: "navStories"    },
+  { href: "/treasure",     icon: Swords,        key: "treasure",  labelKey: "navChallenges" },
+  { href: null,            icon: null,          key: "nimi",      labelKey: ""              },
+  { href: "/community",    icon: Users,         key: "community", labelKey: "navFriends"    },
+  { href: "/shop",         icon: ShoppingBag,   key: "shop",      labelKey: "navShop"       },
+  { href: "/talk-to-nimi", icon: MessageCircle, key: "talk",      labelKey: "navTalk"       },
 ];
 
 export default function BottomNavBar() {
@@ -24,6 +25,7 @@ export default function BottomNavBar() {
   const [offset, setOffset] = useState(0);
   const lastY = useRef(0);
   const { themeId } = useAppTheme();
+  const { t } = useLanguage();
   const assets = getThemeAssets(themeId);
   const cv = getComponentVariant(themeId);
 
@@ -75,19 +77,20 @@ export default function BottomNavBar() {
 
           {/* Icons + labels row — 68 px tall to accommodate labels */}
           <div className="relative z-10 flex items-stretch h-[68px] px-1">
-            {NAV.map((item) => {
+            {NAV_ITEMS.map((item) => {
               if (item.key === "nimi") {
                 return <div key="nimi" className="w-[56px] shrink-0" aria-hidden="true" />;
               }
 
               const Icon = item.icon!;
               const active = isActive(item.href);
+              const label = t(item.labelKey);
 
               return (
                 <Link
                   key={item.key}
                   href={item.href!}
-                  aria-label={item.label}
+                  aria-label={label}
                   aria-current={active ? "page" : undefined}
                   className="flex-1 flex flex-col items-center justify-center gap-[3px] py-2 active:scale-95 transition-transform duration-75"
                 >
@@ -117,7 +120,7 @@ export default function BottomNavBar() {
                         : cv.navigationStyle.inactiveIconColor
                     }`}
                   >
-                    {item.label}
+                    {label}
                   </span>
                 </Link>
               );

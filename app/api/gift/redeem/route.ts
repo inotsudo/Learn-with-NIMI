@@ -2,11 +2,10 @@
 // Caller must be authenticated. The gift is activated on their account.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createRouteClient } from "@/lib/supabaseRouteClient";
 
 export async function POST(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createRouteClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -85,7 +84,7 @@ export async function POST(req: NextRequest) {
 
 // GET /api/gift/redeem?code=XXX — preview a gift before signing in
 export async function GET(req: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createRouteClient();
   const code = req.nextUrl.searchParams.get("code")?.toUpperCase().trim() ?? "";
   if (!code) return NextResponse.json({ error: "Code required" }, { status: 422 });
 

@@ -3,11 +3,13 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { useMotion } from "@/hooks/useMotion";
 
 export default function KeepGoingCard() {
   const { themeId } = useAppTheme();
+  const { t } = useLanguage();
   const assets = getThemeAssets(themeId);
   const m = useMotion();
 
@@ -19,11 +21,11 @@ export default function KeepGoingCard() {
         transition={{ ...m.glowPulse.transition, duration: 2 }}>✦</motion.span>
 
       <div className="relative z-10 bg-white/80 border border-[var(--ds-border-brand)]/20 rounded-xl px-3 py-1.5 mb-3 shadow-sm">
-        <h3 className="font-black text-[var(--ds-brand-primary)] text-[11px] tracking-wide">Keep Going!</h3>
+        <h3 className="font-black text-[var(--ds-brand-primary)] text-[11px] tracking-wide">{t("keepGoingLabel")}</h3>
       </div>
 
       <p className="text-gray-400 text-[10px] leading-snug max-w-[120px]">
-        Every story you complete makes you a star!
+        {t("keepGoingDesc")}
       </p>
 
       <motion.div

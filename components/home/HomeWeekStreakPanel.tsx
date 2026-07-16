@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Star, Flame } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   weekStreak: boolean[];
@@ -12,12 +13,13 @@ interface Props {
 const DAYS = ["M","T","W","T","F","S","S"];
 
 export default function HomeWeekStreakPanel({ weekStreak, consecutiveStreak, totalStars }: Props) {
+  const { t } = useLanguage();
   const todayRaw   = new Date().getDay();
   const todayIdx   = todayRaw === 0 ? 6 : todayRaw - 1;
   const message    =
-    consecutiveStreak >= 7 ? "Unstoppable! 🏆" :
-    consecutiveStreak >= 3 ? "You're on fire! 🔥" :
-    consecutiveStreak > 0  ? "Keep it up! 💪"   : "Start your streak! ✨";
+    consecutiveStreak >= 7 ? t("homeStreakUnstoppable") :
+    consecutiveStreak >= 3 ? t("homeStreakOnFire") :
+    consecutiveStreak > 0  ? t("homeStreakKeepItUp") : t("homeStreakStart");
 
   return (
     <div className="overflow-hidden leaf-lg border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.07)]">
@@ -33,7 +35,7 @@ export default function HomeWeekStreakPanel({ weekStreak, consecutiveStreak, tot
               {message}
             </p>
             <h3 className="font-baloo font-black text-gray-900 text-[17px] leading-tight">
-              {consecutiveStreak} {consecutiveStreak === 1 ? "day" : "days"}
+              {consecutiveStreak} {consecutiveStreak === 1 ? t("homeStreakDayLabel") : t("homeStreakDaysLabel")}
             </h3>
           </div>
         </div>
@@ -71,7 +73,7 @@ export default function HomeWeekStreakPanel({ weekStreak, consecutiveStreak, tot
         </div>
         {consecutiveStreak === 0 && (
           <p className="text-center font-nunito text-gray-400 text-[11px] mt-3">
-            Complete a story to light your first flame 🔥
+            {t("homeStreakFirstFlame")}
           </p>
         )}
       </div>

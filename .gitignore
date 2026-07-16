@@ -49,3 +49,11 @@ core.*
 .env.local
 .vercel
 .env*
+
+# Local test / debug scripts (may contain hardcoded credentials)
+browser-test.mjs
+community_shot.js
+gen-auth-link.mjs
+
+# Debug screenshot artifacts
+undefined/
