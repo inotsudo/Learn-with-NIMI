@@ -178,7 +178,11 @@ export async function GET(req: NextRequest) {
       if (chargeResult.ok && pm.provider === "cybersource") {
         // Card charged — extend period
         const newEnd = new Date(sub.current_period_end);
-        newEnd.setMonth(newEnd.getMonth() + (sub.billing_interval === "year" ? 12 : 1));
+        if (sub.billing_interval === "year") {
+          newEnd.setFullYear(newEnd.getFullYear() + 1);
+        } else {
+          newEnd.setMonth(newEnd.getMonth() + 1);
+        }
 
         await supabase.from("nimipiko_subscriptions").update({
           current_period_start: sub.current_period_end,

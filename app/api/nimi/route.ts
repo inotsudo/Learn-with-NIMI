@@ -176,9 +176,9 @@ Your style:
 `.trim(),
     };
 
-    const model = process.env.OPENROUTER_MODEL || "openai/gpt-3.5-turbo";
+    const model = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // generous timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // stay under Vercel edge 25s limit
 
     // 🇷🇼 Kinyarwanda: generate, then run through the Language Guardian for a natural rewrite,
     // then stream the polished result word-by-word so the UI keeps its typing effect.

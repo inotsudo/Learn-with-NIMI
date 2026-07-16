@@ -21,8 +21,8 @@ async function send(to: string, subject: string, html: string): Promise<void> {
         content: [{ type: "text/html", value: html }],
       }),
     });
-  } catch {
-    // Non-fatal — email is best-effort
+  } catch (err) {
+    console.error("[email] SendGrid send failed:", err);
   }
 }
 

@@ -14,7 +14,7 @@ const supabase = createClient(
 // with the service-role key server-side and returns only published-story
 // fields, without changing the table's RLS policy.
 export async function GET(req: NextRequest) {
-  const limit = Number(req.nextUrl.searchParams.get("limit")) || 6;
+  const limit = Math.min(Math.max(1, Number(req.nextUrl.searchParams.get("limit")) || 6), 20);
   const { data, error } = await supabase
     .from("stories")
     .select("id, slug, title, cover_url, theme_emoji, sort_order")
