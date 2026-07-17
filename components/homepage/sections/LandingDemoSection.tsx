@@ -68,7 +68,7 @@ export default function LandingDemoSection() {
                 style={{ borderRadius: "28px", aspectRatio: "9/16", background: "#000" }}>
                 {playing ? (
                   <iframe
-                    src={`https://www.youtube.com/embed/${DEMO_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                    src={`https://www.youtube-nocookie.com/embed/${DEMO_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
                     title="NIMIPIKO demo"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen

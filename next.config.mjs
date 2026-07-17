@@ -18,7 +18,8 @@ const CSP = [
   // CyberSource Flex SDK makes XHR calls back to its own host during tokenization.
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://flex.cybersource.com https://testflex.cybersource.com https://up.cybersource.com",
   // CyberSource Flex renders payment fields inside iframes; Google Pay uses its own iframe.
-  "frame-src https://flex.cybersource.com https://testflex.cybersource.com https://up.cybersource.com https://pay.google.com",
+  // YouTube embed for the marketing demo video (both standard and privacy-enhanced domains).
+  "frame-src https://flex.cybersource.com https://testflex.cybersource.com https://up.cybersource.com https://pay.google.com https://www.youtube.com https://www.youtube-nocookie.com",
   // Prevent this site from being embedded in any foreign frame (clickjacking protection).
   "frame-ancestors 'none'",
   // Service worker (push notifications, sw.js).
