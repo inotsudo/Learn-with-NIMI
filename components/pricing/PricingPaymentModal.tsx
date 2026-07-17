@@ -125,9 +125,22 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
 
         if (cancelled) return;
         setStep("card");
-        await new Promise(r => setTimeout(r, 200));
 
-        const accept = await window.Accept!(captureContext);
+        // Poll up to 3 s for the SDK to expose window.Accept after onload.
+        for (let i = 0; i < 30; i++) {
+          if (typeof (window as any).Accept === "function") break;
+          await new Promise(r => setTimeout(r, 100));
+        }
+        if (typeof (window as any).Accept !== "function") {
+          // Debug: log what the SDK actually exposed so we can identify the global name.
+          const csKeys = Object.keys(window).filter(k => /accept|cyber|unified|flex|up[A-Z_]/i.test(k));
+          console.error("[CyberSource] window.Accept not found. Possible CS globals:", csKeys, "| Accept type:", typeof (window as any).Accept);
+          setStep("error");
+          setErrorMsg(`Payment SDK failed to initialize (Accept=${typeof (window as any).Accept}; check console)`);
+          return;
+        }
+
+        const accept = await (window as any).Accept(captureContext);
         const up = await accept.unifiedPayments(false);
         const transientToken = await up.show({
           containers: { paymentSelection: "#cs-payment-list", paymentScreen: "#cs-payment-form" },

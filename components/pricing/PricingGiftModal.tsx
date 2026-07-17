@@ -102,9 +102,19 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       }
 
       setStep("pay-card");
-      await new Promise(r => setTimeout(r, 200));
 
-      const accept = await window.Accept!(captureContext);
+      for (let i = 0; i < 30; i++) {
+        if (typeof (window as any).Accept === "function") break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      if (typeof (window as any).Accept !== "function") {
+        const csKeys = Object.keys(window).filter(k => /accept|cyber|unified|flex/i.test(k));
+        console.error("[CyberSource] window.Accept not found:", csKeys, typeof (window as any).Accept);
+        setStep("error"); setErrorMsg(`Payment SDK not ready (Accept=${typeof (window as any).Accept}; check console)`);
+        return;
+      }
+
+      const accept = await (window as any).Accept(captureContext);
       const up = await accept.unifiedPayments(false);
       const transientToken = await up.show({
         containers: { paymentSelection: "#cs-gift-list", paymentScreen: "#cs-gift-form" },
