@@ -33,9 +33,6 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
   const price = getPrice(product, currency);
   const isRwanda = currency === "RWF";
 
-  // Rwanda card payments are charged in USD — compute for display on the Card button.
-  const usdPrice = isRwanda ? getPrice(product, "USD") : null;
-
   const [step, setStep] = useState<GiftStep>("form");
   const [activeProvider, setActiveProvider] = useState<ActiveProvider | null>(null);
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -55,14 +52,13 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     setErrorMsg("");
     setStep(paymentProvider === "cybersource" ? "pay-loading" : "pay-momo");
 
-    // Rwanda card payments are charged in USD — CyberSource card processing doesn't support RWF.
-    const giftCurrency = isRwanda && paymentProvider === "cybersource" ? "USD" : currency;
+    // Send currency as-is (RWF for Rwanda); the server converts to USD for CyberSource.
     const res = await authedFetch("/api/gift", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         productId: product.id,
-        currency: giftCurrency,
+        currency,
         paymentProvider,
         recipientEmail,
         recipientName: recipientName.trim() || null,
@@ -248,9 +244,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
                   className="flex flex-col items-center gap-2 p-4 leaf border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition text-center">
                   <CreditCard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   <span className="font-baloo font-black text-ds-text text-[14px]">Debit / Card</span>
-                  {usdPrice && (
-                    <span className="font-baloo font-black text-blue-600 text-[13px]">{usdPrice.formatted}</span>
-                  )}
+                  {isRwanda && <span className="text-gray-400 text-[10px]">USD equivalent</span>}
                   <span className="text-gray-500 dark:text-gray-400 text-[11px]">Visa, Mastercard, Amex</span>
                 </motion.button>
               </div>

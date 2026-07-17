@@ -76,13 +76,12 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { window.location.href = "/loginpage"; return; }
 
-        // Rwanda card payments must use USD — CyberSource card processing doesn't support RWF.
-        const cardCurrency = isRwanda ? "USD" : currency;
+        // Send currency as-is (RWF for Rwanda); the server converts to USD for CyberSource.
         const orderRes = await authedFetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            productId: product.id, currency: cardCurrency, paymentProvider: "cybersource",
+            productId: product.id, currency, paymentProvider: "cybersource",
             ...(discountCodeId ? { discountCodeId } : {}),
           }),
         });
@@ -232,9 +231,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     ? formatAmount(effectiveAmount, currency)
     : price.formatted;
   const hasDiscount = effectiveAmount !== undefined && effectiveAmount < price.amount;
-  // Rwanda card payments are charged in USD — show the USD price on the Card button.
-  const usdPrice = isRwanda ? getPrice(product, "USD") : null;
-
   return (
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -270,9 +266,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
                   className="flex flex-col items-center gap-2 p-4 leaf border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition text-center">
                   <CreditCard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   <span className="font-baloo font-black text-ds-text text-[14px]">Debit / Card</span>
-                  {usdPrice && (
-                    <span className="font-baloo font-black text-blue-600 text-[13px]">{usdPrice.formatted}</span>
-                  )}
+                  {isRwanda && <span className="text-gray-400 text-[10px]">USD equivalent</span>}
                   <span className="text-gray-500 dark:text-gray-400 text-[11px]">Visa, Mastercard, Amex</span>
                 </motion.button>
               </div>

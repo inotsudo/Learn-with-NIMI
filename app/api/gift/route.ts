@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
+import { rwfToUsd } from "@/lib/payments/rwfConvert";
 import crypto from "crypto";
 
 const supabase = createClient(
@@ -50,7 +51,12 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
-  const authorizedAmount = body.currency === "RWF" ? product.price_rwf : product.price_usd;
+  // Rwanda card: convert price_rwf → USD so MoMo and card cost the same locally.
+  const isRwandaCard = body.currency === "RWF" && body.paymentProvider === "cybersource";
+  const chargeCurrency = isRwandaCard ? "USD" : body.currency!;
+  const authorizedAmount = isRwandaCard
+    ? (product.price_rwf != null ? rwfToUsd(product.price_rwf) : null)
+    : (body.currency === "RWF" ? product.price_rwf : product.price_usd);
   if (authorizedAmount == null) {
     return NextResponse.json({ error: "Currency not supported for this product" }, { status: 422 });
   }
@@ -59,7 +65,7 @@ export async function POST(req: NextRequest) {
   const { data: order, error: orderErr } = await supabase.from("orders").insert({
     parent_id: user.id,
     product_id: body.productId,
-    currency: body.currency,
+    currency: chargeCurrency,
     amount: authorizedAmount,
     payment_provider: body.paymentProvider ?? "cybersource",
     payment_status: "pending",

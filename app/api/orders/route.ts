@@ -11,14 +11,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import type { Currency } from "@/lib/payments/types";
+import { rwfToUsd } from "@/lib/payments/rwfConvert";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function priceForCurrency(product: { price_usd: number | null; price_rwf: number | null }, currency: Currency): number | null {
-  return currency === "RWF" ? product.price_rwf : product.price_usd;
+// Returns the charge amount and the currency CyberSource / MoMo will actually see.
+// Rwanda card payments: convert price_rwf → USD so both methods cost the same locally.
+function resolveCharge(
+  product: { price_usd: number | null; price_rwf: number | null },
+  currency: Currency,
+  paymentProvider: string,
+): { amount: number | null; chargeCurrency: Currency } {
+  if (currency === "RWF" && paymentProvider === "cybersource") {
+    return {
+      amount: product.price_rwf != null ? rwfToUsd(product.price_rwf) : null,
+      chargeCurrency: "USD",
+    };
+  }
+  return {
+    amount: currency === "RWF" ? product.price_rwf : product.price_usd,
+    chargeCurrency: currency,
+  };
 }
 
 function applyDiscount(amount: number, type: "percent" | "fixed", value: number): number {
@@ -53,7 +69,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
-  const baseAmount = priceForCurrency(product, currency as Currency);
+  const { amount: baseAmount, chargeCurrency } = resolveCharge(product, currency as Currency, paymentProvider);
   if (baseAmount == null) {
     return NextResponse.json({ error: "Currency not supported for this product" }, { status: 422 });
   }
@@ -81,7 +97,7 @@ export async function POST(req: NextRequest) {
     .insert({
       parent_id: user.id,
       product_id: productId,
-      currency,
+      currency: chargeCurrency,
       amount: finalAmount,
       payment_provider: paymentProvider,
       payment_status: finalAmount === 0 ? "completed" : "pending",
@@ -122,7 +138,7 @@ export async function POST(req: NextRequest) {
         p_token:            null,
         p_phone:            null,
         p_amount:           0,
-        p_currency:         currency,
+        p_currency:         chargeCurrency,
         p_billing_interval: billingInterval,
         p_period_start:     new Date().toISOString(),
         p_period_end:       periodEnd.toISOString(),
