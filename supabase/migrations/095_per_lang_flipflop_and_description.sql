@@ -15,6 +15,8 @@ alter table story_page_versions add column if not exists image_url text;
 alter table story_versions add column if not exists description text;
 
 -- ── 3. Recreate get_story_details — add description to return shape ───
+-- Must drop first: Postgres forbids changing a function's return type in-place.
+drop function if exists get_story_details(uuid, text);
 create or replace function get_story_details(
   p_story_id uuid,
   p_language text default 'en'
