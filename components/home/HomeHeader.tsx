@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import { updateChildLanguage, type Child } from "@/lib/queries";
+import LanguageSwitchDialog from "@/components/LanguageSwitchDialog";
 
 const HEADER_STARS = [
   { top: "12%", left: "7%",  color: "#FFD700", shape: "✦", size: "14px" },
@@ -24,16 +26,31 @@ const HEADER_STARS = [
 ];
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English",     flag: "en" },
-  { code: "fr", label: "Français",    flag: "fr" },
-  { code: "rw", label: "Kinyarwanda", flag: "rw" },
+  { code: "en", label: "English",     flag: "🇬🇧" },
+  { code: "fr", label: "Français",    flag: "🇫🇷" },
+  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
 ];
 
-export default function HomeHeader() {
+interface HomeHeaderProps {
+  activeChild?: Child | null;
+}
+
+export default function HomeHeader({ activeChild }: HomeHeaderProps) {
   const { language, setLanguage } = useLanguage();
   const [showPicker, setShowPicker] = useState(false);
+  const [pendingLanguage, setPendingLanguage] = useState<Language | null>(null);
+  const [switching, setSwitching] = useState(false);
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
+
+  const confirmSwitch = async () => {
+    if (!pendingLanguage) return;
+    setSwitching(true);
+    if (activeChild) await updateChildLanguage(activeChild.id, pendingLanguage);
+    setLanguage(pendingLanguage);
+    setSwitching(false);
+    setPendingLanguage(null);
+  };
 
   return (
     <header className="bg-white border-b border-ds-border shadow-ds-nav relative overflow-hidden">
@@ -117,7 +134,7 @@ export default function HomeHeader() {
             {showPicker && (
               <div className="absolute right-0 mt-2 bg-white border border-ds-border rounded-xl shadow-lg overflow-hidden z-50 w-40">
                 {LANGS.map(lang => (
-                  <button key={lang.code} onClick={() => { setLanguage(lang.code); setShowPicker(false); }}
+                  <button key={lang.code} onClick={() => { setPendingLanguage(lang.code); setShowPicker(false); }}
                     className="flex items-center px-4 py-3 w-full hover:bg-gray-50 transition text-sm">
                     <span className="text-xl mr-2">{lang.flag}</span>
                     <span className="font-semibold text-ds-text">{lang.label}</span>
@@ -146,6 +163,15 @@ export default function HomeHeader() {
         </div>
       </div>
 
+      <LanguageSwitchDialog
+        pendingLanguage={pendingLanguage}
+        currentLanguage={language}
+        childName={activeChild?.name}
+        switching={switching}
+        onConfirm={confirmSwitch}
+        onCancel={() => setPendingLanguage(null)}
+      />
+
       {/* ── Mobile ── */}
       <div className="sm:hidden flex items-center justify-between px-3 py-3 relative z-10">
         <div className="flex items-center gap-2">
@@ -168,7 +194,7 @@ export default function HomeHeader() {
             {showPicker && (
               <div className="absolute right-0 mt-2 bg-white border border-ds-border rounded-xl shadow-lg overflow-hidden z-50 w-36">
                 {LANGS.map(lang => (
-                  <button key={lang.code} onClick={() => { setLanguage(lang.code); setShowPicker(false); }}
+                  <button key={lang.code} onClick={() => { setPendingLanguage(lang.code); setShowPicker(false); }}
                     className="flex items-center px-3 py-2.5 w-full hover:bg-gray-50 text-sm">
                     <span className="text-lg mr-2">{lang.flag}</span>
                     <span className="font-medium text-ds-text">{lang.label}</span>

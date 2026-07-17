@@ -11,9 +11,9 @@ interface HeaderProps {
 }
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English", flag: "en" },
-  { code: "fr", label: "Français", flag: "fr" },
-  { code: "rw", label: "Kinyarwanda", flag: "rw" },
+  { code: "en", label: "English",     flag: "🇬🇧" },
+  { code: "fr", label: "Français",    flag: "🇫🇷" },
+  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
 ];
 
 export default function Header({ simple }: HeaderProps) {

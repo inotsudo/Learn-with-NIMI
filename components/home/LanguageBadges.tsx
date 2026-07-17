@@ -30,9 +30,6 @@ export default function LanguageBadges({ activeChild, earnedLanguages, onLanguag
     if (activeChild) await updateChildLanguage(activeChild.id, pendingLanguage);
     setLanguage(pendingLanguage);
     onLanguageChanged?.(pendingLanguage);
-    window.dispatchEvent(
-      new CustomEvent("app:languageChange", { detail: { language: pendingLanguage } })
-    );
     setSwitching(false);
     setPendingLanguage(null);
   };

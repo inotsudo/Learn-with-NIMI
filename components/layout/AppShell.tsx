@@ -37,9 +37,9 @@ const LEVEL_LABELS: Record<number, string> = {
 const getLevelLabel = (n: number) => LEVEL_LABELS[Math.min(Math.max(n, 1), 5)] ?? "Explorer";
 
 const LANGS: { code: Language; label: string; flag: string }[] = [
-  { code: "en", label: "English",     flag: "en" },
-  { code: "fr", label: "Français",    flag: "fr" },
-  { code: "rw", label: "Kinyarwanda", flag: "rw" },
+  { code: "en", label: "English",     flag: "🇬🇧" },
+  { code: "fr", label: "Français",    flag: "🇫🇷" },
+  { code: "rw", label: "Kinyarwanda", flag: "🇷🇼" },
 ];
 
 interface AppShellProps {
@@ -211,9 +211,6 @@ export default function AppShell({ children }: AppShellProps) {
     setLanguage(pendingLanguage);
     setSwitchingLanguage(false);
     setPendingLanguage(null);
-    window.dispatchEvent(
-      new CustomEvent("app:languageChange", { detail: { language: pendingLanguage } })
-    );
   };
 
   if (authLoading || !user) return null;

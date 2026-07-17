@@ -22,6 +22,7 @@ import { getActiveSubscription } from "@/lib/payments/products";
 import { computeStreaks } from "@/lib/parentInsights";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
@@ -47,6 +48,7 @@ interface ChildData {
 export default function ParentsZonePage() {
   const router = useRouter();
   const { themeId } = useAppTheme();
+  const { t } = useLanguage();
   const m = useThemeMotion();
   const assets = getThemeAssets(themeId);
   const push = usePushNotifications();
@@ -384,10 +386,10 @@ export default function ParentsZonePage() {
                   <div className="p-4 flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center text-xl shadow-sm shrink-0">🚀</div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-baloo font-black text-ds-text text-[15px]">Unlock Premium</p>
-                      <p className="text-gray-500 text-[11px]">All stories · All languages</p>
+                      <p className="font-baloo font-black text-ds-text text-[15px]">{t("unlockPremium")}</p>
+                      <p className="text-gray-500 text-[11px]">{t("allStoriesAllLanguages")}</p>
                     </div>
-                    <span className="bg-yellow-400 text-black font-black text-[11px] px-3 py-1 shrink-0" style={{ borderRadius: 'var(--leaf-r-sm)' }}>See Plans</span>
+                    <span className="bg-yellow-400 text-black font-black text-[11px] px-3 py-1 shrink-0" style={{ borderRadius: 'var(--leaf-r-sm)' }}>{t("seePlans")}</span>
                   </div>
                 </motion.div>
               </Link>
@@ -417,7 +419,7 @@ export default function ParentsZonePage() {
                     <div className="text-left">
                       <p className="font-black leading-none">{d.child.name}</p>
                       <p className={`text-[10px] mt-0.5 ${isSelected ? "text-white/75" : "text-gray-400"}`}>
-                        {isPlaying ? "Now playing" : `${d.stories.filter(s => s.complete).length}/${d.stories.length} stories`}
+                        {isPlaying ? t("nowPlaying") : `${d.stories.filter(s => s.complete).length}/${d.stories.length} stories`}
                       </p>
                     </div>
                   </motion.button>
@@ -428,7 +430,7 @@ export default function ParentsZonePage() {
                       className="text-[10px] font-black text-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/40 px-2 py-1 text-center hover:bg-[var(--ds-brand-primary)] hover:text-white transition"
                       style={{ borderRadius: 'var(--leaf-r-sm)' }}
                     >
-                      Switch to this kid
+                      {t("switchToThisKid")}
                     </button>
                   )}
                 </div>
@@ -440,7 +442,7 @@ export default function ParentsZonePage() {
               className="flex items-center gap-2 px-3.5 py-2.5 font-black text-[13px] bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] border-2 border-dashed border-[var(--ds-border-brand)]/40 transition shrink-0 self-start"
               style={{ borderRadius: 'var(--leaf-r)' }}>
               {childrenData.length >= 1 && !hasSubscription ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              Add Kid
+              {t("addKid")}
             </motion.button>
           </div>
 
@@ -455,8 +457,8 @@ export default function ParentsZonePage() {
                 <div className="overflow-hidden border border-violet-200/80 bg-gradient-to-r from-violet-50 to-purple-50 shadow-ds-card p-4 flex items-center gap-3" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                   <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0">👑</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-black text-ds-text text-[13px]">Club Active</p>
-                    <p className="text-violet-600 text-[10px] font-bold">All stories unlocked ✓</p>
+                    <p className="font-black text-ds-text text-[13px]">{t("clubActive")}</p>
+                    <p className="text-violet-600 text-[10px] font-bold">{t("allStoriesUnlocked")}</p>
                   </div>
                   <Link href="/pricing"><ChevronRight className="w-4 h-4 text-violet-400" /></Link>
                 </div>
@@ -465,8 +467,8 @@ export default function ParentsZonePage() {
                   <div className="overflow-hidden border border-yellow-200/80 bg-gradient-to-r from-yellow-50 to-orange-50 shadow-ds-card p-4 flex items-center gap-3 cursor-pointer hover:shadow-md transition" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                     <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0">🚀</div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-black text-ds-text text-[13px]">Go Premium</p>
-                      <p className="text-gray-500 text-[10px]">All stories · All languages</p>
+                      <p className="font-black text-ds-text text-[13px]">{t("goPremium")}</p>
+                      <p className="text-gray-500 text-[10px]">{t("allStoriesAllLanguages")}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-yellow-600 shrink-0" />
                   </div>
@@ -476,7 +478,7 @@ export default function ParentsZonePage() {
               {/* Child cards */}
               <div className="bg-white border border-ds-border shadow-ds-card overflow-hidden" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                 <div className="px-4 pt-4 pb-2">
-                  <p className="text-[10px] font-black text-ds-muted uppercase tracking-widest">My Kids</p>
+                  <p className="text-[10px] font-black text-ds-muted uppercase tracking-widest">{t("myKids")}</p>
                 </div>
                 <div className="px-2 pb-2 space-y-1">
                   {childrenData.map((d, i) => {
@@ -531,7 +533,7 @@ export default function ParentsZonePage() {
                             onClick={() => switchPlaying(d.child.id)}
                             className="w-full text-[10px] font-black text-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/30 px-3 py-1.5 rounded-lg hover:bg-[var(--ds-brand-primary)] hover:text-white transition text-center"
                           >
-                            🔄 Switch to {d.child.name}
+                            {t("switchToChild").replace("{name}", d.child.name)}
                           </button>
                         )}
                       </div>
@@ -544,7 +546,7 @@ export default function ParentsZonePage() {
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-[var(--ds-border-brand)]/40 text-[var(--ds-brand-primary)] font-black text-[12px] hover:bg-[var(--ds-brand-subtle)] transition"
                   >
                     {childrenData.length >= 1 && !hasSubscription ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                    Add Kid
+                    {t("addKid")}
                   </button>
                 </div>
               </div>
@@ -578,10 +580,10 @@ export default function ParentsZonePage() {
               {/* ═══ TAB NAV ═══ */}
               <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide">
                 {([
-                  { id: "overview",      emoji: "📊", label: "Overview" },
-                  { id: "stories",       emoji: "📚", label: "Stories"  },
-                  { id: "achievements",  emoji: "🏆", label: "Wins"     },
-                  { id: "settings",      emoji: "⚙️", label: "Settings" },
+                  { id: "overview",      emoji: "📊", label: t("tabOverview")  },
+                  { id: "stories",       emoji: "📚", label: t("tabStories")   },
+                  { id: "achievements",  emoji: "🏆", label: t("tabWins")      },
+                  { id: "settings",      emoji: "⚙️", label: t("tabSettings")  },
                 ] as { id: typeof parentTab; emoji: string; label: string }[]).map(tab => (
                   <button
                     key={tab.id}
@@ -774,8 +776,8 @@ export default function ParentsZonePage() {
                       ) : (
                         <div className="text-center py-4">
                           <span className="text-4xl">🎉</span>
-                          <p className="text-ds-text font-black text-[16px] mt-2">All stories completed!</p>
-                          <p className="text-gray-500 text-[12px]">Amazing work by {active.child.name}!</p>
+                          <p className="text-ds-text font-black text-[16px] mt-2">{t("allStoriesCompleted")}</p>
+                          <p className="text-gray-500 text-[12px]">{t("amazingWorkBy").replace("{name}", active.child.name)}</p>
                         </div>
                       )}
                     </div>
@@ -791,7 +793,7 @@ export default function ParentsZonePage() {
                     <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                       <div className="flex items-center gap-2 mb-4">
                         <span className="text-xl">📚</span>
-                        <h2 className="font-black text-ds-text text-[18px]">All Stories</h2>
+                        <h2 className="font-black text-ds-text text-[18px]">{t("allStories")}</h2>
                         <span className="ml-auto text-[12px] font-bold text-ds-muted">{storiesComplete}/{totalStories} done</span>
                       </div>
                       {/* Progress bar */}
