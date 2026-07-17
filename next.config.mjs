@@ -15,8 +15,8 @@ const CSP = [
   "media-src 'self' https://*.supabase.co blob:",
   "font-src 'self' data:",
   // All API calls from the browser — Supabase client (HTTP + WebSocket realtime).
-  // OpenRouter and Resend are server-side only and do not need client-side connect-src.
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  // CyberSource Flex SDK makes XHR calls back to its own host during tokenization.
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://flex.cybersource.com https://testflex.cybersource.com",
   // CyberSource Flex renders payment fields inside iframes; Google Pay uses its own iframe.
   "frame-src https://flex.cybersource.com https://testflex.cybersource.com https://pay.google.com",
   // Prevent this site from being embedded in any foreign frame (clickjacking protection).

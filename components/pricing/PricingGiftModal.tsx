@@ -96,7 +96,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       const scriptId = "cybersource-up-sdk";
       if (!document.getElementById(scriptId)) {
         const script = document.createElement("script");
-        script.id = scriptId; script.src = sdkUrl; script.async = true; script.crossOrigin = "anonymous";
+        script.id = scriptId; script.src = sdkUrl; script.async = true;
         document.head.appendChild(script);
         await new Promise<void>((resolve, reject) => { script.onload = () => resolve(); script.onerror = () => reject(); });
       }
