@@ -5,7 +5,7 @@ const CSP = [
   "default-src 'self'",
   // Next.js requires unsafe-inline for the theme-injection script (dangerouslySetInnerHTML)
   // and unsafe-eval for dynamic imports. External scripts are locked to known payment hosts.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://flex.cybersource.com https://testflex.cybersource.com https://pay.google.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://flex.cybersource.com https://testflex.cybersource.com https://up.cybersource.com https://pay.google.com",
   // Tailwind + Next.js inline styles require unsafe-inline here.
   "style-src 'self' 'unsafe-inline'",
   // Supabase storage images; Google avatar thumbnails; data/blob URIs for canvas/PDF.
@@ -16,9 +16,9 @@ const CSP = [
   "font-src 'self' data:",
   // All API calls from the browser — Supabase client (HTTP + WebSocket realtime).
   // CyberSource Flex SDK makes XHR calls back to its own host during tokenization.
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://flex.cybersource.com https://testflex.cybersource.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://flex.cybersource.com https://testflex.cybersource.com https://up.cybersource.com",
   // CyberSource Flex renders payment fields inside iframes; Google Pay uses its own iframe.
-  "frame-src https://flex.cybersource.com https://testflex.cybersource.com https://pay.google.com",
+  "frame-src https://flex.cybersource.com https://testflex.cybersource.com https://up.cybersource.com https://pay.google.com",
   // Prevent this site from being embedded in any foreign frame (clickjacking protection).
   "frame-ancestors 'none'",
   // Service worker (push notifications, sw.js).
