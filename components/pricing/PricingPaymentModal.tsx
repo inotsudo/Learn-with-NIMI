@@ -124,24 +124,27 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         }
 
         if (cancelled) return;
-        setStep("card");
 
-        // Poll up to 3 s for the SDK to expose window.Accept after onload.
+        // Poll up to 3 s for Accept to be available (SecureAcceptance.js loads async after the primary script).
         for (let i = 0; i < 30; i++) {
           if (typeof (window as any).Accept === "function") break;
           await new Promise(r => setTimeout(r, 100));
         }
         if (typeof (window as any).Accept !== "function") {
-          // Debug: log what the SDK actually exposed so we can identify the global name.
-          const csKeys = Object.keys(window).filter(k => /accept|cyber|unified|flex|up[A-Z_]/i.test(k));
-          console.error("[CyberSource] window.Accept not found. Possible CS globals:", csKeys, "| Accept type:", typeof (window as any).Accept);
           setStep("error");
-          setErrorMsg(`Payment SDK failed to initialize (Accept=${typeof (window as any).Accept}; check console)`);
+          setErrorMsg("Payment SDK failed to initialize — please reload and try again");
           return;
         }
 
+        // Initialize BEFORE switching to "card" step — up.show() needs the containers in the DOM.
         const accept = await (window as any).Accept(captureContext);
         const up = await accept.unifiedPayments(false);
+
+        if (cancelled) return;
+        // Now render the card containers, then wait one tick for React to flush.
+        setStep("card");
+        await new Promise(r => setTimeout(r, 50));
+
         const transientToken = await up.show({
           containers: { paymentSelection: "#cs-payment-list", paymentScreen: "#cs-payment-form" },
         });

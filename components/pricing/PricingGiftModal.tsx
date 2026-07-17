@@ -101,21 +101,22 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
         await new Promise<void>((resolve, reject) => { script.onload = () => resolve(); script.onerror = () => reject(); });
       }
 
-      setStep("pay-card");
-
       for (let i = 0; i < 30; i++) {
         if (typeof (window as any).Accept === "function") break;
         await new Promise(r => setTimeout(r, 100));
       }
       if (typeof (window as any).Accept !== "function") {
-        const csKeys = Object.keys(window).filter(k => /accept|cyber|unified|flex/i.test(k));
-        console.error("[CyberSource] window.Accept not found:", csKeys, typeof (window as any).Accept);
-        setStep("error"); setErrorMsg(`Payment SDK not ready (Accept=${typeof (window as any).Accept}; check console)`);
+        setStep("error"); setErrorMsg("Payment SDK failed to initialize — please reload and try again");
         return;
       }
 
+      // Initialize before switching to "pay-card" so the containers exist when show() runs.
       const accept = await (window as any).Accept(captureContext);
       const up = await accept.unifiedPayments(false);
+
+      setStep("pay-card");
+      await new Promise(r => setTimeout(r, 50));
+
       const transientToken = await up.show({
         containers: { paymentSelection: "#cs-gift-list", paymentScreen: "#cs-gift-form" },
       });
