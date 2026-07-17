@@ -19,7 +19,7 @@ import {
 import { resolveShields } from "@/lib/streakShields";
 import { computeStreaks } from "@/lib/parentInsights";
 import type { Child, ChildAchievement } from "@/lib/queries";
-import { getStoryLibrary, getStorySlots, getPopularStories, type PopularStory } from "@/lib/storyRepository";
+import { getStoryLibrary, getStorySlots, getStoryDetails, getPopularStories, type PopularStory } from "@/lib/storyRepository";
 import { getActiveSubscription } from "@/lib/payments/products";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
@@ -113,6 +113,23 @@ const LOCKED_BADGE_PLACEHOLDERS = [
 const up      = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const } } };
 const pop     = { hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] as const } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
+
+interface HomeSnapshot {
+  ts: number;
+  stories: StoryLibraryItem[];
+  slots: StorySlot[];
+  level: number;
+  totalStars: number;
+  weekStreak: boolean[];
+  achievements: ChildAchievement[];
+  consecutiveStreak: number;
+  popularStories: PopularStory[];
+  cosmetics: ChildCosmetics;
+}
+
+function saveHomeSnapshot(key: string, snap: Omit<HomeSnapshot, "ts">) {
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), ...snap })); } catch { /* quota */ }
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function HomePage() {
@@ -249,15 +266,39 @@ export default function HomePage() {
     setShowPicker(false);
     if (typeof window !== "undefined") {
       localStorage.setItem(ACTIVE_CHILD_KEY, child.id);
-      // Favorites
       try {
         const raw = localStorage.getItem(`nimi_favs_${child.id}`);
         setFavorites(raw ? new Set(JSON.parse(raw) as string[]) : new Set());
       } catch { setFavorites(new Set()); }
-      // Daily claim — check DB
     }
     setLanguage(child.language);
     if (list) setChildren(list);
+
+    // SWR: restore last session's snapshot so returning users skip the loading skeleton.
+    const snapshotKey = `nimipiko_home_${child.id}_${child.language}`;
+    const TWO_HOURS   = 2 * 60 * 60 * 1000;
+    let hasCachedData = false;
+    if (typeof window !== "undefined") {
+      try {
+        const raw  = localStorage.getItem(snapshotKey);
+        const snap = raw ? (JSON.parse(raw) as HomeSnapshot) : null;
+        if (snap && Date.now() - snap.ts < TWO_HOURS) {
+          setStories(snap.stories);
+          setLevel(snap.level);
+          setTotalStars(snap.totalStars);
+          setWeekStreak(snap.weekStreak);
+          setAchievements(snap.achievements);
+          setConsecutiveStreak(snap.consecutiveStreak);
+          setPopularStories(snap.popularStories);
+          setCosmetics(snap.cosmetics);
+          if (snap.slots.length > 0) setSlots(snap.slots);
+          setLoading(false);
+          hasCachedData = true;
+        }
+      } catch { /* corrupt snapshot — ignore, proceed with fresh load */ }
+    }
+    if (hasCachedData) setRefreshing(true);
+
     const [lib, lvl, stars, streak, ach, actDates, popular, cos] = await Promise.all([
       getStoryLibrary(child.id, child.language),
       getCurrentLevel(child.id, child.language),
@@ -272,19 +313,32 @@ export default function HomePage() {
       getUsedShieldDates(child.id, child.language),
     ]);
     const { usedDates: homeDates1 } = await resolveShields(child.id, child.language, actDates);
+    const cStreak = computeStreaks(actDates, new Date(), homeDates1).current;
     setStories(lib);
     setLevel(lvl);
     setTotalStars(stars);
     setWeekStreak(streak);
     setAchievements(ach);
-    setConsecutiveStreak(computeStreaks(actDates, new Date(), homeDates1).current);
+    setConsecutiveStreak(cStreak);
     setPopularStories(popular);
     setCosmetics(cos);
-    setLoading(false);
+    if (hasCachedData) setRefreshing(false); else setLoading(false);
 
-    // Load story slots and community creations without blocking the page render.
+    // Fetch slots and save complete snapshot once slots are known.
     const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
-    if (cur) getStorySlots(child.id, cur.sid, child.language).then(setSlots);
+    if (cur) {
+      getStorySlots(child.id, cur.sid, child.language).then(freshSlots => {
+        setSlots(freshSlots);
+        saveHomeSnapshot(snapshotKey, { stories: lib, slots: freshSlots, level: lvl,
+          totalStars: stars, weekStreak: streak, achievements: ach,
+          consecutiveStreak: cStreak, popularStories: popular, cosmetics: cos });
+      });
+    } else {
+      setSlots([]);
+      saveHomeSnapshot(snapshotKey, { stories: lib, slots: [], level: lvl,
+        totalStars: stars, weekStreak: streak, achievements: ach,
+        consecutiveStreak: cStreak, popularStories: popular, cosmetics: cos });
+    }
 
     // Community creations — best-effort, never blocks
     void loadCommunityCreations();
@@ -306,18 +360,31 @@ export default function HomePage() {
       getUsedShieldDates(child.id, lang),
     ]);
     const { usedDates: homeDates2 } = await resolveShields(child.id, lang, actDates);
+    const cStreak = computeStreaks(actDates, new Date(), homeDates2).current;
     setStories(lib);
     setLevel(lvl);
     setTotalStars(stars);
     setWeekStreak(streak);
     setAchievements(ach);
-    setConsecutiveStreak(computeStreaks(actDates, new Date(), homeDates2).current);
+    setConsecutiveStreak(cStreak);
     setPopularStories(popular);
     setCosmetics(cos);
     setRefreshing(false);
     const cur = lib.find(s => s.unlocked && !s.complete) ?? lib[0];
-    if (cur) getStorySlots(child.id, cur.sid, lang).then(setSlots);
-    else setSlots([]);
+    const snapshotKey = `nimipiko_home_${child.id}_${lang}`;
+    if (cur) {
+      getStorySlots(child.id, cur.sid, lang).then(freshSlots => {
+        setSlots(freshSlots);
+        saveHomeSnapshot(snapshotKey, { stories: lib, slots: freshSlots, level: lvl,
+          totalStars: stars, weekStreak: streak, achievements: ach,
+          consecutiveStreak: cStreak, popularStories: popular, cosmetics: cos });
+      });
+    } else {
+      setSlots([]);
+      saveHomeSnapshot(snapshotKey, { stories: lib, slots: [], level: lvl,
+        totalStars: stars, weekStreak: streak, achievements: ach,
+        consecutiveStreak: cStreak, popularStories: popular, cosmetics: cos });
+    }
   }
 
   async function handleCreated(child: Child) {
@@ -889,6 +956,10 @@ export default function HomePage() {
                   up={up}
                   stagger={stagger}
                   pop={pop}
+                  onPrefetch={activeChild ? (storyId) => {
+                    void getStoryDetails(storyId, activeChild.language);
+                    void getStorySlots(activeChild.id, storyId, activeChild.language);
+                  } : undefined}
                 />
 
               </main>

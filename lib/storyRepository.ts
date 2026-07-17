@@ -113,19 +113,21 @@ export function getStorySlots(
   }); // TTL_SHORT (20s) — slot completion status changes during a session
 }
 
-export async function getStoryRecommendations(
+export function getStoryRecommendations(
   childId: string,
   language: string
 ): Promise<StoryRecommendation[]> {
-  const { data, error } = await supabase.rpc("get_story_recommendations", {
-    p_child_id: childId,
-    p_language: language,
+  return qcached(`storyRecommendations:${childId}:${language}`, async () => {
+    const { data, error } = await supabase.rpc("get_story_recommendations", {
+      p_child_id: childId,
+      p_language: language,
+    });
+    if (error) {
+      console.error("[getStoryRecommendations]", error);
+      return [];
+    }
+    return (data ?? []) as StoryRecommendation[];
   });
-  if (error) {
-    console.error("[getStoryRecommendations]", error);
-    return [];
-  }
-  return (data ?? []) as StoryRecommendation[];
 }
 
 export function getStoryBySlug(slug: string): Promise<{ id: string; slug: string; title: string; cover_url: string | null; theme_emoji: string | null; sort_order: number } | null> {

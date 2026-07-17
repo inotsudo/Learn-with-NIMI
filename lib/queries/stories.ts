@@ -13,13 +13,15 @@ export function getActiveStories(): Promise<Story[]> {
   });
 }
 
-export async function getStoryBySlug(slug: string): Promise<Story | null> {
-  const { data } = await supabase
-    .from("stories")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-  return (data ?? null) as Story | null;
+export function getStoryBySlug(slug: string): Promise<Story | null> {
+  return lscached(`storyBySlugFull:${slug}`, TTL_LONG, async () => {
+    const { data } = await supabase
+      .from("stories")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+    return (data ?? null) as Story | null;
+  });
 }
 
 // Fetches story pages with their per-language narration (story_page_versions),

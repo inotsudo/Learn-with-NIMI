@@ -33,9 +33,10 @@ interface Props {
   up: Variants;
   stagger: Variants;
   pop: Variants;
+  onPrefetch?: (storyId: string) => void;
 }
 
-export default function HomeStoryLibrarySection({ stories, curStory, up, stagger, pop }: Props) {
+export default function HomeStoryLibrarySection({ stories, curStory, up, stagger, pop, onPrefetch }: Props) {
   if (stories.length === 0) return null;
 
   return (
@@ -68,6 +69,7 @@ export default function HomeStoryLibrarySection({ stories, curStory, up, stagger
               <motion.div key={story.sid} variants={pop} className="shrink-0 w-[148px] sm:w-[164px]">
                 {story.unlocked ? (
                   <Link href={`/stories/${story.slug}`}
+                    onMouseEnter={() => onPrefetch?.(story.sid)}
                     className="group block rounded-2xl overflow-hidden bg-white transition-all hover:-translate-y-1.5"
                     style={{
                       boxShadow: isActive
