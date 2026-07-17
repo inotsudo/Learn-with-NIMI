@@ -382,6 +382,11 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
                   <p className="text-gray-400 text-[11px] mt-3 font-mono">
                     Check {momoAttempt}/30 · {momoElapsed}s elapsed
                   </p>
+                  <button
+                    onClick={() => { momoAbort.current = true; setStep("momo"); setErrorMsg(""); }}
+                    className="mt-5 px-5 py-2 leaf border border-ds-border text-gray-400 font-bold text-[12px] hover:bg-gray-50 transition">
+                    Cancel
+                  </button>
                 </>
               )}
             </div>
