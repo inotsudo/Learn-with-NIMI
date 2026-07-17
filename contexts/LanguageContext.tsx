@@ -320,6 +320,7 @@ const dict: Record<Language, Record<string, string>> = {
     homeStreakKeepItUp: "Keep it up! 💪", homeStreakStart: "Start your streak! ✨",
     homeStreakDayLabel: "day", homeStreakDaysLabel: "days",
     homeStreakFirstFlame: "Complete a story to light your first flame 🔥",
+    homeStreakBroke: "Fresh start! 🌱", homeStreakBrokeHint: "You had a great run — today is day 1 of your new streak!",
     homeTrophyRoomEyebrow: "Trophy Room", homeMyTreasuresTitle: "My Treasures",
     homeViewAllBadges: "All", homeBadgeEarned: "★ Earned", homeBadgeLocked: "🔒 Locked",
     // WhoIsPlaying
@@ -1460,6 +1461,7 @@ const dict: Record<Language, Record<string, string>> = {
     homeStreakKeepItUp: "Continue ! 💪", homeStreakStart: "Commence ta série ! ✨",
     homeStreakDayLabel: "jour", homeStreakDaysLabel: "jours",
     homeStreakFirstFlame: "Termine une histoire pour allumer ta première flamme 🔥",
+    homeStreakBroke: "Nouveau départ ! 🌱", homeStreakBrokeHint: "Tu t'es bien battu — aujourd'hui c'est le jour 1 de ta nouvelle série !",
     homeTrophyRoomEyebrow: "Salle des Trophées", homeMyTreasuresTitle: "Mes Trésors",
     homeViewAllBadges: "Tout", homeBadgeEarned: "★ Obtenu", homeBadgeLocked: "🔒 Verrouillé",
     whoIsPlayingTagline: "Là où les histoires prennent vie",
@@ -2592,6 +2594,7 @@ const dict: Record<Language, Record<string, string>> = {
     homeStreakKeepItUp: "Komeza! 💪", homeStreakStart: "Tangira ubuhoraho bwawe! ✨",
     homeStreakDayLabel: "umunsi", homeStreakDaysLabel: "iminsi",
     homeStreakFirstFlame: "Soza inkuru kugira ngo ubashe gutangira 🔥",
+    homeStreakBroke: "Tangira bushya! 🌱", homeStreakBrokeHint: "Wakoze neza — uyu munsi ni wa mbere w'ubuhoraho bwawe bushya!",
     homeTrophyRoomEyebrow: "Inzu y'Ibihembo", homeMyTreasuresTitle: "Ibintu Byanjye Byiza",
     homeViewAllBadges: "Byose", homeBadgeEarned: "★ Wahawe", homeBadgeLocked: "🔒 Bifunze",
     whoIsPlayingTagline: "Aho inkuru zizuka",

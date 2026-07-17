@@ -10,6 +10,7 @@ import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import supabase from "@/lib/supabaseClient";
 import { getChildren } from "@/lib/queries";
 import type { Child } from "@/lib/queries";
+import { getParentAccess } from "@/lib/payments/products";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -102,6 +103,7 @@ export default function MasterpiecePage() {
   const [orders, setOrders]   = useState<MasterpieceOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [hasAccess, setHasAccess]          = useState<boolean | null>(null);
   const [step, setStep]                   = useState<"choose"|"upload"|"processing"|"done">("choose");
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [photoFile, setPhotoFile]         = useState<File | null>(null);
@@ -114,24 +116,33 @@ export default function MasterpiecePage() {
 
   useEffect(() => {
     void (async () => {
-      const list = await getChildren();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const [list, storiesRes] = await Promise.all([
+        getChildren(),
+        supabase.from("stories")
+          .select("id, title, slug, cover_url, theme_emoji, is_personalizable")
+          .eq("is_personalizable", true).eq("status", "published").order("sort_order"),
+      ]);
+
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const c = list.find(ch => ch.id === savedId) ?? list[0];
       setChild(c ?? null);
+      setStories((storiesRes.data ?? []) as Story[]);
 
-      const { data: s } = await supabase.from("stories")
-        .select("id, title, slug, cover_url, theme_emoji, is_personalizable")
-        .eq("is_personalizable", true).eq("status", "published").order("sort_order");
-      setStories((s ?? []) as Story[]);
-
-      if (c) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: o } = await supabase.from("masterpiece_orders")
-            .select("*").eq("parent_id", user.id).order("created_at", { ascending: false });
-          setOrders((o ?? []) as MasterpieceOrder[]);
-        }
+      if (user) {
+        const [access, ordersRes] = await Promise.all([
+          getParentAccess(user.id),
+          supabase.from("masterpiece_orders")
+            .select("*").eq("parent_id", user.id).order("created_at", { ascending: false }),
+        ]);
+        const granted = access.some(a => a === "personalized" || a.startsWith("personalized:"));
+        setHasAccess(granted);
+        setOrders((ordersRes.data ?? []) as MasterpieceOrder[]);
+      } else {
+        setHasAccess(false);
       }
+
       setLoading(false);
     })();
   }, []);
@@ -211,6 +222,67 @@ export default function MasterpiecePage() {
             {Array.from({ length: 6 }).map((_, i) => <Bone key={i} className="h-44 leaf-lg" />)}
           </div>
         </div>
+      </AppShell>
+    );
+  }
+
+  /* ── PAYWALL ── user is loaded but has no "personalized" access ── */
+  if (!loading && hasAccess === false) {
+    return (
+      <AppShell>
+        <PageSurface>
+          <main className="max-w-2xl mx-auto px-4 py-16 pb-28 flex flex-col items-center text-center gap-6">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22 }}
+              className="w-28 h-28 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-5xl shadow-2xl shadow-amber-200"
+            >
+              👑
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+              <h1 className="font-baloo font-black text-ds-text text-[28px] sm:text-[34px] leading-tight">
+                Masterpiece is a Premium Feature
+              </h1>
+              <p className="text-gray-500 text-[15px] mt-3 max-w-md mx-auto leading-relaxed">
+                Purchase the Masterpiece add-on once and your child becomes the hero of their own personalized storybook — complete with their photo woven into every page and a Champion Certificate.
+              </p>
+            </motion.div>
+
+            {/* What they get */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+              className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+              {[
+                { icon: "📸", title: "Child's Photo in the Story", desc: "Headshot cropped and placed on every page" },
+                { icon: "📖", title: "Personalized PDF Download", desc: "Printable keepsake forever" },
+                { icon: "🏆", title: "Champion Certificate", desc: "With your child's name and photo" },
+                { icon: "🌍", title: "Any Language", desc: "EN · FR · RW — their choice" },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} className="flex items-start gap-3 bg-ds-card border border-ds-border rounded-2xl p-4 shadow-ds-card">
+                  <span className="text-2xl shrink-0">{icon}</span>
+                  <div>
+                    <p className="font-black text-ds-text text-[13px]">{title}</p>
+                    <p className="text-gray-500 text-[11px] mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+              className="flex flex-col sm:flex-row items-center gap-3">
+              <a href="/pricing"
+                className="px-10 py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black text-[16px] shadow-xl shadow-amber-200 flex items-center gap-2 hover:opacity-90 transition">
+                <Crown className="w-5 h-5" /> Get Masterpiece — $29.99
+              </a>
+              <a href="/"
+                className="text-gray-400 text-[13px] font-bold hover:text-ds-text transition">
+                Back to home
+              </a>
+            </motion.div>
+
+            <p className="text-gray-400 text-[11px]">One-time purchase · No subscription needed · 40,000 RWF for Rwanda</p>
+          </main>
+        </PageSurface>
       </AppShell>
     );
   }

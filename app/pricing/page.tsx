@@ -47,6 +47,7 @@ function applyDiscount(amount: number, info: DiscountInfo): number {
 
 function formatAmount(amount: number, currency: Currency): string {
   if (currency === "RWF") return `${Math.round(amount).toLocaleString()} RWF`;
+  if (currency === "EUR") return `€${amount.toFixed(2)}`;
   return `$${amount.toFixed(2)}`;
 }
 
@@ -58,7 +59,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<Currency>("USD");
   const [showPayment, setShowPayment] = useState<{
-    product: Product; effectiveAmount?: number; discountCodeId?: string;
+    product: Product; effectiveAmount?: number; discountCodeId?: string; successRedirectUrl?: string;
   } | null>(null);
   const [activeSub, setActiveSub] = useState<Subscription | null>(null);
   const [billingAnnual, setBillingAnnual] = useState(false);
@@ -88,7 +89,7 @@ export default function PricingPage() {
         ),
       ]);
       setProducts(p);
-      setCurrency(geo.currency === "RWF" ? "RWF" : "USD");
+      setCurrency(geo.currency === "RWF" ? "RWF" : geo.currency === "EUR" ? "EUR" : "USD");
       const annual = p.find((x: Product) => x.slug === "nimipiko-club-annual");
       const monthly = p.find((x: Product) => x.slug === "nimipiko-club");
       setGiftProduct(annual ?? monthly ?? null);
@@ -126,8 +127,8 @@ export default function PricingPage() {
     }
   }, [discountInput]);
 
-  const handlePurchase = useCallback((product: Product, effectiveAmount?: number, discountCodeId?: string) => {
-    setShowPayment({ product, effectiveAmount, discountCodeId });
+  const handlePurchase = useCallback((product: Product, effectiveAmount?: number, discountCodeId?: string, successRedirectUrl?: string) => {
+    setShowPayment({ product, effectiveAmount, discountCodeId, successRedirectUrl });
   }, []);
 
   if (loading) return (
@@ -176,14 +177,62 @@ export default function PricingPage() {
                 className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-xl border border-white/30">
                 👑
               </motion.div>
+              <p className="text-white/60 text-[11px] font-bold uppercase tracking-[0.15em] mb-1">
+                Nimipiko: The Immersive Early Learning Platform
+              </p>
               <h1 className="font-baloo font-black text-[32px] sm:text-[42px] text-white leading-tight">
-                Join the Nimipiko Universe
+                Grow With Every Story.
               </h1>
               <p className="text-white/80 text-[15px] font-nunito mt-2 max-w-lg mx-auto">
                 Every story is a complete learning adventure — reading, singing, creating, and growing together.
               </p>
             </div>
           </HeroBanner>
+
+          {/* ═══ DISCOVERY — FREE ENTRY POINT ═══ */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            className="mb-8 relative overflow-hidden border border-green-200 dark:border-green-800/60 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/20 shadow-sm"
+            style={{ borderRadius: "var(--leaf-r-lg)" }}>
+            <div className="relative z-10 p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                {/* Left: label + description */}
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="w-11 h-11 rounded-xl bg-green-100 dark:bg-green-800/40 flex items-center justify-center text-2xl shrink-0">🎁</div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-baloo font-black text-green-700 dark:text-green-400 text-[18px]">Start for FREE</span>
+                      <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">NO CARD NEEDED</span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-[13px]">
+                      Experience the Nimipiko Learning Universe before you subscribe. Your first adventure is completely free.
+                    </p>
+                  </div>
+                </div>
+                {/* Right: CTA */}
+                <a href="/signup"
+                  className="shrink-0 px-6 py-3 rounded-full bg-green-500 hover:bg-green-600 text-white font-black text-[14px] transition flex items-center gap-2 justify-center">
+                  Create Free Account →
+                </a>
+              </div>
+              {/* What's free */}
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { icon: "🎵", label: "Animated Song", sub: "Lyric video intro" },
+                  { icon: "📖", label: "Story Preview", sub: "Taste the content" },
+                  { icon: "🦸", label: "Meet the Heroes", sub: "Character intro" },
+                  { icon: "🏆", label: "First Challenge", sub: "Champion activity" },
+                ].map(({ icon, label, sub }) => (
+                  <div key={label} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 rounded-xl px-3 py-2 border border-green-100 dark:border-green-800/30">
+                    <span className="text-lg shrink-0">{icon}</span>
+                    <div>
+                      <p className="font-bold text-[12px] text-gray-800 dark:text-gray-200">{label}</p>
+                      <p className="text-[10px] text-gray-500">{sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
 
           {/* Billing toggle */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -219,6 +268,20 @@ export default function PricingPage() {
             {billingAnnual && (
               <p className="font-nunito text-green-700 text-[12px] font-bold">🎉 2 months free — billed once per year</p>
             )}
+          </motion.div>
+
+          {/* ═══ BRAND STORY — THE LEARNING UNIVERSE ═══ */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+            className="mb-8 text-center px-2">
+            <p className="font-baloo font-black text-ds-text text-[20px] sm:text-[24px] leading-snug">
+              We are not selling digital books.
+            </p>
+            <p className="font-baloo font-black text-[var(--ds-brand-primary)] text-[20px] sm:text-[24px] leading-snug mb-3">
+              We are building the Nimipiko Learning Universe.
+            </p>
+            <p className="text-gray-500 text-[13px] max-w-xl mx-auto leading-relaxed">
+              Every story unlocks a complete interactive learning ecosystem — Interactive Storybooks, Professional Voice Overs, Songs &amp; Karaoke, Animated Videos, Coloring Books, Language Learning, Champion Challenges, Community, and Personalized Adventures.
+            </p>
           </motion.div>
 
           {/* Two-Pillar intro */}
@@ -274,12 +337,8 @@ export default function PricingPage() {
                       const monthlyPrice = getPrice(clubMonthly, currency);
                       const perMonth = annualPrice.amount / 12;
                       const saved = monthlyPrice.amount * 12 - annualPrice.amount;
-                      const perMonthFmt = currency === "RWF"
-                        ? `${Math.round(perMonth).toLocaleString()} RWF/month`
-                        : `$${perMonth.toFixed(2)}/month`;
-                      const savedFmt = currency === "RWF"
-                        ? `${Math.round(saved).toLocaleString()} RWF`
-                        : `$${saved.toFixed(2)}`;
+                      const perMonthFmt = `${formatAmount(perMonth, currency)}/month`;
+                      const savedFmt = formatAmount(saved, currency);
                       return (
                         <p className="text-green-600 text-[12px] font-bold mt-0.5">
                           ≈ {perMonthFmt} · saves {savedFmt}
@@ -297,6 +356,15 @@ export default function PricingPage() {
                         <span className="text-ds-text text-[13px]">{FEATURE_LABELS[f] ?? f}</span>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Nimi AI callout */}
+                  <div className="mx-6 mb-4 flex items-center gap-2.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700/40 rounded-xl px-3 py-2.5">
+                    <span className="text-xl shrink-0">🤖</span>
+                    <div>
+                      <p className="font-black text-indigo-700 dark:text-indigo-300 text-[12px]">Nimi AI Learning Companion — Included</p>
+                      <p className="text-indigo-500 dark:text-indigo-400 text-[10px]">Your child&apos;s personal AI friend who speaks about stories, characters &amp; values.</p>
+                    </div>
                   </div>
 
                   {/* Language profile picker (visual) */}
@@ -447,7 +515,7 @@ export default function PricingPage() {
                   {/* CTA */}
                   <div className="px-6 pb-6">
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={m.buttonPress}
-                      onClick={() => handlePurchase(masterpiece)}
+                      onClick={() => handlePurchase(masterpiece, undefined, undefined, "/masterpiece")}
                       className="w-full py-4 leaf bg-[var(--nimi-green)] hover:bg-[var(--ds-brand-hover)] text-white font-black text-[16px] shadow-md transition flex items-center justify-center gap-2">
                       {provider === "mtn_momo" ? <><Phone className="w-5 h-5" /> Choose Payment Method</>
                         : <><CreditCard className="w-5 h-5" /> Buy Masterpiece</>}
@@ -573,7 +641,7 @@ export default function PricingPage() {
               { icon: <Shield className="w-5 h-5" />, label: "Secure Payments" },
               { icon: <span className="text-lg">🌍</span>, label: "3 Languages" },
               { icon: <span className="text-lg">👨‍👩‍👧</span>, label: "Family Safe" },
-              { icon: <span className="text-lg">🏫</span>, label: "School Licensing Coming Soon" },
+              { icon: <span className="text-lg">🏫</span>, label: "School Licensing Available" },
             ].map((b, i) => (
               <div key={i} className="flex items-center gap-1.5 text-gray-400 text-[11px] font-bold">
                 {b.icon} {b.label}
@@ -602,6 +670,114 @@ export default function PricingPage() {
             </div>
           </motion.div>
 
+          {/* ═══ NIMIPIKO FOR SCHOOLS ═══ */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+            className="mt-10 relative overflow-hidden border border-ds-border shadow-ds-card bg-ds-card"
+            style={{ borderRadius: "var(--leaf-r-lg)" }}>
+
+            {/* Background accent */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-sky-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-blue-200/30 to-transparent dark:from-blue-800/15 rounded-full translate-x-24 -translate-y-24 pointer-events-none" />
+
+            <div className="relative z-10 p-6 sm:p-8">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg shrink-0">
+                    🏫
+                  </div>
+                  <div>
+                    <span className="inline-block bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide mb-1">
+                      For Schools &amp; Institutions
+                    </span>
+                    <h2 className="font-baloo font-black text-ds-text text-[22px] leading-tight">Nimipiko for Schools &amp; Educators</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-0.5">
+                      Institutional licensing for classrooms, childcare centres, and schools — with an Educator Dashboard to track class progress.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing tiers table */}
+              <div className="overflow-x-auto mb-6">
+                <table className="w-full text-left border-collapse" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  <thead>
+                    <tr className="border-b border-ds-border">
+                      <th className="pb-2 pr-4 font-baloo font-black text-ds-text text-[13px]">Tier</th>
+                      <th className="pb-2 pr-4 font-baloo font-black text-ds-text text-[13px]">Volume</th>
+                      <th className="pb-2 pr-4 font-baloo font-black text-ds-text text-[13px]">USD</th>
+                      <th className="pb-2 pr-4 font-baloo font-black text-ds-text text-[13px]">EUR</th>
+                      <th className="pb-2 font-baloo font-black text-ds-text text-[13px]">RWF</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ds-border">
+                    {[
+                      { tier: "Small Group License", volume: "10–50 students", usd: "$7.00", eur: "€6.50", rwf: "5,000–6,000", highlight: false },
+                      { tier: "Large Institution License", volume: "50+ students", usd: "$5.00", eur: "€4.60", rwf: "4,000–5,000", highlight: false },
+                      { tier: "Custom Enterprise", volume: "100+ students", usd: "Custom", eur: "Custom", rwf: "Custom", highlight: true },
+                    ].map(({ tier, volume, usd, eur, rwf, highlight }) => (
+                      <tr key={tier} className={highlight ? "bg-blue-50/60 dark:bg-blue-900/20" : ""}>
+                        <td className="py-3 pr-4">
+                          <span className={`font-baloo font-black text-[13px] ${highlight ? "text-blue-700 dark:text-blue-300" : "text-ds-text"}`}>
+                            {tier}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className="text-gray-500 text-[13px] font-semibold">{volume}</span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600 dark:text-blue-400" : "text-ds-text"}`}>
+                            {usd}
+                          </span>
+                          {!highlight && <span className="text-gray-400 text-[10px] ml-1">/student/mo</span>}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600 dark:text-blue-400" : "text-ds-text"}`}>
+                            {eur}
+                          </span>
+                          {!highlight && <span className="text-gray-400 text-[10px] ml-1">/student/mo</span>}
+                        </td>
+                        <td className="py-3">
+                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600 dark:text-blue-400" : "text-ds-text"}`}>
+                            {rwf}
+                          </span>
+                          {!highlight && <span className="text-gray-400 text-[10px] ml-1"> RWF/student/mo</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* What schools get */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
+                {[
+                  { icon: "📊", text: "Educator Dashboard with class progress" },
+                  { icon: "🌍", text: "All 3 languages (EN · FR · RW)" },
+                  { icon: "👩‍🏫", text: "Separate from parent account logic" },
+                ].map(({ icon, text }) => (
+                  <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 rounded-xl px-3 py-2 border border-white/80 dark:border-white/10">
+                    <span className="text-lg shrink-0">{icon}</span>
+                    <span className="text-ds-text text-[12px] font-bold">{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <a
+                  href="/schools"
+                  className="flex-1 sm:flex-none sm:px-8 py-3.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black text-[15px] shadow-lg shadow-blue-200 dark:shadow-blue-900/30 flex items-center justify-center gap-2 hover:opacity-90 transition"
+                >
+                  🏫 View School Licensing Plans
+                </a>
+                <p className="text-gray-400 text-[11px] font-bold text-center sm:text-left">
+                  From $7 · €6.50 · 5,000 RWF /student/month · volume discounts available
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
           {/* FAQ */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             className="mt-6 border border-ds-border bg-white/60 backdrop-blur-sm p-6 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
@@ -613,6 +789,7 @@ export default function PricingPage() {
                 { q: "Can I cancel anytime?", a: "Absolutely. Cancel in one click from the Parents Zone — no fees, no questions asked. Your child keeps their progress even after cancelling." },
                 { q: "Which payment methods are accepted?", a: "We accept Visa, Mastercard and Amex for card payments. Rwandan families can pay with MTN Mobile Money or by card." },
                 { q: "Is the content safe for young children?", a: "Every story and activity is educator-reviewed for children aged 2–10. Zero ads, zero in-app purchases beyond what you choose here." },
+                { q: "Does Nimipiko offer school or classroom licensing?", a: "Yes! We offer institutional licenses starting at $7/student/month (5,000–6,000 RWF) with volume discounts for 50+ learners. Visit our Schools page to see plans and submit an inquiry." },
               ] as const).map(({ q, a }) => (
                 <div key={q} className="border-b border-ds-border pb-4 last:border-0 last:pb-0">
                   <p className="font-baloo font-black text-ds-text text-[14px] mb-1.5">{q}</p>
@@ -631,6 +808,7 @@ export default function PricingPage() {
               currency={currency}
               effectiveAmount={showPayment.effectiveAmount}
               discountCodeId={showPayment.discountCodeId}
+              successRedirectUrl={showPayment.successRedirectUrl}
               onClose={() => setShowPayment(null)}
             />
           )}

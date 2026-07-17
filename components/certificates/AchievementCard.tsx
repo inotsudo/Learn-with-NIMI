@@ -1,13 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Lock, Printer } from "lucide-react";
+import { Lock, Printer, Share2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fillTemplate, type AchievementItem, type AchievementTier } from "@/app/_achievementData";
 import { generateCertificateDataUrl } from "@/lib/certificateImage";
 import BadgeRenderer from "./BadgeRenderer";
 
 function printCertificate() { window.print(); }
+
+async function nativeShare(opts: {
+  files?: File[];
+  title: string;
+  text: string;
+  url?: string;
+}): Promise<boolean> {
+  if (!navigator.share) return false;
+  try {
+    if (opts.files && navigator.canShare?.({ files: opts.files })) {
+      await navigator.share({ files: opts.files, title: opts.title, text: opts.text });
+      return true;
+    }
+    await navigator.share({ title: opts.title, text: opts.text, url: opts.url });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /* ── Story badge JPEG — falls back to BadgeRenderer if image not found ── */
 function StoryBadgeImage({
@@ -44,7 +63,15 @@ const TIER_STYLES: Record<AchievementTier, { border: string; text: string }> = {
 };
 
 /* ── Certificate display: loads the admin template, stamps the name ── */
-function TemplateCertificate({ childName, language }: { childName: string; language: string }) {
+function TemplateCertificate({
+  childName,
+  language,
+  onDataUrl,
+}: {
+  childName: string;
+  language: string;
+  onDataUrl?: (url: string | null) => void;
+}) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +79,9 @@ function TemplateCertificate({ childName, language }: { childName: string; langu
     generateCertificateDataUrl(childName, language).then(url => {
       setDataUrl(url);
       setLoading(false);
+      onDataUrl?.(url);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childName, language]);
 
   if (loading) {
@@ -63,7 +92,6 @@ function TemplateCertificate({ childName, language }: { childName: string; langu
   }
 
   if (!dataUrl) {
-    /* No template configured — show a clean placeholder */
     return (
       <div className="w-full aspect-[3/4] flex flex-col items-center justify-center gap-3 rounded-t-2xl"
         style={{ background: "linear-gradient(160deg,#FDF4DC,#F8EABC)" }}>
@@ -85,6 +113,164 @@ function TemplateCertificate({ childName, language }: { childName: string; langu
   );
 }
 
+/* ── Earned certificate card with share capability ── */
+function EarnedCertificateCard({ item, childName }: { item: AchievementItem; childName: string }) {
+  const { t } = useLanguage();
+  const [certDataUrl, setCertDataUrl] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const style = TIER_STYLES[item.tier];
+  const title = fillTemplate(t(item.titleKey), item.titleParams);
+  const desc  = fillTemplate(t(item.descKey),  item.descParams);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2800);
+  }
+
+  async function handleShare() {
+    setSharing(true);
+    try {
+      const shareText = `🎓 ${childName} just earned a NIMIPIKO Language Certificate! nimipiko.com`;
+
+      if (certDataUrl) {
+        const res = await fetch(certDataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `${childName.replace(/ /g, "_")}_certificate.jpg`, { type: "image/jpeg" });
+
+        const shared = await nativeShare({
+          files: [file],
+          title: `${childName}'s NIMIPIKO Certificate`,
+          text: shareText,
+          url: "https://nimipiko.com",
+        });
+        if (shared) return;
+      } else {
+        const shared = await nativeShare({
+          title: `${childName}'s NIMIPIKO Certificate`,
+          text: shareText,
+          url: "https://nimipiko.com",
+        });
+        if (shared) return;
+      }
+
+      // WhatsApp fallback
+      const waText = encodeURIComponent(`🎓 ${childName} just earned a NIMIPIKO Language Certificate! nimipiko.com`);
+      window.open(`https://wa.me/?text=${waText}`, "_blank");
+      showToast("Opening WhatsApp…");
+    } catch (err) {
+      // Clipboard last resort
+      try {
+        await navigator.clipboard.writeText(`🎓 ${childName} just earned a NIMIPIKO Language Certificate! nimipiko.com`);
+        showToast("Copied to clipboard!");
+      } catch {
+        console.error("[EarnedCertificateCard] share failed", err);
+      }
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  return (
+    <div className={`overflow-hidden shadow-ds-card border ${style.border} certificate-print-root relative`}
+      style={{ borderRadius: "var(--leaf-r)" }}>
+      <TemplateCertificate childName={childName} language={item.language ?? "en"} onDataUrl={setCertDataUrl} />
+      <div className="bg-amber-50 px-3 py-2.5 text-center border-t border-amber-100">
+        <p className="font-black text-xs uppercase text-amber-700 tracking-wide">{title}</p>
+        <p className="text-gray-500 text-[10px] mt-0.5">{desc}</p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <button
+            onClick={printCertificate}
+            className="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-[11px] px-3 py-1.5 rounded-full transition"
+          >
+            <Printer className="w-3 h-3" /> Print
+          </button>
+          <button
+            onClick={handleShare}
+            disabled={sharing}
+            className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold text-[11px] px-3 py-1.5 rounded-full transition disabled:opacity-60"
+          >
+            <Share2 className="w-3 h-3" />
+            {sharing ? "…" : "Share"}
+          </button>
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] font-semibold px-3 py-1.5 rounded-full whitespace-nowrap shadow-lg animate-slide-up">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Badge share button ── */
+function ShareBadgeButton({ childName, title, badgeSrc }: { childName: string; title: string; badgeSrc: string | null }) {
+  const [sharing, setSharing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2800);
+  }
+
+  async function handleShare() {
+    setSharing(true);
+    try {
+      const shareText = `🏅 ${childName} just earned the "${title}" badge on NIMIPIKO! nimipiko.com`;
+
+      // Try to share the badge image if available
+      if (badgeSrc) {
+        try {
+          const res = await fetch(badgeSrc);
+          if (res.ok) {
+            const blob = await res.blob();
+            const file = new File([blob], `${childName.replace(/ /g, "_")}_badge.jpg`, { type: blob.type });
+            const shared = await nativeShare({ files: [file], title: `${childName}'s Badge`, text: shareText });
+            if (shared) return;
+          }
+        } catch { /* fall through */ }
+      }
+
+      const shared = await nativeShare({ title: `${childName}'s Badge`, text: shareText, url: "https://nimipiko.com" });
+      if (shared) return;
+
+      // WhatsApp fallback
+      const waText = encodeURIComponent(shareText);
+      window.open(`https://wa.me/?text=${waText}`, "_blank");
+      showToast("Opening WhatsApp…");
+    } catch {
+      try {
+        await navigator.clipboard.writeText(`🏅 ${childName} just earned the "${title}" badge on NIMIPIKO! nimipiko.com`);
+        showToast("Copied!");
+      } catch { /* silent */ }
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={handleShare}
+        disabled={sharing}
+        className="flex items-center gap-1 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold text-[10px] px-2.5 py-1 rounded-full transition disabled:opacity-60 mx-auto mt-1"
+      >
+        <Share2 className="w-2.5 h-2.5" />
+        {sharing ? "…" : "Share"}
+      </button>
+      {toast && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap shadow-lg">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AchievementCard({ item, earnedAt, childName }: Props) {
   const { t } = useLanguage();
   const earned = earnedAt !== null;
@@ -93,24 +279,9 @@ export default function AchievementCard({ item, earnedAt, childName }: Props) {
   const title = fillTemplate(t(item.titleKey), item.titleParams);
   const desc  = fillTemplate(t(item.descKey),  item.descParams);
 
-  /* ── Earned certificate → real admin template ── */
+  /* ── Earned certificate → own sub-component (needs its own state) ── */
   if (earned && item.type === "certificate") {
-    return (
-      <div className={`overflow-hidden shadow-ds-card border ${style.border} certificate-print-root`}
-        style={{ borderRadius: "var(--leaf-r)" }}>
-        <TemplateCertificate childName={childName} language={item.language ?? "en"} />
-        <div className="bg-amber-50 px-3 py-2.5 text-center border-t border-amber-100">
-          <p className="font-black text-xs uppercase text-amber-700 tracking-wide">{title}</p>
-          <p className="text-gray-500 text-[10px] mt-0.5">{desc}</p>
-          <button
-            onClick={printCertificate}
-            className="mt-2 flex items-center gap-1.5 mx-auto bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-[11px] px-3 py-1.5 rounded-full transition"
-          >
-            <Printer className="w-3 h-3" /> Print
-          </button>
-        </div>
-      </div>
-    );
+    return <EarnedCertificateCard item={item} childName={childName} />;
   }
 
   /* ── Earned badge → story JPEG if available, else SVG BadgeRenderer ── */
@@ -141,6 +312,7 @@ export default function AchievementCard({ item, earnedAt, childName }: Props) {
         <div className="px-3 pb-3 text-center">
           <p className={`font-black text-xs uppercase tracking-wide ${style.text}`}>{title}</p>
           <p className="text-gray-500 text-[10px] mt-0.5 px-1">{desc}</p>
+          <ShareBadgeButton childName={childName} title={title} badgeSrc={badgeSrc} />
         </div>
       </div>
     );

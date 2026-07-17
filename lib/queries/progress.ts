@@ -272,3 +272,43 @@ export async function claimTaskReward(childId: string, language: "en" | "fr" | "
   }
   return !error || error.code === "23505";
 }
+
+// ── Today's mission detail for the parent daily digest ───────────────────────
+export interface TodayMission {
+  mission_id:   string;
+  stars_earned: number;
+  completed_at: string;
+  category:     string;
+  story_title:  string | null;
+}
+
+// Fetches every mission the child completed today (UTC date) with category +
+// story title. Not cached — the parent portal always wants live data.
+export async function getTodayMissions(
+  childId: string,
+  language: "en" | "fr" | "rw"
+): Promise<TodayMission[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("child_progress")
+    .select("mission_id, stars_earned, completed_at, missions(category_slug, stories(title))")
+    .eq("child_id", childId)
+    .eq("language", language)
+    .gte("completed_at", `${today}T00:00:00`)
+    .lt("completed_at", `${today}T23:59:59.999`)
+    .order("completed_at");
+
+  if (error || !data) return [];
+  return (data as unknown as Array<{
+    mission_id: string;
+    stars_earned: number;
+    completed_at: string;
+    missions: { category_slug: string | null; stories: { title: string } | null } | null;
+  }>).map(r => ({
+    mission_id:   r.mission_id,
+    stars_earned: r.stars_earned ?? 0,
+    completed_at: r.completed_at,
+    category:     r.missions?.category_slug ?? "unknown",
+    story_title:  r.missions?.stories?.title ?? null,
+  }));
+}

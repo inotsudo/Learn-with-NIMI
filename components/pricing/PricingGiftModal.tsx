@@ -12,6 +12,7 @@ import type { Product, Currency } from "@/lib/payments/types";
 
 function formatAmount(amount: number, currency: Currency): string {
   if (currency === "RWF") return `${Math.round(amount).toLocaleString()} RWF`;
+  if (currency === "EUR") return `€${amount.toFixed(2)}`;
   return `$${amount.toFixed(2)}`;
 }
 

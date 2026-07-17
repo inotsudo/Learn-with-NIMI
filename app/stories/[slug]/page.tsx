@@ -27,6 +27,9 @@ import { getStoryIntroProgress, markIntroItemConsumed } from "@/lib/storyProgres
 import { getStoryCertificate } from "@/lib/storyCertificateRepository";
 import type { StoryDetails, StorySlot, StoryIntroProgress, StoryCertificate } from "@/lib/story-types";
 import supabase from "@/lib/supabaseClient";
+import PricingPaymentModal from "@/components/pricing/PricingPaymentModal";
+import { getProducts } from "@/lib/payments/products";
+import type { Product, Currency } from "@/lib/payments/types";
 import ChampionChallengeCard from "@/components/challenges/ChampionChallengeCard";
 import PreviewBanner from "@/components/admin/story-readiness/PreviewBanner";
 import CelebrationModal from "@/components/challenges/CelebrationModal";
@@ -231,6 +234,9 @@ export default function StoryDetailPage() {
   const [streak, setStreak] = useState(0);
   const [feeling, setFeeling] = useState<string | null>(null);
   const [premiumLocked, setPremiumLocked] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingCurrency, setPricingCurrency] = useState<Currency>("USD");
+  const [clubProduct, setClubProduct] = useState<Product | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
   const [sharingCert, setSharingCert] = useState(false);
@@ -449,6 +455,20 @@ export default function StoryDetailPage() {
     })();
   }, [childId, storyId, language]);
 
+  // Prefetch geo + club product when paywall is hit
+  useEffect(() => {
+    if (!premiumLocked) return;
+    void (async () => {
+      const [geo, products] = await Promise.all([
+        fetch("/api/geo").then(r => r.json()).catch(() => ({ currency: "USD" })),
+        getProducts(),
+      ]);
+      setPricingCurrency(geo.currency === "RWF" ? "RWF" : "USD");
+      const monthly = products.find((p: Product) => p.slug === "nimipiko-club");
+      if (monthly) setClubProduct(monthly);
+    })();
+  }, [premiumLocked]);
+
   // Fetch next story in sequence for the complete phase
   useEffect(() => {
     if (phase !== "complete" || !childId || !details) return;
@@ -497,14 +517,24 @@ export default function StoryDetailPage() {
                 {t("premiumStoryDesc")}
               </p>
               <div className="space-y-3">
-                <Link href="/parents">
+                {clubProduct ? (
                   <motion.button
                     whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}
+                    onClick={() => setShowPricingModal(true)}
                     className="w-full font-baloo font-black text-white text-[17px] bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl px-6 py-4 shadow-lg shadow-purple-400/25"
                   >
                     🔓 {t("unlockWithClub")}
                   </motion.button>
-                </Link>
+                ) : (
+                  <Link href="/parents">
+                    <motion.button
+                      whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}
+                      className="w-full font-baloo font-black text-white text-[17px] bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl px-6 py-4 shadow-lg shadow-purple-400/25"
+                    >
+                      🔓 {t("unlockWithClub")}
+                    </motion.button>
+                  </Link>
+                )}
                 <button onClick={() => router.back()}
                   className="w-full font-baloo font-black text-gray-400 text-[15px] py-2">
                   ← {t("goBack")}
@@ -513,6 +543,17 @@ export default function StoryDetailPage() {
             </motion.div>
           </main>
         </PageSurface>
+
+        <AnimatePresence>
+          {showPricingModal && clubProduct && (
+            <PricingPaymentModal
+              product={clubProduct}
+              currency={pricingCurrency}
+              successRedirectUrl={typeof window !== "undefined" ? window.location.href : undefined}
+              onClose={() => setShowPricingModal(false)}
+            />
+          )}
+        </AnimatePresence>
       </AppShell>
     );
   }

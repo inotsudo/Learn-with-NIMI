@@ -20,21 +20,32 @@ const FEATURES = [
 
 const PLANS = [
   {
-    name: "Classroom",
+    name: "Small Group License",
     icon: "🏫",
-    price: "$49",
-    period: "/month",
-    ideal: "1 teacher · up to 30 learners",
-    features: ["30 child profiles", "All 3 languages", "Teacher dashboard", "Weekly progress reports", "All stories & activities", "Achievement certificates"],
+    price: "$7",
+    period: "/student/month",
+    rwf: "5,000–6,000 RWF",
+    ideal: "10–50 learners",
+    features: ["Up to 50 child profiles", "All 3 languages (EN · FR · RW)", "Teacher dashboard", "Weekly progress reports", "All stories & activities", "Achievement certificates"],
   },
   {
-    name: "School",
+    name: "Large Institution",
     icon: "🏛️",
-    price: "Custom",
-    period: "",
-    ideal: "Multiple classrooms · school-wide license",
+    price: "$5",
+    period: "/student/month",
+    rwf: "4,000–5,000 RWF",
+    ideal: "50+ learners",
     features: ["Unlimited classrooms", "Dedicated account manager", "Staff onboarding session", "District-level reporting", "Custom branding options", "Priority support"],
     highlight: true,
+  },
+  {
+    name: "Custom Enterprise",
+    icon: "🎓",
+    price: "Custom",
+    period: "",
+    rwf: "Custom Quote",
+    ideal: "100+ learners · NGOs · Districts",
+    features: ["Full district deployment", "Educator Portal (separate from parent)", "API access for LMS integration", "SLA agreement", "Dedicated onboarding", "Custom content options"],
   },
 ];
 
@@ -137,20 +148,29 @@ export default function SchoolsPage() {
 
       {/* Pricing */}
       <section className="px-5 sm:px-10 py-16 bg-white">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <h2 className="font-baloo font-black text-gray-900 text-[28px] sm:text-[34px] text-center mb-3">School Plans</h2>
-          <p className="text-gray-500 text-center text-[15px] mb-10">Simple licensing, no per-pupil surprises.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <p className="text-gray-500 text-center text-[15px] mb-2">Volume-based pricing — the more learners, the lower the per-student cost.</p>
+          <p className="text-green-700 text-center text-[12px] font-bold mb-10">🇷🇼 Rwanda pricing available in RWF — noted on each plan.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {PLANS.map(p => (
               <div key={p.name} className={`rounded-2xl border-2 p-7 flex flex-col ${p.highlight ? "border-green-500 shadow-xl bg-green-50" : "border-gray-100 shadow-sm bg-white"}`}>
                 <div className="text-3xl mb-3">{p.icon}</div>
-                <h3 className="font-baloo font-black text-gray-900 text-[22px]">{p.name}</h3>
+                <h3 className="font-baloo font-black text-gray-900 text-[20px]">{p.name}</h3>
                 <p className="text-gray-400 text-[12px] font-bold mb-4">{p.ideal}</p>
-                <div className="flex items-end gap-1 mb-5">
-                  <span className="font-baloo font-black text-gray-900 text-[38px] leading-none">{p.price}</span>
-                  <span className="text-gray-400 text-[14px] mb-1">{p.period}</span>
+                <div className="mb-1">
+                  <div className="flex items-end gap-1">
+                    <span className="font-baloo font-black text-gray-900 text-[36px] leading-none">{p.price}</span>
+                    {p.period && <span className="text-gray-400 text-[12px] mb-1.5">{p.period}</span>}
+                  </div>
+                  {p.rwf && p.price !== "Custom" && (
+                    <p className="text-green-700 text-[11px] font-bold mt-0.5">🇷🇼 {p.rwf}/student/month</p>
+                  )}
+                  {p.price === "Custom" && (
+                    <p className="text-green-700 text-[11px] font-bold mt-0.5">🇷🇼 {p.rwf}</p>
+                  )}
                 </div>
-                <ul className="space-y-2 flex-1 mb-6">
+                <ul className="space-y-2 flex-1 mb-6 mt-4">
                   {p.features.map(f => (
                     <li key={f} className="flex items-start gap-2 text-[13px] text-gray-700">
                       <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
@@ -159,7 +179,7 @@ export default function SchoolsPage() {
                   ))}
                 </ul>
                 <a href="#contact" className={`text-center font-black text-[14px] py-3 rounded-full transition ${p.highlight ? "bg-green-600 text-white hover:bg-green-700 shadow-lg" : "bg-gray-900 text-white hover:bg-gray-800"}`}>
-                  {p.highlight ? "Talk to Sales" : "Get Started"}
+                  {p.price === "Custom" ? "Contact Us" : p.highlight ? "Get a Quote" : "Get Started"}
                 </a>
               </div>
             ))}

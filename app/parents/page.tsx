@@ -15,7 +15,7 @@ import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import CreateChildModal from "@/components/home/CreateChildModal";
 import supabase from "@/lib/supabaseClient";
-import { getChildren, getChildAchievements, getActivityDates, getTotalStars, getWeekActivityCounts, getChildCosmetics, type Child, type ChildAchievement, type ChildCosmetics } from "@/lib/queries";
+import { getChildren, getChildAchievements, getActivityDates, getTotalStars, getWeekActivityCounts, getChildCosmetics, getTodayMissions, type TodayMission, type Child, type ChildAchievement, type ChildCosmetics } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots } from "@/lib/storyRepository";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { getActiveSubscription } from "@/lib/payments/products";
@@ -71,6 +71,8 @@ export default function ParentsZonePage() {
   const [editParentOpen, setEditParentOpen] = useState(false);
   const [playingChildId, setPlayingChildId] = useState<string | null>(null);
   const [switched, setSwitched] = useState(false);
+  const [todayActivity, setTodayActivity] = useState<TodayMission[]>([]);
+  const [shareToast, setShareToast] = useState(false);
 
   const switchPlaying = (childId: string) => {
     if (typeof window !== "undefined") {
@@ -185,6 +187,15 @@ export default function ParentsZonePage() {
       setLoading(false);
     })();
   }, []);
+
+  // Refresh today's activity whenever the parent switches to a different child.
+  useEffect(() => {
+    if (!selectedChild) return;
+    const data = childrenData.find(d => d.child.id === selectedChild);
+    if (!data) return;
+    void getTodayMissions(selectedChild, data.child.language as "en" | "fr" | "rw")
+      .then(setTodayActivity);
+  }, [selectedChild, childrenData]);
 
   const active = childrenData.find(d => d.child.id === selectedChild);
 
@@ -628,6 +639,106 @@ export default function ParentsZonePage() {
                         </motion.div>
                       ))}
                     </div>
+
+                    {/* Today's Activity — daily digest card */}
+                    {(() => {
+                      const CAT_EMOJI: Record<string, string> = {
+                        morning: "🎵", movement: "🤸", artistic: "🎨",
+                        histoire: "📖", zoom: "🔍", discovery: "🌍",
+                        flipflop: "🎧", coloring: "🦋",
+                      };
+                      const CAT_LABEL: Record<string, string> = {
+                        morning: "Morning Song", movement: "Move & Groove",
+                        artistic: "Arts & Crafts", histoire: "Story Time",
+                        zoom: "Zoom In", discovery: "Discover",
+                        flipflop: "Flip Flop", coloring: "Coloring",
+                      };
+                      const totalStarsToday = todayActivity.reduce((s, m) => s + m.stars_earned, 0);
+
+                      const handleShare = async () => {
+                        const name = active.child.name;
+                        const lines = todayActivity.map(m =>
+                          `${CAT_EMOJI[m.category] ?? "⭐"} ${CAT_LABEL[m.category] ?? m.category}${m.story_title ? ` — ${m.story_title}` : ""} (+${m.stars_earned}⭐)`
+                        );
+                        const text = [
+                          `${name}'s NIMIPIKO learning today 🌟`,
+                          ...lines,
+                          `Total: ${totalStarsToday} stars! 🏆`,
+                          `nimipiko.com`,
+                        ].join("\n");
+                        try {
+                          if (navigator.share) {
+                            await navigator.share({ text });
+                          } else {
+                            await navigator.clipboard.writeText(text);
+                            setShareToast(true);
+                            setTimeout(() => setShareToast(false), 2500);
+                          }
+                        } catch { /* user cancelled */ }
+                      };
+
+                      return (
+                        <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">📚</span>
+                              <h2 className="font-black text-ds-text text-[18px]">Today&apos;s Learning</h2>
+                            </div>
+                            {todayActivity.length > 0 && (
+                              <button
+                                onClick={handleShare}
+                                className="flex items-center gap-1.5 text-[12px] font-bold text-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/30 px-3 py-1.5 rounded-full hover:opacity-80 transition-opacity"
+                              >
+                                {shareToast ? "✅ Copied!" : "📤 Share"}
+                              </button>
+                            )}
+                          </div>
+
+                          {todayActivity.length === 0 ? (
+                            <div className="flex flex-col items-center gap-2 py-3 text-center">
+                              <span className="text-3xl">🌅</span>
+                              <p className="font-nunito text-ds-muted text-[13px]">
+                                Nothing yet today — open NIMIPIKO to start the adventure!
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {todayActivity.map((m, i) => (
+                                <motion.div
+                                  key={m.mission_id}
+                                  initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: i * 0.06 }}
+                                  className="flex items-center gap-3 bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/20 px-3.5 py-2.5 rounded-xl"
+                                >
+                                  <span className="text-[22px] shrink-0">{CAT_EMOJI[m.category] ?? "⭐"}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-black text-ds-text text-[13px] leading-tight">
+                                      {CAT_LABEL[m.category] ?? m.category}
+                                    </p>
+                                    {m.story_title && (
+                                      <p className="font-nunito text-ds-muted text-[11px] truncate">{m.story_title}</p>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                    <span className="font-black text-amber-700 text-[13px]">+{m.stars_earned}</span>
+                                  </div>
+                                </motion.div>
+                              ))}
+                              <div className="flex items-center justify-between pt-1 px-0.5">
+                                <span className="font-nunito text-ds-muted text-[12px]">
+                                  {todayActivity.length} {todayActivity.length === 1 ? "mission" : "missions"} completed
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                  <span className="font-black text-amber-700 text-[14px]">{totalStarsToday} today</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Today's Learning Goal */}
                     {(() => {

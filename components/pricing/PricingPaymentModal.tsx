@@ -12,6 +12,7 @@ import type { Product, Currency } from "@/lib/payments/types";
 
 function formatAmount(amount: number, currency: Currency): string {
   if (currency === "RWF") return `${Math.round(amount).toLocaleString()} RWF`;
+  if (currency === "EUR") return `€${amount.toFixed(2)}`;
   return `$${amount.toFixed(2)}`;
 }
 
@@ -23,10 +24,11 @@ interface Props {
   currency: Currency;
   effectiveAmount?: number;
   discountCodeId?: string;
+  successRedirectUrl?: string;
   onClose: () => void;
 }
 
-export default function PricingPaymentModal({ product, currency, effectiveAmount, discountCodeId, onClose }: Props) {
+export default function PricingPaymentModal({ product, currency, effectiveAmount, discountCodeId, successRedirectUrl, onClose }: Props) {
   const m = useThemeMotion();
   const price = getPrice(product, currency);
   const chargeAmount = effectiveAmount ?? price.amount;
@@ -46,14 +48,16 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
   // Countdown → redirect on success
   useEffect(() => {
     if (step !== "success") return;
+    const dest = successRedirectUrl ?? "/stories";
     setCountdown(3);
     const interval = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) { clearInterval(interval); window.location.href = "/stories"; return 0; }
+        if (prev <= 1) { clearInterval(interval); window.location.href = dest; return 0; }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
 
@@ -392,9 +396,9 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
                 className="text-gray-500 text-[14px] mt-2">
                 Your {product.name} is now active.
               </motion.p>
-              <motion.a href="/stories" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+              <motion.a href={successRedirectUrl ?? "/stories"} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
                 className="inline-flex items-center gap-2 mt-6 px-8 py-3.5 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[15px] shadow-xl">
-                📖 Go to Stories
+                {successRedirectUrl === "/masterpiece" ? "👑 Create My Masterpiece" : successRedirectUrl ? "▶ Continue Story" : "📖 Go to Stories"}
                 <span className="bg-white/30 rounded-full text-[11px] font-black px-2 py-0.5">{countdown}s</span>
               </motion.a>
             </div>

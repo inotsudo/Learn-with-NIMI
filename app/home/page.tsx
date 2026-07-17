@@ -38,6 +38,8 @@ import HomeWeekStreakPanel   from "@/components/home/HomeWeekStreakPanel";
 import HomeAchievementsPanel from "@/components/home/HomeAchievementsPanel";
 import HomeCommunityPanel    from "@/components/home/HomeCommunityPanel";
 import HomeMasterpiecePanel  from "@/components/home/HomeMasterpiecePanel";
+import NotificationOptInPrompt from "@/components/home/NotificationOptInPrompt";
+import WelcomeBackOverlay      from "@/components/home/WelcomeBackOverlay";
 import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
@@ -160,6 +162,7 @@ export default function HomePage() {
   const [consecutiveStreak,  setConsecutiveStreak]  = useState(0);
   const [favorites,          setFavorites]          = useState<Set<string>>(new Set());
   const [cosmetics,          setCosmetics]          = useState<ChildCosmetics>({ nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null });
+  const [welcomeBack,        setWelcomeBack]        = useState<{ show: boolean; daysAway: number }>({ show: false, daysAway: 0 });
 
   useEffect(() => { void init(); }, []);
 
@@ -270,6 +273,18 @@ export default function HomePage() {
         const raw = localStorage.getItem(`nimi_favs_${child.id}`);
         setFavorites(raw ? new Set(JSON.parse(raw) as string[]) : new Set());
       } catch { setFavorites(new Set()); }
+
+      // Welcome-back overlay: show if returning after 3+ days away.
+      const visitKey  = `nimipiko_last_visit_${child.id}`;
+      const todayStr  = new Date().toISOString().slice(0, 10);
+      const lastVisit = localStorage.getItem(visitKey);
+      if (lastVisit && lastVisit !== todayStr) {
+        const diffDays = Math.round(
+          (new Date(todayStr).getTime() - new Date(lastVisit).getTime()) / 86400000
+        );
+        if (diffDays >= 3) setWelcomeBack({ show: true, daysAway: diffDays });
+      }
+      localStorage.setItem(visitKey, todayStr);
     }
     setLanguage(child.language);
     if (list) setChildren(list);
@@ -410,6 +425,12 @@ export default function HomePage() {
 
   /* ─── Derived ──────────────────────────────────────────────────────────── */
   const WEEK_DAYS = [t("dayMon"), t("dayTue"), t("dayWed"), t("dayThu"), t("dayFri"), t("daySat"), t("daySun")];
+
+  // Streak broke = no current streak, had activity earlier this week, haven't done today yet.
+  const todayDotIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const streakBroke = consecutiveStreak === 0
+    && !weekStreak[todayDotIdx]
+    && weekStreak.slice(0, todayDotIdx).some(Boolean);
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -972,7 +993,7 @@ export default function HomePage() {
                   <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} />
 
                   {/* ── Week Streak ─────────────────────────────────────────── */}
-                  <HomeWeekStreakPanel weekStreak={weekStreak} consecutiveStreak={consecutiveStreak} totalStars={totalStars} />
+                  <HomeWeekStreakPanel weekStreak={weekStreak} consecutiveStreak={consecutiveStreak} totalStars={totalStars} streakBroke={streakBroke} />
 
                   {/* ── My Achievements ─────────────────────────────────────── */}
                   <HomeAchievementsPanel achievements={achievements} />
@@ -994,6 +1015,18 @@ export default function HomePage() {
 
       {showCreateModal && (
         <CreateChildModal onCreated={handleCreated} onClose={() => setShowCreateModal(false)} />
+      )}
+
+      {welcomeBack.show && activeChild && (
+        <WelcomeBackOverlay
+          childName={activeChild.name}
+          daysAway={welcomeBack.daysAway}
+          onDismiss={() => setWelcomeBack({ show: false, daysAway: 0 })}
+        />
+      )}
+
+      {activeChild && (
+        <NotificationOptInPrompt childId={activeChild.id} childName={activeChild.name} />
       )}
     </AppShell>
   );
