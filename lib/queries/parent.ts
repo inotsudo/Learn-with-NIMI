@@ -37,12 +37,14 @@ export function clearAuthCache() {
 export async function getParent(): Promise<Parent | null> {
   const user = await getCachedUser();
   if (!user) return null;
-  const { data } = await supabase
-    .from("parents")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-  return data ?? null;
+  return qcached(`parent:${user.id}`, async () => {
+    const { data } = await supabase
+      .from("parents")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    return data ?? null;
+  });
 }
 
 // Ensures a parent row exists for the signed-in user.
@@ -65,6 +67,7 @@ export async function updateParent(name: string): Promise<void> {
   const user = await getCachedUser();
   if (!user) return;
   await supabase.from("parents").update({ name }).eq("id", user.id);
+  qinvalidate(`parent:${user.id}`);
 }
 
 export async function getChildren(): Promise<Child[]> {

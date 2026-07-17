@@ -273,17 +273,19 @@ export default function StoryDetailPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const [{ data: { user } }, list, story] = await Promise.all([
+        supabase.auth.getUser(),
+        getChildren(),
+        getStoryBySlug(slug),
+      ]);
       setParentId(user?.id ?? null);
-      const list = await getChildren();
+      if (!story) { setLoading(false); return; }
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0];
       if (!child) { setLoading(false); return; }
       setChildId(child.id);
       setChildName(child.name);
       getConsecutiveStreak(child.id, child.language as "en" | "fr" | "rw").then(setStreak);
-      const story = await getStoryBySlug(slug);
-      if (!story) { setLoading(false); return; }
       setStoryId(story.id);
       const [det, sl, intro, cert] = await Promise.all([
         getStoryDetails(story.id, child.language),

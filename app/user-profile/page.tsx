@@ -225,9 +225,8 @@ export default function UserProfilePage() {
     const child = list.find(c => c.id === savedId) ?? list[0];
     if (typeof window !== "undefined") localStorage.setItem(ACTIVE_CHILD_KEY, child.id);
 
-    // Ensure milestone badges are up-to-date before reading child_badges.
-    // This is idempotent — safe to call on every profile load.
-    await awardMilestoneBadges(child.id, child.language);
+    // Fire milestone-badge check in parallel with display data — don't block render.
+    const milestonePromise = awardMilestoneBadges(child.id, child.language);
 
     const [wStreak, wCounts, stars, dates, badges, streak, stories, imageMap, certs] = await Promise.all([
       getWeekStreak(child.id, child.language),
@@ -259,6 +258,14 @@ export default function UserProfilePage() {
     setCurrentStreak(streak);
     setStoriesCompleted(stories);
     if (silent) setRefreshing(false); else setLoading(false);
+
+    // Silently refresh badges if any milestones just landed.
+    const newSlugs = await milestonePromise;
+    if (newSlugs.length > 0) {
+      const fresh = await getChildBadges(child.id, child.language);
+      setBadgeCount(fresh.length);
+      setEarnedBadgeSlugs(fresh.map(b => b.badge_slug));
+    }
   }, []);
 
   const handleSaveProfile = async (newName: string, newAvatarUrl: string) => {

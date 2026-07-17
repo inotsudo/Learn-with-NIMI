@@ -21,8 +21,9 @@ export const TTL_LONG  = 5 * 60_000;   // 5 min
 
 interface Entry { value: unknown; expires: number }
 
-const store   = new Map<string, Entry>();
-const pending = new Map<string, Promise<unknown>>();
+const store      = new Map<string, Entry>();
+const pending    = new Map<string, Promise<unknown>>();
+const pendingLs  = new Map<string, Promise<unknown>>();
 
 export function qcached<T>(key: string, fn: () => Promise<T>, ttl = TTL_SHORT): Promise<T> {
   const hit = store.get(key);
@@ -74,10 +75,21 @@ export function lscached<T>(key: string, ttl: number, fn: () => Promise<T>): Pro
       }
     } catch { /* corrupt — fall through to re-fetch */ }
   }
-  return fn().then(value => {
+
+  const flying = pendingLs.get(key);
+  if (flying) return flying as Promise<T>;
+
+  const promise = fn().then(value => {
     if (typeof window !== "undefined") {
       try { localStorage.setItem(key, JSON.stringify({ value, expires: Date.now() + ttl })); } catch { /* storage full */ }
     }
+    pendingLs.delete(key);
     return value;
+  }).catch(err => {
+    pendingLs.delete(key);
+    throw err;
   });
+
+  pendingLs.set(key, promise);
+  return promise;
 }

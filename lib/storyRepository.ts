@@ -42,50 +42,56 @@ export function getStoryLibrary(
   });
 }
 
-export async function getCurrentStoryId(
+export function getCurrentStoryId(
   childId: string,
   language: string
 ): Promise<string | null> {
-  const { data, error } = await supabase.rpc("get_current_story", {
-    p_child_id: childId,
-    p_language: language,
+  return qcached(`currentStoryId:${childId}:${language}`, async () => {
+    const { data, error } = await supabase.rpc("get_current_story", {
+      p_child_id: childId,
+      p_language: language,
+    });
+    if (error) {
+      console.error("[getCurrentStoryId]", error);
+      return null;
+    }
+    return data as string | null;
   });
-  if (error) {
-    console.error("[getCurrentStoryId]", error);
-    return null;
-  }
-  return data as string | null;
 }
 
-export async function getUnlockedStoryIds(
+export function getUnlockedStoryIds(
   childId: string,
   language: string
 ): Promise<string[]> {
-  const { data, error } = await supabase.rpc("get_unlocked_stories", {
-    p_child_id: childId,
-    p_language: language,
+  return qcached(`unlockedStoryIds:${childId}:${language}`, async () => {
+    const { data, error } = await supabase.rpc("get_unlocked_stories", {
+      p_child_id: childId,
+      p_language: language,
+    });
+    if (error) {
+      console.error("[getUnlockedStoryIds]", error);
+      return [];
+    }
+    return ((data ?? []) as { sid: string }[]).map((r) => r.sid);
   });
-  if (error) {
-    console.error("[getUnlockedStoryIds]", error);
-    return [];
-  }
-  return ((data ?? []) as { sid: string }[]).map((r) => r.sid);
 }
 
-export async function getStoryDetails(
+export function getStoryDetails(
   storyId: string,
   language: string
 ): Promise<StoryDetails | null> {
-  const { data, error } = await supabase.rpc("get_story_details", {
-    p_story_id: storyId,
-    p_language: language,
+  return lscached(`storyDetails:${storyId}:${language}`, TTL_LONG, async () => {
+    const { data, error } = await supabase.rpc("get_story_details", {
+      p_story_id: storyId,
+      p_language: language,
+    });
+    if (error) {
+      console.error("[getStoryDetails]", error);
+      return null;
+    }
+    const rows = data as StoryDetails[] | null;
+    return rows?.[0] ?? null;
   });
-  if (error) {
-    console.error("[getStoryDetails]", error);
-    return null;
-  }
-  const rows = data as StoryDetails[] | null;
-  return rows?.[0] ?? null;
 }
 
 export function getStorySlots(

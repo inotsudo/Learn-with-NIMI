@@ -36,7 +36,7 @@ export async function resolveShields(
 
   const newlyUsed = new Set(used);
   let remaining = available;
-  let activated = false;
+  const gapDates: string[] = [];
   const cursor = new Date(today);
   cursor.setDate(cursor.getDate() - 1);
 
@@ -47,16 +47,19 @@ export async function resolveShields(
 
     if (!effective.has(curStr) && !newlyUsed.has(curStr)) {
       if (effective.has(prevStr) || newlyUsed.has(prevStr)) {
-        await activateStreakShield(childId, language, curStr);
+        gapDates.push(curStr);
         newlyUsed.add(curStr);
         effective.add(curStr);
         remaining--;
-        activated = true;
       } else {
         break;
       }
     }
   }
 
-  return { purchased, usedDates: newlyUsed, available: remaining, activated };
+  if (gapDates.length > 0) {
+    await Promise.all(gapDates.map(d => activateStreakShield(childId, language, d)));
+  }
+
+  return { purchased, usedDates: newlyUsed, available: remaining, activated: gapDates.length > 0 };
 }

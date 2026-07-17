@@ -11,10 +11,13 @@ import supabase from "@/lib/supabaseClient";
 import {
   getChildren, ensureParentRow, getStorageUrl,
   getCurrentLevel, getTotalStars,
-  getWeekStreak,
-  getChildAchievements, getConsecutiveStreak,
+  getWeekStreak, getActivityDates,
+  getChildAchievements,
   getChildCosmetics, type ChildCosmetics,
+  getStreakShieldsPurchased, getUsedShieldDates,
 } from "@/lib/queries";
+import { resolveShields } from "@/lib/streakShields";
+import { computeStreaks } from "@/lib/parentInsights";
 import type { Child, ChildAchievement } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots, getPopularStories, type PopularStory } from "@/lib/storyRepository";
 import { getActiveSubscription } from "@/lib/payments/products";
@@ -162,23 +165,27 @@ export default function HomePage() {
       activeChildRef.current = updated;
       setActiveChild(updated);
       setRefreshing(true);
-      const [lib, lvl, stars, streak, ach, consStreak, popular, cos] = await Promise.all([
+      const [lib, lvl, stars, streak, ach, actDates, popular, cos] = await Promise.all([
         getStoryLibrary(updated.id, lang),
         getCurrentLevel(updated.id, lang),
         getTotalStars(updated.id, lang),
         getWeekStreak(updated.id, lang),
         getChildAchievements(updated.id),
-        getConsecutiveStreak(updated.id, lang),
+        getActivityDates(updated.id, lang),
         getPopularStories(),
         getChildCosmetics(updated.id),
+        getStreakShieldsPurchased(updated.id),
+        getUsedShieldDates(updated.id, lang),
       ]);
+      if (gen !== switchGenRef.current) return;
+      const { usedDates: homeDates3 } = await resolveShields(updated.id, lang, actDates);
       if (gen !== switchGenRef.current) return;
       setStories(lib);
       setLevel(lvl);
       setTotalStars(stars);
       setWeekStreak(streak);
       setAchievements(ach);
-      setConsecutiveStreak(consStreak);
+      setConsecutiveStreak(computeStreaks(actDates, new Date(), homeDates3).current);
       setPopularStories(popular);
       setCosmetics(cos);
       setRefreshing(false);
@@ -222,6 +229,21 @@ export default function HomePage() {
     else       { setShowPicker(true); setLoading(false); }
   }
 
+  async function loadCommunityCreations() {
+    const { data } = await supabase
+      .from("creations")
+      .select("id, image_url, child_name, type")
+      .eq("is_public", true)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(3);
+    if (data) setCommunityCreations(
+      data
+        .filter(r => { const url = (r.image_url as string | null) ?? ""; return url.length > 0 && !url.startsWith("/") && !url.startsWith("assets/"); })
+        .map(r => ({ id: r.id as string, imageUrl: (r.image_url as string | null) ?? "", childName: (r.child_name as string | null) ?? "", type: (r.type as string | null) ?? "art" }))
+    );
+  }
+
   async function select(child: Child, list?: Child[]) {
     setActiveChild(child);
     setShowPicker(false);
@@ -236,22 +258,26 @@ export default function HomePage() {
     }
     setLanguage(child.language);
     if (list) setChildren(list);
-    const [lib, lvl, stars, streak, ach, consStreak, popular, cos] = await Promise.all([
+    const [lib, lvl, stars, streak, ach, actDates, popular, cos] = await Promise.all([
       getStoryLibrary(child.id, child.language),
       getCurrentLevel(child.id, child.language),
       getTotalStars(child.id, child.language),
       getWeekStreak(child.id, child.language),
       getChildAchievements(child.id),
-      getConsecutiveStreak(child.id, child.language),
+      getActivityDates(child.id, child.language),
       getPopularStories(),
       getChildCosmetics(child.id),
+      // Pre-warm resolveShields inputs so the await below is a cache-hit
+      getStreakShieldsPurchased(child.id),
+      getUsedShieldDates(child.id, child.language),
     ]);
+    const { usedDates: homeDates1 } = await resolveShields(child.id, child.language, actDates);
     setStories(lib);
     setLevel(lvl);
     setTotalStars(stars);
     setWeekStreak(streak);
     setAchievements(ach);
-    setConsecutiveStreak(consStreak);
+    setConsecutiveStreak(computeStreaks(actDates, new Date(), homeDates1).current);
     setPopularStories(popular);
     setCosmetics(cos);
     setLoading(false);
@@ -261,47 +287,31 @@ export default function HomePage() {
     if (cur) getStorySlots(child.id, cur.sid, child.language).then(setSlots);
 
     // Community creations — best-effort, never blocks
-    supabase
-      .from("creations")
-      .select("id, image_url, child_name, type")
-      .eq("is_public", true)
-      .eq("status", "approved")
-      .order("created_at", { ascending: false })
-      .limit(3)
-      .then(({ data }) => {
-        if (data) setCommunityCreations(
-          data
-            // Only keep rows with a real storage URL (not blank, not a local /assets/ path)
-            .filter(r => {
-              const url = (r.image_url as string | null) ?? "";
-              return url.length > 0 && !url.startsWith("/") && !url.startsWith("assets/");
-            })
-            .map(r => ({ id: r.id as string, imageUrl: (r.image_url as string | null) ?? "", childName: (r.child_name as string | null) ?? "", type: (r.type as string | null) ?? "art" }))
-        );
-      });
-
-    setLoading(false);
+    void loadCommunityCreations();
   }
 
   async function silentRefresh(child: Child) {
     setRefreshing(true);
     const lang = child.language;
-    const [lib, lvl, stars, streak, ach, consStreak, popular, cos] = await Promise.all([
+    const [lib, lvl, stars, streak, ach, actDates, popular, cos] = await Promise.all([
       getStoryLibrary(child.id, lang),
       getCurrentLevel(child.id, lang),
       getTotalStars(child.id, lang),
       getWeekStreak(child.id, lang),
       getChildAchievements(child.id),
-      getConsecutiveStreak(child.id, lang),
+      getActivityDates(child.id, lang),
       getPopularStories(),
       getChildCosmetics(child.id),
+      getStreakShieldsPurchased(child.id),
+      getUsedShieldDates(child.id, lang),
     ]);
+    const { usedDates: homeDates2 } = await resolveShields(child.id, lang, actDates);
     setStories(lib);
     setLevel(lvl);
     setTotalStars(stars);
     setWeekStreak(streak);
     setAchievements(ach);
-    setConsecutiveStreak(consStreak);
+    setConsecutiveStreak(computeStreaks(actDates, new Date(), homeDates2).current);
     setPopularStories(popular);
     setCosmetics(cos);
     setRefreshing(false);

@@ -89,13 +89,15 @@ export function getChildCertificates(childId: string, language: string): Promise
 }
 
 // Returns set of challenge_slug strings already claimed for this child+language.
-export async function getClaimedChallenges(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
-  const { data } = await supabase
-    .from("challenge_bonus_stars")
-    .select("challenge_slug")
-    .eq("child_id", childId)
-    .eq("language", language);
-  return new Set((data ?? []).map((r: any) => r.challenge_slug));
+export function getClaimedChallenges(childId: string, language: "en" | "fr" | "rw"): Promise<Set<string>> {
+  return qcached(`claimedChallenges:${childId}:${language}`, async () => {
+    const { data } = await supabase
+      .from("challenge_bonus_stars")
+      .select("challenge_slug")
+      .eq("child_id", childId)
+      .eq("language", language);
+    return new Set((data ?? []).map((r: any) => r.challenge_slug));
+  });
 }
 
 // Claims a challenge reward — inserts a row; no-ops if already claimed (unique conflict).
@@ -108,6 +110,7 @@ export async function claimChallengeReward(
   if (!error || error.code === "23505") {
     qinvalidate(`bonusStars:${childId}:${language}`);
     qinvalidate(`totalStars:${childId}:${language}`);
+    qinvalidate(`claimedChallenges:${childId}:${language}`);
   }
   return !error || error.code === "23505";
 }

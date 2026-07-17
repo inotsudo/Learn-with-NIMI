@@ -7,16 +7,18 @@ const EMPTY_COSMETICS: ChildCosmetics = {
 };
 
 // All cosmetic shop items this child has ever unlocked.
-export async function getShopPurchases(childId: string): Promise<ShopPurchase[]> {
-  const { data, error } = await supabase
-    .from("shop_purchases")
-    .select("*")
-    .eq("child_id", childId);
-  if (error) {
-    console.error("[getShopPurchases]", error.message);
-    return [];
-  }
-  return (data ?? []) as ShopPurchase[];
+export function getShopPurchases(childId: string): Promise<ShopPurchase[]> {
+  return qcached(`shopPurchases:${childId}`, async () => {
+    const { data, error } = await supabase
+      .from("shop_purchases")
+      .select("*")
+      .eq("child_id", childId);
+    if (error) {
+      console.error("[getShopPurchases]", error.message);
+      return [];
+    }
+    return (data ?? []) as ShopPurchase[];
+  });
 }
 
 // Records a shop purchase, spending `price` stars on `itemId`.
@@ -30,6 +32,8 @@ export async function purchaseShopItem(childId: string, itemId: string, price: n
     console.error("[purchaseShopItem]", error.message);
     return null;
   }
+  qinvalidate(`shopPurchases:${childId}`);
+  qinvalidate(`shieldsPurchased:${childId}`);
   return data as ShopPurchase;
 }
 
@@ -97,6 +101,7 @@ export async function activateStreakShield(childId: string, language: "en" | "fr
   if (ok) {
     qinvalidate(`usedShieldDates:${childId}:${language}`);
     qinvalidate(`consecutiveStreak:${childId}:${language}`);
+    qinvalidate(`weekStreak:${childId}:${language}`);
   }
   return ok;
 }

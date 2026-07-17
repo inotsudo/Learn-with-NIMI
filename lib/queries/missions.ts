@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabaseClient";
-import { qcached, qinvalidate, lsinvalidate } from "@/lib/queryCache";
+import { qcached, qinvalidate, lscached, lsinvalidate, TTL_LONG } from "@/lib/queryCache";
 import type { CurriculumMission, CompleteCurriculumMissionResult, LevelMissionRow } from "./types";
 
 function curriculumCacheKey(childId: string): string {
@@ -85,30 +85,38 @@ export async function completeCurriculumMission(
   qinvalidate(`completedMissionIds:${childId}`);
   qinvalidate(`storyProgressStars:${childId}`);
   qinvalidate(`curriculumMissions:${childId}`);
+  qinvalidate(`completedStoriesCount:${childId}`);
+  qinvalidate(`allChildProgress:${childId}`);
+  qinvalidate(`currentStoryId:${childId}`);
+  qinvalidate(`unlockedStoryIds:${childId}`);
   return data as CompleteCurriculumMissionResult;
 }
 
 // All (level_number, category_slug) -> mission_id rows. Small table,
 // readable by any authenticated user (migration 026 policy). Used to
 // derive per-language X/8 level progress and overall completion %.
-export async function getLevelMissions(): Promise<LevelMissionRow[]> {
-  const { data, error } = await supabase
-    .from("level_missions")
-    .select("level_number, category_slug, mission_id");
-  if (error) {
-    console.error("[getLevelMissions]", error.message);
-    return [];
-  }
-  return (data ?? []) as LevelMissionRow[];
+export function getLevelMissions(): Promise<LevelMissionRow[]> {
+  return lscached("levelMissions", TTL_LONG, async () => {
+    const { data, error } = await supabase
+      .from("level_missions")
+      .select("level_number, category_slug, mission_id");
+    if (error) {
+      console.error("[getLevelMissions]", error.message);
+      return [];
+    }
+    return (data ?? []) as LevelMissionRow[];
+  });
 }
 
 // Highest level number defined in the curriculum (currently 3). Drives how
 // many "Explorer Badge" tiers the Achievement Dashboard renders.
-export async function getMaxCurriculumLevel(): Promise<number> {
-  const { data } = await supabase
-    .from("level_missions")
-    .select("level_number")
-    .order("level_number", { ascending: false })
-    .limit(1);
-  return data?.[0]?.level_number ?? 1;
+export function getMaxCurriculumLevel(): Promise<number> {
+  return lscached("maxCurriculumLevel", TTL_LONG, async () => {
+    const { data } = await supabase
+      .from("level_missions")
+      .select("level_number")
+      .order("level_number", { ascending: false })
+      .limit(1);
+    return data?.[0]?.level_number ?? 1;
+  });
 }

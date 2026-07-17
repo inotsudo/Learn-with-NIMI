@@ -54,15 +54,22 @@ export async function getTodayStars(childId: string, language: "en" | "fr" | "rw
     .reduce((sum, r) => sum + (r.missions?.stars ?? 10), 0);
 }
 
-// Which of the last 7 days (Mon–Sun, current week) had >=1 completion.
+// Which of the last 7 days (Mon–Sun, current week) had >=1 completion or a shield.
 // Index 0 = Monday. All-false if no progress yet.
 export function getWeekStreak(childId: string, language: "en" | "fr" | "rw"): Promise<boolean[]> {
   return qcached(`weekStreak:${childId}:${language}`, async () => {
-    const rows   = await rawProgressRows(childId, language);
+    const [rows, shieldDates] = await Promise.all([
+      rawProgressRows(childId, language),
+      getUsedShieldDates(childId, language),
+    ]);
     const monday = weekMonday();
     const result = [false, false, false, false, false, false, false];
     for (const row of rows) {
       const diffDays = Math.floor((new Date(row.completed_at).getTime() - monday.getTime()) / 86400000);
+      if (diffDays >= 0 && diffDays < 7) result[diffDays] = true;
+    }
+    for (const dateStr of shieldDates) {
+      const diffDays = Math.floor((new Date(`${dateStr}T00:00:00`).getTime() - monday.getTime()) / 86400000);
       if (diffDays >= 0 && diffDays < 7) result[diffDays] = true;
     }
     return result;
@@ -110,22 +117,24 @@ export function getWeekActivityCounts(childId: string, language: "en" | "fr" | "
 // All child_progress rows for this child, across ALL 3 language journeys.
 // Source data for the Parent Intelligence Dashboard's per-language journey
 // cards, learning insights and attention alerts.
-export async function getAllChildProgress(childId: string): Promise<ProgressRow[]> {
-  const { data, error } = await supabase
-    .from("child_progress")
-    .select("mission_id, language, stars_earned, completed_at, missions(category_slug)")
-    .eq("child_id", childId);
-  if (error) {
-    console.error("[getAllChildProgress]", error.message);
-    return [];
-  }
-  return (data ?? []).map((row: any) => ({
-    mission_id: row.mission_id,
-    language: row.language,
-    category: row.missions?.category_slug,
-    stars_earned: row.stars_earned,
-    completed_at: row.completed_at,
-  })) as ProgressRow[];
+export function getAllChildProgress(childId: string): Promise<ProgressRow[]> {
+  return qcached(`allChildProgress:${childId}`, async () => {
+    const { data, error } = await supabase
+      .from("child_progress")
+      .select("mission_id, language, stars_earned, completed_at, missions(category_slug)")
+      .eq("child_id", childId);
+    if (error) {
+      console.error("[getAllChildProgress]", error.message);
+      return [];
+    }
+    return (data ?? []).map((row: any) => ({
+      mission_id: row.mission_id,
+      language: row.language,
+      category: row.missions?.category_slug,
+      stars_earned: row.stars_earned,
+      completed_at: row.completed_at,
+    })) as ProgressRow[];
+  });
 }
 
 // The child's current curriculum level for a specific language journey
