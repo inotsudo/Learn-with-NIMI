@@ -40,8 +40,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
   const [errorMsg, setErrorMsg] = useState("");
   const [phone, setPhone] = useState("");
   const [countdown, setCountdown] = useState(3);
-  const [momoAttempt, setMomoAttempt] = useState(0);
-  const [momoElapsed, setMomoElapsed] = useState(0);
   const momoAbort = useRef(false);
   const pendingCsOrderId = useRef<string | null>(null);
 
@@ -58,13 +56,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     return () => clearInterval(interval);
   }, [step]);
 
-  // Elapsed-time counter for MoMo processing UI
-  useEffect(() => {
-    if (step !== "processing" || activeProvider !== "mtn_momo") return;
-    setMomoElapsed(0);
-    const interval = setInterval(() => setMomoElapsed(s => s + 1), 1000);
-    return () => clearInterval(interval);
-  }, [step, activeProvider]);
 
   // CyberSource card flow — triggers when provider is set to "cybersource"
   useEffect(() => {
@@ -202,7 +193,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
     const cleanPhone = phone.replace(/[\s\-]/g, "");
     if (cleanPhone.length < 9) { setErrorMsg("Enter a valid MTN phone number"); return; }
     setErrorMsg("");
-    setMomoAttempt(0);
+
     setStep("processing");
     momoAbort.current = false;
     try {
@@ -231,7 +222,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
         for (let i = 0; i < 30; i++) {
           await new Promise(r => setTimeout(r, 5000));
           if (momoAbort.current) return;
-          setMomoAttempt(i + 1);
           const s = await authedFetch(`/api/payments/mtn-momo?orderId=${momoOrderId}&referenceId=${result.referenceId}`);
           const d = await s.json();
           if (momoAbort.current) return;
@@ -379,9 +369,6 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
               {activeProvider === "mtn_momo" && (
                 <>
                   <p className="text-gray-500 text-[13px] mt-2">Check your phone and enter your PIN</p>
-                  <p className="text-gray-400 text-[11px] mt-3 font-mono">
-                    Check {momoAttempt}/30 · {momoElapsed}s elapsed
-                  </p>
                   <button
                     onClick={() => { momoAbort.current = true; setStep("momo"); setErrorMsg(""); }}
                     className="mt-5 px-5 py-2 leaf border border-ds-border text-gray-400 font-bold text-[12px] hover:bg-gray-50 transition">
