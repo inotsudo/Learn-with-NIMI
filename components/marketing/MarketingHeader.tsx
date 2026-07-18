@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { label: "Activities", href: "#activities" },
   { label: "Community", href: "/community" },
   { label: "Schools", href: "/schools" },
-  { label: "About", href: "#about" },
+  { label: "About", href: "/about" },
 ];
 
 export default function MarketingHeader() {

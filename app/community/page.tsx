@@ -572,6 +572,13 @@ function CaptionSheet({
   cv: ComponentVariant;
 }) {
   const { t } = useLanguage();
+  const [consentChecked, setConsentChecked] = useState(false);
+  // Reset consent each time a new item is opened
+  const prevItemKey = useRef<string | null>(null);
+  if (item?.key !== prevItemKey.current) {
+    prevItemKey.current = item?.key ?? null;
+    if (consentChecked) setConsentChecked(false);
+  }
   const coverSrc = item?.coverUrl ? getStorageUrl(item.coverUrl) : null;
   const remaining = CAPTION_MAX - caption.length;
 
@@ -637,12 +644,30 @@ function CaptionSheet({
               </span>
             </div>
 
+            {/* Consent checkbox */}
+            <div className="mx-5 mb-4 flex items-start gap-3">
+              <input
+                id="community-consent"
+                type="checkbox"
+                checked={consentChecked}
+                onChange={e => setConsentChecked(e.target.checked)}
+                className="mt-0.5 w-4 h-4 shrink-0 accent-[var(--nimi-green)] cursor-pointer"
+              />
+              <label htmlFor="community-consent" className="text-ds-muted text-[12px] leading-relaxed cursor-pointer select-none">
+                I agree to the{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-[var(--nimi-green)]">
+                  Terms of Use
+                </a>{" "}
+                and confirm I have the right to share this content on Nimipiko.
+              </label>
+            </div>
+
             {/* Post button */}
             <div className="px-5 pb-8">
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={onPost}
-                disabled={posting || caption.trim().length === 0}
+                disabled={posting || caption.trim().length === 0 || !consentChecked}
                 className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[16px] text-white shadow-lg disabled:opacity-50 bg-gradient-to-r ${cv.zoneGradients.communitySquare}`}
               >
                 {posting

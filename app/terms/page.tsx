@@ -200,12 +200,21 @@ export default function TermsOfUsePage() {
             </div>
           </Section>
 
+          <Section title="15. Copyright Notice">
+            <div className="bg-gray-900 text-white rounded-2xl p-6 text-center">
+              <p className="font-baloo font-black text-[18px] mb-1">© 2026 Nimipiko Studio LTD</p>
+              <p className="text-gray-300 text-[13px] leading-relaxed">All rights reserved. All content, characters, artwork, music, educational methods, and platform features are the exclusive intellectual property of Nimipiko Studio LTD.</p>
+              <p className="text-gray-400 text-[12px] mt-3">Nimi™ · Piko™ · Zilo™ · Nimipiko Learning Method™ · Champion Treasure Gallery™</p>
+              <p className="text-gray-500 text-[11px] mt-2">Unauthorized reproduction, distribution, or commercial use of any Nimipiko content is strictly prohibited and may result in civil and criminal liability under applicable copyright law.</p>
+            </div>
+          </Section>
+
         </motion.div>
       </main>
 
       <footer className="bg-white border-t border-gray-100 px-4 py-6 text-center">
         <p className="font-nunito text-gray-400 text-[12px]">
-          © {new Date().getFullYear()} Nimipiko Studio LTD · <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms of Use</Link> · <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
+          © 2026 Nimipiko Studio LTD. All rights reserved. · <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms of Use</Link> · <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
         </p>
       </footer>
     </div>

@@ -179,12 +179,34 @@ function EarnedCertificateCard({ item, childName }: { item: AchievementItem; chi
       <div className="bg-amber-50 px-3 py-2.5 text-center border-t border-amber-100">
         <p className="font-black text-xs uppercase text-amber-700 tracking-wide">{title}</p>
         <p className="text-gray-500 text-[10px] mt-0.5">{desc}</p>
-        <div className="mt-2 flex items-center justify-center gap-2">
+        <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
           <button
             onClick={printCertificate}
             className="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-[11px] px-3 py-1.5 rounded-full transition"
           >
             <Printer className="w-3 h-3" /> Print
+          </button>
+          <button
+            onClick={() => {
+              const params = new URLSearchParams({
+                child: childName, lang: item.language ?? "en",
+              });
+              window.open(`/api/certificate?${params}`, "_blank");
+            }}
+            className="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-[11px] px-3 py-1.5 rounded-full transition"
+          >
+            📥 PDF
+          </button>
+          <button
+            onClick={() => {
+              const params = new URLSearchParams({
+                child: childName, lang: item.language ?? "en", format: "png",
+              });
+              window.open(`/api/certificate?${params}`, "_blank");
+            }}
+            className="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-[11px] px-3 py-1.5 rounded-full transition"
+          >
+            🖼️ PNG
           </button>
           <button
             onClick={handleShare}
@@ -312,7 +334,20 @@ export default function AchievementCard({ item, earnedAt, childName }: Props) {
         <div className="px-3 pb-3 text-center">
           <p className={`font-black text-xs uppercase tracking-wide ${style.text}`}>{title}</p>
           <p className="text-gray-500 text-[10px] mt-0.5 px-1">{desc}</p>
-          <ShareBadgeButton childName={childName} title={title} badgeSrc={badgeSrc} />
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            {badgeSrc && (
+              <a
+                href={badgeSrc}
+                download={`${childName.replace(/ /g, "_")}_badge.jpeg`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold text-[10px] px-2.5 py-1 rounded-full transition"
+              >
+                🖼️ PNG
+              </a>
+            )}
+            <ShareBadgeButton childName={childName} title={title} badgeSrc={badgeSrc} />
+          </div>
         </div>
       </div>
     );

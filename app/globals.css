@@ -712,6 +712,28 @@ img {
   user-drag: none;
 }
 
+/* ── Anti-scraping & content protection ─────────────────────── */
+/* Disable text selection on story and certificate content */
+.story-body,
+.certificate-content,
+.protected-asset {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Prevent long-press save on images/videos (iOS Safari) */
+img, video {
+  -webkit-touch-callout: none;
+  pointer-events: auto; /* keep clicks but block context saves via JS */
+}
+
+/* Drag-lock on all media assets */
+img, video, audio {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 @media (max-width: 768px) {
   .mobile-controls        { padding: 0.5rem; }
   .mobile-controls button { font-size: 0.875rem; padding: 0.5rem 0.75rem; }

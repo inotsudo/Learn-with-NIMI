@@ -76,6 +76,7 @@ function buildCertificateSvg(opts: {
   stars: string;
   nimiB64: string | null;
   pikoB64: string | null;
+  watermarkToken: string;
 }): string {
   const { childName, storyTitle, lang, nimiB64, pikoB64 } = opts;
   const l = LABELS[lang] || LABELS.en;
@@ -253,6 +254,10 @@ function buildCertificateSvg(opts: {
   <!-- Tagline -->
   <text x="${W / 2 - 14}" y="1074" text-anchor="middle" font-size="14" font-family="Arial,sans-serif"
     fill="#6B7280">🌿 ${esc(l.tagline)} 🌿</text>
+
+  <!-- Watermark: faint account token for tracing unauthorized redistribution -->
+  <text x="${W / 2}" y="${H - 8}" text-anchor="middle" font-size="9" font-family="Arial,sans-serif"
+    fill="#D1D5DB" opacity="0.55" font-weight="400">${esc(opts.watermarkToken)} · nimipiko.com</text>
 </svg>`;
 }
 
@@ -276,11 +281,15 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const childName = searchParams.get("child") || "Explorer";
-  const storyId   = searchParams.get("storyId");
+  const childName  = searchParams.get("child") || "Explorer";
+  const storyId    = searchParams.get("storyId");
   const storyTitle = searchParams.get("story") || "Story Adventure";
-  const lang      = searchParams.get("lang") || "en";
-  const stars     = searchParams.get("stars") || "60";
+  const lang       = searchParams.get("lang") || "en";
+  const stars      = searchParams.get("stars") || "60";
+  const format     = searchParams.get("format") === "png" ? "png" : "pdf";
+
+  // Watermark token: truncated parent ID, low-visibility stamp for tracing
+  const watermarkToken = `NMK-${user.id.slice(0, 8).toUpperCase()}`;
 
   // ── Template mode: use admin-configured certificate image ──
   if (storyId) {
@@ -325,11 +334,25 @@ export async function GET(req: NextRequest) {
                 font-family="Arial Black,sans-serif" font-weight="900">
                 ${childName.toUpperCase().replace(/&/g,"&amp;").replace(/</g,"&lt;")}
               </text>
+              <text x="${imgW / 2}" y="${imgH - 8}" text-anchor="middle"
+                font-size="11" fill="#D1D5DB" opacity="0.55"
+                font-family="Arial,sans-serif">
+                ${watermarkToken} · nimipiko.com
+              </text>
             </svg>`);
 
           const composited = await sharp(imgBuffer)
             .composite([{ input: textSvg, top: 0, left: 0 }])
             .png().toBuffer();
+
+          if (format === "png") {
+            return new NextResponse(new Uint8Array(composited), {
+              headers: {
+                "Content-Type": "image/png",
+                "Content-Disposition": `attachment; filename="${childName}_certificate.png"`,
+              },
+            });
+          }
 
           const pdfDoc  = await PDFDocument.create();
           const pdfImg  = await pdfDoc.embedPng(composited);
@@ -384,12 +407,27 @@ export async function GET(req: NextRequest) {
               font-family="Arial Black, sans-serif" font-weight="900">
               ${esc(childName.toUpperCase())}
             </text>
+            <text x="${imgW / 2}" y="${imgH - 8}" text-anchor="middle"
+              font-size="11" fill="#D1D5DB" opacity="0.55"
+              font-family="Arial, sans-serif">
+              ${esc(watermarkToken)} · nimipiko.com
+            </text>
           </svg>`);
 
         const composited = await sharp(imgBuffer)
           .composite([{ input: textSvg, top: 0, left: 0 }])
           .jpeg({ quality: 97 })
           .toBuffer();
+
+        if (format === "png") {
+          const pngBuffer = await sharp(composited).png().toBuffer();
+          return new NextResponse(new Uint8Array(pngBuffer), {
+            headers: {
+              "Content-Type": "image/png",
+              "Content-Disposition": `attachment; filename="${childName}_certificate.png"`,
+            },
+          });
+        }
 
         const pdfDoc = await PDFDocument.create();
         const pdfImg = await pdfDoc.embedJpg(composited);
@@ -437,6 +475,14 @@ export async function GET(req: NextRequest) {
         font-weight="900">
         ${esc(childName.toUpperCase())}
       </text>
+      <text x="${imgW / 2}" y="${imgH - 8}"
+        text-anchor="middle"
+        font-size="11"
+        fill="#D1D5DB"
+        opacity="0.55"
+        font-family="Arial, sans-serif">
+        ${esc(watermarkToken)} · nimipiko.com
+      </text>
     </svg>
   `);
 
@@ -444,6 +490,16 @@ export async function GET(req: NextRequest) {
     .composite([{ input: textSvg, top: 0, left: 0 }])
     .jpeg({ quality: 97 })
     .toBuffer();
+
+  if (format === "png") {
+    const pngBuffer = await sharp(composited).png().toBuffer();
+    return new NextResponse(new Uint8Array(pngBuffer), {
+      headers: {
+        "Content-Type": "image/png",
+        "Content-Disposition": `attachment; filename="${childName}_certificate.png"`,
+      },
+    });
+  }
 
   // Wrap in PDF (A4 portrait)
   const pdfDoc = await PDFDocument.create();

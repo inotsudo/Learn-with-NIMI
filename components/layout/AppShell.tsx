@@ -579,6 +579,11 @@ export default function AppShell({ children }: AppShellProps) {
 
       <LogoutModal isOpen={showLogout} onClose={() => setShowLogout(false)} />
 
+      {/* Copyright footer — desktop only, stays below content */}
+      <div className="hidden lg:block text-center py-2 border-t border-ds-border bg-ds-card/50">
+        <p className="font-nunito text-[10px] text-gray-400">© 2026 Nimipiko Studio LTD. All rights reserved.</p>
+      </div>
+
       <LanguageSwitchDialog
         pendingLanguage={pendingLanguage}
         currentLanguage={language}

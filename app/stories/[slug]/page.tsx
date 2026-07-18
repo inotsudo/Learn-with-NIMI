@@ -1295,27 +1295,71 @@ export default function StoryDetailPage() {
                             {/* Certificate strip */}
                             <motion.div
                               initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.48 }}
-                              className="w-full mt-4 bg-gradient-to-r from-amber-50 via-[#faf6ee] to-amber-50 border border-amber-200/70 rounded-2xl p-3.5 flex items-center gap-3">
-                              <div className="w-11 h-11 bg-gradient-to-br from-yellow-300 to-amber-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm text-xl">
-                                📜
+                              className="w-full mt-4 space-y-2">
+                              {/* Certificate row */}
+                              <div className="bg-gradient-to-r from-amber-50 via-[#faf6ee] to-amber-50 border border-amber-200/70 rounded-2xl p-3.5 flex items-center gap-3">
+                                <div className="w-11 h-11 bg-gradient-to-br from-yellow-300 to-amber-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm text-xl">
+                                  📜
+                                </div>
+                                <div className="flex-1 min-w-0 text-left">
+                                  <p className="font-baloo font-black text-amber-800 text-[13px] leading-tight">Story Certificate</p>
+                                  <p className="font-nunito text-amber-500/80 text-[11px] truncate">Awarded to {childName}</p>
+                                </div>
+                                <div className="flex-shrink-0 flex flex-col gap-1">
+                                  <button
+                                    onClick={() => {
+                                      const params = new URLSearchParams({
+                                        child: childName, story: storyTitle,
+                                        stars: String(totalStars), lang: language,
+                                        ...(storyId ? { storyId } : {}),
+                                        date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+                                      });
+                                      window.open(`/api/certificate?${params}`, "_blank");
+                                    }}
+                                    className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
+                                    📥 PDF
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const params = new URLSearchParams({
+                                        child: childName, story: storyTitle,
+                                        stars: String(totalStars), lang: language,
+                                        ...(storyId ? { storyId } : {}),
+                                        date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+                                        format: "png",
+                                      });
+                                      window.open(`/api/certificate?${params}`, "_blank");
+                                    }}
+                                    className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
+                                    🖼️ PNG
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex-1 min-w-0 text-left">
-                                <p className="font-baloo font-black text-amber-800 text-[13px] leading-tight">Story Certificate</p>
-                                <p className="font-nunito text-amber-500/80 text-[11px] truncate">Awarded to {childName}</p>
-                              </div>
-                              <button
-                                onClick={() => {
-                                  const params = new URLSearchParams({
-                                    child: childName, story: storyTitle,
-                                    stars: String(totalStars), lang: language,
-                                    ...(storyId ? { storyId } : {}),
-                                    date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-                                  });
-                                  window.open(`/api/certificate?${params}`, "_blank");
-                                }}
-                                className="flex-shrink-0 bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
-                                📥 Download
-                              </button>
+                              {/* Badge row */}
+                              {earnedBadgeImageUrl && (
+                                <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border border-green-200/70 rounded-2xl p-3.5 flex items-center gap-3">
+                                  <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+                                    <BadgeCircle slug={earnedBadgeSlug} size="sm" imageUrl={earnedBadgeImageUrl} />
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-left">
+                                    <p className="font-baloo font-black text-green-800 text-[13px] leading-tight">
+                                      {earnedBadgeSlug ? badgeDisplayName(earnedBadgeSlug) : "Story Badge"}
+                                    </p>
+                                    <p className="font-nunito text-green-600/80 text-[11px] truncate">Earned by {childName}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const a = document.createElement("a");
+                                      a.href = earnedBadgeImageUrl;
+                                      a.download = `${earnedBadgeSlug ?? "badge"}.png`;
+                                      a.target = "_blank";
+                                      a.click();
+                                    }}
+                                    className="flex-shrink-0 bg-green-100 hover:bg-green-200 text-green-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
+                                    🖼️ PNG
+                                  </button>
+                                </div>
+                              )}
                             </motion.div>
 
                             {/* Send to Treasure Box */}

@@ -76,6 +76,19 @@ r.setProperty("--theme-sidebar","#FFFFFF");
 }catch(e){}}())` }} />
       </head>
       <body className="font-nunito" style={{ backgroundColor: "var(--theme-bg, #FFFFFF)" }}>
+        {/* Anti-scraping: disable right-click context menu on images and videos */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          document.addEventListener('contextmenu', function(e) {
+            if (e.target && (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO')) {
+              e.preventDefault();
+            }
+          });
+          document.addEventListener('dragstart', function(e) {
+            if (e.target && (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO')) {
+              e.preventDefault();
+            }
+          });
+        `}} />
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <LanguageProvider>
           <NimiReaderProvider>

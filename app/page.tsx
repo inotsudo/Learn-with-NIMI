@@ -195,8 +195,8 @@ export default function LandingPage() {
             🇷🇼 Kinyarwanda · 🇫🇷 Français · 🇬🇧 English
           </span>
           <h1 className="font-baloo font-black leading-tight mb-1.5" style={{fontSize:"clamp(1.65rem,7.5vw,2.1rem)"}}>
-            <span className="text-gray-900 block">The first app that speaks</span>
-            <span className="text-[var(--ds-brand-primary)] block">your child&rsquo;s language.</span>
+            <span className="text-[var(--ds-brand-primary)] block">Grow With Every Story.</span>
+            <span className="text-gray-900 block" style={{fontSize:"0.6em",fontWeight:700}}>The Immersive Early Learning Platform</span>
           </h1>
           <p className="font-nunito font-semibold text-gray-600 leading-snug mb-0" style={{fontSize:"clamp(0.72rem,3vw,0.82rem)",maxWidth:"30ch"}}>
             Stories, missions and printable certificates — crafted for Rwandan families and curious children worldwide.
@@ -245,8 +245,8 @@ export default function LandingPage() {
             🇷🇼 Kinyarwanda · 🇫🇷 Français · 🇬🇧 English
           </span>
           <h1 className="font-baloo font-black leading-tight mb-3" style={{fontSize:"clamp(2rem,3.8vw,3rem)"}}>
-            <span className="text-gray-900 block">The first app that speaks</span>
-            <span className="text-[var(--ds-brand-primary)] block">your child&rsquo;s language.</span>
+            <span className="text-[var(--ds-brand-primary)] block">Grow With Every Story.</span>
+            <span className="text-gray-900 block" style={{fontSize:"0.58em",fontWeight:700}}>The Immersive Early Learning Platform</span>
           </h1>
           <p className="font-nunito font-semibold text-gray-700 leading-relaxed mb-1" style={{fontSize:"clamp(0.85rem,1.6vw,1rem)",maxWidth:"38ch"}}>
             Stories, missions and printable certificates — crafted for Rwandan families and curious children worldwide.
@@ -291,9 +291,9 @@ export default function LandingPage() {
             🇷🇼 Kinyarwanda · 🇫🇷 Français · 🇬🇧 English
           </span>
           <h1 className="font-baloo font-black leading-tight mb-4" style={{fontSize:"clamp(2.2rem,3.6vw,4.2rem)"}}>
-            <span className="text-gray-900 block">The first app</span>
-            <span className="text-gray-900 block">that speaks</span>
-            <span className="text-[var(--ds-brand-primary)] block">your child&rsquo;s language.</span>
+            <span className="text-[var(--ds-brand-primary)] block">Grow With</span>
+            <span className="text-[var(--ds-brand-primary)] block">Every Story.</span>
+            <span className="text-gray-900 block" style={{fontSize:"0.5em",fontWeight:700,letterSpacing:"0.01em"}}>The Immersive Early Learning Platform</span>
           </h1>
           <p className="font-nunito font-semibold text-gray-700 leading-relaxed mb-1" style={{fontSize:"clamp(0.875rem,1.15vw,1.1rem)",maxWidth:"34ch"}}>
             Stories, missions and printable certificates — crafted for Rwandan families and curious children worldwide.
@@ -317,6 +317,40 @@ export default function LandingPage() {
           <svg viewBox="0 0 1440 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-[110px] block">
             <path d="M0,85 C120,30 240,100 400,55 C560,10 680,95 840,48 C1000,5 1140,88 1280,50 C1360,28 1410,60 1440,45 L1440,110 L0,110 Z" fill="white" />
           </svg>
+        </div>
+      </section>
+
+      {/* ══ SIX PILLARS ════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden px-5 sm:px-10 lg:px-14 py-16 sm:py-24 bg-gray-50 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto relative z-10">
+          <motion.div initial="hidden" whileInView="visible" viewport={{once:true,margin:"-80px"}} variants={stagger}>
+            <motion.div variants={fadeUp} className="text-center mb-12">
+              <span className="eyebrow inline-block text-green-800 mb-4 bg-green-100 px-4 py-1.5 rounded-full border border-green-200">
+                🌟 Six Pillars of Learning
+              </span>
+              <h2 className="font-baloo font-black text-gray-900 text-[26px] sm:text-[38px] leading-tight">
+                Every dimension of your child&rsquo;s growth —<br /><span className="text-nimi-green">covered in every story</span>
+              </h2>
+            </motion.div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
+              {[
+                { emoji:"🗣️", title:"Language & Communication",        color:"from-sky-400 to-blue-500",      bg:"bg-sky-50 border-sky-200" },
+                { emoji:"🎨", title:"Creativity & Artistic Expression", color:"from-fuchsia-400 to-pink-500",  bg:"bg-fuchsia-50 border-fuchsia-200" },
+                { emoji:"🤸", title:"Physical Development",             color:"from-orange-400 to-amber-500",  bg:"bg-orange-50 border-orange-200" },
+                { emoji:"🔭", title:"Discovery of the World",           color:"from-teal-400 to-emerald-500",  bg:"bg-teal-50 border-teal-200" },
+                { emoji:"💻", title:"Technology & Planet",              color:"from-violet-400 to-indigo-500", bg:"bg-violet-50 border-violet-200" },
+                { emoji:"🏆", title:"Character & Champion Mindset",     color:"from-amber-400 to-yellow-500",  bg:"bg-amber-50 border-amber-200" },
+              ].map(({ emoji, title, color, bg }) => (
+                <motion.div key={title} variants={fadeUp}
+                  className={`flex flex-col items-center text-center rounded-3xl border p-5 sm:p-7 gap-3 ${bg}`}>
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center text-[26px] sm:text-[30px] shadow-md shrink-0`}>
+                    {emoji}
+                  </div>
+                  <p className="font-baloo font-black text-gray-800 text-[13px] sm:text-[15px] leading-snug">{title}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
