@@ -315,21 +315,34 @@ export async function sendGiftConfirmation(opts: {
   to: string;
   giverName: string;
   recipientEmail: string;
-  productName: string;
+  productName?: string | null;
+  giftAmount?: number | null;
+  giftCurrency?: string | null;
 }): Promise<void> {
-  const { to, giverName, recipientEmail, productName } = opts;
+  const { to, giverName, recipientEmail, productName, giftAmount, giftCurrency } = opts;
+
+  let giftLabel: string;
+  if (giftAmount && giftCurrency) {
+    const formatted = giftCurrency === "RWF"
+      ? `${Math.round(giftAmount).toLocaleString()} RWF`
+      : giftCurrency === "EUR" ? `€${giftAmount.toFixed(2)}` : `$${giftAmount.toFixed(2)}`;
+    giftLabel = `your ${formatted} gift`;
+  } else {
+    giftLabel = `your gift of ${productName ?? "Nimipiko Club"}`;
+  }
 
   await send(
     to,
     "Your NIMIPIKO gift has been sent! 🎁",
     `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827">
-  <div style="background:#15803d;padding:24px;text-align:center;border-radius:12px 12px 0 0">
-    <h1 style="color:#fff;margin:0;font-size:22px">Gift sent! 🎁</h1>
+  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:24px;text-align:center;border-radius:12px 12px 0 0">
+    <div style="font-size:40px;margin-bottom:6px">🎁</div>
+    <h1 style="color:#fff;margin:0;font-size:22px">Gift sent!</h1>
   </div>
   <div style="background:#fff;padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-    <p style="font-size:15px">Hi ${giverName}! Your gift of <strong>${productName}</strong> has been sent to <strong>${recipientEmail}</strong>. They'll receive an email with a link to claim it.</p>
-    <p style="font-size:14px;color:#6b7280">Questions? <a href="mailto:support@nimipiko.com" style="color:#15803d">support@nimipiko.com</a></p>
+    <p style="font-size:15px">Hi ${giverName}! We've sent ${giftLabel} to <strong>${recipientEmail}</strong>. They'll receive an email with a link to claim it.</p>
+    <p style="font-size:14px;color:#6b7280;margin-top:16px">You'll get another email the moment they redeem it. Questions? <a href="mailto:support@nimipiko.com" style="color:#15803d">support@nimipiko.com</a></p>
   </div>
 </div>
     `.trim(),

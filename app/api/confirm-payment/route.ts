@@ -44,9 +44,9 @@ export async function dispatchGiftEmail(
       to: parent.email,
       giverName: parent.name ?? "there",
       recipientEmail: gift.recipient_email,
-      productName: productName ?? gift.gift_currency
-        ? `${gift.gift_amount} ${gift.gift_currency} gift`
-        : "Nimipiko Gift",
+      productName,
+      giftAmount: gift.gift_amount ?? null,
+      giftCurrency: gift.gift_currency ?? null,
     });
   }
   await supabase.from("gift_subscriptions")
