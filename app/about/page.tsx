@@ -21,43 +21,43 @@ const stagger = {
 const PILLARS = [
   {
     icon: Globe2,
-    color: "bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400",
+    color: "bg-sky-50 text-sky-600",
     title: "Three Languages, One Universe",
     body: "Every story, song, and activity exists in English, French, and Kinyarwanda — simultaneously. Children switch languages mid-session without losing their progress or their place in the world.",
   },
   {
     icon: BookOpen,
-    color: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+    color: "bg-amber-50 text-amber-600",
     title: "Stories That Come Alive",
     body: "Interactive storybooks with professional voice actors, original music, animated videos, karaoke tracks, and printable coloring pages — the full ecosystem, not just text on a screen.",
   },
   {
     icon: Brain,
-    color: "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+    color: "bg-indigo-50 text-indigo-600",
     title: "Nimi — The AI Learning Companion",
     body: "An AI-powered chatbot that speaks to children about the stories, characters, and values. Kid-friendly, voice-enabled, and highly visual — Nimi is designed to become a real digital friend.",
   },
   {
     icon: Trophy,
-    color: "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+    color: "bg-green-50 text-green-600",
     title: "Champion Certificates & Treasure Gallery",
     body: "Every milestone earns a real, printable achievement certificate. Children collect them in their Champion Treasure Gallery — a growing showcase of proof that learning happened, something parents can frame.",
   },
   {
     icon: Palette,
-    color: "bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+    color: "bg-rose-50 text-rose-600",
     title: "Creative & Physical Activities",
     body: "Coloring books, movement games, and craft activities extend every story beyond the screen. Learning that lives in the body sticks longer than learning that only lives on it.",
   },
   {
     icon: Users,
-    color: "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+    color: "bg-orange-50 text-orange-600",
     title: "Nimipiko Friends Club",
     body: "A community where children share their colored drawings, vote on the theme of the next story, and get featured as Star Artist of the Week. Creativity becomes social.",
   },
   {
     icon: GraduationCap,
-    color: "bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400",
+    color: "bg-violet-50 text-violet-600",
     title: "Built for Schools Too",
     body: "Institutional licensing from $7/student/month gives classrooms a separate Educator Dashboard with class-wide progress tracking and district-level reporting.",
   },
@@ -90,46 +90,46 @@ const NUMBERS = [
   { value: "3", label: "Languages", icon: "🌐" },
   { value: "2–10", label: "Age range", icon: "🎂" },
   { value: "5", label: "Child profiles per family", icon: "👶" },
-  { value: "∞", label: "Stories in the universe", icon: "📖" },
+  { value: "∞", label: "Adventures waiting", icon: "📖" },
 ];
 
 export default function AboutPage() {
   const noMotion = useReducedMotion();
 
   return (
-    <div className="min-h-screen font-nunito bg-white dark:bg-gray-950">
+    <div className="min-h-screen font-nunito bg-white">
       <MarketingHeader />
 
       {/* ══ HERO ══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#fdf3e0] via-white to-green-50/60 dark:from-gray-900 dark:via-gray-950 dark:to-green-950/30 px-5 sm:px-10 pt-20 pb-16 sm:pt-28 sm:pb-24">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#fdf3e0] via-white to-green-50/60 px-5 sm:px-10 pt-20 pb-16 sm:pt-28 sm:pb-24">
         {/* Decorative blobs */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-green-200/30 dark:bg-green-800/10 rounded-full blur-3xl pointer-events-none" aria-hidden />
-        <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-amber-200/30 dark:bg-amber-800/10 rounded-full blur-3xl pointer-events-none" aria-hidden />
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-green-200/30 rounded-full blur-3xl pointer-events-none" aria-hidden />
+        <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" aria-hidden />
 
         <motion.div
           className="relative z-10 max-w-3xl mx-auto text-center"
           initial="hidden" animate="visible" variants={noMotion ? {} : stagger}
         >
           <motion.span variants={noMotion ? {} : fadeUp}
-            className="inline-block bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-5">
+            className="inline-block bg-green-100 text-green-800 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-5">
             Our Story
           </motion.span>
 
           <motion.h1 variants={noMotion ? {} : fadeUp}
-            className="font-baloo font-black text-gray-900 dark:text-white text-[36px] sm:text-[52px] leading-tight mb-5"
+            className="font-baloo font-black text-gray-900 text-[36px] sm:text-[52px] leading-tight mb-5"
             style={{ textWrap: "balance" }}>
             We are not selling<br />
             <span className="text-[var(--nimi-green)]">digital books.</span>
           </motion.h1>
 
           <motion.p variants={noMotion ? {} : fadeUp}
-            className="text-gray-600 dark:text-gray-300 text-[17px] sm:text-[19px] leading-relaxed mb-3 font-semibold"
+            className="text-gray-600 text-[17px] sm:text-[19px] leading-relaxed mb-3 font-semibold"
             style={{ textWrap: "balance" }}>
-            We are building the <strong className="text-gray-900 dark:text-white">Nimipiko Learning Universe</strong> — an immersive world where every child becomes the hero of their own story.
+            We are building the <strong className="text-gray-900">Nimipiko Learning Universe</strong> — an immersive world where every child becomes the hero of their own story.
           </motion.p>
 
           <motion.p variants={noMotion ? {} : fadeUp}
-            className="text-gray-500 dark:text-gray-400 text-[15px] leading-relaxed max-w-xl mx-auto">
+            className="text-gray-500 text-[15px] leading-relaxed max-w-xl mx-auto">
             Three languages. AI-powered companionship. Printable certificates. Stories that live on long after the screen turns off.
           </motion.p>
         </motion.div>
@@ -144,17 +144,17 @@ export default function AboutPage() {
           </motion.span>
 
           <motion.h2 variants={noMotion ? {} : fadeUp}
-            className="font-baloo font-black text-gray-900 dark:text-white text-[28px] sm:text-[36px] leading-tight mb-6"
+            className="font-baloo font-black text-gray-900 text-[28px] sm:text-[36px] leading-tight mb-6"
             style={{ textWrap: "balance" }}>
             Every child deserves to learn<br />in their mother tongue.
           </motion.h2>
 
-          <div className="space-y-5 text-gray-600 dark:text-gray-300 text-[16px] leading-relaxed">
+          <div className="space-y-5 text-gray-600 text-[16px] leading-relaxed">
             <motion.p variants={noMotion ? {} : fadeUp}>
               Most children's learning apps were designed for one kind of child — English-speaking, from the Global North, represented in every story they encounter. Millions of children across Africa grow up with world-class curiosity and no tools that speak back to them.
             </motion.p>
             <motion.p variants={noMotion ? {} : fadeUp}>
-              Nimipiko started with one question: <em className="text-gray-800 dark:text-gray-200 font-semibold">what would an early-learning platform look like if Rwandan children were the starting point, not an edge case?</em>
+              Nimipiko started with one question: <em className="text-gray-800 font-semibold">what would an early-learning platform look like if Rwandan children were the starting point, not an edge case?</em>
             </motion.p>
             <motion.p variants={noMotion ? {} : fadeUp}>
               The answer is a platform where Kinyarwanda sits alongside French and English as an equal — where every hero looks familiar, where every certificate carries a name that fits, and where the AI companion speaks the child's language before it learns to speak yours.
@@ -164,7 +164,7 @@ export default function AboutPage() {
       </section>
 
       {/* ══ WHAT MAKES IT DIFFERENT ═══════════════════════════════════ */}
-      <section className="bg-[#fdf3e0]/60 dark:bg-gray-900/60 px-5 sm:px-10 py-16 sm:py-20">
+      <section className="bg-[#fdf3e0]/60 px-5 sm:px-10 py-16 sm:py-20">
         <div className="max-w-5xl mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={noMotion ? {} : stagger}
             className="text-center mb-12">
@@ -173,7 +173,7 @@ export default function AboutPage() {
               What we built
             </motion.span>
             <motion.h2 variants={noMotion ? {} : fadeUp}
-              className="font-baloo font-black text-gray-900 dark:text-white text-[28px] sm:text-[36px] leading-tight"
+              className="font-baloo font-black text-gray-900 text-[28px] sm:text-[36px] leading-tight"
               style={{ textWrap: "balance" }}>
               Seven pillars of the Learning Universe
             </motion.h2>
@@ -185,12 +185,12 @@ export default function AboutPage() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {PILLARS.map(({ icon: Icon, color, title, body }) => (
               <motion.div key={title} variants={noMotion ? {} : fadeUp}
-                className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm hover:shadow-md transition-shadow">
+                className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="font-baloo font-black text-gray-900 dark:text-white text-[17px] mb-2">{title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-[13px] leading-relaxed">{body}</p>
+                <h3 className="font-baloo font-black text-gray-900 text-[17px] mb-2">{title}</h3>
+                <p className="text-gray-500 text-[13px] leading-relaxed">{body}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -203,15 +203,15 @@ export default function AboutPage() {
           className="text-center mb-12">
           <motion.span variants={noMotion ? {} : fadeUp}
             className="inline-block text-[11px] font-black uppercase tracking-widest text-[var(--nimi-green)] mb-4">
-            How we monetize
+            Our products
           </motion.span>
           <motion.h2 variants={noMotion ? {} : fadeUp}
-            className="font-baloo font-black text-gray-900 dark:text-white text-[28px] sm:text-[36px] leading-tight"
+            className="font-baloo font-black text-gray-900 text-[28px] sm:text-[36px] leading-tight"
             style={{ textWrap: "balance" }}>
             Two pillars. One universe.
           </motion.h2>
           <motion.p variants={noMotion ? {} : fadeUp}
-            className="text-gray-500 dark:text-gray-400 text-[15px] mt-3 max-w-xl mx-auto leading-relaxed">
+            className="text-gray-500 text-[15px] mt-3 max-w-xl mx-auto leading-relaxed">
             Free entry, sustainable growth. No ads. No dark patterns. Just two honest products.
           </motion.p>
         </motion.div>
@@ -222,13 +222,13 @@ export default function AboutPage() {
           className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Club */}
           <motion.div variants={noMotion ? {} : fadeUp}
-            className="rounded-3xl border-2 border-[var(--nimi-green)] bg-green-50/60 dark:bg-green-950/30 p-8 flex flex-col">
+            className="rounded-3xl border-2 border-[var(--nimi-green)] bg-green-50/60 p-8 flex flex-col">
             <div className="text-4xl mb-4">🌟</div>
-            <span className="inline-block bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide mb-3 w-fit">
+            <span className="inline-block bg-green-100 text-green-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide mb-3 w-fit">
               Pillar 1
             </span>
-            <h3 className="font-baloo font-black text-gray-900 dark:text-white text-[24px] mb-1">Nimipiko Club</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-[13px] mb-5 leading-relaxed">
+            <h3 className="font-baloo font-black text-gray-900 text-[24px] mb-1">Nimipiko Club</h3>
+            <p className="text-gray-500 text-[13px] mb-5 leading-relaxed">
               Full unlimited access to every story, song, activity, coloring book, and Champion Challenge — for up to 5 children under one family subscription.
             </p>
             <div className="mt-auto">
@@ -239,17 +239,17 @@ export default function AboutPage() {
 
           {/* Masterpiece */}
           <motion.div variants={noMotion ? {} : fadeUp}
-            className="rounded-3xl border-2 border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 p-8 flex flex-col">
+            className="rounded-3xl border-2 border-amber-400 bg-amber-50/60 p-8 flex flex-col">
             <div className="text-4xl mb-4">👑</div>
-            <span className="inline-block bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide mb-3 w-fit">
+            <span className="inline-block bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide mb-3 w-fit">
               Pillar 2
             </span>
-            <h3 className="font-baloo font-black text-gray-900 dark:text-white text-[24px] mb-1">Masterpiece</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-[13px] mb-5 leading-relaxed">
+            <h3 className="font-baloo font-black text-gray-900 text-[24px] mb-1">Masterpiece</h3>
+            <p className="text-gray-500 text-[13px] mb-5 leading-relaxed">
               Your child becomes the hero of their own personalized storybook — with their photo woven into every page and a printable Champion Certificate. A keepsake memory, not a subscription.
             </p>
             <div className="mt-auto">
-              <p className="font-baloo font-black text-amber-600 dark:text-amber-400 text-[32px] leading-none">$29.99<span className="text-gray-400 text-[16px] font-normal"> once</span></p>
+              <p className="font-baloo font-black text-amber-600 text-[32px] leading-none">$29.99<span className="text-gray-400 text-[16px] font-normal"> once</span></p>
               <p className="text-gray-400 text-[11px] mt-0.5">or 40,000 RWF · €27.99 · yours forever</p>
             </div>
           </motion.div>
@@ -257,7 +257,7 @@ export default function AboutPage() {
       </section>
 
       {/* ══ WHO IT'S FOR ══════════════════════════════════════════════ */}
-      <section className="bg-gray-50 dark:bg-gray-900/60 px-5 sm:px-10 py-16 sm:py-20">
+      <section className="bg-gray-50 px-5 sm:px-10 py-16 sm:py-20">
         <div className="max-w-5xl mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={noMotion ? {} : stagger}
             className="text-center mb-12">
@@ -266,7 +266,7 @@ export default function AboutPage() {
               Our audience
             </motion.span>
             <motion.h2 variants={noMotion ? {} : fadeUp}
-              className="font-baloo font-black text-gray-900 dark:text-white text-[28px] sm:text-[36px] leading-tight"
+              className="font-baloo font-black text-gray-900 text-[28px] sm:text-[36px] leading-tight"
               style={{ textWrap: "balance" }}>
               Built for children who deserve<br />to see themselves in stories.
             </motion.h2>
@@ -278,11 +278,11 @@ export default function AboutPage() {
             className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {WHO.map(({ icon, headline, body }) => (
               <motion.div key={headline} variants={noMotion ? {} : fadeUp}
-                className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-start gap-4 shadow-sm">
+                className="bg-white rounded-2xl border border-gray-100 p-6 flex items-start gap-4 shadow-sm">
                 <span className="text-4xl shrink-0 mt-0.5">{icon}</span>
                 <div>
-                  <h3 className="font-baloo font-black text-gray-900 dark:text-white text-[17px] mb-1">{headline}</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-[13px] leading-relaxed">{body}</p>
+                  <h3 className="font-baloo font-black text-gray-900 text-[17px] mb-1">{headline}</h3>
+                  <p className="text-gray-500 text-[13px] leading-relaxed">{body}</p>
                 </div>
               </motion.div>
             ))}
@@ -300,14 +300,14 @@ export default function AboutPage() {
             <motion.div key={label} variants={noMotion ? {} : fadeUp} className="flex flex-col items-center gap-1">
               <span className="text-3xl mb-1">{icon}</span>
               <span className="font-baloo font-black text-[var(--nimi-green)] text-[36px] leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>{value}</span>
-              <span className="text-gray-500 dark:text-gray-400 text-[12px] font-bold uppercase tracking-wide">{label}</span>
+              <span className="text-gray-500 text-[12px] font-bold uppercase tracking-wide">{label}</span>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
       {/* ══ USER JOURNEY / FUNNEL ════════════════════════════════════ */}
-      <section className="px-5 sm:px-10 py-16 sm:py-20 bg-gray-50 dark:bg-gray-900/60">
+      <section className="px-5 sm:px-10 py-16 sm:py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={noMotion ? {} : stagger}
             className="text-center mb-12">
@@ -316,12 +316,12 @@ export default function AboutPage() {
               The experience
             </motion.span>
             <motion.h2 variants={noMotion ? {} : fadeUp}
-              className="font-baloo font-black text-gray-900 dark:text-white text-[28px] sm:text-[34px] leading-tight"
+              className="font-baloo font-black text-gray-900 text-[28px] sm:text-[34px] leading-tight"
               style={{ textWrap: "balance" }}>
               Every story follows the same journey.
             </motion.h2>
             <motion.p variants={noMotion ? {} : fadeUp}
-              className="text-gray-500 dark:text-gray-400 text-[14px] mt-3 max-w-lg mx-auto">
+              className="text-gray-500 text-[14px] mt-3 max-w-lg mx-auto">
               Before your child reads a word, the world pulls them in.
             </motion.p>
           </motion.div>
@@ -343,11 +343,11 @@ export default function AboutPage() {
               ].map(({ step, icon, label, sub }) => (
                 <motion.div key={step} variants={noMotion ? {} : fadeUp}
                   className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 border-2 border-[var(--nimi-green)]/30 shadow-sm flex items-center justify-center text-3xl mb-3">
+                  <div className="w-16 h-16 rounded-2xl bg-white border-2 border-[var(--nimi-green)]/30 shadow-sm flex items-center justify-center text-3xl mb-3">
                     {icon}
                   </div>
                   <span className="font-baloo font-black text-[var(--nimi-green)] text-[18px] leading-none">{label}</span>
-                  <span className="text-gray-400 dark:text-gray-500 text-[11px] mt-1 leading-snug">{sub}</span>
+                  <span className="text-gray-400 text-[11px] mt-1 leading-snug">{sub}</span>
                 </motion.div>
               ))}
             </div>
@@ -356,7 +356,7 @@ export default function AboutPage() {
       </section>
 
       {/* ══ DISCOVERY / FREE ENTRY ════════════════════════════════════ */}
-      <section className="bg-[#fdf3e0]/70 dark:bg-gray-900/60 px-5 sm:px-10 py-14 sm:py-16">
+      <section className="bg-[#fdf3e0]/70 px-5 sm:px-10 py-14 sm:py-16">
         <motion.div
           initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }}
           variants={noMotion ? {} : stagger}
@@ -366,26 +366,26 @@ export default function AboutPage() {
             Free to start
           </motion.span>
           <motion.h2 variants={noMotion ? {} : fadeUp}
-            className="font-baloo font-black text-gray-900 dark:text-white text-[26px] sm:text-[32px] leading-tight mb-4"
+            className="font-baloo font-black text-gray-900 text-[26px] sm:text-[32px] leading-tight mb-4"
             style={{ textWrap: "balance" }}>
             Your first adventure is completely free.
           </motion.h2>
           <motion.p variants={noMotion ? {} : fadeUp}
-            className="text-gray-500 dark:text-gray-400 text-[15px] mb-8 max-w-xl mx-auto leading-relaxed">
+            className="text-gray-500 text-[15px] mb-8 max-w-xl mx-auto leading-relaxed">
             No credit card. No commitment. Create an account and explore the Discovery tier — four full experiences included at no cost.
           </motion.p>
           <motion.div variants={noMotion ? {} : stagger}
             className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
             {[
-              { icon: "🎵", label: "Animated Song", sub: "Lyric video intro" },
-              { icon: "📖", label: "Story Preview", sub: "Taste the content" },
-              { icon: "🦸", label: "Meet the Heroes", sub: "Character intro" },
-              { icon: "🏆", label: "First Challenge", sub: "Champion activity" },
+              { icon: "🎵", label: "A full song", sub: "Sing along in 3 languages" },
+              { icon: "📖", label: "A real story", sub: "Read it together, free" },
+              { icon: "🦸", label: "Meet Zilo & Nimi", sub: "Your child's new friends" },
+              { icon: "🏆", label: "First challenge", sub: "Win your first badge" },
             ].map(({ icon, label, sub }) => (
               <motion.div key={label} variants={noMotion ? {} : fadeUp}
-                className="flex flex-col items-center gap-1.5 bg-white dark:bg-gray-900 rounded-2xl border border-green-100 dark:border-green-900/30 px-3 py-4">
+                className="flex flex-col items-center gap-1.5 bg-white rounded-2xl border border-green-100 px-3 py-4">
                 <span className="text-3xl">{icon}</span>
-                <p className="font-baloo font-black text-gray-800 dark:text-gray-100 text-[13px] leading-tight">{label}</p>
+                <p className="font-baloo font-black text-gray-800 text-[13px] leading-tight">{label}</p>
                 <p className="text-gray-400 text-[11px]">{sub}</p>
               </motion.div>
             ))}
@@ -410,17 +410,17 @@ export default function AboutPage() {
             The Studio
           </motion.span>
           <motion.h2 variants={noMotion ? {} : fadeUp}
-            className="font-baloo font-black text-gray-900 dark:text-white text-[26px] sm:text-[32px] leading-tight mb-5"
+            className="font-baloo font-black text-gray-900 text-[26px] sm:text-[32px] leading-tight mb-5"
             style={{ textWrap: "balance" }}>
             Nimipiko Studio LTD
           </motion.h2>
           <motion.div variants={noMotion ? {} : fadeUp}
-            className="space-y-4 text-gray-600 dark:text-gray-300 text-[15px] leading-relaxed text-left sm:text-center max-w-2xl mx-auto">
+            className="space-y-4 text-gray-600 text-[15px] leading-relaxed text-left sm:text-center max-w-2xl mx-auto">
             <p>
               We are a small, focused studio that builds one thing: the most immersive early-learning platform for children growing up in multilingual families. Not a feature factory. Not a content aggregator. One universe, built with depth.
             </p>
             <p>
-              We operate across Rwanda and internationally, with pricing localized in RWF, USD, and EUR. Every product decision starts with the same question — <em className="text-gray-800 dark:text-gray-200 font-semibold">does this make the child's learning world richer?</em>
+              We operate across Rwanda and internationally, with pricing localized in RWF, USD, and EUR. Every product decision starts with the same question — <em className="text-gray-800 font-semibold">does this make the child's learning world richer?</em>
             </p>
           </motion.div>
 
@@ -435,7 +435,7 @@ export default function AboutPage() {
               { icon: Globe2, label: "3 languages natively" },
             ].map(({ icon: Icon, label }) => (
               <span key={label}
-                className="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[12px] font-bold px-3 py-1.5 rounded-full">
+                className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-[12px] font-bold px-3 py-1.5 rounded-full">
                 <Icon className="w-3.5 h-3.5 text-[var(--nimi-green)]" />
                 {label}
               </span>

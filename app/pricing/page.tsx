@@ -186,19 +186,19 @@ export default function PricingPage() {
 
           {/* ═══ DISCOVERY — FREE ENTRY POINT ═══ */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="mb-8 relative overflow-hidden border border-green-200 dark:border-green-800/60 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/20 shadow-sm"
+            className="mb-8 relative overflow-hidden border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 shadow-sm"
             style={{ borderRadius: "var(--leaf-r-lg)" }}>
             <div className="relative z-10 p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Left: label + description */}
                 <div className="flex items-start gap-3 flex-1">
-                  <div className="w-11 h-11 rounded-xl bg-green-100 dark:bg-green-800/40 flex items-center justify-center text-2xl shrink-0">🎁</div>
+                  <div className="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center text-2xl shrink-0">🎁</div>
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-baloo font-black text-green-700 dark:text-green-400 text-[18px]">Start for FREE</span>
+                      <span className="font-baloo font-black text-green-700 text-[18px]">Start for FREE</span>
                       <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">NO CARD NEEDED</span>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400 text-[13px]">
+                    <p className="text-gray-600 text-[13px]">
                       Experience the Nimipiko Learning Universe before you subscribe. Your first adventure is completely free.
                     </p>
                   </div>
@@ -212,16 +212,16 @@ export default function PricingPage() {
               {/* What's free */}
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
-                  { icon: "🎵", label: "Animated Song", sub: "Lyric video intro" },
-                  { icon: "📖", label: "Story Preview", sub: "Taste the content" },
-                  { icon: "🦸", label: "Meet the Heroes", sub: "Character intro" },
-                  { icon: "🏆", label: "First Challenge", sub: "Champion activity" },
+                  { icon: "🎵", label: "A full song", sub: "Sing along in 3 languages" },
+                  { icon: "📖", label: "A real story", sub: "Read it together, free" },
+                  { icon: "🦸", label: "Meet Zilo & Nimi", sub: "Your child's new friends" },
+                  { icon: "🏆", label: "First challenge", sub: "Win your first badge" },
                 ].map(({ icon, label, sub }) => (
-                  <div key={label} className="flex items-center gap-2 bg-white/80 dark:bg-white/10 rounded-xl px-3 py-2 border border-green-200/60 dark:border-green-700/30">
+                  <div key={label} className="flex items-center gap-2 bg-white/80 rounded-xl px-3 py-2 border border-green-200/60">
                     <span className="text-lg shrink-0">{icon}</span>
                     <div>
-                      <p className="font-bold text-[12px] text-gray-800 dark:text-gray-100">{label}</p>
-                      <p className="text-[10px] text-gray-600 dark:text-gray-400">{sub}</p>
+                      <p className="font-bold text-[12px] text-gray-800">{label}</p>
+                      <p className="text-[10px] text-gray-600">{sub}</p>
                     </div>
                   </div>
                 ))}
@@ -265,7 +265,7 @@ export default function PricingPage() {
               const annual  = getPrice(clubAnnual,  currency).amount;
               const monthsFree = Math.round((monthly * 12 - annual) / monthly);
               return (
-                <p className="font-nunito text-green-700 dark:text-green-400 text-[12px] font-bold">
+                <p className="font-nunito text-green-700 text-[12px] font-bold">
                   🎉 {monthsFree} months free — billed once per year
                 </p>
               );
@@ -342,12 +342,12 @@ export default function PricingPage() {
                       const perMonthFmt = `${formatAmount(perMonth, currency)}/month`;
                       const savedFmt = formatAmount(saved, currency);
                       return (
-                        <p className="text-green-600 dark:text-green-400 text-[12px] font-bold mt-0.5">
+                        <p className="text-green-600 text-[12px] font-bold mt-0.5">
                           ≈ {perMonthFmt} · saves {savedFmt}
                         </p>
                       );
                     })()}
-                    <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-1">Full access to everything. Cancel anytime.</p>
+                    <p className="text-gray-500 text-[13px] mt-1">Full access to everything. Cancel anytime.</p>
                   </div>
 
                   {/* Features */}
@@ -361,36 +361,36 @@ export default function PricingPage() {
                   </div>
 
                   {/* Nimi AI callout */}
-                  <div className="mx-6 mb-4 flex items-center gap-2.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700/40 rounded-xl px-3 py-2.5">
+                  <div className="mx-6 mb-4 flex items-center gap-2.5 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2.5">
                     <span className="text-xl shrink-0">🤖</span>
                     <div>
-                      <p className="font-black text-indigo-700 dark:text-indigo-300 text-[12px]">Nimi AI Learning Companion — Included</p>
-                      <p className="text-indigo-500 dark:text-indigo-400 text-[10px]">Your child&apos;s personal AI friend who speaks about stories, characters &amp; values.</p>
+                      <p className="font-black text-indigo-700 text-[12px]">Nimi AI Learning Companion — Included</p>
+                      <p className="text-indigo-500 text-[10px]">Your child&apos;s personal AI friend who speaks about stories, characters &amp; values.</p>
                     </div>
                   </div>
 
                   {/* Language profile picker (visual) */}
                   <div className="px-6 pb-4">
-                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Your language profile</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Your language profile</p>
                     <div className="flex gap-2 flex-wrap">
                       {[
                         { label: "🇫🇷 FR + 🇬🇧 EN", desc: "French & English" },
                         { label: "🇷🇼 RW + 🇫🇷 FR", desc: "Kinyarwanda & French" },
                         { label: "🌍 All 3", desc: "EN · FR · RW" },
                       ].map(({ label, desc }) => (
-                        <div key={label} className="flex flex-col items-center bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700/40 rounded-xl px-3 py-2 text-center">
-                          <span className="font-baloo font-black text-indigo-700 dark:text-indigo-300 text-[12px]">{label}</span>
-                          <span className="text-indigo-400 dark:text-indigo-400 text-[9px] font-bold">{desc}</span>
+                        <div key={label} className="flex flex-col items-center bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 text-center">
+                          <span className="font-baloo font-black text-indigo-700 text-[12px]">{label}</span>
+                          <span className="text-indigo-400 text-[9px] font-bold">{desc}</span>
                         </div>
                       ))}
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-[10px] mt-2">Choose your profile in account settings after subscribing.</p>
+                    <p className="text-gray-500 text-[10px] mt-2">Choose your profile in account settings after subscribing.</p>
                   </div>
 
                   {/* CTA */}
                   <div className="px-6 pb-6">
                     {activeSub ? (
-                      <div className="w-full py-3.5 leaf bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-700/40 flex items-center justify-center gap-2 text-green-700 dark:text-green-400 font-black text-[15px]">
+                      <div className="w-full py-3.5 leaf bg-green-50 border-2 border-green-200 flex items-center justify-center gap-2 text-green-700 font-black text-[15px]">
                         <CheckCircle2 className="w-5 h-5" />
                         {activeSub.cancel_at_period_end ? "Cancels at period end" : "You're a Club Member ✓"}
                       </div>
@@ -399,12 +399,12 @@ export default function PricingPage() {
                         {/* Promo code input */}
                         <div className="mb-4">
                           {discountInfo ? (
-                            <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40 rounded-xl px-3 py-2">
+                            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
                               <div className="flex items-center gap-2">
-                                <Tag className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                <span className="text-green-700 dark:text-green-400 font-black text-[12px]">{discountInfo.code} applied!</span>
+                                <Tag className="w-4 h-4 text-green-600" />
+                                <span className="text-green-700 font-black text-[12px]">{discountInfo.code} applied!</span>
                                 {discountInfo.description && (
-                                  <span className="text-green-600 dark:text-green-500 text-[11px]">· {discountInfo.description}</span>
+                                  <span className="text-green-600 text-[11px]">· {discountInfo.description}</span>
                                 )}
                               </div>
                               <button onClick={() => { setDiscountInfo(null); setDiscountInput(""); setDiscountStatus("idle"); }}
@@ -423,7 +423,7 @@ export default function PricingPage() {
                               <button
                                 onClick={() => applyCode(club.slug)}
                                 disabled={discountStatus === "loading" || !discountInput.trim()}
-                                className="px-4 py-2.5 leaf bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-ds-text font-black text-[12px] transition disabled:opacity-50">
+                                className="px-4 py-2.5 leaf bg-gray-100 hover:bg-gray-200 text-ds-text font-black text-[12px] transition disabled:opacity-50">
                                 {discountStatus === "loading" ? "..." : "Apply"}
                               </button>
                             </div>
@@ -439,7 +439,7 @@ export default function PricingPage() {
                           return (
                             <div className="flex items-center gap-2 mb-3 justify-center">
                               <span className="line-through text-gray-400 text-[15px] font-bold">{price.formatted}</span>
-                              <span className="text-green-700 dark:text-green-400 font-black text-[22px]">{formatAmount(discounted, currency)}</span>
+                              <span className="text-green-700 font-black text-[22px]">{formatAmount(discounted, currency)}</span>
                               <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
                                 {discountInfo.discount_type === "percent"
                                   ? `${discountInfo.discount_value}% OFF`
@@ -458,7 +458,7 @@ export default function PricingPage() {
                           {provider === "mtn_momo" ? <><Phone className="w-5 h-5" /> Choose Payment Method</>
                             : <><CreditCard className="w-5 h-5" /> Subscribe Now</>}
                         </motion.button>
-                        <p className="text-center text-gray-500 dark:text-gray-400 text-[10px] mt-2">
+                        <p className="text-center text-gray-500 text-[10px] mt-2">
                           {provider === "mtn_momo" ? "📱 MTN MoMo or 💳 Card" : "🔒 Visa, Mastercard & Amex"}
                         </p>
                       </>
@@ -501,7 +501,7 @@ export default function PricingPage() {
                       <span className="font-baloo font-black text-ds-text text-[40px]">{price.formatted}</span>
                       <span className="text-gray-400 text-[15px] font-bold">one-time</span>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-1">One-time · no subscription needed. Your child becomes the hero.</p>
+                    <p className="text-gray-500 text-[13px] mt-1">One-time · no subscription needed. Your child becomes the hero.</p>
                   </div>
 
                   {/* Features */}
@@ -539,9 +539,9 @@ export default function PricingPage() {
               style={{ borderRadius: "var(--leaf-r-lg)" }}>
 
               {/* Gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 dark:from-rose-950/40 dark:via-pink-950/30 dark:to-orange-950/30" />
-              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-pink-200/40 to-transparent dark:from-pink-800/20 rounded-full translate-x-20 -translate-y-20" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-rose-200/30 to-transparent dark:from-rose-800/10 rounded-full -translate-x-16 translate-y-16" />
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-pink-200/40 to-transparent rounded-full translate-x-20 -translate-y-20" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-rose-200/30 to-transparent rounded-full -translate-x-16 translate-y-16" />
 
               <div className="relative z-10 p-6 sm:p-8">
                 {/* Header */}
@@ -552,22 +552,22 @@ export default function PricingPage() {
                     </div>
                     <div>
                       <h2 className="font-baloo font-black text-ds-text text-[22px] leading-tight">Surprise someone who deserves it 🌟</h2>
-                      <p className="text-rose-900/60 dark:text-rose-200/70 text-[13px] mt-0.5">Stories, songs &amp; adventures — wrapped up as a gift</p>
+                      <p className="text-rose-900/60 text-[13px] mt-0.5">Stories, songs &amp; adventures — wrapped up as a gift</p>
                     </div>
                   </div>
                   <div className="sm:ml-auto shrink-0">
-                    <span className="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide">
+                    <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide">
                       ✨ Birthdays · Holidays · Just because
                     </span>
                   </div>
                 </div>
 
                 {/* Gift value callout */}
-                <div className="flex items-center gap-3 bg-white/70 dark:bg-white/8 border border-rose-200/60 dark:border-rose-700/30 rounded-2xl px-4 py-3 mb-6">
+                <div className="flex items-center gap-3 bg-white/70 border border-rose-200/60 rounded-2xl px-4 py-3 mb-6">
                   <span className="text-2xl shrink-0">💝</span>
                   <div>
-                    <p className="font-baloo font-black text-rose-700 dark:text-rose-300 text-[14px]">Any amount — you decide what feels right</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-[12px] mt-0.5">
+                    <p className="font-baloo font-black text-rose-700 text-[14px]">Any amount — you decide what feels right</p>
+                    <p className="text-gray-500 text-[12px] mt-0.5">
                       From {currency === "RWF" ? "9,900 RWF" : currency === "EUR" ? "€13.99" : "$14.99"} — enough to unlock a full month of learning. No subscription forced on the recipient.
                     </p>
                   </div>
@@ -580,7 +580,7 @@ export default function PricingPage() {
                     { icon: "💬", text: "Share by WhatsApp or email" },
                     { icon: "🕐", text: "Recipient redeems whenever" },
                   ].map(({ icon, text }) => (
-                    <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/10 rounded-xl px-3 py-2 border border-rose-200/50 dark:border-rose-700/25">
+                    <div key={text} className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-rose-200/50">
                       <span className="text-lg shrink-0">{icon}</span>
                       <span className="text-ds-text text-[12px] font-bold">{text}</span>
                     </div>
@@ -592,10 +592,10 @@ export default function PricingPage() {
                   <motion.button
                     whileHover={{ scale: 1.02 }} whileTap={m.buttonPress}
                     onClick={() => setShowGift(true)}
-                    className="flex-1 sm:flex-none sm:px-8 py-3.5 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[15px] shadow-lg shadow-rose-200 dark:shadow-rose-900/30 flex items-center justify-center gap-2 transition">
+                    className="flex-1 sm:flex-none sm:px-8 py-3.5 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[15px] shadow-lg shadow-rose-200 flex items-center justify-center gap-2 transition">
                     🎁 Send a Gift
                   </motion.button>
-                  <p className="text-rose-900/50 dark:text-rose-200/50 text-[11px] font-bold text-center sm:text-left">
+                  <p className="text-rose-900/50 text-[11px] font-bold text-center sm:text-left">
                     🔒 Secure checkout · No account needed for the recipient
                   </p>
                 </div>
@@ -603,16 +603,18 @@ export default function PricingPage() {
             </motion.div>
           )}
 
-          {/* Trust badges */}
-          <div className="flex justify-center gap-6 mt-10 flex-wrap">
+          {/* Guarantee tiles */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10">
             {[
-              { icon: <Shield className="w-5 h-5" />, label: "Secure Payments" },
-              { icon: <span className="text-lg">🌍</span>, label: "3 Languages" },
-              { icon: <span className="text-lg">👨‍👩‍👧</span>, label: "Family Safe" },
-              { icon: <span className="text-lg">🏫</span>, label: "School Licensing Available" },
-            ].map((b, i) => (
-              <div key={i} className="flex items-center gap-1.5 text-gray-400 text-[11px] font-bold">
-                {b.icon} {b.label}
+              { icon: "🔒", title: "Cancel anytime", sub: "No lock-in, no fees. One click to stop." },
+              { icon: "🌍", title: "3 languages", sub: "English · French · Kinyarwanda" },
+              { icon: "👨‍👩‍👧", title: "Whole family", sub: "Up to 5 child profiles, one subscription" },
+              { icon: "✅", title: "Safe for kids", sub: "Zero ads · zero in-app purchases" },
+            ].map(({ icon, title, sub }) => (
+              <div key={title} className="flex flex-col items-center text-center gap-1.5 bg-ds-card border border-ds-border rounded-2xl px-4 py-4 shadow-ds-card">
+                <span className="text-2xl">{icon}</span>
+                <p className="font-baloo font-black text-ds-text text-[13px]">{title}</p>
+                <p className="text-gray-500 text-[11px] leading-snug">{sub}</p>
               </div>
             ))}
           </div>
@@ -627,11 +629,11 @@ export default function PricingPage() {
                 { quote: "Stories in Kinyarwanda — I cried happy tears the first time she read one!", name: "Amina R.", lang: "🇷🇼", stars: 5 },
                 { quote: "Best subscription we have. My son finished 3 stories in one weekend.", name: "David K.", lang: "🇫🇷", stars: 5 },
               ] as const).map(({ quote, name, lang, stars }) => (
-                <div key={name} className="flex flex-col gap-2 p-4 bg-gray-50 dark:bg-white/5 border border-ds-border" style={{ borderRadius: 'var(--leaf-r)' }}>
+                <div key={name} className="flex flex-col gap-2 p-4 bg-gray-50 border border-ds-border" style={{ borderRadius: 'var(--leaf-r)' }}>
                   <div className="flex gap-0.5">
                     {Array.from({ length: stars }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}
                   </div>
-                  <p className="font-nunito text-gray-700 dark:text-gray-300 text-[13px] italic leading-relaxed flex-1">"{quote}"</p>
+                  <p className="font-nunito text-gray-700 text-[13px] italic leading-relaxed flex-1">"{quote}"</p>
                   <p className="font-baloo font-black text-[12px] text-ds-text">{lang} {name}</p>
                 </div>
               ))}
@@ -644,8 +646,8 @@ export default function PricingPage() {
             style={{ borderRadius: "var(--leaf-r-lg)" }}>
 
             {/* Background accent */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-sky-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-sky-950/30 pointer-events-none" />
-            <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-blue-200/30 to-transparent dark:from-blue-800/15 rounded-full translate-x-24 -translate-y-24 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-sky-50/60 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-blue-200/30 to-transparent rounded-full translate-x-24 -translate-y-24 pointer-events-none" />
 
             <div className="relative z-10 p-6 sm:p-8">
               {/* Header */}
@@ -655,11 +657,11 @@ export default function PricingPage() {
                     🏫
                   </div>
                   <div>
-                    <span className="inline-block bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide mb-1">
+                    <span className="inline-block bg-blue-100 text-blue-700 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide mb-1">
                       For Schools &amp; Institutions
                     </span>
                     <h2 className="font-baloo font-black text-ds-text text-[22px] leading-tight">Nimipiko for Schools &amp; Educators</h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-0.5">
+                    <p className="text-gray-500 text-[13px] mt-0.5">
                       Institutional licensing for classrooms, childcare centres, and schools — with an Educator Dashboard to track class progress.
                     </p>
                   </div>
@@ -684,9 +686,9 @@ export default function PricingPage() {
                       { tier: "Large Institution License", volume: "50+ students", usd: "$5.00", eur: "€4.60", rwf: "4,000–5,000", highlight: false },
                       { tier: "Custom Enterprise", volume: "100+ students", usd: "Custom", eur: "Custom", rwf: "Custom", highlight: true },
                     ].map(({ tier, volume, usd, eur, rwf, highlight }) => (
-                      <tr key={tier} className={highlight ? "bg-blue-50/60 dark:bg-blue-900/20" : ""}>
+                      <tr key={tier} className={highlight ? "bg-blue-50/60" : ""}>
                         <td className="py-3 pr-4">
-                          <span className={`font-baloo font-black text-[13px] ${highlight ? "text-blue-700 dark:text-blue-300" : "text-ds-text"}`}>
+                          <span className={`font-baloo font-black text-[13px] ${highlight ? "text-blue-700" : "text-ds-text"}`}>
                             {tier}
                           </span>
                         </td>
@@ -694,19 +696,19 @@ export default function PricingPage() {
                           <span className="text-gray-500 text-[13px] font-semibold">{volume}</span>
                         </td>
                         <td className="py-3 pr-4">
-                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600 dark:text-blue-400" : "text-ds-text"}`}>
+                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600" : "text-ds-text"}`}>
                             {usd}
                           </span>
                           {!highlight && <span className="text-gray-400 text-[10px] ml-1">/student/mo</span>}
                         </td>
                         <td className="py-3 pr-4">
-                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600 dark:text-blue-400" : "text-ds-text"}`}>
+                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600" : "text-ds-text"}`}>
                             {eur}
                           </span>
                           {!highlight && <span className="text-gray-400 text-[10px] ml-1">/student/mo</span>}
                         </td>
                         <td className="py-3">
-                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600 dark:text-blue-400" : "text-ds-text"}`}>
+                          <span className={`font-baloo font-black text-[14px] ${highlight ? "text-blue-600" : "text-ds-text"}`}>
                             {rwf}
                           </span>
                           {!highlight && <span className="text-gray-400 text-[10px] ml-1"> RWF/student/mo</span>}
@@ -724,9 +726,9 @@ export default function PricingPage() {
                   { icon: "🌍", text: "All 3 languages (EN · FR · RW)" },
                   { icon: "👩‍🏫", text: "Separate from parent account logic" },
                 ].map(({ icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 bg-white dark:bg-white/10 rounded-xl px-3 py-2.5 border border-blue-200 dark:border-blue-700/30 shadow-sm">
+                  <div key={text} className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5 border border-blue-200 shadow-sm">
                     <span className="text-lg shrink-0">{icon}</span>
-                    <span className="text-gray-800 dark:text-gray-100 text-[12px] font-bold">{text}</span>
+                    <span className="text-gray-800 text-[12px] font-bold">{text}</span>
                   </div>
                 ))}
               </div>
@@ -735,11 +737,11 @@ export default function PricingPage() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <a
                   href="/schools"
-                  className="flex-1 sm:flex-none sm:px-8 py-3.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black text-[15px] shadow-lg shadow-blue-200 dark:shadow-blue-900/30 flex items-center justify-center gap-2 hover:opacity-90 transition"
+                  className="flex-1 sm:flex-none sm:px-8 py-3.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black text-[15px] shadow-lg shadow-blue-200 flex items-center justify-center gap-2 hover:opacity-90 transition"
                 >
                   🏫 View School Licensing Plans
                 </a>
-                <p className="text-blue-900/50 dark:text-blue-200/50 text-[11px] font-bold text-center sm:text-left">
+                <p className="text-blue-900/50 text-[11px] font-bold text-center sm:text-left">
                   From $7 · €6.50 · 5,000 RWF /student/month · volume discounts available
                 </p>
               </div>
