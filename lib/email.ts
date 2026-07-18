@@ -267,6 +267,49 @@ export async function sendGiftNotification(opts: {
   );
 }
 
+// ── Gift redeemed notification (to giver) ────────────────────────────────────
+export async function sendGiftRedeemed(opts: {
+  to: string;
+  giverName: string;
+  recipientName: string | null;
+  recipientEmail: string;
+  giftAmount: number | null;
+  giftCurrency: string | null;
+}): Promise<void> {
+  const { to, giverName, recipientName, recipientEmail, giftAmount, giftCurrency } = opts;
+  const who = recipientName ?? recipientEmail;
+
+  let amountLine = "";
+  if (giftAmount && giftCurrency) {
+    const formatted = giftCurrency === "RWF"
+      ? `${Math.round(giftAmount).toLocaleString()} RWF`
+      : giftCurrency === "EUR" ? `€${giftAmount.toFixed(2)}` : `$${giftAmount.toFixed(2)}`;
+    amountLine = `<p style="margin:0 0 16px;font-size:14px;color:#6b7280;text-align:center;">Your ${formatted} gift is now unlocking stories, songs, and adventures.</p>`;
+  }
+
+  await send(
+    to,
+    `🎉 ${who} just redeemed your Nimipiko gift!`,
+    `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827">
+  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0">
+    <div style="font-size:52px;margin-bottom:8px">🎉</div>
+    <h1 style="color:#fff;margin:0;font-size:24px">Your gift landed!</h1>
+    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px">${who} just redeemed it</p>
+  </div>
+  <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+    <p style="font-size:15px;line-height:1.6;text-align:center;">Hi ${giverName}! Great news — <strong>${who}</strong> just claimed the Nimipiko gift you sent. They now have full access to stories, songs, coloring books, and Nimi AI.</p>
+    ${amountLine}
+    <div style="background:#f0fdf4;border-radius:12px;padding:16px 20px;margin:20px 0;text-align:center;">
+      <p style="margin:0;font-size:13px;color:#15803d;font-weight:700;">🌟 Your gift is making a child's learning adventure possible</p>
+    </div>
+    <p style="font-size:13px;color:#9ca3af;text-align:center;">Thank you for sharing NIMIPIKO. Questions? <a href="mailto:support@nimipiko.com" style="color:#15803d">support@nimipiko.com</a></p>
+  </div>
+</div>
+    `.trim(),
+  );
+}
+
 // ── Gift subscription confirmation (to giver) ────────────────────────────────
 export async function sendGiftConfirmation(opts: {
   to: string;

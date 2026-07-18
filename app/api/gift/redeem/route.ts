@@ -4,8 +4,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 type GiftProduct = { name: string | null; tier: string | null; billing_interval: string | null };
-type GiftGiver = { name: string | null };
+type GiftGiver = { name: string | null; email?: string | null };
 import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { sendGiftRedeemed } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const supabase = await createRouteClient();
@@ -19,10 +20,10 @@ export async function POST(req: NextRequest) {
   const code = typeof body.code === "string" ? body.code.toUpperCase().trim() : "";
   if (!code) return NextResponse.json({ error: "Code required" }, { status: 422 });
 
-  // Look up the gift
+  // Look up the gift (include giver for redeemed notification)
   const { data: gift } = await supabase
     .from("gift_subscriptions")
-    .select("*, products(name, tier, billing_interval)")
+    .select("*, products(name, tier, billing_interval), parents!giver_parent_id(name, email)")
     .eq("redemption_code", code)
     .maybeSingle();
 
@@ -105,6 +106,19 @@ export async function POST(req: NextRequest) {
     redeemed_at: new Date().toISOString(),
     redeemed_by: user.id,
   }).eq("id", gift.id);
+
+  // Notify the giver (best-effort, non-blocking)
+  const giver = gift.parents as unknown as GiftGiver | null;
+  if (giver?.email) {
+    void sendGiftRedeemed({
+      to: giver.email,
+      giverName: giver.name ?? "there",
+      recipientName: gift.recipient_name ?? null,
+      recipientEmail: gift.recipient_email,
+      giftAmount: gift.gift_amount ?? null,
+      giftCurrency: gift.gift_currency ?? null,
+    });
+  }
 
   return NextResponse.json({
     success: true,
