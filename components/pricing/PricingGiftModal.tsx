@@ -50,8 +50,10 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [copied, setCopied] = useState(false);
   const giftIdRef = useRef<string>("");
   const orderIdRef = useRef<string>("");
+  const codeRef = useRef<string>("");
   const momoAbort = useRef(false);
 
   useEffect(() => () => { momoAbort.current = true; }, []);
@@ -83,6 +85,7 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
     }
     giftIdRef.current = data.giftId;
     orderIdRef.current = data.orderId;
+    codeRef.current = data.code ?? "";
     return true;
   };
 
@@ -423,21 +426,119 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
             </div>
           )}
 
-          {/* ── Success ───────────────────────────────────────────────── */}
-          {step === "success" && (
-            <div className="text-center py-8">
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                className="text-6xl mb-4">🎁</motion.div>
-              <h3 className="font-baloo font-black text-ds-text text-[24px]">Gift sent!</h3>
-              <p className="text-gray-500 text-[14px] mt-2">
-                {recipientEmail} will receive an email with their gift code.
-              </p>
-              <button onClick={onClose}
-                className="mt-6 px-8 py-3.5 leaf bg-[var(--nimi-green)] text-white font-black text-[15px] shadow-md">
-                Done
-              </button>
-            </div>
-          )}
+          {/* ── Success: gift card moment ─────────────────────────────── */}
+          {step === "success" && (() => {
+            const redeemUrl = `${typeof window !== "undefined" ? window.location.origin : "https://nimipiko.com"}/gift/redeem?code=${codeRef.current}`;
+            const waText = encodeURIComponent(
+              `🎁 I just sent you a Nimipiko gift!\n\nUse this code to unlock stories, songs, and adventures:\n\n*${codeRef.current}*\n\nRedeem at: ${redeemUrl}\n\nEnjoy! 🌟`
+            );
+
+            return (
+              <div>
+                {/* Header */}
+                <div className="text-center mb-4">
+                  <motion.div
+                    initial={{ scale: 0, rotate: -15 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 280, damping: 18 }}
+                    className="text-5xl mb-2"
+                  >🎉</motion.div>
+                  <h3 className="font-baloo font-black text-ds-text text-[22px]">Gift sent!</h3>
+                  <p className="text-gray-400 text-[12px] mt-0.5">An email is on its way to {recipientEmail}</p>
+                </div>
+
+                {/* Gift card visual */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, type: "spring", stiffness: 220, damping: 20 }}
+                  className="relative overflow-hidden rounded-3xl mb-4"
+                  style={{ background: "linear-gradient(135deg, #f43f5e 0%, #ec4899 45%, #fb923c 100%)" }}
+                >
+                  {/* Decorative circles */}
+                  <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10" />
+                  <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10" />
+
+                  <div className="relative z-10 p-5">
+                    {/* Top row */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-baloo font-black text-white/90 text-[13px] tracking-widest uppercase">Nimipiko Gift</span>
+                      <span className="text-2xl">🎁</span>
+                    </div>
+
+                    {/* Amount */}
+                    <p className="font-baloo font-black text-white text-[38px] leading-none mb-1">
+                      {giftAmountFormatted}
+                    </p>
+                    {recipientName && (
+                      <p className="text-white/80 text-[13px] font-bold mb-3">For {recipientName}</p>
+                    )}
+
+                    {/* Message */}
+                    {message.trim() && (
+                      <div className="bg-white/15 rounded-2xl px-3 py-2.5 mb-4">
+                        <p className="text-white text-[12px] italic leading-relaxed">"{message.trim()}"</p>
+                      </div>
+                    )}
+
+                    {/* Code */}
+                    <div className="bg-white/20 rounded-2xl px-4 py-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest">Redemption code</p>
+                        <p className="font-baloo font-black text-white text-[20px] tracking-widest">{codeRef.current}</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(codeRef.current).catch(() => {});
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="bg-white/25 hover:bg-white/35 text-white font-black text-[11px] px-3 py-1.5 rounded-full transition"
+                      >
+                        {copied ? "✓ Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Action buttons */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="space-y-2"
+                >
+                  {/* WhatsApp share */}
+                  <a
+                    href={`https://wa.me/?text=${waText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-3 leaf bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black text-[14px] transition"
+                  >
+                    <span className="text-lg">💬</span>
+                    Share on WhatsApp
+                  </a>
+
+                  {/* Copy link */}
+                  <button
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(`${typeof window !== "undefined" ? window.location.origin : "https://nimipiko.com"}/gift/redeem?code=${codeRef.current}`).catch(() => {});
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 leaf border border-ds-border bg-ds-input text-ds-text font-bold text-[13px] hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                  >
+                    🔗 {copied ? "Link copied!" : "Copy redemption link"}
+                  </button>
+
+                  <button onClick={onClose}
+                    className="w-full py-2.5 text-gray-400 font-bold text-[13px] hover:text-ds-text transition">
+                    Done
+                  </button>
+                </motion.div>
+              </div>
+            );
+          })()}
 
           {/* ── Error ─────────────────────────────────────────────────── */}
           {step === "error" && (
