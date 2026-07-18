@@ -217,11 +217,11 @@ export default function PricingPage() {
                   { icon: "🦸", label: "Meet the Heroes", sub: "Character intro" },
                   { icon: "🏆", label: "First Challenge", sub: "Champion activity" },
                 ].map(({ icon, label, sub }) => (
-                  <div key={label} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 rounded-xl px-3 py-2 border border-green-100 dark:border-green-800/30">
+                  <div key={label} className="flex items-center gap-2 bg-white/80 dark:bg-white/10 rounded-xl px-3 py-2 border border-green-200/60 dark:border-green-700/30">
                     <span className="text-lg shrink-0">{icon}</span>
                     <div>
-                      <p className="font-bold text-[12px] text-gray-800 dark:text-gray-200">{label}</p>
-                      <p className="text-[10px] text-gray-500">{sub}</p>
+                      <p className="font-bold text-[12px] text-gray-800 dark:text-gray-100">{label}</p>
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400">{sub}</p>
                     </div>
                   </div>
                 ))}
@@ -265,7 +265,7 @@ export default function PricingPage() {
               const annual  = getPrice(clubAnnual,  currency).amount;
               const monthsFree = Math.round((monthly * 12 - annual) / monthly);
               return (
-                <p className="font-nunito text-green-700 text-[12px] font-bold">
+                <p className="font-nunito text-green-700 dark:text-green-400 text-[12px] font-bold">
                   🎉 {monthsFree} months free — billed once per year
                 </p>
               );
@@ -342,12 +342,12 @@ export default function PricingPage() {
                       const perMonthFmt = `${formatAmount(perMonth, currency)}/month`;
                       const savedFmt = formatAmount(saved, currency);
                       return (
-                        <p className="text-green-600 text-[12px] font-bold mt-0.5">
+                        <p className="text-green-600 dark:text-green-400 text-[12px] font-bold mt-0.5">
                           ≈ {perMonthFmt} · saves {savedFmt}
                         </p>
                       );
                     })()}
-                    <p className="text-gray-500 text-[13px] mt-1">Full access to everything. Cancel anytime.</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-1">Full access to everything. Cancel anytime.</p>
                   </div>
 
                   {/* Features */}
@@ -371,7 +371,7 @@ export default function PricingPage() {
 
                   {/* Language profile picker (visual) */}
                   <div className="px-6 pb-4">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Your language profile</p>
+                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Your language profile</p>
                     <div className="flex gap-2 flex-wrap">
                       {[
                         { label: "🇫🇷 FR + 🇬🇧 EN", desc: "French & English" },
@@ -384,13 +384,13 @@ export default function PricingPage() {
                         </div>
                       ))}
                     </div>
-                    <p className="text-gray-400 text-[10px] mt-2">Choose your profile in account settings after subscribing.</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-[10px] mt-2">Choose your profile in account settings after subscribing.</p>
                   </div>
 
                   {/* CTA */}
                   <div className="px-6 pb-6">
                     {activeSub ? (
-                      <div className="w-full py-3.5 leaf bg-green-50 border-2 border-green-200 flex items-center justify-center gap-2 text-green-700 font-black text-[15px]">
+                      <div className="w-full py-3.5 leaf bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-700/40 flex items-center justify-center gap-2 text-green-700 dark:text-green-400 font-black text-[15px]">
                         <CheckCircle2 className="w-5 h-5" />
                         {activeSub.cancel_at_period_end ? "Cancels at period end" : "You're a Club Member ✓"}
                       </div>
@@ -399,12 +399,12 @@ export default function PricingPage() {
                         {/* Promo code input */}
                         <div className="mb-4">
                           {discountInfo ? (
-                            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                            <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40 rounded-xl px-3 py-2">
                               <div className="flex items-center gap-2">
-                                <Tag className="w-4 h-4 text-green-600" />
-                                <span className="text-green-700 font-black text-[12px]">{discountInfo.code} applied!</span>
+                                <Tag className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                <span className="text-green-700 dark:text-green-400 font-black text-[12px]">{discountInfo.code} applied!</span>
                                 {discountInfo.description && (
-                                  <span className="text-green-600 text-[11px]">· {discountInfo.description}</span>
+                                  <span className="text-green-600 dark:text-green-500 text-[11px]">· {discountInfo.description}</span>
                                 )}
                               </div>
                               <button onClick={() => { setDiscountInfo(null); setDiscountInput(""); setDiscountStatus("idle"); }}
@@ -423,7 +423,7 @@ export default function PricingPage() {
                               <button
                                 onClick={() => applyCode(club.slug)}
                                 disabled={discountStatus === "loading" || !discountInput.trim()}
-                                className="px-4 py-2.5 leaf bg-gray-100 hover:bg-gray-200 text-ds-text font-black text-[12px] transition disabled:opacity-50">
+                                className="px-4 py-2.5 leaf bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-ds-text font-black text-[12px] transition disabled:opacity-50">
                                 {discountStatus === "loading" ? "..." : "Apply"}
                               </button>
                             </div>
@@ -439,7 +439,7 @@ export default function PricingPage() {
                           return (
                             <div className="flex items-center gap-2 mb-3 justify-center">
                               <span className="line-through text-gray-400 text-[15px] font-bold">{price.formatted}</span>
-                              <span className="text-green-700 font-black text-[22px]">{formatAmount(discounted, currency)}</span>
+                              <span className="text-green-700 dark:text-green-400 font-black text-[22px]">{formatAmount(discounted, currency)}</span>
                               <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
                                 {discountInfo.discount_type === "percent"
                                   ? `${discountInfo.discount_value}% OFF`
@@ -458,7 +458,7 @@ export default function PricingPage() {
                           {provider === "mtn_momo" ? <><Phone className="w-5 h-5" /> Choose Payment Method</>
                             : <><CreditCard className="w-5 h-5" /> Subscribe Now</>}
                         </motion.button>
-                        <p className="text-center text-gray-400 text-[10px] mt-2">
+                        <p className="text-center text-gray-500 dark:text-gray-400 text-[10px] mt-2">
                           {provider === "mtn_momo" ? "📱 MTN MoMo or 💳 Card" : "🔒 Visa, Mastercard & Amex"}
                         </p>
                       </>
@@ -501,7 +501,7 @@ export default function PricingPage() {
                       <span className="font-baloo font-black text-ds-text text-[40px]">{price.formatted}</span>
                       <span className="text-gray-400 text-[15px] font-bold">one-time</span>
                     </div>
-                    <p className="text-gray-500 text-[13px] mt-1">One-time · no subscription needed. Your child becomes the hero.</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-1">One-time · no subscription needed. Your child becomes the hero.</p>
                   </div>
 
                   {/* Features */}
@@ -552,7 +552,7 @@ export default function PricingPage() {
                     </div>
                     <div>
                       <h2 className="font-baloo font-black text-ds-text text-[22px] leading-tight">Surprise someone who deserves it 🌟</h2>
-                      <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-0.5">Stories, songs &amp; adventures — wrapped up as a gift</p>
+                      <p className="text-rose-900/60 dark:text-rose-200/70 text-[13px] mt-0.5">Stories, songs &amp; adventures — wrapped up as a gift</p>
                     </div>
                   </div>
                   <div className="sm:ml-auto shrink-0">
@@ -595,7 +595,7 @@ export default function PricingPage() {
                     className="flex-1 sm:flex-none sm:px-8 py-3.5 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[15px] shadow-lg shadow-rose-200 dark:shadow-rose-900/30 flex items-center justify-center gap-2 transition">
                     🎁 Send a Gift
                   </motion.button>
-                  <p className="text-gray-400 text-[11px] font-bold text-center sm:text-left">
+                  <p className="text-rose-900/50 dark:text-rose-200/50 text-[11px] font-bold text-center sm:text-left">
                     🔒 Secure checkout · No account needed for the recipient
                   </p>
                 </div>
@@ -724,9 +724,9 @@ export default function PricingPage() {
                   { icon: "🌍", text: "All 3 languages (EN · FR · RW)" },
                   { icon: "👩‍🏫", text: "Separate from parent account logic" },
                 ].map(({ icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/10 rounded-xl px-3 py-2 border border-blue-200/50 dark:border-blue-700/25">
+                  <div key={text} className="flex items-center gap-2 bg-white dark:bg-white/10 rounded-xl px-3 py-2.5 border border-blue-200 dark:border-blue-700/30 shadow-sm">
                     <span className="text-lg shrink-0">{icon}</span>
-                    <span className="text-ds-text text-[12px] font-bold">{text}</span>
+                    <span className="text-gray-800 dark:text-gray-100 text-[12px] font-bold">{text}</span>
                   </div>
                 ))}
               </div>
@@ -739,7 +739,7 @@ export default function PricingPage() {
                 >
                   🏫 View School Licensing Plans
                 </a>
-                <p className="text-gray-400 text-[11px] font-bold text-center sm:text-left">
+                <p className="text-blue-900/50 dark:text-blue-200/50 text-[11px] font-bold text-center sm:text-left">
                   From $7 · €6.50 · 5,000 RWF /student/month · volume discounts available
                 </p>
               </div>
