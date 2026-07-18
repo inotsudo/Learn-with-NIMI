@@ -217,27 +217,40 @@ export async function sendRenewalConfirmation(opts: {
   );
 }
 
-// ── Gift subscription notification (to recipient) ────────────────────────────
+// ── Gift notification (to recipient) ─────────────────────────────────────────
 export async function sendGiftNotification(opts: {
   to: string;
   recipientName: string | null;
   giverName: string;
-  productName: string;
+  productName?: string | null;
+  giftAmount?: number | null;
+  giftCurrency?: string | null;
   message: string | null;
   redeemUrl: string;
 }): Promise<void> {
-  const { to, recipientName, giverName, productName, message, redeemUrl } = opts;
+  const { to, recipientName, giverName, productName, giftAmount, giftCurrency, message, redeemUrl } = opts;
   const greeting = recipientName ? `Hi ${recipientName}!` : "Hello!";
+
+  // Format what was gifted — amount-based gifts show the value; product-based show the plan name
+  let giftLabel: string;
+  if (giftAmount && giftCurrency) {
+    const formatted = giftCurrency === "RWF"
+      ? `${Math.round(giftAmount).toLocaleString()} RWF`
+      : giftCurrency === "EUR" ? `€${giftAmount.toFixed(2)}` : `$${giftAmount.toFixed(2)}`;
+    giftLabel = `a ${formatted} Nimipiko gift`;
+  } else {
+    giftLabel = productName ?? "a Nimipiko gift";
+  }
 
   await send(
     to,
     `🎁 ${giverName} sent you a NIMIPIKO gift!`,
     `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827">
-  <div style="background:linear-gradient(135deg,#f59e0b,#ea580c);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0">
+  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0">
     <div style="font-size:56px;margin-bottom:8px">🎁</div>
     <h1 style="color:#fff;margin:0;font-size:26px">You've been gifted!</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px">${giverName} gifted you <strong>${productName}</strong></p>
+    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px">${giverName} sent you <strong>${giftLabel}</strong></p>
   </div>
   <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
     <p style="font-size:15px;line-height:1.6">${greeting} ${giverName} thought you'd love NIMIPIKO — an interactive learning universe for children with stories, songs, coloring books, and Nimi AI in English, French &amp; Kinyarwanda.</p>

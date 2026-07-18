@@ -49,6 +49,8 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
   const [recipientName, setRecipientName] = useState("");
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
+  const [sendNow, setSendNow] = useState(true);
+  const [sendDate, setSendDate] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const giftIdRef = useRef<string>("");
@@ -76,6 +78,7 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
         recipientEmail,
         recipientName: recipientName.trim() || null,
         message: message.trim() || null,
+        sendAt: sendNow ? null : (sendDate || null),
       }),
     });
     const data = await res.json();
@@ -175,6 +178,7 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(recipientEmail)) { setErrorMsg("Enter a valid recipient email"); return; }
+    if (!sendNow && !sendDate) { setErrorMsg("Pick a delivery date"); return; }
     setErrorMsg("");
     if (isRwanda) {
       setStep("choose");
@@ -310,6 +314,43 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
                     rows={3}
                     className="w-full border border-ds-border bg-ds-input leaf px-4 py-3 text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400 resize-none" />
                 </div>
+
+              {/* Send timing */}
+              <div className="mt-3">
+                <p className="text-[11px] font-bold text-gray-500 mb-2">When to deliver?</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSendNow(true)}
+                    className={`flex-1 py-2 leaf font-bold text-[12px] border-2 transition-all ${
+                      sendNow
+                        ? "border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300"
+                        : "border-ds-border bg-ds-input text-ds-text hover:border-rose-200"
+                    }`}
+                  >
+                    Send now
+                  </button>
+                  <button
+                    onClick={() => setSendNow(false)}
+                    className={`flex-1 py-2 leaf font-bold text-[12px] border-2 transition-all ${
+                      !sendNow
+                        ? "border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300"
+                        : "border-ds-border bg-ds-input text-ds-text hover:border-rose-200"
+                    }`}
+                  >
+                    📅 Schedule
+                  </button>
+                </div>
+                {!sendNow && (
+                  <input
+                    type="date"
+                    value={sendDate}
+                    min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+                    max={new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10)}
+                    onChange={e => setSendDate(e.target.value)}
+                    className="mt-2 w-full border border-ds-border bg-ds-input leaf px-4 py-3 text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition"
+                  />
+                )}
+              </div>
               </div>
               {errorMsg && <p className="text-red-500 text-[12px] mt-2">{errorMsg}</p>}
               <div className="flex gap-3 mt-5">
@@ -317,7 +358,9 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
                 <motion.button whileTap={m.buttonPress} onClick={handleFormContinue}
                   disabled={!giftAmount}
                   className="flex-1 py-3 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[14px] shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isRwanda ? "Choose Payment" : giftAmountFormatted ? `Send ${giftAmountFormatted}` : "Send Gift"}
+                  {isRwanda ? "Choose Payment" : giftAmountFormatted
+                    ? sendNow ? `Send ${giftAmountFormatted}` : `Schedule ${giftAmountFormatted}`
+                    : "Send Gift"}
                 </motion.button>
               </div>
             </>
@@ -444,7 +487,12 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
                     className="text-5xl mb-2"
                   >🎉</motion.div>
                   <h3 className="font-baloo font-black text-ds-text text-[22px]">Gift sent!</h3>
-                  <p className="text-gray-400 text-[12px] mt-0.5">An email is on its way to {recipientEmail}</p>
+                  <p className="text-gray-400 text-[12px] mt-0.5">
+                    {sendNow
+                      ? `An email is on its way to ${recipientEmail}`
+                      : `Scheduled for ${new Date(sendDate).toLocaleDateString(undefined, { month: "long", day: "numeric" })} · ${recipientEmail}`
+                    }
+                  </p>
                 </div>
 
                 {/* Gift card visual */}

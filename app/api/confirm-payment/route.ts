@@ -3,10 +3,56 @@ import { NextRequest, NextResponse } from "next/server";
 
 type OrderProduct = { tier: string | null; story_id: string | null; billing_interval: string | null; product_type: string | null; name: string | null };
 type PersonalizationData = { discount_code_id?: string; gift?: boolean };
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { verifyCybersourceTransaction } from "@/lib/cybersource/verify";
 import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
+
+// Shared helper used by confirm-payment (immediate) and the send-gift-emails cron (scheduled).
+// Checks send_at: if null or in the past, fires email + marks email_sent_at.
+// If send_at is in the future, skips — cron will handle it.
+export async function dispatchGiftEmail(
+  supabase: SupabaseClient,
+  orderId: string,
+  parent: { email?: string; name?: string } | null,
+  productName: string | null,
+): Promise<void> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
+  const { data: gift } = await supabase
+    .from("gift_subscriptions")
+    .select("id, redemption_code, recipient_email, recipient_name, message, send_at, email_sent_at, gift_amount, gift_currency")
+    .eq("order_id", orderId)
+    .maybeSingle();
+  if (!gift || gift.email_sent_at) return; // already sent
+
+  const now = new Date();
+  const sendAt = gift.send_at ? new Date(gift.send_at) : null;
+  if (sendAt && sendAt > now) return; // scheduled for the future — cron handles it
+
+  void sendGiftNotification({
+    to: gift.recipient_email,
+    recipientName: gift.recipient_name ?? null,
+    giverName: parent?.name ?? "Someone special",
+    productName,
+    giftAmount: gift.gift_amount ?? null,
+    giftCurrency: gift.gift_currency ?? null,
+    message: gift.message ?? null,
+    redeemUrl: `${siteUrl}/gift/redeem?code=${gift.redemption_code}`,
+  });
+  if (parent?.email) {
+    void sendGiftConfirmation({
+      to: parent.email,
+      giverName: parent.name ?? "there",
+      recipientEmail: gift.recipient_email,
+      productName: productName ?? gift.gift_currency
+        ? `${gift.gift_amount} ${gift.gift_currency} gift`
+        : "Nimipiko Gift",
+    });
+  }
+  await supabase.from("gift_subscriptions")
+    .update({ email_sent_at: now.toISOString() })
+    .eq("id", gift.id);
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -190,30 +236,7 @@ export async function POST(req: NextRequest) {
 
           const isGift = (order.personalization_data as PersonalizationData | null)?.gift === true;
           if (isGift) {
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
-            const { data: giftRecord } = await supabase
-              .from("gift_subscriptions")
-              .select("redemption_code, recipient_email, recipient_name, message")
-              .eq("order_id", orderId)
-              .maybeSingle();
-            if (giftRecord) {
-              void sendGiftNotification({
-                to: giftRecord.recipient_email,
-                recipientName: giftRecord.recipient_name ?? null,
-                giverName: parent?.name ?? "Someone special",
-                productName: product.name ?? "Nimipiko Club",
-                message: giftRecord.message ?? null,
-                redeemUrl: `${siteUrl}/gift/redeem?code=${giftRecord.redemption_code}`,
-              });
-              if (parent?.email) {
-                void sendGiftConfirmation({
-                  to: parent.email,
-                  giverName: parent.name ?? "there",
-                  recipientEmail: giftRecord.recipient_email,
-                  productName: product.name ?? "Nimipiko Club",
-                });
-              }
-            }
+            await dispatchGiftEmail(supabase, orderId, parent, product?.name ?? null);
           } else if (parent?.email) {
             void sendPaymentReceipt({
               to: parent.email,
@@ -231,6 +254,16 @@ export async function POST(req: NextRequest) {
             story_id: product.story_id,
             order_id: orderId,
           });
+        }
+      }
+
+      // Flexible-amount gifts have no product — handle email here
+      if (!product) {
+        const isFlexibleGift = (order.personalization_data as PersonalizationData | null)?.gift === true;
+        if (isFlexibleGift) {
+          const { data: giver } = await supabase
+            .from("parents").select("email, name").eq("id", order.parent_id).maybeSingle();
+          await dispatchGiftEmail(supabase, orderId, giver, null);
         }
       }
 

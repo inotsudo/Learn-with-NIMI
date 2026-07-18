@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     recipientEmail?: string;
     recipientName?: string;
     message?: string;
+    sendAt?: string; // ISO date string; null/absent = send immediately on payment
   };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Bad request" }, { status: 400 }); }
 
@@ -79,6 +80,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 
+  // Validate sendAt if provided — must be a future date within 1 year
+  let sendAt: string | null = null;
+  if (body.sendAt) {
+    const d = new Date(body.sendAt);
+    const now = new Date();
+    const maxDate = new Date(); maxDate.setFullYear(maxDate.getFullYear() + 1);
+    if (isNaN(d.getTime()) || d <= now || d > maxDate) {
+      return NextResponse.json({ error: "Invalid send date" }, { status: 422 });
+    }
+    sendAt = d.toISOString();
+  }
+
   // Create gift record (product_id is null — redeemer picks plan at redemption)
   const code = randomCode(12);
   const { data: gift, error: giftErr } = await supabase.from("gift_subscriptions").insert({
@@ -91,6 +104,7 @@ export async function POST(req: NextRequest) {
     message: body.message ?? null,
     gift_amount: body.amount,
     gift_currency: currency,
+    send_at: sendAt,
   }).select().single();
   if (giftErr || !gift) {
     return NextResponse.json({ error: "Failed to create gift record" }, { status: 500 });
