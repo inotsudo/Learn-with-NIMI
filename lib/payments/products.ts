@@ -5,8 +5,8 @@ import type { Product, Order, Subscription, Currency } from "./types";
 const LS_PRODUCTS_TTL = 60 * 60_000; // 1 hour — survives page reloads so pricing shows instantly
 
 export function getProducts(): Promise<Product[]> {
-  return lscached("nimi:products", LS_PRODUCTS_TTL, () =>
-    qcached("products", async () => {
+  return lscached("nimi:products:v2", LS_PRODUCTS_TTL, () =>
+    qcached("products:v2", async () => {
       const { data, error } = await supabase
         .from("products")
         .select("*")
