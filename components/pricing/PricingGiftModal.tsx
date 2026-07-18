@@ -7,8 +7,7 @@ import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { SPRING } from "@/lib/design-system/motion";
 import supabase from "@/lib/supabaseClient";
 import { authedFetch } from "@/lib/authedFetch";
-import { getPrice } from "@/lib/payments/types";
-import type { Product, Currency } from "@/lib/payments/types";
+import type { Currency } from "@/lib/payments/types";
 
 function formatAmount(amount: number, currency: Currency): string {
   if (currency === "RWF") return `${Math.round(amount).toLocaleString()} RWF`;
@@ -16,26 +15,36 @@ function formatAmount(amount: number, currency: Currency): string {
   return `$${amount.toFixed(2)}`;
 }
 
-function isAnnualProduct(product: Product) {
-  return product.billing_interval === "year";
-}
+const QUICK_PICKS: Record<Currency, number[]> = {
+  USD: [10, 20, 50],
+  EUR: [10, 20, 50],
+  RWF: [10000, 20000, 50000],
+};
+
+const MINIMUMS: Record<Currency, number> = { USD: 5, EUR: 5, RWF: 5000 };
+
+const CURRENCY_SYMBOL: Record<Currency, string> = { USD: "$", EUR: "€", RWF: "" };
 
 type GiftStep = "form" | "choose" | "pay-loading" | "pay-card" | "pay-momo" | "processing" | "success" | "error";
 type ActiveProvider = "cybersource" | "mtn_momo";
 
 interface Props {
-  product: Product;
   currency: Currency;
   onClose: () => void;
 }
 
-export default function PricingGiftModal({ product, currency, onClose }: Props) {
+export default function PricingGiftModal({ currency, onClose }: Props) {
   const m = useThemeMotion();
-  const price = getPrice(product, currency);
   const isRwanda = currency === "RWF";
 
   const [step, setStep] = useState<GiftStep>("form");
   const [activeProvider, setActiveProvider] = useState<ActiveProvider | null>(null);
+
+  // Amount state
+  const [customAmount, setCustomAmount] = useState("");
+  const [selectedQuick, setSelectedQuick] = useState<number | null>(null);
+  const [isCustom, setIsCustom] = useState(false);
+
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [message, setMessage] = useState("");
@@ -47,13 +56,19 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
 
   useEffect(() => () => { momoAbort.current = true; }, []);
 
-  // Creates the gift order and returns { orderId, giftId } or throws into error step
+  const giftAmount: number | null = isCustom
+    ? (parseFloat(customAmount) || null)
+    : selectedQuick;
+
+  const giftAmountFormatted = giftAmount != null ? formatAmount(giftAmount, currency) : null;
+
+  // Creates the gift order and returns true or sets error step
   const createGiftOrder = async (paymentProvider: ActiveProvider): Promise<boolean> => {
     const res = await authedFetch("/api/gift", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        productId: product.id,
+        amount: giftAmount,
         currency,
         paymentProvider,
         recipientEmail,
@@ -71,9 +86,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     return true;
   };
 
-  // Called after form validation; provider is chosen by user (Rwanda) or auto-selected (USD)
-  // MoMo: just navigate to phone step — order is created in handleMomoPay to avoid
-  // double-creation if the user goes back and switches methods.
+  // MoMo: just navigate — order created in handleMomoPay to avoid double-creation on back-navigate
   const handleGiftPay = async (paymentProvider: ActiveProvider) => {
     setActiveProvider(paymentProvider);
     setErrorMsg("");
@@ -122,7 +135,6 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
         return;
       }
 
-      // Initialize before switching to "pay-card" so the containers exist when show() runs.
       const accept = await (window as any).Accept(captureContext);
       const up = await accept.unifiedPayments(false);
 
@@ -153,13 +165,18 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
   };
 
   const handleFormContinue = () => {
+    const minimum = MINIMUMS[currency];
+    if (!giftAmount || giftAmount < minimum) {
+      setErrorMsg(`Minimum gift is ${formatAmount(minimum, currency)}`);
+      return;
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(recipientEmail)) { setErrorMsg("Enter a valid recipient email"); return; }
     setErrorMsg("");
     if (isRwanda) {
-      setStep("choose"); // Rwanda: pick method first
+      setStep("choose");
     } else {
-      handleGiftPay("cybersource"); // USD: straight to card
+      handleGiftPay("cybersource");
     }
   };
 
@@ -169,8 +186,6 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     setErrorMsg("");
     momoAbort.current = false;
 
-    // Create the order here (not on method selection) so back-navigating and
-    // switching to card doesn't produce a duplicate gift order.
     const ok = await createGiftOrder("mtn_momo");
     if (!ok) return;
 
@@ -214,9 +229,64 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
             <>
               <div className="text-center mb-5">
                 <div className="text-5xl mb-2">🎁</div>
-                <h3 className="font-baloo font-black text-ds-text text-[22px]">Gift Nimipiko Club</h3>
-                <p className="text-gray-500 text-[13px] mt-1">{price.formatted}/{isAnnualProduct(product) ? "year" : "month"} · sent to someone you love</p>
+                <h3 className="font-baloo font-black text-ds-text text-[22px]">Give a Gift</h3>
+                <p className="text-gray-500 text-[13px] mt-1">Send any amount you like — it's the thought that counts</p>
               </div>
+
+              {/* Amount picker */}
+              <div className="mb-4">
+                <p className="text-[11px] font-bold text-gray-500 mb-2">How much would you like to give?</p>
+                <div className="flex gap-2 mb-2">
+                  {QUICK_PICKS[currency].map(amt => (
+                    <button
+                      key={amt}
+                      onClick={() => { setSelectedQuick(amt); setIsCustom(false); setCustomAmount(""); setErrorMsg(""); }}
+                      className={`flex-1 py-2.5 leaf font-baloo font-black text-[13px] border-2 transition-all ${
+                        !isCustom && selectedQuick === amt
+                          ? "border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300"
+                          : "border-ds-border bg-ds-input text-ds-text hover:border-rose-200"
+                      }`}
+                    >
+                      {formatAmount(amt, currency)}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => { setIsCustom(true); setSelectedQuick(null); setErrorMsg(""); }}
+                    className={`flex-1 py-2.5 leaf font-baloo font-black text-[13px] border-2 transition-all ${
+                      isCustom
+                        ? "border-rose-400 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300"
+                        : "border-ds-border bg-ds-input text-ds-text hover:border-rose-200"
+                    }`}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {isCustom && (
+                  <div className="flex items-center gap-2 border border-ds-border bg-ds-input leaf px-3 py-2.5 focus-within:ring-2 focus-within:ring-[var(--ds-state-focus)] transition">
+                    {CURRENCY_SYMBOL[currency] && (
+                      <span className="text-gray-400 font-bold text-[14px]">{CURRENCY_SYMBOL[currency]}</span>
+                    )}
+                    <input
+                      type="number"
+                      min={MINIMUMS[currency]}
+                      step={currency === "RWF" ? 1000 : 1}
+                      value={customAmount}
+                      onChange={e => setCustomAmount(e.target.value)}
+                      placeholder={`Min ${formatAmount(MINIMUMS[currency], currency)}`}
+                      className="flex-1 bg-transparent text-ds-text text-[14px] focus:outline-none placeholder:text-gray-400"
+                    />
+                    {currency === "RWF" && (
+                      <span className="text-gray-400 font-bold text-[12px]">RWF</span>
+                    )}
+                  </div>
+                )}
+                {giftAmount != null && giftAmount >= MINIMUMS[currency] && (
+                  <p className="text-[11px] font-bold text-rose-500 mt-1.5 text-center">
+                    🎁 Sending {giftAmountFormatted}
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-3">
                 <div>
                   <label className="text-[11px] font-bold text-gray-500 mb-1 block">Recipient email *</label>
@@ -242,8 +312,9 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
               <div className="flex gap-3 mt-5">
                 <button onClick={onClose} className="flex-1 py-3 leaf border border-ds-border text-gray-400 font-bold text-[13px] hover:bg-gray-50 transition">Cancel</button>
                 <motion.button whileTap={m.buttonPress} onClick={handleFormContinue}
-                  className="flex-1 py-3 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[14px] shadow-md">
-                  {isRwanda ? "Choose Payment" : `Pay ${price.formatted}`}
+                  disabled={!giftAmount}
+                  className="flex-1 py-3 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[14px] shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isRwanda ? "Choose Payment" : giftAmountFormatted ? `Send ${giftAmountFormatted}` : "Send Gift"}
                 </motion.button>
               </div>
             </>
@@ -256,11 +327,10 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
                 <button onClick={() => setStep("form")}
                   className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
                 <div>
-                  <h3 className="font-baloo font-black text-ds-text text-[18px]">Gift · {product.name}</h3>
+                  <h3 className="font-baloo font-black text-ds-text text-[18px]">Gift · {giftAmountFormatted}</h3>
                   <p className="text-gray-400 text-[11px]">🎁 To <strong>{recipientEmail}</strong></p>
                 </div>
               </div>
-              <p className="font-baloo font-black text-yellow-600 text-[24px] mb-1">{price.formatted}</p>
               <p className="text-[11px] font-bold text-gray-500 text-center mb-3 uppercase tracking-wide">Choose payment method</p>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <motion.button whileTap={m.buttonPress} onClick={() => handleGiftPay("mtn_momo")}
@@ -273,7 +343,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
                   className="flex flex-col items-center gap-2 p-4 leaf border-2 border-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition text-center">
                   <CreditCard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   <span className="font-baloo font-black text-ds-text text-[14px]">Debit / Card</span>
-                  {isRwanda && <span className="text-gray-400 text-[10px]">USD equivalent</span>}
+                  <span className="text-gray-400 text-[10px]">USD equivalent</span>
                   <span className="text-gray-500 dark:text-gray-400 text-[11px]">Visa, Mastercard, Amex</span>
                 </motion.button>
               </div>
@@ -298,9 +368,8 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
                   <button onClick={() => setStep("choose")}
                     className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
                 )}
-                <h3 className="font-baloo font-black text-ds-text text-[20px]">Gift · {product.name}</h3>
+                <h3 className="font-baloo font-black text-ds-text text-[20px]">Gift · {giftAmountFormatted}</h3>
               </div>
-              <p className="font-baloo font-black text-yellow-600 text-[28px] mb-2">{price.formatted}</p>
               <p className="text-gray-400 text-[12px] mb-3">🎁 Will be sent to <strong>{recipientEmail}</strong></p>
               <div id="cs-gift-list" className="mb-3" />
               <div id="cs-gift-form" className="min-h-[200px] leaf overflow-hidden" />
@@ -320,9 +389,8 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
                   <button onClick={() => setStep("choose")}
                     className="text-gray-400 hover:text-ds-text transition text-[12px] font-bold">← Back</button>
                 )}
-                <h3 className="font-baloo font-black text-ds-text text-[20px]">Gift · {product.name}</h3>
+                <h3 className="font-baloo font-black text-ds-text text-[20px]">Gift · {giftAmountFormatted}</h3>
               </div>
-              <p className="font-baloo font-black text-yellow-600 text-[28px] mb-2">{price.formatted}</p>
               <p className="text-gray-400 text-[12px] mb-4">🎁 Will be sent to <strong>{recipientEmail}</strong></p>
               <div>
                 <label className="text-[11px] font-bold text-gray-500 mb-1 block">Your MTN Phone Number</label>
@@ -362,7 +430,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
                 className="text-6xl mb-4">🎁</motion.div>
               <h3 className="font-baloo font-black text-ds-text text-[24px]">Gift sent!</h3>
               <p className="text-gray-500 text-[14px] mt-2">
-                {recipientEmail} will receive an email with a link to claim their Nimipiko Club.
+                {recipientEmail} will receive an email with their gift code.
               </p>
               <button onClick={onClose}
                 className="mt-6 px-8 py-3.5 leaf bg-[var(--nimi-green)] text-white font-black text-[15px] shadow-md">

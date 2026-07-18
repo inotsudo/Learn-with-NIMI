@@ -64,9 +64,7 @@ export default function PricingPage() {
   const [activeSub, setActiveSub] = useState<Subscription | null>(null);
   const [billingAnnual, setBillingAnnual] = useState(false);
 
-  const [showGift, setShowGift] = useState<Product | null>(null);
-  // Gift section: tracks which plan the user has selected; default to annual once loaded
-  const [giftProduct, setGiftProduct] = useState<Product | null>(null);
+  const [showGift, setShowGift] = useState(false);
 
   // Promo code state
   const [discountInput, setDiscountInput] = useState("");
@@ -90,9 +88,6 @@ export default function PricingPage() {
       ]);
       setProducts(p);
       setCurrency(geo.currency === "RWF" ? "RWF" : geo.currency === "EUR" ? "EUR" : "USD");
-      const annual = p.find((x: Product) => x.slug === "nimipiko-club-annual");
-      const monthly = p.find((x: Product) => x.slug === "nimipiko-club");
-      setGiftProduct(annual ?? monthly ?? null);
 
       const sub = await subPromise;
       setActiveSub(sub);
@@ -560,48 +555,15 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* Plan selector */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                  {([clubMonthly, clubAnnual].filter(Boolean) as Product[]).map(plan => {
-                    const planPrice = getPrice(plan, currency);
-                    const isAnnual = plan.billing_interval === "year";
-                    const isSelected = giftProduct?.id === plan.id;
-                    return (
-                      <button key={plan.id} onClick={() => setGiftProduct(plan)}
-                        className={`relative text-left p-4 leaf border-2 transition-all ${
-                          isSelected
-                            ? "border-rose-400 bg-white dark:bg-rose-950/30 shadow-md"
-                            : "border-ds-border bg-white/60 dark:bg-white/5 hover:border-rose-200 hover:bg-white dark:hover:bg-white/10"
-                        }`}>
-                        {isAnnual && (
-                          <span className="absolute top-2 right-2 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
-                            BEST VALUE
-                          </span>
-                        )}
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                            isSelected ? "border-rose-500 bg-rose-500" : "border-gray-300"
-                          }`}>
-                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                          </div>
-                          <span className="font-baloo font-black text-ds-text text-[15px]">
-                            {isAnnual ? "Annual Club" : "Monthly Club"}
-                          </span>
-                        </div>
-                        <p className="font-baloo font-black text-rose-600 text-[22px] ml-6">
-                          {planPrice.formatted}
-                          <span className="text-gray-400 font-bold text-[13px] ml-1">
-                            /{isAnnual ? "year" : "month"}
-                          </span>
-                        </p>
-                        {isAnnual && clubMonthly && (
-                          <p className="text-green-700 dark:text-green-400 text-[11px] font-bold ml-6 mt-0.5">
-                            🎉 2 months free vs monthly
-                          </p>
-                        )}
-                      </button>
-                    );
-                  })}
+                {/* Gift value callout */}
+                <div className="flex items-center gap-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-2xl px-4 py-3 mb-6">
+                  <span className="text-2xl shrink-0">💸</span>
+                  <div>
+                    <p className="font-baloo font-black text-rose-700 dark:text-rose-300 text-[14px]">Give any amount you like</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-[12px] mt-0.5">
+                      You pick — {currency === "RWF" ? "from 5,000 RWF" : currency === "EUR" ? "from €5" : "from $5"}. The recipient redeems it for learning access.
+                    </p>
+                  </div>
                 </div>
 
                 {/* What they get */}
@@ -622,13 +584,12 @@ export default function PricingPage() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   <motion.button
                     whileHover={{ scale: 1.02 }} whileTap={m.buttonPress}
-                    disabled={!giftProduct}
-                    onClick={() => giftProduct && setShowGift(giftProduct)}
-                    className="flex-1 sm:flex-none sm:px-8 py-3.5 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[15px] shadow-lg shadow-rose-200 dark:shadow-rose-900/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                    🎁 Gift {giftProduct ? getPrice(giftProduct, currency).formatted : "…"} now
+                    onClick={() => setShowGift(true)}
+                    className="flex-1 sm:flex-none sm:px-8 py-3.5 leaf bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black text-[15px] shadow-lg shadow-rose-200 dark:shadow-rose-900/30 flex items-center justify-center gap-2 transition">
+                    🎁 Send a Gift
                   </motion.button>
                   <p className="text-gray-400 text-[11px] font-bold text-center sm:text-left">
-                    🔒 Secure checkout · No account needed to give
+                    🔒 Secure checkout · Any amount you choose
                   </p>
                 </div>
               </div>
@@ -813,7 +774,7 @@ export default function PricingPage() {
             />
           )}
           {showGift && (
-            <PricingGiftModal product={showGift} currency={currency} onClose={() => setShowGift(null)} />
+            <PricingGiftModal currency={currency} onClose={() => setShowGift(false)} />
           )}
         </AnimatePresence>
       </PageSurface>

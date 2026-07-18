@@ -40,7 +40,35 @@ export async function POST(req: NextRequest) {
   }
 
   const product = gift.products as GiftProduct | null;
-  const billingInterval = (product?.billing_interval ?? "month") as "month" | "year";
+
+  // Flexible-amount gifts (product_id = null): map gift amount to best plan it covers.
+  // Look up current club prices to determine monthly vs annual.
+  let billingInterval: "month" | "year" = product?.billing_interval as "month" | "year" ?? "month";
+  let resolvedProductId: string | null = gift.product_id ?? null;
+
+  if (!gift.product_id && gift.gift_amount && gift.gift_currency) {
+    const { data: plans } = await supabase
+      .from("products")
+      .select("id, billing_interval, price_usd, price_rwf, price_eur")
+      .in("slug", ["nimipiko-club-annual", "nimipiko-club"])
+      .eq("is_active", true);
+
+    if (plans && plans.length > 0) {
+      const priceField = gift.gift_currency === "RWF" ? "price_rwf"
+        : gift.gift_currency === "EUR" ? "price_eur" : "price_usd";
+      const annual  = plans.find(p => p.billing_interval === "year");
+      const monthly = plans.find(p => p.billing_interval === "month");
+
+      if (annual && gift.gift_amount >= (annual[priceField] ?? Infinity)) {
+        billingInterval = "year";
+        resolvedProductId = annual.id;
+      } else {
+        billingInterval = "month";
+        resolvedProductId = monthly?.id ?? null;
+      }
+    }
+  }
+
   const periodEnd = new Date();
   if (billingInterval === "year") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
   else periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -48,7 +76,7 @@ export async function POST(req: NextRequest) {
   // Create subscription for the recipient
   const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
     parent_id: user.id,
-    product_id: gift.product_id,
+    product_id: resolvedProductId,
     status: "active",
     currency: order.currency,
     amount: order.amount,
@@ -56,7 +84,7 @@ export async function POST(req: NextRequest) {
     current_period_start: new Date().toISOString(),
     current_period_end: periodEnd.toISOString(),
     payment_provider: "admin_grant",
-    cancel_at_period_end: true, // gifts don't auto-renew
+    cancel_at_period_end: true,
   }).select().single();
 
   if (!sub) return NextResponse.json({ error: "Failed to activate gift" }, { status: 500 });
@@ -93,7 +121,7 @@ export async function GET(req: NextRequest) {
 
   const { data: gift } = await supabase
     .from("gift_subscriptions")
-    .select("recipient_email, recipient_name, redeemed_at, products(name), parents!giver_parent_id(name)")
+    .select("recipient_email, recipient_name, redeemed_at, gift_amount, gift_currency, products(name), parents!giver_parent_id(name)")
     .eq("redemption_code", code)
     .maybeSingle();
 
@@ -109,5 +137,7 @@ export async function GET(req: NextRequest) {
     recipientName: gift.recipient_name,
     giverName: giver?.name ?? "Someone special",
     productName: product?.name ?? "Nimipiko Club",
+    giftAmount: gift.gift_amount ?? null,
+    giftCurrency: gift.gift_currency ?? null,
   });
 }

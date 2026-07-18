@@ -1,6 +1,6 @@
-// POST /api/gift — create a gift subscription order
-// Called from the gift purchase flow (same as regular checkout but with recipient_email)
-// Returns { giftId, orderId } so the confirm-payment flow can finalize it.
+// POST /api/gift — create a flexible-amount gift
+// Giver chooses any amount; no product required.
+// Returns { giftId, orderId, code } so the confirm-payment flow can finalize it.
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -13,6 +13,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const MINIMUMS: Record<string, number> = { USD: 5, EUR: 5, RWF: 5000 };
+
 function randomCode(len = 12): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = crypto.randomBytes(len);
@@ -24,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: {
-    productId?: string;
+    amount?: number;
     currency?: string;
     paymentProvider?: string;
     recipientEmail?: string;
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
   };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Bad request" }, { status: 400 }); }
 
-  if (!body.productId || !body.currency || !body.recipientEmail) {
+  if (!body.amount || !body.currency || !body.recipientEmail) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 422 });
   }
 
@@ -42,35 +44,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid recipient email address" }, { status: 422 });
   }
 
-  // Fetch product with authoritative prices — never trust client-supplied amount
-  const { data: product } = await supabase
-    .from("products")
-    .select("id, name, tier, billing_interval, price_usd, price_rwf")
-    .eq("id", body.productId)
-    .eq("is_active", true)
-    .maybeSingle();
-  if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
-
-  // Rwanda card: convert price_rwf → USD so MoMo and card cost the same locally.
-  const isRwandaCard = body.currency === "RWF" && body.paymentProvider === "cybersource";
-  const chargeCurrency = isRwandaCard ? "USD" : body.currency!;
-  const authorizedAmount = isRwandaCard
-    ? (product.price_rwf != null ? rwfToUsd(product.price_rwf) : null)
-    : (body.currency === "RWF" ? product.price_rwf : product.price_usd);
-  if (authorizedAmount == null) {
-    return NextResponse.json({ error: "Currency not supported for this product" }, { status: 422 });
+  const currency = body.currency as "USD" | "EUR" | "RWF";
+  const minimum = MINIMUMS[currency] ?? 5;
+  if (body.amount < minimum) {
+    return NextResponse.json(
+      { error: `Minimum gift amount is ${minimum} ${currency}` },
+      { status: 422 }
+    );
   }
 
-  // Create the order
+  // Rwanda card: charge in USD equivalent so CyberSource can process it
+  const isRwandaCard = currency === "RWF" && body.paymentProvider === "cybersource";
+  const chargeCurrency = isRwandaCard ? "USD" : currency;
+  const chargeAmount   = isRwandaCard ? rwfToUsd(body.amount) : body.amount;
+
+  // Create order (no product_id — this is a pure monetary gift)
   const { data: order, error: orderErr } = await supabase.from("orders").insert({
     parent_id: user.id,
-    product_id: body.productId,
+    product_id: null,
     currency: chargeCurrency,
-    amount: authorizedAmount,
+    amount: chargeAmount,
     payment_provider: body.paymentProvider ?? "cybersource",
     payment_status: "pending",
     personalization_data: {
       gift: true,
+      gift_amount: body.amount,
+      gift_currency: currency,
       recipient_email: body.recipientEmail,
       recipient_name: body.recipientName ?? null,
       message: body.message ?? null,
@@ -80,16 +79,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 
-  // Create the gift_subscriptions record (pending redemption)
+  // Create gift record (product_id is null — redeemer picks plan at redemption)
   const code = randomCode(12);
   const { data: gift, error: giftErr } = await supabase.from("gift_subscriptions").insert({
     giver_parent_id: user.id,
     recipient_email: body.recipientEmail,
     recipient_name: body.recipientName ?? null,
-    product_id: body.productId,
+    product_id: null,
     order_id: order.id,
     redemption_code: code,
     message: body.message ?? null,
+    gift_amount: body.amount,
+    gift_currency: currency,
   }).select().single();
   if (giftErr || !gift) {
     return NextResponse.json({ error: "Failed to create gift record" }, { status: 500 });
