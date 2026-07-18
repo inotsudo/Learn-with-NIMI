@@ -244,23 +244,23 @@ export async function sendGiftNotification(opts: {
 
   await send(
     to,
-    `🎁 ${giverName} sent you a NIMIPIKO gift!`,
+    `🎁 ${giverName} just sent you something special!`,
     `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827">
-  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0">
-    <div style="font-size:56px;margin-bottom:8px">🎁</div>
-    <h1 style="color:#fff;margin:0;font-size:26px">You've been gifted!</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px">${giverName} sent you <strong>${giftLabel}</strong></p>
+  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:36px 24px;text-align:center;border-radius:12px 12px 0 0">
+    <div style="font-size:60px;margin-bottom:10px">🎁</div>
+    <h1 style="color:#fff;margin:0;font-size:28px;font-weight:900">You've got a gift! 🎉</h1>
+    <p style="color:rgba(255,255,255,0.92);margin:10px 0 0;font-size:15px"><strong>${giverName}</strong> sent you <strong>${giftLabel}</strong></p>
   </div>
   <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-    <p style="font-size:15px;line-height:1.6">${greeting} ${giverName} thought you'd love NIMIPIKO — an interactive learning universe for children with stories, songs, coloring books, and Nimi AI in English, French &amp; Kinyarwanda.</p>
-    ${message ? `<div style="background:#fefce8;border-left:4px solid #fbbf24;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px;font-style:italic;color:#78350f">"${message}"</div>` : ""}
+    <p style="font-size:15px;line-height:1.7;margin:0 0 16px">${greeting} You just got a Nimipiko gift from <strong>${giverName}</strong> — stories, songs, coloring books, and Nimi AI all in one magical place for kids. 🌟</p>
+    ${message ? `<div style="background:#fdf4ff;border-left:4px solid #e879f9;padding:14px 18px;border-radius:0 10px 10px 0;margin:16px 0;font-size:14px;font-style:italic;color:#7e22ce;line-height:1.6">"${message}"</div>` : ""}
     <div style="text-align:center;margin:28px 0">
-      <a href="${redeemUrl}" style="background:#15803d;color:#fff;padding:16px 40px;border-radius:9999px;font-weight:700;font-size:16px;text-decoration:none;display:inline-block">
-        🚀 Claim Your Gift
+      <a href="${redeemUrl}" style="background:linear-gradient(135deg,#f43f5e,#ec4899);color:#fff;padding:16px 44px;border-radius:9999px;font-weight:800;font-size:16px;text-decoration:none;display:inline-block;box-shadow:0 4px 14px rgba(244,63,94,0.35)">
+        🎁 Open Your Gift
       </a>
     </div>
-    <p style="font-size:13px;color:#9ca3af;text-align:center">This gift link works once. If you need help, contact <a href="mailto:support@nimipiko.com" style="color:#15803d">support@nimipiko.com</a></p>
+    <p style="font-size:13px;color:#9ca3af;text-align:center;margin:0">This gift link is just for you. Need help? <a href="mailto:support@nimipiko.com" style="color:#ec4899;text-decoration:none">support@nimipiko.com</a></p>
   </div>
 </div>
     `.trim(),
@@ -289,21 +289,21 @@ export async function sendGiftRedeemed(opts: {
 
   await send(
     to,
-    `🎉 ${who} just redeemed your Nimipiko gift!`,
+    `🎉 Your gift just made ${who}'s day!`,
     `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827">
-  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:32px 24px;text-align:center;border-radius:12px 12px 0 0">
-    <div style="font-size:52px;margin-bottom:8px">🎉</div>
-    <h1 style="color:#fff;margin:0;font-size:24px">Your gift landed!</h1>
-    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:15px">${who} just redeemed it</p>
+  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:36px 24px;text-align:center;border-radius:12px 12px 0 0">
+    <div style="font-size:56px;margin-bottom:8px">🎉</div>
+    <h1 style="color:#fff;margin:0;font-size:26px;font-weight:900">Your gift landed!</h1>
+    <p style="color:rgba(255,255,255,0.92);margin:10px 0 0;font-size:15px"><strong>${who}</strong> just redeemed it 🥳</p>
   </div>
   <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-    <p style="font-size:15px;line-height:1.6;text-align:center;">Hi ${giverName}! Great news — <strong>${who}</strong> just claimed the Nimipiko gift you sent. They now have full access to stories, songs, coloring books, and Nimi AI.</p>
+    <p style="font-size:15px;line-height:1.7;margin:0 0 16px">Hi <strong>${giverName}</strong>! 🙌 Wonderful news — <strong>${who}</strong> just claimed the Nimipiko gift you sent. They now have full access to stories, songs, coloring books, and Nimi AI in English, French &amp; Kinyarwanda.</p>
     ${amountLine}
-    <div style="background:#f0fdf4;border-radius:12px;padding:16px 20px;margin:20px 0;text-align:center;">
-      <p style="margin:0;font-size:13px;color:#15803d;font-weight:700;">🌟 Your gift is making a child's learning adventure possible</p>
+    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:18px 20px;margin:20px 0;text-align:center;border:1px solid #bbf7d0;">
+      <p style="margin:0;font-size:14px;color:#15803d;font-weight:700;line-height:1.5;">🌟 Your generosity is making a child's learning adventure possible.<br><span style="font-weight:400;font-size:13px;color:#16a34a;">Thank you for being the kind of person who gives like this.</span></p>
     </div>
-    <p style="font-size:13px;color:#9ca3af;text-align:center;">Thank you for sharing NIMIPIKO. Questions? <a href="mailto:support@nimipiko.com" style="color:#15803d">support@nimipiko.com</a></p>
+    <p style="font-size:13px;color:#9ca3af;text-align:center;margin:0">Questions? <a href="mailto:support@nimipiko.com" style="color:#ec4899;text-decoration:none">support@nimipiko.com</a></p>
   </div>
 </div>
     `.trim(),
@@ -333,16 +333,20 @@ export async function sendGiftConfirmation(opts: {
 
   await send(
     to,
-    "Your NIMIPIKO gift has been sent! 🎁",
+    `Your Nimipiko gift is on its way! 🎁`,
     `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827">
-  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:24px;text-align:center;border-radius:12px 12px 0 0">
-    <div style="font-size:40px;margin-bottom:6px">🎁</div>
-    <h1 style="color:#fff;margin:0;font-size:22px">Gift sent!</h1>
+  <div style="background:linear-gradient(135deg,#f43f5e,#ec4899,#fb923c);padding:28px 24px;text-align:center;border-radius:12px 12px 0 0">
+    <div style="font-size:44px;margin-bottom:8px">🎁</div>
+    <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900">Gift sent! 🎉</h1>
+    <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:14px">You just did something really sweet</p>
   </div>
-  <div style="background:#fff;padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-    <p style="font-size:15px">Hi ${giverName}! We've sent ${giftLabel} to <strong>${recipientEmail}</strong>. They'll receive an email with a link to claim it.</p>
-    <p style="font-size:14px;color:#6b7280;margin-top:16px">You'll get another email the moment they redeem it. Questions? <a href="mailto:support@nimipiko.com" style="color:#15803d">support@nimipiko.com</a></p>
+  <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+    <p style="font-size:15px;line-height:1.7;margin:0 0 12px">Hi <strong>${giverName}</strong>! 🙌 We've sent ${giftLabel} to <strong>${recipientEmail}</strong>. They'll get an email with everything they need to unlock it.</p>
+    <div style="background:#fdf4ff;border-radius:10px;padding:14px 18px;margin:16px 0;border:1px solid #f3e8ff;">
+      <p style="margin:0;font-size:13px;color:#7e22ce;">⏳ You&apos;ll get a notification the moment they open it — we love that part too!</p>
+    </div>
+    <p style="font-size:13px;color:#9ca3af;margin:0">Questions? <a href="mailto:support@nimipiko.com" style="color:#ec4899;text-decoration:none">support@nimipiko.com</a></p>
   </div>
 </div>
     `.trim(),
