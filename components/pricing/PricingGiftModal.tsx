@@ -177,7 +177,7 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-    if (!emailRegex.test(recipientEmail)) { setErrorMsg("Enter a valid recipient email"); return; }
+    if (recipientEmail.trim() && !emailRegex.test(recipientEmail)) { setErrorMsg("Enter a valid email address"); return; }
     if (!sendNow && !sendDate) { setErrorMsg("Pick a delivery date"); return; }
     setErrorMsg("");
     if (isRwanda) {
@@ -296,10 +296,16 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-[11px] font-bold text-gray-500 mb-1 block">Recipient email *</label>
+                  <label className="text-[11px] font-bold text-gray-500 mb-1 block">
+                    Recipient email
+                    <span className="ml-1 font-normal text-gray-400">(optional)</span>
+                  </label>
                   <input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)}
                     placeholder="friend@example.com"
                     className="w-full border border-ds-border bg-ds-input leaf px-4 py-3 text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400" />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    No email? You&apos;ll get the code to share yourself via WhatsApp or any way you like.
+                  </p>
                 </div>
                 <div>
                   <label className="text-[11px] font-bold text-gray-500 mb-1 block">Recipient name (optional)</label>
@@ -488,9 +494,11 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
                   >🎉</motion.div>
                   <h3 className="font-baloo font-black text-ds-text text-[22px]">Gift sent!</h3>
                   <p className="text-gray-400 text-[12px] mt-0.5">
-                    {sendNow
-                      ? `An email is on its way to ${recipientEmail}`
-                      : `Scheduled for ${new Date(sendDate).toLocaleDateString(undefined, { month: "long", day: "numeric" })} · ${recipientEmail}`
+                    {recipientEmail.trim()
+                      ? sendNow
+                        ? `An email is on its way to ${recipientEmail}`
+                        : `Scheduled for ${new Date(sendDate).toLocaleDateString(undefined, { month: "long", day: "numeric" })} · ${recipientEmail}`
+                      : "Share the code below however you like"
                     }
                   </p>
                 </div>

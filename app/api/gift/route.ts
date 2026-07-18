@@ -36,12 +36,12 @@ export async function POST(req: NextRequest) {
   };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Bad request" }, { status: 400 }); }
 
-  if (!body.amount || !body.currency || !body.recipientEmail) {
+  if (!body.amount || !body.currency) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 422 });
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  if (!emailRegex.test(body.recipientEmail)) {
+  if (body.recipientEmail && !emailRegex.test(body.recipientEmail)) {
     return NextResponse.json({ error: "Invalid recipient email address" }, { status: 422 });
   }
 

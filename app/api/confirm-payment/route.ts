@@ -24,6 +24,7 @@ export async function dispatchGiftEmail(
     .eq("order_id", orderId)
     .maybeSingle();
   if (!gift || gift.email_sent_at) return; // already sent
+  if (!gift.recipient_email) return; // no email — giver shares code themselves
 
   const now = new Date();
   const sendAt = gift.send_at ? new Date(gift.send_at) : null;
