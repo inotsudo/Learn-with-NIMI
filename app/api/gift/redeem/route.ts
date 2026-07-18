@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
 
   const { data: gift } = await supabase
     .from("gift_subscriptions")
-    .select("recipient_email, recipient_name, redeemed_at, gift_amount, gift_currency, products(name), parents!giver_parent_id(name)")
+    .select("recipient_email, recipient_name, redeemed_at, gift_amount, gift_currency, message, products(name), parents!giver_parent_id(name)")
     .eq("redemption_code", code)
     .maybeSingle();
 
@@ -153,5 +153,6 @@ export async function GET(req: NextRequest) {
     productName: product?.name ?? "Nimipiko Club",
     giftAmount: gift.gift_amount ?? null,
     giftCurrency: gift.gift_currency ?? null,
+    message: gift.message ?? null,
   });
 }

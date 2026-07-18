@@ -260,9 +260,16 @@ export default function PricingPage() {
                 })()}
               </button>
             </div>
-            {billingAnnual && (
-              <p className="font-nunito text-green-700 text-[12px] font-bold">🎉 2 months free — billed once per year</p>
-            )}
+            {billingAnnual && clubMonthly && clubAnnual && (() => {
+              const monthly = getPrice(clubMonthly, currency).amount;
+              const annual  = getPrice(clubAnnual,  currency).amount;
+              const monthsFree = Math.round((monthly * 12 - annual) / monthly);
+              return (
+                <p className="font-nunito text-green-700 text-[12px] font-bold">
+                  🎉 {monthsFree} months free — billed once per year
+                </p>
+              );
+            })()}
           </motion.div>
 
           {/* ═══ BRAND STORY — THE LEARNING UNIVERSE ═══ */}
@@ -371,9 +378,9 @@ export default function PricingPage() {
                         { label: "🇷🇼 RW + 🇫🇷 FR", desc: "Kinyarwanda & French" },
                         { label: "🌍 All 3", desc: "EN · FR · RW" },
                       ].map(({ label, desc }) => (
-                        <div key={label} className="flex flex-col items-center bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 text-center">
-                          <span className="font-baloo font-black text-indigo-700 text-[12px]">{label}</span>
-                          <span className="text-indigo-400 text-[9px] font-bold">{desc}</span>
+                        <div key={label} className="flex flex-col items-center bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700/40 rounded-xl px-3 py-2 text-center">
+                          <span className="font-baloo font-black text-indigo-700 dark:text-indigo-300 text-[12px]">{label}</span>
+                          <span className="text-indigo-400 dark:text-indigo-400 text-[9px] font-bold">{desc}</span>
                         </div>
                       ))}
                     </div>
@@ -544,24 +551,24 @@ export default function PricingPage() {
                       🎁
                     </div>
                     <div>
-                      <h2 className="font-baloo font-black text-ds-text text-[22px] leading-tight">Give the Gift of Learning</h2>
-                      <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-0.5">The perfect gift for any child — delivered instantly by email</p>
+                      <h2 className="font-baloo font-black text-ds-text text-[22px] leading-tight">Surprise someone who deserves it 🌟</h2>
+                      <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-0.5">Stories, songs &amp; adventures — wrapped up as a gift</p>
                     </div>
                   </div>
                   <div className="sm:ml-auto shrink-0">
                     <span className="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide">
-                      Great for birthdays &amp; holidays
+                      ✨ Birthdays · Holidays · Just because
                     </span>
                   </div>
                 </div>
 
                 {/* Gift value callout */}
-                <div className="flex items-center gap-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-2xl px-4 py-3 mb-6">
-                  <span className="text-2xl shrink-0">💸</span>
+                <div className="flex items-center gap-3 bg-white/70 dark:bg-white/8 border border-rose-200/60 dark:border-rose-700/30 rounded-2xl px-4 py-3 mb-6">
+                  <span className="text-2xl shrink-0">💝</span>
                   <div>
-                    <p className="font-baloo font-black text-rose-700 dark:text-rose-300 text-[14px]">Give any amount you like</p>
+                    <p className="font-baloo font-black text-rose-700 dark:text-rose-300 text-[14px]">Any amount — you decide what feels right</p>
                     <p className="text-gray-500 dark:text-gray-400 text-[12px] mt-0.5">
-                      You pick — {currency === "RWF" ? "from 5,000 RWF" : currency === "EUR" ? "from €5" : "from $5"}. The recipient redeems it for learning access.
+                      From {currency === "RWF" ? "9,900 RWF" : currency === "EUR" ? "€13.99" : "$14.99"} — enough to unlock a full month of learning. No subscription forced on the recipient.
                     </p>
                   </div>
                 </div>
@@ -569,11 +576,11 @@ export default function PricingPage() {
                 {/* What they get */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
                   {[
-                    { icon: "📖", text: "All stories in 3 languages" },
-                    { icon: "📧", text: "Delivered by email instantly" },
-                    { icon: "🕐", text: "Recipient redeems any time" },
+                    { icon: "📖", text: "Stories & songs in 3 languages" },
+                    { icon: "💬", text: "Share by WhatsApp or email" },
+                    { icon: "🕐", text: "Recipient redeems whenever" },
                   ].map(({ icon, text }) => (
-                    <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 rounded-xl px-3 py-2 border border-white/80 dark:border-white/10">
+                    <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/10 rounded-xl px-3 py-2 border border-rose-200/50 dark:border-rose-700/25">
                       <span className="text-lg shrink-0">{icon}</span>
                       <span className="text-ds-text text-[12px] font-bold">{text}</span>
                     </div>
@@ -589,7 +596,7 @@ export default function PricingPage() {
                     🎁 Send a Gift
                   </motion.button>
                   <p className="text-gray-400 text-[11px] font-bold text-center sm:text-left">
-                    🔒 Secure checkout · Any amount you choose
+                    🔒 Secure checkout · No account needed for the recipient
                   </p>
                 </div>
               </div>
@@ -620,11 +627,11 @@ export default function PricingPage() {
                 { quote: "Stories in Kinyarwanda — I cried happy tears the first time she read one!", name: "Amina R.", lang: "🇷🇼", stars: 5 },
                 { quote: "Best subscription we have. My son finished 3 stories in one weekend.", name: "David K.", lang: "🇫🇷", stars: 5 },
               ] as const).map(({ quote, name, lang, stars }) => (
-                <div key={name} className="flex flex-col gap-2 p-4 bg-gray-50 border border-ds-border" style={{ borderRadius: 'var(--leaf-r)' }}>
+                <div key={name} className="flex flex-col gap-2 p-4 bg-gray-50 dark:bg-white/5 border border-ds-border" style={{ borderRadius: 'var(--leaf-r)' }}>
                   <div className="flex gap-0.5">
                     {Array.from({ length: stars }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />)}
                   </div>
-                  <p className="font-nunito text-gray-700 text-[13px] italic leading-relaxed flex-1">"{quote}"</p>
+                  <p className="font-nunito text-gray-700 dark:text-gray-300 text-[13px] italic leading-relaxed flex-1">"{quote}"</p>
                   <p className="font-baloo font-black text-[12px] text-ds-text">{lang} {name}</p>
                 </div>
               ))}
@@ -717,7 +724,7 @@ export default function PricingPage() {
                   { icon: "🌍", text: "All 3 languages (EN · FR · RW)" },
                   { icon: "👩‍🏫", text: "Separate from parent account logic" },
                 ].map(({ icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 rounded-xl px-3 py-2 border border-white/80 dark:border-white/10">
+                  <div key={text} className="flex items-center gap-2 bg-white/70 dark:bg-white/10 rounded-xl px-3 py-2 border border-blue-200/50 dark:border-blue-700/25">
                     <span className="text-lg shrink-0">{icon}</span>
                     <span className="text-ds-text text-[12px] font-bold">{text}</span>
                   </div>

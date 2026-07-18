@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, CreditCard } from "lucide-react";
+import confetti from "canvas-confetti";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { SPRING } from "@/lib/design-system/motion";
 import supabase from "@/lib/supabaseClient";
@@ -67,6 +68,19 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
   const momoAbort = useRef(false);
 
   useEffect(() => () => { momoAbort.current = true; }, []);
+
+  useEffect(() => {
+    if (step !== "success") return;
+    const burst = () => confetti({
+      particleCount: 120,
+      spread: 75,
+      origin: { y: 0.5 },
+      colors: ["#f43f5e", "#ec4899", "#fb923c", "#fbbf24", "#a78bfa", "#34d399"],
+    });
+    burst();
+    const t = setTimeout(burst, 650);
+    return () => clearTimeout(t);
+  }, [step]);
 
   const giftAmount: number | null = isCustom
     ? (parseFloat(customAmount) || null)
