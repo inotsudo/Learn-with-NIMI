@@ -13,7 +13,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const MINIMUMS: Record<string, number> = { USD: 5, EUR: 5, RWF: 5000 };
+// Fallback minimums — overridden by the actual monthly plan price at runtime
+const FALLBACK_MINIMUMS: Record<string, number> = { USD: 14.99, EUR: 13.99, RWF: 9900 };
 
 function randomCode(len = 12): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -46,10 +47,23 @@ export async function POST(req: NextRequest) {
   }
 
   const currency = body.currency as "USD" | "EUR" | "RWF";
-  const minimum = MINIMUMS[currency] ?? 5;
+
+  // Derive minimum from the actual monthly Club price so gifts always cover at least 1 month
+  const priceField = currency === "RWF" ? "price_rwf" : currency === "EUR" ? "price_eur" : "price_usd";
+  const { data: monthlyPlan } = await supabase
+    .from("products")
+    .select(priceField)
+    .eq("slug", "nimipiko-club")
+    .eq("is_active", true)
+    .maybeSingle();
+  const minimum: number = (monthlyPlan as any)?.[priceField] ?? FALLBACK_MINIMUMS[currency] ?? 14.99;
+
   if (body.amount < minimum) {
+    const minFmt = currency === "RWF"
+      ? `${Math.round(minimum).toLocaleString()} RWF`
+      : currency === "EUR" ? `€${minimum.toFixed(2)}` : `$${minimum.toFixed(2)}`;
     return NextResponse.json(
-      { error: `Minimum gift amount is ${minimum} ${currency}` },
+      { error: `Minimum gift is ${minFmt} — enough to unlock 1 month of Nimipiko Club` },
       { status: 422 }
     );
   }

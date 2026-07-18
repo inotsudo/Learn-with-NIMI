@@ -15,13 +15,15 @@ function formatAmount(amount: number, currency: Currency): string {
   return `$${amount.toFixed(2)}`;
 }
 
+// Quick-picks start at the monthly plan price — gifts must cover at least 1 month
 const QUICK_PICKS: Record<Currency, number[]> = {
-  USD: [10, 20, 50],
-  EUR: [10, 20, 50],
+  USD: [15, 30, 60],
+  EUR: [14, 28, 60],
   RWF: [10000, 20000, 50000],
 };
 
-const MINIMUMS: Record<Currency, number> = { USD: 5, EUR: 5, RWF: 5000 };
+// Must match monthly Club price — server validates against the live DB value
+const MINIMUMS: Record<Currency, number> = { USD: 14.99, EUR: 13.99, RWF: 9900 };
 
 const CURRENCY_SYMBOL: Record<Currency, string> = { USD: "$", EUR: "€", RWF: "" };
 
@@ -287,8 +289,11 @@ export default function PricingGiftModal({ currency, onClose }: Props) {
                     )}
                   </div>
                 )}
+                <p className="text-[10px] text-gray-400 mt-1.5">
+                  Min {formatAmount(MINIMUMS[currency], currency)} — enough to unlock at least 1 month of Nimipiko Club
+                </p>
                 {giftAmount != null && giftAmount >= MINIMUMS[currency] && (
-                  <p className="text-[11px] font-bold text-rose-500 mt-1.5 text-center">
+                  <p className="text-[11px] font-bold text-rose-500 mt-1 text-center">
                     🎁 Sending {giftAmountFormatted}
                   </p>
                 )}
