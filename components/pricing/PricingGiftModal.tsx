@@ -47,13 +47,8 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
 
   useEffect(() => () => { momoAbort.current = true; }, []);
 
-  // Called after form validation; provider is chosen by user (Rwanda) or auto-selected (USD)
-  const handleGiftPay = async (paymentProvider: ActiveProvider) => {
-    setActiveProvider(paymentProvider);
-    setErrorMsg("");
-    setStep(paymentProvider === "cybersource" ? "pay-loading" : "pay-momo");
-
-    // Send currency as-is (RWF for Rwanda); the server converts to USD for CyberSource.
+  // Creates the gift order and returns { orderId, giftId } or throws into error step
+  const createGiftOrder = async (paymentProvider: ActiveProvider): Promise<boolean> => {
     const res = await authedFetch("/api/gift", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -69,12 +64,28 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     const data = await res.json();
     if (!res.ok || !data.orderId) {
       setStep("error"); setErrorMsg(data.error ?? "Failed to create gift order");
-      return;
+      return false;
     }
     giftIdRef.current = data.giftId;
     orderIdRef.current = data.orderId;
+    return true;
+  };
 
-    if (paymentProvider === "mtn_momo") return; // phone step handles the rest
+  // Called after form validation; provider is chosen by user (Rwanda) or auto-selected (USD)
+  // MoMo: just navigate to phone step — order is created in handleMomoPay to avoid
+  // double-creation if the user goes back and switches methods.
+  const handleGiftPay = async (paymentProvider: ActiveProvider) => {
+    setActiveProvider(paymentProvider);
+    setErrorMsg("");
+
+    if (paymentProvider === "mtn_momo") {
+      setStep("pay-momo");
+      return;
+    }
+
+    setStep("pay-loading");
+    const ok = await createGiftOrder("cybersource");
+    if (!ok) return;
 
     // CyberSource card flow
     try {
@@ -84,7 +95,7 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       const ctxRes = await authedFetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: data.orderId }),
+        body: JSON.stringify({ orderId: orderIdRef.current }),
       });
       const { captureContext, success } = await ctxRes.json();
       if (!success || !captureContext) { setStep("error"); setErrorMsg("Failed to initialize payment"); return; }
@@ -123,14 +134,14 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
       });
       if (!transientToken) return;
 
-      sessionStorage.setItem("nimipiko_pending_payment", JSON.stringify({ orderId: data.orderId }));
+      sessionStorage.setItem("nimipiko_pending_payment", JSON.stringify({ orderId: orderIdRef.current }));
       const completionJwt = await up.complete(transientToken);
       setStep("processing");
 
       const confirmRes = await authedFetch("/api/confirm-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ response: completionJwt, orderId: data.orderId }),
+        body: JSON.stringify({ response: completionJwt, orderId: orderIdRef.current }),
       });
       const confirmResult = await confirmRes.json();
       sessionStorage.removeItem("nimipiko_pending_payment");
@@ -156,8 +167,14 @@ export default function PricingGiftModal({ product, currency, onClose }: Props) 
     const cleanPhone = phone.replace(/[\s\-]/g, "");
     if (cleanPhone.length < 9) { setErrorMsg("Enter a valid MTN phone number"); return; }
     setErrorMsg("");
-    setStep("processing");
     momoAbort.current = false;
+
+    // Create the order here (not on method selection) so back-navigating and
+    // switching to card doesn't produce a duplicate gift order.
+    const ok = await createGiftOrder("mtn_momo");
+    if (!ok) return;
+
+    setStep("processing");
     try {
       const res = await authedFetch("/api/payments/mtn-momo", {
         method: "POST",
