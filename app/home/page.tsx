@@ -38,6 +38,7 @@ import HomeWeekStreakPanel   from "@/components/home/HomeWeekStreakPanel";
 import HomeAchievementsPanel from "@/components/home/HomeAchievementsPanel";
 import HomeCommunityPanel    from "@/components/home/HomeCommunityPanel";
 import HomeMasterpiecePanel  from "@/components/home/HomeMasterpiecePanel";
+import HomeAssignmentsPanel  from "@/components/home/HomeAssignmentsPanel";
 import NotificationOptInPrompt from "@/components/home/NotificationOptInPrompt";
 import WelcomeBackOverlay      from "@/components/home/WelcomeBackOverlay";
 import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
@@ -991,6 +992,11 @@ export default function HomePage() {
 
                   {/* ── Story Journey ───────────────────────────────────────── */}
                   <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} />
+
+                  {/* ── Assignments ─────────────────────────────────────────── */}
+                  {activeChild?.teacher_id && (
+                    <HomeAssignmentsPanel childId={activeChild.id} language={activeChild.language} />
+                  )}
 
                   {/* ── Week Streak ─────────────────────────────────────────── */}
                   <HomeWeekStreakPanel weekStreak={weekStreak} consecutiveStreak={consecutiveStreak} totalStars={totalStars} streakBroke={streakBroke} />

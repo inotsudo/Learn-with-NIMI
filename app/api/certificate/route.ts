@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
 import * as fs from "fs";
@@ -276,8 +276,7 @@ async function loadPublicAssetAsBase64(relPath: string): Promise<string | null> 
 
 // ── Main handler ────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  const authClient = await createRouteClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);

@@ -154,6 +154,18 @@ export async function GET(req: NextRequest) {
       if (pm.provider === "cybersource" && pm.token) {
         chargeResult = await chargeCybersource(pm.token, Number(sub.amount), sub.currency, sub.id);
       } else if (pm.provider === "mtn_momo" && pm.phone_number) {
+        // Guard: if a MoMo renewal is already pending (user hasn't approved yet),
+        // skip this run — sending another request would prompt the user multiple times.
+        const { data: existingPending } = await supabase
+          .from("subscription_renewals")
+          .select("id")
+          .eq("subscription_id", sub.id)
+          .eq("status", "pending")
+          .maybeSingle();
+        if (existingPending) {
+          results.momo_pending++;
+          continue;
+        }
         chargeResult = await chargeMoMo(pm.phone_number, Number(sub.amount), sub.id);
       } else {
         // No usable payment method (CyberSource TMS not enabled → null token, or MoMo without phone).
@@ -172,7 +184,11 @@ export async function GET(req: NextRequest) {
         payment_method_id: pm.id,
         amount: sub.amount,
         currency: sub.currency,
-        status: chargeResult.ok ? "completed" : (pm.provider === "mtn_momo" ? "pending" : "failed"),
+        // MoMo 202 = request sent, user approval still pending — NOT yet "completed".
+        // CyberSource ok = charge collected immediately = "completed".
+        status: pm.provider === "mtn_momo"
+          ? (chargeResult.ok ? "pending" : "failed")
+          : (chargeResult.ok ? "completed" : "failed"),
         provider_transaction_id: pm.provider === "cybersource"
           ? (chargeResult as CyberSourceResult).transactionId
           : (chargeResult as MoMoResult).referenceId,

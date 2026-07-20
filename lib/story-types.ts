@@ -88,6 +88,10 @@ export interface WeeklyChallenge {
   content_json: Record<string, unknown>;
   completed: boolean;
   stars_earned: number;
+  image_url: string | null;
+  video_url: string | null;
+  difficulty: 'easy' | 'medium' | 'hard' | null;
+  reward_badge: string | null;
 }
 
 // ── Mutation Results ─────────────────────────────────────────
@@ -99,6 +103,11 @@ export interface CompleteSlotResult {
   story_complete: boolean;
   next_story_unlocked: boolean;
 }
+
+/** Discriminated union returned by completeStorySlot. */
+export type CompleteSlotOutcome =
+  | { queued: false; result: CompleteSlotResult }
+  | { queued: true };
 
 export interface CompleteChallengeResult {
   stars_earned: number;

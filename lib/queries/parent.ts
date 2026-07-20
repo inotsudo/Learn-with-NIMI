@@ -1,5 +1,6 @@
 import supabase from "@/lib/supabaseClient";
 import { qcached, qinvalidate, lscached, lsinvalidate } from "@/lib/queryCache";
+import { syncGuestProgressToSupabase } from "@/lib/guestProgress";
 import type { Parent, Child } from "./types";
 
 // Skip the upsert if we've already ensured a parent row this browser session.
@@ -77,7 +78,7 @@ export async function getChildren(): Promise<Child[]> {
     const { data, error } = await supabase
       .from("children")
       .select("*")
-      .eq("parent_id", user.id)
+      .or(`parent_id.eq.${user.id},teacher_id.eq.${user.id}`)
       .order("created_at");
     if (error) console.error("[getChildren] error:", error.message, error.code);
     return (data ?? []) as Child[];
@@ -115,7 +116,12 @@ export async function createChild(
     .select()
     .single();
   if (error) console.error("[createChild]", error);
-  else { qinvalidate(`children:${user.id}`); lsinvalidate(`children:${user.id}`); }
+  else {
+    qinvalidate(`children:${user.id}`);
+    lsinvalidate(`children:${user.id}`);
+    // Drain any guest progress accumulated before sign-up now that a child exists.
+    void syncGuestProgressToSupabase();
+  }
   return { data: (data ?? null) as Child | null, error: error?.message ?? null };
 }
 
@@ -124,6 +130,8 @@ export async function updateChild(
   updates: Partial<Pick<Child, "name" | "avatar_url" | "language" | "age">>
 ): Promise<void> {
   await supabase.from("children").update(updates).eq("id", childId);
+  const user = await getCachedUser();
+  if (user) { qinvalidate(`children:${user.id}`); lsinvalidate(`children:${user.id}`); }
 }
 
 // Switching language starts a fresh per-category mission sequence for the

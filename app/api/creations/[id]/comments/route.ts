@@ -1,7 +1,7 @@
 // app/api/creations/[id]/comments/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 
 // Service-role client — bypasses RLS so comments are always readable
 // even before the migration's RLS policy propagates.
@@ -28,8 +28,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
 }
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const authClient = await createRouteClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getAuthUser(req);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

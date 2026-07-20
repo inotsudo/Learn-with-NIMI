@@ -70,7 +70,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         if (currentUser) {
           await fetchProfile(currentUser.id);
           if (event === "SIGNED_IN") {
-            await syncGuestProgressToSupabase(currentUser.id);
+            await syncGuestProgressToSupabase();
           }
         } else {
           setProfile(null);

@@ -1,7 +1,7 @@
 // app/api/creations/upload/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { v4 as uuidv4 } from "uuid";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
@@ -21,17 +21,16 @@ const adminClient = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    // 1. Auth — get the calling parent's user id from session cookie
-    const authClient = await createRouteClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    // 1. Auth — validate Bearer token from Authorization header
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 2. Parse form data
-    const formData = await request.formData();
+    const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const childName = (formData.get("childName") as string | null)?.trim() ?? "";
     const description = (formData.get("description") as string | null)?.trim() ?? "";

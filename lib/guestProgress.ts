@@ -29,12 +29,25 @@ export function clearGuestProgress() {
 }
 
 // Sync guest mission completions to child_progress after login.
-// Requires the active childId to be passed in.
-export async function syncGuestProgressToSupabase(userId: string, childId?: string) {
+// Resolves the child internally — callers just call with no args after sign-in.
+export async function syncGuestProgressToSupabase() {
   const guestProgress = loadGuestProgress();
-  if (!guestProgress || !childId) return;
+  if (!guestProgress) return;
 
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: children } = await supabase
+      .from("children")
+      .select("id")
+      .eq("parent_id", user.id)
+      .order("created_at")
+      .limit(1);
+
+    const childId = children?.[0]?.id;
+    if (!childId) return;
+
     const missionIds: string[] = guestProgress.completedMissions || [];
     for (const missionId of missionIds) {
       await completeChildMission(childId, missionId);

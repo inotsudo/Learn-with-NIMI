@@ -23,6 +23,7 @@ export default function SettingsAccountCard() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -40,12 +41,19 @@ export default function SettingsAccountCard() {
 
   async function handleCancelSubscription() {
     setCancelling(true);
+    setCancelError(null);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setCancelling(false); return; }
-    await fetch("/api/account/cancel-subscription", {
+    const res = await fetch("/api/account/cancel-subscription", {
       method: "POST",
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ subscriptionId: subscription?.id }),
     });
+    if (!res.ok) {
+      setCancelError("Something went wrong. Please try again.");
+      setCancelling(false);
+      return;
+    }
     setSubscription(prev => prev ? { ...prev, cancel_at_period_end: true } : null);
     setCancelling(false);
     setShowCancelConfirm(false);
@@ -87,12 +95,15 @@ export default function SettingsAccountCard() {
               <div className="bg-red-50 border border-red-100 rounded-lg p-3 space-y-2">
                 <p className="text-[12px] font-bold text-red-700">Cancel your NIMIPIKO Club?</p>
                 <p className="text-[11px] text-red-500">You&apos;ll keep access until {formatDate(subscription.current_period_end)}. Your child&apos;s progress is saved forever.</p>
+                {cancelError && (
+                  <p className="text-[11px] font-bold text-red-600">{cancelError}</p>
+                )}
                 <div className="flex gap-2">
                   <button onClick={handleCancelSubscription} disabled={cancelling}
                     className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition disabled:opacity-60">
                     <XCircle className="w-3 h-3" /> {cancelling ? "Cancelling…" : "Yes, cancel"}
                   </button>
-                  <button onClick={() => setShowCancelConfirm(false)}
+                  <button onClick={() => { setShowCancelConfirm(false); setCancelError(null); }}
                     className="text-[11px] font-bold text-gray-500 hover:text-gray-700 px-3 py-1.5 transition">
                     Keep Club
                   </button>

@@ -174,7 +174,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
       const oid = pendingCsOrderId.current;
       if (oid) {
         pendingCsOrderId.current = null;
-        void fetch(`/api/orders/${oid}`, {
+        void authedFetch(`/api/orders/${oid}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "cancel" }),

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import { Bone } from "@/components/ui/Bone";
 import supabase from "@/lib/supabaseClient";
+import { authedFetch } from "@/lib/authedFetch";
 import confetti from "canvas-confetti";
 
 type GiftPreview = {
@@ -68,7 +69,7 @@ function RedeemContent() {
       return;
     }
     try {
-      const res = await fetch("/api/gift/redeem", {
+      const res = await authedFetch("/api/gift/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),

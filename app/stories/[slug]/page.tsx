@@ -24,9 +24,11 @@ function badgeDisplayName(slug: string): string {
 import { getStoryBySlug, getStoryDetails, getStorySlots, getStoryLibrary } from "@/lib/storyRepository";
 import type { StoryLibraryItem } from "@/lib/story-types";
 import { getStoryIntroProgress, markIntroItemConsumed } from "@/lib/storyProgressRepository";
+import { getWeeklyChallenges, completeWeeklyChallenge } from "@/lib/weeklyChallengeRepository";
 import { getStoryCertificate } from "@/lib/storyCertificateRepository";
-import type { StoryDetails, StorySlot, StoryIntroProgress, StoryCertificate } from "@/lib/story-types";
+import type { StoryDetails, StorySlot, StoryIntroProgress, StoryCertificate, WeeklyChallenge } from "@/lib/story-types";
 import supabase from "@/lib/supabaseClient";
+import { qinvalidate, lsinvalidate } from "@/lib/queryCache";
 import PricingPaymentModal from "@/components/pricing/PricingPaymentModal";
 import { getProducts } from "@/lib/payments/products";
 import type { Product, Currency } from "@/lib/payments/types";
@@ -190,17 +192,6 @@ const SLOT_BADGE: Record<string, { bg: string; text: string; border: string }> =
 
 type Phase = "welcome" | "intro" | "missions" | "certificate" | "challenge" | "complete";
 
-interface WeeklyChallenge {
-  challenge_id: string;
-  ch_stars: number;
-  title: string;
-  description: string;
-  image_url: string | null;
-  video_url: string | null;
-  difficulty: 'easy' | 'medium' | 'hard' | null;
-  reward_badge: string | null;
-  completed: boolean;
-}
 
 export default function StoryDetailPage() {
   const params = useParams();
@@ -262,7 +253,7 @@ export default function StoryDetailPage() {
       }
 
       // 2. Upload cert → public URL → WhatsApp message with image link
-      const certPublicUrl = await generateCertificateImageUrl(childName, language).catch(() => null);
+      const certPublicUrl = await generateCertificateImageUrl(childName, language, childId ?? undefined, slug).catch(() => null);
       const message = certPublicUrl
         ? `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n📜 View certificate:\n${certPublicUrl}\n\n🔗 Start learning:\n${storyUrl}`
         : `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n🔗 ${storyUrl}`;
@@ -350,12 +341,8 @@ export default function StoryDetailPage() {
     if (phase !== "challenge" || !childId || !storyId || weeklyChallenge || challengeLoading) return;
     setChallengeLoading(true);
     void (async () => {
-      const { data } = await supabase.rpc("get_weekly_challenges", {
-        p_child_id: childId,
-        p_story_id: storyId,
-        p_language: language,
-      });
-      const first = (data as WeeklyChallenge[] | null)?.[0] ?? null;
+      const challenges = await getWeeklyChallenges(childId, storyId, language);
+      const first = challenges[0] ?? null;
       setWeeklyChallenge(first);
       if (first?.completed) setChallengeDone(true);
       setChallengeLoading(false);
@@ -367,10 +354,15 @@ export default function StoryDetailPage() {
       setShowCelebration(true);
       return;
     }
-    await supabase.rpc("complete_weekly_challenge", {
-      p_child_id: childId,
-      p_challenge_id: weeklyChallenge.challenge_id,
-    });
+    const res = await completeWeeklyChallenge(childId, weeklyChallenge.challenge_id);
+    if (!res) return;
+    // Bust all star-related caches — complete_weekly_challenge writes to
+    // challenge_bonus_stars, which feeds totalStars and bonusStars queries.
+    // bonusStars is lscached so needs both layers cleared.
+    qinvalidate(`bonusStars:${childId}`);
+    lsinvalidate(`bonusStars:${childId}`);
+    qinvalidate(`totalStars:${childId}`);
+    qinvalidate(`claimedChallenges:${childId}`);
     setChallengeDone(true);
     setShowCelebration(true);
   };
@@ -479,12 +471,19 @@ export default function StoryDetailPage() {
     })();
   }, [phase, childId, storyId, details, language]);
 
-  // Auto-open certificate modal 1.5 s after the completion screen appears
+  // Auto-open certificate modal 1.5 s after the completion screen appears.
+  // Only fires once per child+story — a localStorage flag suppresses re-opens
+  // on subsequent visits so a returning child isn't interrupted every time.
   useEffect(() => {
-    if (phase !== "complete") return;
-    const t = setTimeout(() => setShowCertModal(true), 1500);
+    if (phase !== "complete" || !childId || !slug) return;
+    const shownKey = `nimipiko_cert_shown:${childId}:${slug}`;
+    if (typeof window !== "undefined" && localStorage.getItem(shownKey)) return;
+    const t = setTimeout(() => {
+      if (typeof window !== "undefined") localStorage.setItem(shownKey, "1");
+      setShowCertModal(true);
+    }, 1500);
     return () => clearTimeout(t);
-  }, [phase]);
+  }, [phase, childId, slug]);
 
   if (loading) {
     return (
@@ -1215,7 +1214,7 @@ export default function StoryDetailPage() {
                 </motion.div>
 
                 <div className="mt-4 space-y-3 w-full max-w-xs">
-                  <ShareAchievementFlow childId={childId} childName={childName} shareType="certificate"
+                  <ShareAchievementFlow childId={childId} childName={childName} storySlug={slug} shareType="certificate"
                     title={storyTitle} description={`${childName} completed: ${storyTitle}`}
                     imageUrl={details?.cover_url ? getStorageUrl(details.cover_url) : null} />
 

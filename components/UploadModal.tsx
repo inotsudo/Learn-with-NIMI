@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from 'react';
+import { authedFetch } from '@/lib/authedFetch';
 import { useDropzone, FileRejection, FileError } from 'react-dropzone';
 import { motion } from 'framer-motion';
 import { X, Camera, UploadCloud, CheckCircle, AlertCircle } from 'lucide-react';
@@ -81,7 +82,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess, ch
       formData.append('description', description);
       formData.append('isPublic', String(isPublic));
 
-      const response = await fetch('/api/creations/upload', { method: 'POST', body: formData });
+      const response = await authedFetch('/api/creations/upload', { method: 'POST', body: formData });
       clearInterval(progressInterval);
       setProgress(100);
 

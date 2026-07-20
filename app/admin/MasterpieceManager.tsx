@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Crown, Check, Download, RefreshCw, Upload, Award } from 'lucide-react'
 import supabase from '@/lib/supabaseClient'
+import { authedFetch } from '@/lib/authedFetch'
 import { useToast } from './Toast'
 
 interface Story { id: string; title: string; slug: string; theme_emoji: string | null; is_personalizable: boolean; personalization_config: any; certificate_config: any }
@@ -80,7 +81,7 @@ export default function MasterpieceManager() {
 
   const retryGenerate = async (orderId: string) => {
     try {
-      await fetch('/api/masterpiece/generate', {
+      await authedFetch('/api/masterpiece/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ masterpieceId: orderId }),
@@ -279,7 +280,7 @@ export default function MasterpieceManager() {
                 )}
                 {order.status === 'completed' && order.pdf_url && (
                   <button onClick={async () => {
-                    const res = await fetch(`/api/masterpiece/download?id=${order.id}`);
+                    const res = await authedFetch(`/api/masterpiece/download?id=${order.id}`);
                     const data = await res.json();
                     if (data.downloadUrl) window.open(data.downloadUrl, '_blank');
                   }} className="p-2 rounded-lg hover:bg-gray-100 transition" title="Download">

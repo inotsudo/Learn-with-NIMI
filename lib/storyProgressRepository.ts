@@ -7,26 +7,40 @@
 // ══════════════════════════════════════════════════════════════
 
 import supabase from "./supabaseClient";
-import { qinvalidate } from "./queryCache";
+import { qinvalidate, lsinvalidate } from "./queryCache";
+import { queueOfflineSlotCompletion } from "./offlineSlotQueue";
 import type {
   StoryCompletion,
   StoryIntroProgress,
   CompleteSlotResult,
+  CompleteSlotOutcome,
 } from "./story-types";
 
 export async function completeStorySlot(
   childId: string,
   missionId: string
-): Promise<CompleteSlotResult | null> {
+): Promise<CompleteSlotOutcome | null> {
   const { data, error } = await supabase.rpc("complete_story_slot", {
     p_child_id: childId,
     p_mission_id: missionId,
   });
   if (error) {
+    const isNetwork =
+      !navigator.onLine ||
+      error.message.toLowerCase().includes("failed to fetch") ||
+      error.message.toLowerCase().includes("networkerror");
+    if (isNetwork) {
+      queueOfflineSlotCompletion({ childId, missionId, queuedAt: Date.now() });
+      return { queued: true };
+    }
     console.error("[completeStorySlot]", error);
     return null;
   }
   // Bust all per-child progress caches (prefix-only = all language variants).
+  // lsinvalidate clears the localStorage rawProgressRows base cache that all
+  // derived qcached values read from — without this, re-fetches after slot
+  // completion return stale rows for up to TTL_SHORT (20s).
+  lsinvalidate(`progressRows:${childId}`);
   qinvalidate(`weekStreak:${childId}`);
   qinvalidate(`totalStars:${childId}`);
   qinvalidate(`activityDates:${childId}`);
@@ -38,7 +52,7 @@ export async function completeStorySlot(
   // Bust slot completion state so the story detail page reflects the new completion immediately.
   qinvalidate(`storySlots:${childId}`);
   qinvalidate(`storyLibrary:${childId}`);
-  return data as CompleteSlotResult;
+  return { queued: false, result: data as CompleteSlotResult };
 }
 
 export async function getStoryCompletion(

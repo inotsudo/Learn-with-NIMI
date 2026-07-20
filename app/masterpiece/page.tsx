@@ -8,6 +8,7 @@ import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import supabase from "@/lib/supabaseClient";
+import { authedFetch } from "@/lib/authedFetch";
 import { getChildren } from "@/lib/queries";
 import type { Child } from "@/lib/queries";
 import { getParentAccess } from "@/lib/payments/products";
@@ -179,7 +180,7 @@ export default function MasterpiecePage() {
 
       if (error || !mp) { setStep("choose"); setGenerating(false); return; }
 
-      const res = await fetch("/api/masterpiece/generate", {
+      const res = await authedFetch("/api/masterpiece/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ masterpieceId: mp.id }),
@@ -187,7 +188,7 @@ export default function MasterpiecePage() {
       const result = await res.json();
 
       if (result.success) {
-        const dlRes  = await fetch(`/api/masterpiece/download?id=${mp.id}`);
+        const dlRes  = await authedFetch(`/api/masterpiece/download?id=${mp.id}`);
         const dlData = await dlRes.json();
         setDownloadUrl(dlData.downloadUrl);
         setOrders(prev => [{ ...mp, status:"completed", pdf_url:dlData.downloadUrl }, ...prev]);
@@ -422,7 +423,7 @@ export default function MasterpiecePage() {
                           {order.status === "completed" && (
                             <motion.button whileTap={m.buttonPress}
                               onClick={async () => {
-                                const res = await fetch(`/api/masterpiece/download?id=${order.id}`);
+                                const res = await authedFetch(`/api/masterpiece/download?id=${order.id}`);
                                 const data = await res.json();
                                 if (data.downloadUrl) window.open(data.downloadUrl, "_blank");
                               }}

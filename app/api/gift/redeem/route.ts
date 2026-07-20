@@ -5,13 +5,17 @@ import { NextRequest, NextResponse } from "next/server";
 
 type GiftProduct = { name: string | null; tier: string | null; billing_interval: string | null };
 type GiftGiver = { name: string | null; email?: string | null };
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { createClient } from "@supabase/supabase-js";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
+
+const serviceSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+);
 import { sendGiftRedeemed } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
-  const supabase = await createRouteClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: { code?: string };
@@ -21,17 +25,19 @@ export async function POST(req: NextRequest) {
   if (!code) return NextResponse.json({ error: "Code required" }, { status: 422 });
 
   // Look up the gift (include giver for redeemed notification)
-  const { data: gift } = await supabase
+  const { data: gift } = await serviceSupabase
     .from("gift_subscriptions")
     .select("*, products(name, tier, billing_interval), parents!giver_parent_id(name, email)")
     .eq("redemption_code", code)
     .maybeSingle();
 
   if (!gift) return NextResponse.json({ error: "Invalid redemption code" }, { status: 404 });
+  // Fast-path for already-redeemed codes. The real race guard is the atomic
+  // update below — this just avoids running the billing resolution work.
   if (gift.redeemed_at) return NextResponse.json({ error: "This gift has already been redeemed" }, { status: 409 });
 
   // Verify the order was paid (gift must be purchased before it can be redeemed)
-  const { data: order } = await supabase
+  const { data: order } = await serviceSupabase
     .from("orders")
     .select("payment_status, amount, currency")
     .eq("id", gift.order_id)
@@ -48,7 +54,7 @@ export async function POST(req: NextRequest) {
   let resolvedProductId: string | null = gift.product_id ?? null;
 
   if (!gift.product_id && gift.gift_amount && gift.gift_currency) {
-    const { data: plans } = await supabase
+    const { data: plans } = await serviceSupabase
       .from("products")
       .select("id, billing_interval, price_usd, price_rwf, price_eur")
       .in("slug", ["nimipiko-club-annual", "nimipiko-club"])
@@ -74,8 +80,21 @@ export async function POST(req: NextRequest) {
   if (billingInterval === "year") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
   else periodEnd.setMonth(periodEnd.getMonth() + 1);
 
+  // Atomically claim the gift — exactly one concurrent request can succeed here.
+  // Both requests may pass the fast-path `if (gift.redeemed_at)` check above,
+  // but only one will see a row returned from this update; the other gets 0 rows → 409.
+  const { data: claimed } = await serviceSupabase
+    .from("gift_subscriptions")
+    .update({ redeemed_at: new Date().toISOString(), redeemed_by: user.id })
+    .eq("id", gift.id)
+    .is("redeemed_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (!claimed) return NextResponse.json({ error: "This gift has already been redeemed" }, { status: 409 });
+
   // Create subscription for the recipient
-  const { data: sub } = await supabase.from("nimipiko_subscriptions").insert({
+  const { data: sub } = await serviceSupabase.from("nimipiko_subscriptions").insert({
     parent_id: user.id,
     product_id: resolvedProductId,
     status: "active",
@@ -88,24 +107,26 @@ export async function POST(req: NextRequest) {
     cancel_at_period_end: true,
   }).select().single();
 
-  if (!sub) return NextResponse.json({ error: "Failed to activate gift" }, { status: 500 });
+  if (!sub) {
+    // Roll back the claim so the user can retry — otherwise the code is
+    // permanently burned with no subscription to show for it.
+    await serviceSupabase
+      .from("gift_subscriptions")
+      .update({ redeemed_at: null, redeemed_by: null })
+      .eq("id", gift.id);
+    return NextResponse.json({ error: "Failed to activate gift" }, { status: 500 });
+  }
 
   // Grant content access
   const accessType = product?.tier === "club" ? "club"
     : product?.tier === "personalized" ? "personalized" : "story";
 
-  await supabase.from("content_access").insert({
+  await serviceSupabase.from("content_access").insert({
     parent_id: user.id,
     access_type: accessType,
     order_id: gift.order_id,
     subscription_id: sub.id,
   });
-
-  // Mark gift as redeemed
-  await supabase.from("gift_subscriptions").update({
-    redeemed_at: new Date().toISOString(),
-    redeemed_by: user.id,
-  }).eq("id", gift.id);
 
   // Notify the giver (best-effort, non-blocking)
   const giver = gift.parents as unknown as GiftGiver | null;
@@ -129,11 +150,10 @@ export async function POST(req: NextRequest) {
 
 // GET /api/gift/redeem?code=XXX — preview a gift before signing in
 export async function GET(req: NextRequest) {
-  const supabase = await createRouteClient();
   const code = req.nextUrl.searchParams.get("code")?.toUpperCase().trim() ?? "";
   if (!code) return NextResponse.json({ error: "Code required" }, { status: 422 });
 
-  const { data: gift } = await supabase
+  const { data: gift } = await serviceSupabase
     .from("gift_subscriptions")
     .select("recipient_email, recipient_name, redeemed_at, gift_amount, gift_currency, message, products(name), parents!giver_parent_id(name)")
     .eq("redemption_code", code)

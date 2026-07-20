@@ -13,6 +13,7 @@ interface Props {
   childId: string | null;
   childName: string;
   childLanguage?: string;
+  storySlug?: string;
   shareType: ShareType;
   title: string;
   description?: string;
@@ -26,7 +27,7 @@ const TYPE_CONFIG: Record<ShareType, { emoji: string; label: string }> = {
   sticker:     { emoji: "⭐", label: "Achievement"       },
 };
 
-export default function ShareAchievementFlow({ childId, childName, childLanguage, shareType, title, description, imageUrl, onShared }: Props) {
+export default function ShareAchievementFlow({ childId, childName, childLanguage, storySlug, shareType, title, description, imageUrl, onShared }: Props) {
   const { t } = useLanguage();
   const [sharing, setSharing] = useState(false);
   const cfg = TYPE_CONFIG[shareType];
@@ -45,7 +46,7 @@ export default function ShareAchievementFlow({ childId, childName, childLanguage
     let shareImage = (imageUrl && imageUrl.startsWith("http")) ? imageUrl : "";
     if (shareType === "certificate") {
       const lang = childLanguage ?? "en";
-      const certUrl = await generateCertificateImageUrl(childName, lang);
+      const certUrl = await generateCertificateImageUrl(childName, lang, childId ?? undefined, storySlug);
       if (certUrl) shareImage = certUrl;
     }
 

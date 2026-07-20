@@ -13,7 +13,7 @@ import { lscached, TTL_LONG } from "@/lib/queryCache";
 import type { Mission, StoryPage, ColoringPage } from "@/lib/queries";
 import { getStoryBySlug, getStorySlots } from "@/lib/storyRepository";
 import { completeStorySlot } from "@/lib/storyProgressRepository";
-import type { StorySlot, CompleteSlotResult } from "@/lib/story-types";
+import type { StorySlot, CompleteSlotResult, CompleteSlotOutcome } from "@/lib/story-types";
 import supabase from "@/lib/supabaseClient";
 
 import { personalize, personalizeJson } from "@/lib/personalize";
@@ -136,7 +136,8 @@ export default function StoryMissionPage() {
   const [coloringPages, setColoringPages] = useState<ColoringPage[]>([]);
   const [completed, setCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState<CompleteSlotResult | null>(null);
+  const [saveError, setSaveError] = useState(false);
+  const [outcome, setOutcome] = useState<CompleteSlotOutcome | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
   const [questionIdx, setQuestionIdx] = useState(0);  // index of the question being shown
   const [wordIdx, setWordIdx] = useState(0);           // index of the vocab word being shown
@@ -163,8 +164,20 @@ export default function StoryMissionPage() {
       const slots = await getStorySlots(child.id, story.id, child.language);
       const currentSlot = slots.find(s => s.slot_key === slotKey);
       if (!currentSlot) { setLoading(false); return; }
+
+      // Sequential access guard — mirrors the UI lock shown on the story map.
+      // A slot is accessible if it's already done, it's the first slot,
+      // or the slot immediately before it is completed.
+      const sortedSlots = [...slots].sort((a, b) => (a.slot_order ?? 0) - (b.slot_order ?? 0));
+      const slotIndex = sortedSlots.findIndex(s => s.slot_key === slotKey);
+      const prevDone = slotIndex === 0 || sortedSlots[slotIndex - 1].completed;
+      if (!currentSlot.completed && !prevDone) {
+        router.replace(`/stories/${slug}`);
+        return;
+      }
+
       setSlot(currentSlot);
-      setAllSlots([...slots].sort((a, b) => (a.slot_order ?? 0) - (b.slot_order ?? 0)));
+      setAllSlots(sortedSlots);
       setCompleted(currentSlot.completed);
 
       // lscached — survives page reload; mission content only changes when admin publishes
@@ -237,17 +250,29 @@ export default function StoryMissionPage() {
     if (!childId || !slot?.mission_id || completed || saving) return;
     if (isPreview) {
       setCompleted(true);
-      setResult({ stars_earned: 10, new_badges: [], new_certificate: null, story_complete: false, next_story_unlocked: false });
+      setOutcome({ queued: false, result: { stars_earned: 10, new_badges: [], new_certificate: null, story_complete: false, next_story_unlocked: false } });
       return;
     }
     setSaving(true);
-    const res = await completeStorySlot(childId, slot.mission_id);
-    setResult(res);
+    setSaveError(false);
+    let res: CompleteSlotOutcome | null;
+    try {
+      res = await completeStorySlot(childId, slot.mission_id);
+    } catch {
+      setSaving(false);
+      setSaveError(true);
+      return;
+    }
+    if (!res) {
+      setSaving(false);
+      setSaveError(true);
+      return;
+    }
+    setOutcome(res);
     setCompleted(true);
     setSaving(false);
-    if (res?.story_complete) {
+    if (!res.queued && res.result.story_complete) {
       playCelebration();
-      // Fire in-app notification for the parent
       if (parentId) {
         void createNotification(parentId, {
           title: "📖 Story Complete!",
@@ -404,6 +429,19 @@ export default function StoryMissionPage() {
             </div>
           )}
 
+          {/* Save error — shown when completeStorySlot returns null; completed stays false so the activity button retries */}
+          {saveError && !completed && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="mt-4 flex items-center gap-3 bg-red-50 border border-red-200 px-4 py-3 shadow-sm"
+              style={{ borderRadius: 'var(--leaf-r)' }}>
+              <span className="text-[20px]">😬</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-baloo font-black text-red-700 text-[14px] leading-tight">Oops, something went wrong!</p>
+                <p className="font-nunito text-red-500 text-[12px]">Your internet might be sleepy. Tap the button again to try!</p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Post-completion delight layer */}
           {completed && mission && (() => {
             const questions = Array.isArray(mission.content?.questions) ? (mission.content.questions as QuestionData[]) : [];
@@ -441,82 +479,95 @@ export default function StoryMissionPage() {
           })()}
 
           {/* Completion result */}
-          {result && (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              transition={SPRING.modal}
-              className={`mt-5 relative overflow-hidden border ${missionStyle.badgeBorder} ${missionStyle.resultBg} p-6 text-center shadow-[0_20px_42px_rgba(15,23,42,0.12)]`}
-              style={{ borderRadius: 'var(--leaf-r)' }}>
-              <RewardBurst active config={CONFETTI_BURST} className="absolute inset-0" />
+          {outcome && (() => {
+            // Derive res via the discriminated union so TypeScript narrows correctly:
+            // outcome.queued branches outcome to its two union members, giving
+            // outcome.result the type CompleteSlotResult (not undefined) in the false branch.
+            const res = outcome.queued ? null : outcome.result;
+            return (
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                transition={SPRING.modal}
+                className={`mt-5 relative overflow-hidden border ${missionStyle.badgeBorder} ${missionStyle.resultBg} p-6 text-center shadow-[0_20px_42px_rgba(15,23,42,0.12)]`}
+                style={{ borderRadius: 'var(--leaf-r)' }}>
+                <RewardBurst active config={CONFETTI_BURST} className="absolute inset-0" />
 
-              <div className="relative z-10">
-                <motion.img src={assets.starMascot} alt="" className="w-16 h-16 mx-auto mb-3"
-                  initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }}
-                  transition={{ ...SPRING.gentle, delay: 0.2 }} />
-                <AnimatedCheckmark className="mx-auto mb-3" />
+                <div className="relative z-10">
+                  <motion.img src={assets.starMascot} alt="" className="w-16 h-16 mx-auto mb-3"
+                    initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }}
+                    transition={{ ...SPRING.gentle, delay: 0.2 }} />
+                  <AnimatedCheckmark className="mx-auto mb-3" />
 
-                <div className="mx-auto inline-flex items-center justify-center gap-2 rounded-full border border-amber-200 bg-white/90 px-4 py-2 mb-3 shadow-sm">
-                  <Image src={assets.starMascot} alt="" width={24} height={24} className="w-6 h-6" />
-                  <span className="font-baloo font-black text-amber-500 text-[28px]">+{result.stars_earned}</span>
-                  <span className="font-nunito text-gray-600 text-[14px] font-bold">{t("storyStarsLabel")}</span>
-                </div>
-
-                {result.story_complete && (
-                  <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
-                    className="mb-3">
-                    <p className="font-baloo font-black text-emerald-700 text-[22px]">{t("storyCompleteResult")}</p>
-                    <p className="font-nunito text-ds-text text-[14px]">{t("storyEarnedCert")}</p>
-                  </motion.div>
-                )}
-
-                {result.next_story_unlocked && (
-                  <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.7 }}
-                    className="mb-3 bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/30 leaf px-4 py-2 inline-block">
-                    <p className="font-nunito text-ds-text text-[14px] font-bold">{t("storyNextUnlocked")}</p>
-                  </motion.div>
-                )}
-
-                {!result.story_complete && (
-                  <p className="font-nunito text-ds-text text-[14px] mb-3">{t("storyGreatJob")}</p>
-                )}
-
-                <motion.button initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.9 }}
-                  onClick={() => router.push(`/stories/${slug}`)}
-                  className="font-baloo font-black bg-cta-gradient text-white text-[16px] rounded-full px-7 py-3 shadow-lg shadow-ds-cta transition hover:shadow-ds-hover">
-                  {result.story_complete ? t("storyViewCert") : t("storyContinueArrow")}
-                </motion.button>
-
-                {/* Share row */}
-                <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 1.1 }}
-                  className="mt-4 space-y-2 w-full text-left">
-                  {result.story_complete && childId && childName && mission?.title && (
-                    <ShareAchievementFlow
-                      childId={childId}
-                      childName={childName}
-                      childLanguage={childLanguage}
-                      shareType="certificate"
-                      title={mission.title}
-                    />
+                  {outcome.queued ? (
+                    <div className="mx-auto inline-flex items-center justify-center gap-2 rounded-full border border-blue-200 bg-white/90 px-4 py-2 mb-3 shadow-sm">
+                      <span className="font-nunito text-blue-700 text-[13px] font-bold">{t("slotSavedOffline")}</span>
+                    </div>
+                  ) : (
+                    <div className="mx-auto inline-flex items-center justify-center gap-2 rounded-full border border-amber-200 bg-white/90 px-4 py-2 mb-3 shadow-sm">
+                      <Image src={assets.starMascot} alt="" width={24} height={24} className="w-6 h-6" />
+                      <span className="font-baloo font-black text-amber-500 text-[28px]">+{outcome.result.stars_earned}</span>
+                      <span className="font-nunito text-gray-600 text-[14px] font-bold">{t("storyStarsLabel")}</span>
+                    </div>
                   )}
-                  <button
-                    onClick={async () => {
-                      const url = window.location.href;
-                      const text = `${childName || "We"} just completed "${mission?.title}" on NIMIPIKO! 🎉`;
-                      if (navigator.share) {
-                        try { await navigator.share({ title: "NIMIPIKO", text, url }); } catch { /* cancelled */ }
-                      } else {
-                        await navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
-                      }
-                    }}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 px-4 py-3 font-baloo font-black text-[14px] text-gray-600 transition shadow-sm"
-                  >
-                    <Share2 className="w-4 h-4 text-gray-500" />
-                    {t("shareFriendsBtn")}
-                  </button>
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
+
+                  {res?.story_complete && (
+                    <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
+                      className="mb-3">
+                      <p className="font-baloo font-black text-emerald-700 text-[22px]">{t("storyCompleteResult")}</p>
+                      <p className="font-nunito text-ds-text text-[14px]">{t("storyEarnedCert")}</p>
+                    </motion.div>
+                  )}
+
+                  {res?.next_story_unlocked && (
+                    <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.7 }}
+                      className="mb-3 bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/30 leaf px-4 py-2 inline-block">
+                      <p className="font-nunito text-ds-text text-[14px] font-bold">{t("storyNextUnlocked")}</p>
+                    </motion.div>
+                  )}
+
+                  {(!res?.story_complete) && (
+                    <p className="font-nunito text-ds-text text-[14px] mb-3">{t("storyGreatJob")}</p>
+                  )}
+
+                  <motion.button initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.9 }}
+                    onClick={() => router.push(`/stories/${slug}`)}
+                    className="font-baloo font-black bg-cta-gradient text-white text-[16px] rounded-full px-7 py-3 shadow-lg shadow-ds-cta transition hover:shadow-ds-hover">
+                    {res?.story_complete ? t("storyViewCert") : t("storyContinueArrow")}
+                  </motion.button>
+
+                  {/* Share row */}
+                  <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 1.1 }}
+                    className="mt-4 space-y-2 w-full text-left">
+                    {res?.story_complete && childId && childName && mission?.title && (
+                      <ShareAchievementFlow
+                        childId={childId}
+                        childName={childName}
+                        childLanguage={childLanguage}
+                        storySlug={slug}
+                        shareType="certificate"
+                        title={mission.title}
+                      />
+                    )}
+                    <button
+                      onClick={async () => {
+                        const url = window.location.href;
+                        const text = `${childName || "We"} just completed "${mission?.title}" on NIMIPIKO! 🎉`;
+                        if (navigator.share) {
+                          try { await navigator.share({ title: "NIMIPIKO", text, url }); } catch { /* cancelled */ }
+                        } else {
+                          await navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 px-4 py-3 font-baloo font-black text-[14px] text-gray-600 transition shadow-sm"
+                    >
+                      <Share2 className="w-4 h-4 text-gray-500" />
+                      {t("shareFriendsBtn")}
+                    </button>
+                  </motion.div>
+                </div>
+              </motion.div>
+            );
+          })()}
         </main>
       </PageSurface>
     </AppShell>

@@ -307,16 +307,24 @@ export default function StoryLibraryPage() {
 
                           <div className="p-3">
                             <h3 className="font-baloo font-black text-ds-text text-[14px] sm:text-[15px] leading-tight truncate">{story.title}</h3>
-                            <div className="flex items-center gap-0.5 mt-1.5">
-                              {Array.from({ length: 5 }).map((_, j) => (
-                                <Star key={j} className={`w-3.5 h-3.5 ${j < story.progress * 5 ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-100"}`} />
-                              ))}
-                            </div>
-                            {!story.complete && story.progress > 0 && (
-                              <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(to right, var(--nimi-green), #0e9d60)' }}
-                                  initial={{ width: 0 }} animate={{ width: `${story.progress * 100}%` }} transition={{ duration: DURATION.loopBounce }} />
-                              </div>
+                            {story.progress > 0 ? (
+                              <>
+                                <div className="flex items-center gap-0.5 mt-1.5">
+                                  {Array.from({ length: 5 }).map((_, j) => (
+                                    <Star key={j} className={`w-3.5 h-3.5 ${j < story.progress * 5 ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-100"}`} />
+                                  ))}
+                                </div>
+                                {!story.complete && (
+                                  <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(to right, var(--nimi-green), #0e9d60)' }}
+                                      initial={{ width: 0 }} animate={{ width: `${story.progress * 100}%` }} transition={{ duration: DURATION.loopBounce }} />
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-[11px] text-gray-400 font-nunito mt-1">
+                                {story.age_min != null && story.age_max != null ? `Ages ${story.age_min}–${story.age_max}` : ""}
+                              </p>
                             )}
                           </div>
                         </motion.div>

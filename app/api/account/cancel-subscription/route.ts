@@ -19,10 +19,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 
-  // Mark cancel_at_period_end so the renewal cron skips it
+  let body: { subscriptionId?: string } = {};
+  try { body = await req.json(); } catch { /* no body is fine */ }
+
+  const subscriptionId = body.subscriptionId;
+  if (!subscriptionId) {
+    return NextResponse.json({ error: "subscriptionId required" }, { status: 422 });
+  }
+
+  // Mark cancel_at_period_end so the renewal cron skips it.
+  // Filter by id + parent_id so a user can only cancel their own subscription,
+  // and exactly one row is targeted — never all active subscriptions at once.
   const { data: sub, error } = await sb
     .from("nimipiko_subscriptions")
     .update({ cancel_at_period_end: true })
+    .eq("id", subscriptionId)
     .eq("parent_id", user.id)
     .eq("status", "active")
     .select("current_period_end")
@@ -31,6 +42,10 @@ export async function POST(req: NextRequest) {
   if (error) {
     console.error("[CancelSubscription]", error);
     return NextResponse.json({ error: "Failed to cancel subscription" }, { status: 500 });
+  }
+
+  if (!sub) {
+    return NextResponse.json({ error: "Subscription not found or already cancelled" }, { status: 404 });
   }
 
   // Send cancellation confirmation email (best-effort)

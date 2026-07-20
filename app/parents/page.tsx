@@ -15,6 +15,7 @@ import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import CreateChildModal from "@/components/home/CreateChildModal";
 import supabase from "@/lib/supabaseClient";
+import { authedFetch } from "@/lib/authedFetch";
 import { getChildren, getChildAchievements, getActivityDates, getTotalStars, getWeekActivityCounts, getChildCosmetics, getTodayMissions, type TodayMission, type Child, type ChildAchievement, type ChildCosmetics } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots } from "@/lib/storyRepository";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
@@ -173,7 +174,7 @@ export default function ParentsZonePage() {
 
       // Referral code + stats
       const [codeRes, redemptionsRes] = await Promise.all([
-        fetch("/api/referral").then(r => r.json()).catch(() => ({})),
+        authedFetch("/api/referral").then(r => r.json()).catch(() => ({})),
         supabase
           .from("referral_redemptions")
           .select("id, reward_granted_at")

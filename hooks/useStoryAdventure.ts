@@ -17,6 +17,7 @@ import type {
   StoryIntroProgress,
   WeeklyChallenge,
   CompleteSlotResult,
+  CompleteSlotOutcome,
   CompleteChallengeResult,
 } from "@/lib/story-types";
 import {
@@ -213,7 +214,7 @@ export function useStorySlots(
     };
   }, [childId, storyId, language]);
 
-  const complete = useCallback(async (missionId: string): Promise<CompleteSlotResult | null> => {
+  const complete = useCallback(async (missionId: string): Promise<CompleteSlotOutcome | null> => {
     if (!childId) return null;
     const result = await completeStorySlot(childId, missionId);
     if (result) {

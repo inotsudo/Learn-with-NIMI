@@ -3,7 +3,7 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { PDFDocument, rgb } from "pdf-lib";
 import sharp from "sharp";
 
@@ -36,8 +36,7 @@ async function makeCircularPhoto(photoBuffer: Buffer, size: number): Promise<Buf
 
 export async function POST(req: NextRequest) {
   try {
-    const authClient = await createRouteClient();
-    const { data: { user } } = await authClient.auth.getUser();
+    const user = await getAuthUser(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { masterpieceId } = await req.json();

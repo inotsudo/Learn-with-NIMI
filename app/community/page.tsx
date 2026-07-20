@@ -43,6 +43,7 @@ interface PickerItem {
   childAvatar: string;
   childLanguage: string;
   storyTitle: string;
+  storySlug: string;
   coverUrl: string | null;
   themeEmoji: string | null;
   complete: boolean;
@@ -875,6 +876,7 @@ export default function CommunityPage() {
             childAvatar: kid.avatar_url ?? "🌟",
             childLanguage: lang,
             storyTitle: s.title,
+            storySlug: s.slug,
             coverUrl: s.cover_url,
             themeEmoji: s.theme_emoji,
             complete: s.complete,
@@ -920,7 +922,7 @@ export default function CommunityPage() {
 
     let shareImg = "";
     if (shareType === "certificate") {
-      const certUrl = await generateCertificateImageUrl(item.childName, item.childLanguage);
+      const certUrl = await generateCertificateImageUrl(item.childName, item.childLanguage, item.childId, item.storySlug);
       if (certUrl) shareImg = certUrl;
     }
     if (!shareImg) {

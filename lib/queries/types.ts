@@ -12,6 +12,7 @@ export type FavoriteCategory = "animals" | "space" | "music" | "art" | "stories"
 export interface Child {
   id: string;
   parent_id: string;
+  teacher_id: string | null;
   name: string;
   avatar_url: string | null;
   language: "en" | "fr" | "rw";

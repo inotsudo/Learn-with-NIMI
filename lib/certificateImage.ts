@@ -25,7 +25,9 @@ function proxied(url: string): string {
  */
 export async function generateCertificateImageUrl(
   childName: string,
-  language: string
+  language: string,
+  childId?: string,
+  storySlug?: string
 ): Promise<string | null> {
   // Fetch template; fall back to English
   let { data: tpl } = await supabase
@@ -77,12 +79,23 @@ export async function generateCertificateImageUrl(
   );
   if (!blob) return null;
 
-  const path = `community/cert_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+  // Use a deterministic path when caller provides identity — re-shares overwrite
+  // the same file instead of accumulating duplicates in the bucket.
+  const path = (childId && storySlug)
+    ? `community/${childId}_${storySlug}_${language}.jpg`
+    : `community/cert_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
   const { error } = await supabase.storage
     .from("certificates")
-    .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    .upload(path, blob, { contentType: "image/jpeg", upsert: !!(childId && storySlug) });
 
   if (error) {
+    // On a deterministic path the file likely already exists (RLS blocks upsert
+    // UPDATE, or a concurrent request beat us). Return the existing public URL
+    // rather than failing — the cert was already uploaded successfully before.
+    if (childId && storySlug) {
+      const { data: { publicUrl } } = supabase.storage.from("certificates").getPublicUrl(path);
+      return publicUrl;
+    }
     console.error("[generateCertificateImageUrl] upload error:", error.message);
     return null;
   }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createRouteClient } from "@/lib/supabaseRouteClient";
+import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import crypto from "crypto";
 
 const serviceSupabase = createClient(
@@ -16,9 +16,8 @@ function makeCode(): string {
 }
 
 // GET: Return (or create) the caller's referral code
-export async function GET() {
-  const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export async function GET(req: NextRequest) {
+  const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Try to fetch existing code
@@ -51,8 +50,7 @@ export async function GET() {
 
 // POST: Apply a referral code at signup — body: { code }
 export async function POST(req: NextRequest) {
-  const supabase = await createRouteClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: { code?: string };
