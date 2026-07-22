@@ -68,78 +68,86 @@ export default function HomeStoryLibrarySection({ stories, curStory, up, stagger
             return (
               <motion.div key={story.sid} variants={pop} className="shrink-0 w-[148px] sm:w-[164px]">
                 {story.unlocked ? (
-                  <Link href={`/stories/${story.slug}`}
-                    onMouseEnter={() => onPrefetch?.(story.sid)}
-                    className="group block rounded-2xl overflow-hidden bg-white transition-all hover:-translate-y-1.5"
+                  <div className="rounded-2xl overflow-hidden bg-white transition-all hover:-translate-y-1"
                     style={{
                       boxShadow: isActive
                         ? "0 8px 28px rgba(5,150,105,0.25), 0 0 0 2px rgba(5,150,105,0.4)"
                         : "0 4px 16px rgba(15,23,42,0.08)",
                     }}>
+                    <Link href={`/stories/${story.slug}`}
+                      onMouseEnter={() => onPrefetch?.(story.sid)}
+                      className="group block">
 
-                    {/* Portrait cover image — 3:4 book ratio */}
-                    <div className="relative w-full overflow-hidden" style={{ aspectRatio: "3/4" }}>
-                      {story.cover_url
-                        ? <Image src={getStorageUrl(story.cover_url)} alt={story.title} fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                        : <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-                            style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}>
-                            <span className="text-5xl">{story.theme_emoji ?? "📖"}</span>
-                          </div>
-                      }
+                      {/* Portrait cover image — 3:4 book ratio */}
+                      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "3/4" }}>
+                        {story.cover_url
+                          ? <Image src={getStorageUrl(story.cover_url)} alt={story.title} fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                          : <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+                              style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}>
+                              <span className="text-5xl">{story.theme_emoji ?? "📖"}</span>
+                            </div>
+                        }
 
-                      {/* Gradient fade for text legibility */}
-                      <div className="absolute inset-0"
-                        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 40%, transparent 70%)" }} />
+                        {/* Gradient fade for text legibility */}
+                        <div className="absolute inset-0"
+                          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 40%, transparent 70%)" }} />
 
-                      {/* Top-left status chip */}
-                      <div className="absolute top-2.5 left-2.5">
-                        {story.complete ? (
-                          <span className="flex items-center gap-1 font-baloo font-black text-[9px] bg-emerald-500 text-white px-2 py-0.5 rounded-full shadow-md">
-                            <Star className="w-2.5 h-2.5 fill-white" /> Done
-                          </span>
-                        ) : isActive ? (
-                          <span className="flex items-center gap-1 font-baloo font-black text-[9px] bg-white/90 text-emerald-700 px-2 py-0.5 rounded-full shadow-md backdrop-blur-sm">
-                            <Play className="w-2 h-2 fill-emerald-600" /> Reading
-                          </span>
-                        ) : story.is_free ? (
-                          <span className="font-baloo font-black text-[9px] bg-sky-500 text-white px-2 py-0.5 rounded-full shadow-md">
-                            Free
-                          </span>
-                        ) : null}
+                        {/* Top-left status chip */}
+                        <div className="absolute top-2.5 left-2.5">
+                          {story.complete ? (
+                            <span className="flex items-center gap-1 font-baloo font-black text-[9px] bg-emerald-500 text-white px-2 py-0.5 rounded-full shadow-md">
+                              <Star className="w-2.5 h-2.5 fill-white" /> Done
+                            </span>
+                          ) : isActive ? (
+                            <span className="flex items-center gap-1 font-baloo font-black text-[9px] bg-white/90 text-emerald-700 px-2 py-0.5 rounded-full shadow-md backdrop-blur-sm">
+                              <Play className="w-2 h-2 fill-emerald-600" /> Reading
+                            </span>
+                          ) : story.is_free ? (
+                            <span className="font-baloo font-black text-[9px] bg-sky-500 text-white px-2 py-0.5 rounded-full shadow-md">
+                              Free
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {/* Bottom overlay — title + progress */}
+                        <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2.5 pt-6">
+                          <p className="font-baloo font-black text-white text-[12px] leading-tight line-clamp-2 mb-1.5 drop-shadow">
+                            {story.title}
+                          </p>
+                          {pctDone > 0 && !story.complete && (
+                            <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${pctDone}%`, background: "#34d399" }} />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Bottom overlay — title + progress */}
-                      <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2.5 pt-6">
-                        <p className="font-baloo font-black text-white text-[12px] leading-tight line-clamp-2 mb-1.5 drop-shadow">
-                          {story.title}
-                        </p>
-                        {pctDone > 0 && !story.complete && (
-                          <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${pctDone}%`, background: "#34d399" }} />
-                          </div>
+                      {/* Bottom pill row */}
+                      <div className="flex items-center justify-between px-2.5 py-2 bg-white border-t border-gray-50">
+                        {story.category ? (
+                          <span className="font-nunito font-bold text-[9px] text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full capitalize truncate max-w-[75px]">
+                            {story.category}
+                          </span>
+                        ) : (
+                          <span className="font-nunito font-bold text-[9px] text-gray-400">Story</span>
+                        )}
+                        {story.complete ? (
+                          <span className="font-nunito font-bold text-[9px] text-emerald-600">✓ All done</span>
+                        ) : pctDone > 0 ? (
+                          <span className="font-nunito font-bold text-[9px] text-gray-400">{pctDone}%</span>
+                        ) : (
+                          <span className="font-nunito font-bold text-[9px] text-sky-500">Start →</span>
                         )}
                       </div>
-                    </div>
+                    </Link>
 
-                    {/* Bottom pill row */}
-                    <div className="flex items-center justify-between px-2.5 py-2 bg-white border-t border-gray-50">
-                      {story.category ? (
-                        <span className="font-nunito font-bold text-[9px] text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full capitalize truncate max-w-[75px]">
-                          {story.category}
-                        </span>
-                      ) : (
-                        <span className="font-nunito font-bold text-[9px] text-gray-400">Story</span>
-                      )}
-                      {story.complete ? (
-                        <span className="font-nunito font-bold text-[9px] text-emerald-600">✓ All done</span>
-                      ) : pctDone > 0 ? (
-                        <span className="font-nunito font-bold text-[9px] text-gray-400">{pctDone}%</span>
-                      ) : (
-                        <span className="font-nunito font-bold text-[9px] text-sky-500">Start →</span>
-                      )}
-                    </div>
-                  </Link>
+                    {/* Practice reading strip — separate link so it doesn't nest inside the story link */}
+                    <Link href="/talk-to-nimi?mode=practice"
+                      className="flex items-center justify-center gap-1 py-1.5 text-[9px] font-black transition border-t border-sky-100 bg-sky-50 hover:bg-sky-100 text-sky-600">
+                      🎤 Practice Reading
+                    </Link>
+                  </div>
                 ) : (
                   /* Locked card */
                   <div className="rounded-2xl overflow-hidden bg-white opacity-55 shadow-[0_4px_12px_rgba(15,23,42,0.06)]">

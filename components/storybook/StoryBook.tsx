@@ -14,17 +14,16 @@ import BookControls from "./BookControls";
 import BookToolbar from "./BookToolbar";
 import type { StoryBookData } from "./types";
 
-const PageImage = React.forwardRef<HTMLDivElement, { imageUrl: string; text?: string; showText?: boolean }>(
-  ({ imageUrl, text, showText }, ref) => {
-    return <IllustrationPage ref={ref} imageUrl={imageUrl} side="right" text={text} showText={showText} />;
+const PageImage = React.forwardRef<HTMLDivElement, { imageUrl: string }>(
+  ({ imageUrl }, ref) => {
+    return <IllustrationPage ref={ref} imageUrl={imageUrl} side="right" />;
   }
 );
 PageImage.displayName = "PageImage";
 
 // ── Mobile: one page at a time, swipeable ────────────────────────────────────
-function MobilePageViewer({ pages, showText, direction, onPrev, onNext }: {
+function MobilePageViewer({ pages, direction, onPrev, onNext }: {
   pages: StoryBookData["pages"];
-  showText: boolean;
   direction: number;
   onPrev: () => void;
   onNext: () => void;
@@ -70,8 +69,6 @@ function MobilePageViewer({ pages, showText, direction, onPrev, onNext }: {
           <IllustrationPage
             imageUrl={page.imageUrl}
             side="right"
-            text={page.text}
-            showText={showText}
           />
         </motion.div>
       </AnimatePresence>
@@ -89,8 +86,6 @@ function BookInner({ story, onComplete, completed, onExit }: {
   const assets = getThemeAssets(themeId);
   const flipBookRef = useRef<any>(null);
   const bookContainerRef = useRef<HTMLDivElement>(null);
-  const [showText, setShowText] = useState(true);
-  const hasAnyText = story.pages.some(p => !!p.text);
   const [direction, setDirection] = useState(1);
 
   // Sync to correct value immediately — avoids flash of desktop flipbook on mobile
@@ -134,7 +129,6 @@ function BookInner({ story, onComplete, completed, onExit }: {
       {isMobile ? (
         <MobilePageViewer
           pages={story.pages}
-          showText={showText}
           direction={direction}
           onPrev={mobilePrev}
           onNext={mobileNext}
@@ -175,7 +169,7 @@ function BookInner({ story, onComplete, completed, onExit }: {
               renderOnlyPageLengthChange={false}
             >
               {story.pages.map((pg, i) => (
-                <PageImage key={pg.id || i} imageUrl={pg.imageUrl} text={pg.text} showText={showText} />
+                <PageImage key={pg.id || i} imageUrl={pg.imageUrl} />
               ))}
 
               {/* Back cover — The End */}
@@ -215,9 +209,6 @@ function BookInner({ story, onComplete, completed, onExit }: {
         onPrev={isMobile ? mobilePrev : flipPrev}
         onNext={isMobile ? mobileNext : flipNext}
         bookRef={bookContainerRef}
-        showText={showText}
-        onToggleText={() => setShowText(v => !v)}
-        hasText={hasAnyText}
       />
 
       {reachedEnd && !completed && (

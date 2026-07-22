@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getChildren, getChildAchievements, getMaxCurriculumLevel, getActiveStories, type ChildAchievement } from "@/lib/queries";
@@ -12,6 +12,7 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import CertificatesHeader from "@/components/certificates/CertificatesHeader";
 import AchievementDashboard from "@/components/certificates/AchievementDashboard";
+import { emitCertificateEarned } from "@/lib/ai/eventBus";
 import type { Lang } from "@/app/_achievementData";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
@@ -29,6 +30,7 @@ export default function CertificatesPage() {
   const [levelSlugs, setLevelSlugs] = useState<Map<number, string>>(new Map());
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const emittedCertsRef = useRef(new Set<string>());
 
   useEffect(() => {
     void loadProgress();
@@ -56,6 +58,19 @@ export default function CertificatesPage() {
         getActiveStories(),
       ]);
       setAchievements(achievementRows);
+
+      // Emit certificate_earned for any certificate granted within the last 60 s (just earned)
+      const nowMs = Date.now();
+      for (const a of achievementRows) {
+        if (a.type === 'certificate' && !emittedCertsRef.current.has(a.id)) {
+          const ageSec = (nowMs - new Date(a.earned_at).getTime()) / 1000;
+          if (ageSec < 60) {
+            emittedCertsRef.current.add(a.id);
+            emitCertificateEarned(child.id, { certType: a.slug, certName: a.slug });
+          }
+        }
+      }
+
       setMaxLevel(level);
       setLevelSlugs(new Map(stories.map(s => [s.sort_order, s.slug])));
       setLoading(false);

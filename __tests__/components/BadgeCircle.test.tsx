@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import BadgeCircle from "@/components/stories/BadgeCircle";
 
 // getMilestoneBadgeMeta returns null for unknown slugs
@@ -42,9 +42,7 @@ describe("BadgeCircle", () => {
   it("shows fallback champion when image errors", async () => {
     const { container } = render(<BadgeCircle slug="broken-badge" size="md" />);
     const img = screen.getByRole("img");
-    // Simulate image load failure
-    img.dispatchEvent(new Event("error"));
-    // After error, the img should be replaced by fallback div
+    fireEvent.error(img);
     await vi.waitFor(() => {
       expect(container.textContent).toContain("🏅");
     });

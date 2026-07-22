@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
@@ -25,6 +26,10 @@ import ChatQuestBanner from "@/components/home/ChatQuestBanner";
 import ChatSidebar from "@/components/home/ChatSidebar";
 import { NIMI_CHAT_HANDOFF_KEY } from "@/components/home/TalkToNimi";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import { useScreenTime } from "@/lib/screenTime";
+import BreakNudge from "@/components/learn/BreakNudge";
+import VoiceCompanionView from "@/components/voice/VoiceCompanionView";
+import supabase from "@/lib/supabaseClient";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -37,8 +42,11 @@ export default function TalkToNimiPage() {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
+  const searchParams = useSearchParams();
+  const initialMode: "chat" | "practice" = searchParams.get("mode") === "practice" ? "practice" : "chat";
   const [childId, setChildId] = useState<string | null>(null);
   const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState<number | null>(null);
   const [childLanguage, setChildLanguage] = useState<"en" | "fr" | "rw">("en");
   const [initialMessages, setInitialMessages] = useState<ChatMessage[] | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
@@ -50,15 +58,18 @@ export default function TalkToNimiPage() {
     let name = t("defaultChildName");
     let id: string | null = null;
     let lang: "en" | "fr" | "rw" = "en";
+    let age: number | null = null;
     if (list.length > 0) {
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0];
       name = child.name;
       id   = child.id;
       lang = child.language;
+      age  = child.age ?? null;
     }
     setChildName(name);
     setChildId(id);
+    setChildAge(age);
     setChildLanguage(lang);
 
     const greeting: ChatMessage = { from: "nimi", text: t("nimiGreeting").replace("{name}", name) };
@@ -100,23 +111,28 @@ export default function TalkToNimiPage() {
       <NimiChatPageContent
         childId={childId}
         childName={childName}
+        childAge={childAge}
         childLanguage={childLanguage}
         initialMessages={initialMessages}
         pendingMessage={pendingMessage}
+        initialMode={initialMode}
       />
     </AppShell>
   );
 }
 
 function NimiChatPageContent({
-  childId, childName, childLanguage, initialMessages, pendingMessage,
+  childId, childName, childAge, childLanguage, initialMessages, pendingMessage, initialMode,
 }: {
   childId: string | null;
   childName: string;
+  childAge: number | null;
   childLanguage: "en" | "fr" | "rw";
   initialMessages: ChatMessage[];
   pendingMessage: string | null;
+  initialMode: "chat" | "practice";
 }) {
+  const [currentStoryId,       setCurrentStoryId]       = useState<string | null>(null);
   const [currentStoryTitle,    setCurrentStoryTitle]    = useState<string | null>(null);
   const [currentStoryEmoji,    setCurrentStoryEmoji]    = useState<string | null>(null);
   const [currentStoryProgress, setCurrentStoryProgress] = useState(0);
@@ -135,7 +151,9 @@ function NimiChatPageContent({
   const assets          = getThemeAssets(themeId);
   const messagesRef     = useRef<HTMLDivElement>(null);
   const hasResumedRef   = useRef(false);
-  const [chatInput, setChatInput] = useState("");
+  const [chatInput,       setChatInput]       = useState("");
+  const [pageMode,        setPageMode]        = useState<"chat" | "practice">(initialMode);
+  const [practicePassage, setPracticePassage] = useState<string | null>(null);
 
   const [todayStars,           setTodayStars]           = useState(0);
   const [chatStreakDays,        setChatStreakDays]        = useState(0);
@@ -158,15 +176,22 @@ function NimiChatPageContent({
     }
   };
 
-  const { messages, isTyping, send, isSpeaking, toggleSpeak } = useNimiChat(initialMessages, {
+  const { messages, isTyping, send, sendVoice, isSpeaking, toggleSpeak } = useNimiChat(initialMessages, {
     childName,
     onExchangeComplete: handleExchangeComplete,
-    storyTitle:    currentStoryTitle,
-    storyEmoji:    currentStoryEmoji,
-    storyProgress: currentStoryProgress,
+    childId:         childId,
+    childAge:        childAge,
+    storyId:         currentStoryId,
+    storyTitle:      currentStoryTitle,
+    storyEmoji:      currentStoryEmoji,
+    storyProgress:   currentStoryProgress,
     slotsDone,
     slotsTotal,
+    persistOnUnmount: true,
   });
+
+  const { status: screenStatus, offlineSuggestion, dismiss: dismissBreak } =
+    useScreenTime(childId, childAge);
 
   // Rotate mascot prompt
   useEffect(() => {
@@ -207,12 +232,18 @@ function NimiChatPageContent({
 
     const curStory = stories.find((s: { unlocked: boolean; complete: boolean }) => s.unlocked && !s.complete) ?? stories[0];
     if (curStory) {
+      setCurrentStoryId(curStory.sid);
       setCurrentStoryTitle(curStory.title);
       setCurrentStoryEmoji(curStory.theme_emoji ?? null);
       setCurrentStoryProgress(curStory.progress ?? 0);
-      const slots = await getStorySlots(id, curStory.sid, lang);
+      const [slots, passageResult] = await Promise.all([
+        getStorySlots(id, curStory.sid, lang),
+        supabase.rpc("get_story_practice_passage", { p_child_id: id, p_language: lang }),
+      ]);
       setSlotsDone(slots.filter((s: { completed: boolean }) => s.completed).length);
       setSlotsTotal(slots.length);
+      const passageData = passageResult.data as { passage?: string } | null;
+      if (passageData?.passage) setPracticePassage(passageData.passage);
     }
   };
 
@@ -224,7 +255,7 @@ function NimiChatPageContent({
   };
 
   const { listening, supported: micSupported, start: startListening, stop: stopListening, interimText, error: micError } =
-    useSpeechToText(language, (text) => sendChat(text));
+    useSpeechToText(language, (text) => { void sendVoice(text); });
   const showMic = micSupported && language !== "rw";
 
   return (
@@ -277,6 +308,25 @@ function NimiChatPageContent({
             </div>
           </div>
         </HeroBanner>
+
+        {/* Mode toggle */}
+        <div className="flex justify-center mb-4">
+          <div className="flex rounded-full overflow-hidden border border-ds-border shadow-sm">
+            {([
+              { val: "chat",     label: "💬 Chat with Nimi"  },
+              { val: "practice", label: "🎤 Practice Reading" },
+            ] as const).map(({ val, label }) => (
+              <button key={val} onClick={() => setPageMode(val)}
+                className="px-5 py-2 text-[13px] font-black transition"
+                style={{
+                  background: pageMode === val ? "var(--nimi-green,#15803D)" : "var(--ds-surface-card,#fff)",
+                  color:      pageMode === val ? "#fff" : "var(--ds-text-secondary,#6B7280)",
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Quest banner */}
         <div className="mb-4">
@@ -354,7 +404,23 @@ function NimiChatPageContent({
             )}
           </div>
 
+          {/* CENTER: Practice Reading mode */}
+          {pageMode === "practice" && (
+            <div className="bg-ds-surface border border-ds-border shadow-ds-card p-5 overflow-y-auto max-h-[80vh]"
+              style={{ borderRadius:"var(--leaf-r-lg)" }}>
+              <VoiceCompanionView
+                passage={practicePassage ?? (currentStoryTitle
+                  ? `${currentStoryTitle} is a story about learning and growing. Every day we discover something new.`
+                  : "The sun rises over the hills every morning. Birds sing and children play outside.")}
+                language={childLanguage}
+                childName={childName}
+                childAge={childAge}
+              />
+            </div>
+          )}
+
           {/* CENTER: Chat card */}
+          {pageMode === "chat" && (
           <div className="bg-ds-surface border border-ds-border shadow-ds-card overflow-hidden flex flex-col h-[72vh]"
             style={{ borderRadius:"var(--leaf-r-lg)" }}>
 
@@ -441,6 +507,14 @@ function NimiChatPageContent({
               <QuickReplyChips onSelect={text => sendChat(text)} disabled={isTyping} size="md" />
             </div>
 
+            {/* Break nudge — gentle, non-blocking */}
+            <BreakNudge
+              status={screenStatus}
+              suggestion={offlineSuggestion}
+              onDismiss={dismissBreak}
+              onBreak={() => window.history.back()}
+            />
+
             {/* Mic error */}
             {micError && (
               <p className="px-4 py-1 text-[11px] font-bold text-red-500 text-center">
@@ -484,6 +558,8 @@ function NimiChatPageContent({
               </div>
             </div>
           </div>
+
+          )} {/* end chat mode */}
 
           {/* RIGHT: Sidebar */}
           <div className="mt-4 lg:mt-0">

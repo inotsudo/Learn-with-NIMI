@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   getCurriculumMissions, completeCurriculumMission, getColoringPages, getStoryPages, notifyPushOnCompletion,
@@ -19,6 +19,7 @@ import ReadContent from "@/components/missions/ReadContent";
 import ColoringContent from "@/components/missions/ColoringContent";
 import StoryContent from "@/components/missions/StoryContent";
 import { ContentSurface } from "@/components/layout/primitives";
+import { emitReadingSessionStarted } from "@/lib/ai/eventBus";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -42,6 +43,7 @@ export default function MissionCategoryPage() {
   const [coloringPages, setColoringPages] = useState<ColoringPage[]>([]);
   const [storyPages, setStoryPages]       = useState<StoryPage[]>([]);
   const [reloadKey, setReloadKey]         = useState(0);
+  const readingEmittedRef                 = useRef(false);
 
   useEffect(() => {
     if (!activity) { router.replace("/missions"); return; }
@@ -87,6 +89,18 @@ export default function MissionCategoryPage() {
     };
     void load();
   }, [activity, router, language, reloadKey]);
+
+  // Emit reading_session_started once when a read-type mission is active
+  useEffect(() => {
+    if (mission?.type === 'read' && childId && !readingEmittedRef.current) {
+      readingEmittedRef.current = true;
+      emitReadingSessionStarted(childId, {
+        missionId: mission.id,
+        storyId:   mission.story_id ?? undefined,
+        language,
+      });
+    }
+  }, [mission, childId, language]);
 
   const handleComplete = async () => {
     if (saving || completed || !mission || !childId) return;

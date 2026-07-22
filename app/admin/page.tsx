@@ -55,14 +55,16 @@ const ContentMediaManager = dynamicView(() => import('./ContentMediaManager'))
 const WeeklyChallengesManager = dynamicView(() => import('./WeeklyChallengesManager'))
 const FamiliesManager = dynamicView(() => import('./FamiliesManager'))
 const ContentLibraryManager = dynamicView(() => import('./ContentLibraryManager'))
-const SchoolsManager = dynamicView(() => import('./SchoolsManager'))
+const SchoolsManager             = dynamicView(() => import('./SchoolsManager'))
+const RosterProvisioningManager  = dynamicView(() => import('./RosterProvisioningManager'))
 const NewsletterManager    = dynamicView(() => import('./NewsletterManager'))
 const ReferralManager      = dynamicView(() => import('./ReferralManager'))
 const DiscountCodesManager = dynamicView(() => import('./DiscountCodesManager'))
 const GiftManager          = dynamicView(() => import('./GiftManager'))
 const TestimonialsManager         = dynamicView(() => import('./TestimonialsManager'))
 const PartnersManager             = dynamicView(() => import('./PartnersManager'))
-const CertificateTemplatesManager = dynamicView(() => import('./CertificateTemplatesManager'))
+const CertificateTemplatesManager     = dynamicView(() => import('./CertificateTemplatesManager'))
+const ConversationHistoryManager      = dynamicView(() => import('./ConversationHistoryManager'))
 
 const tables = [
   'categories', 'mission_versions',
@@ -217,7 +219,8 @@ export default function AdminPanel() {
   const isAudioView = currentTable === 'audio'
   const isWeeklyChallengesView = currentTable === 'weekly_challenges'
   const isFamiliesView = currentTable === 'families'
-  const isSchoolsView      = currentTable === 'school_inquiries'
+  const isSchoolsView           = currentTable === 'school_inquiries'
+  const isRosterProvisioningView = currentTable === 'roster_provisioning'
   const isNewsletterView   = currentTable === 'newsletter_signups'
   const isReferralView      = currentTable === 'referral_redemptions'
   const isDiscountCodesView = currentTable === 'discount_codes'
@@ -251,6 +254,7 @@ export default function AdminPanel() {
 
   const isBucketsView = currentTable === 'Buckets'
 
+  const isConversationHistoryView = currentTable === 'conversation_history'
   const isAdministratorsView = currentTable === 'admins'
 
   const isNotificationsView = currentTable === 'notifications'
@@ -296,7 +300,8 @@ export default function AdminPanel() {
           {isAudioView && <ContentMediaManager title="Audio" description="Manage audio content for sing along missions." missionType="sing" mediaField="media_url" onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isWeeklyChallengesView && <WeeklyChallengesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isFamiliesView && <FamiliesManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
-          {isSchoolsView     && <SchoolsManager     onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isSchoolsView            && <SchoolsManager            onOpenSidebar={() => setSidebarOpen(true)} />}
+          {isRosterProvisioningView && <RosterProvisioningManager onOpenSidebar={() => setSidebarOpen(true)} />}
           {isNewsletterView  && <NewsletterManager  onOpenSidebar={() => setSidebarOpen(true)} />}
           {isReferralView       && <ReferralManager       onOpenSidebar={() => setSidebarOpen(true)} />}
           {isDiscountCodesView  && <DiscountCodesManager  onOpenSidebar={() => setSidebarOpen(true)} />}
@@ -339,6 +344,7 @@ export default function AdminPanel() {
           )}
           {isBucketsView && <BucketsView onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {currentTable === 'Profile' && <AdminProfile />}
+          {isConversationHistoryView && <ConversationHistoryManager onOpenSidebar={() => setSidebarOpen(true)} />}
           {isAdministratorsView && <AdministratorsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isNotificationsView && <NotificationsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isCurriculumView && <CurriculumManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
@@ -366,7 +372,7 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
+          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isRosterProvisioningView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
             <TableView table={currentTable} />
           )}
           </ErrorBoundary>

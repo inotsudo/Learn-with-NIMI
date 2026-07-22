@@ -88,9 +88,14 @@ const LIMITS: [string, number][] = [
   ["/api/account/welcome-email", 5],  // welcome trigger
   ["/api/confirm-payment",       10], // payment confirmation
   ["/api/push",                  20], // push subscription ops
-  ["/api/nimi",                  60], // AI chat
+  ["/api/nimi",                  60], // AI chat + proactive + recommendations
+  ["/api/parent-ai",             10], // parent insight generation (expensive LLM)
+  ["/api/parent-insights",       10], // parent insight generation (expensive LLM)
+  ["/api/parent-recommendations", 10], // parent recommendation generation
+  ["/api/ai/event",             120], // event inference (fast, but fire-and-forget)
   ["/api/masterpiece",           10], // expensive PDF generation
   ["/api/admin",                 60], // admin mutations
+  ["/api/v1",                    30], // external partner API
 ];
 
 function tooManyRequests() {
@@ -100,17 +105,37 @@ function tooManyRequests() {
   });
 }
 
+// ── Routes that should be scoped per-user rather than per-IP ────────────────
+// A single IP behind NAT could share a limit across many users. For expensive
+// AI routes we key by the first 32 chars of the bearer token (a unique session
+// fingerprint) so each authenticated user gets their own independent budget.
+const USER_SCOPED_ROUTES = new Set([
+  "/api/parent-ai",
+  "/api/parent-insights",
+  "/api/parent-recommendations",
+  "/api/nimi",
+]);
+
+function rateLimitKey(req: NextRequest, prefix: string): string {
+  if (USER_SCOPED_ROUTES.has(prefix)) {
+    const auth = req.headers.get("authorization") ?? "";
+    // "Bearer <token>" → take 32 chars of the token as a user fingerprint
+    const fingerprint = auth.length > 7 ? auth.slice(7, 39) : "";
+    if (fingerprint) return `user:${fingerprint}:${prefix}`;
+  }
+  return `${ip(req)}:${prefix}`;
+}
+
 // ── Middleware ───────────────────────────────────────────────────────────────
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const { pathname } = req.nextUrl;
-  const clientIp = ip(req);
 
   // 1. Rate-limit sensitive API routes (mutations only)
   if (req.method !== "GET" && req.method !== "HEAD") {
     for (const [prefix, max] of LIMITS) {
       if (pathname.startsWith(prefix)) {
-        if (await rateLimited(`${clientIp}:${prefix}`, max)) return tooManyRequests();
+        if (await rateLimited(rateLimitKey(req, prefix), max)) return tooManyRequests();
         break;
       }
     }
@@ -147,5 +172,11 @@ export const config = {
     "/api/masterpiece/:path*",
     "/api/auth/:path*",
     "/api/creations/:path*",
+    "/api/v1/:path*",
+    "/api/parent-ai",
+    "/api/parent-insights",
+    "/api/parent-recommendations",
+    "/api/ai/:path*",
+    "/api/nimi",
   ],
 };

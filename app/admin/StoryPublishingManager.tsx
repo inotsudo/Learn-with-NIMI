@@ -75,6 +75,13 @@ const filtered = useMemo(() => {
   const handlePublish = async (id: string) => {
     try {
       await supabase.from('stories').update({ status: 'published', published_at: new Date().toISOString() }).eq('id', id)
+      // Auto-warm story knowledge cache + seed concept graph — fire-and-forget
+      // First child to read this story will always get a cache hit, never pay AI cost.
+      void fetch('/api/admin/warm-story-cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storyId: id }),
+      }).catch(err => console.error('[StoryPublishingManager] cache warm failed:', err))
       await load()
     } catch (err) {
       console.error('[StoryPublishingManager] handlePublish failed:', err)

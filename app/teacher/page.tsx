@@ -11,9 +11,17 @@ import {
   Menu, X, CheckCircle2, AlertCircle, Loader2,
   ChevronUp, ChevronDown, Megaphone, Trash2, Copy, Check,
   Upload, Printer, ExternalLink, ClipboardList, Calendar, UserCheck,
+  Brain, Wand2, ListChecks, BookMarked,
 } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
+import { authedFetch } from "@/lib/authedFetch";
 import { getCachedTeacher, clearTeacherCache, type TeacherProfile } from "./teacherAuth";
+import TeacherInsightsPanel from "@/components/teacher/TeacherInsightsPanel";
+import LessonGeneratorView from "@/components/teacher/LessonGeneratorView";
+import QuizGeneratorView from "@/components/teacher/QuizGeneratorView";
+import HomeworkGeneratorView from "@/components/teacher/HomeworkGeneratorView";
+import SavedMaterialsView   from "@/components/teacher/SavedMaterialsView";
+import type { TeacherAIResponse } from "@/lib/teacherInsightBuilder";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 interface ChildSummary {
@@ -470,6 +478,11 @@ const NAV_ITEMS = [
   { icon: Users,           label: "Students",      view: "students"      },
   { icon: ClipboardList,   label: "Assignments",   view: "assignments"   },
   { icon: BookOpen,        label: "Story Progress", view: "stories"       },
+  { icon: Brain,           label: "Classroom AI",  view: "learning"      },
+  { icon: Wand2,           label: "Lesson Planner", view: "lesson"       },
+  { icon: ListChecks,      label: "Quiz Maker",    view: "quiz"          },
+  { icon: BookMarked,      label: "Homework",      view: "homework"      },
+  { icon: Download,        label: "Saved",         view: "saved"         },
   { icon: Megaphone,       label: "Announcements", view: "announcements" },
   { icon: BarChart3,       label: "Reports",       view: "reports"       },
   { icon: Settings,        label: "Settings",      view: "settings"      },
@@ -1965,10 +1978,435 @@ function TeacherOnboarding({ userId, email, onComplete }: {
   );
 }
 
+/* ─── Classroom Learning View (Phase 5.1) ────────────────────────── */
+
+interface StudentLearning {
+  child_id:          string;
+  name:              string;
+  language:          string;
+  reading_level:     "emerging" | "beginning" | "developing" | "expanding" | "fluent";
+  completed_stories: number;
+  mastered_words:    number;
+  total_words:       number;
+  quiz_questions:    number;
+  quiz_accuracy_pct: number | null;
+}
+
+interface ClassroomLearning {
+  reading_levels: {
+    emerging: number; beginning: number; developing: number;
+    expanding: number; fluent: number; total: number;
+    per_student: StudentLearning[];
+  };
+  vocabulary: {
+    total_words: number; encountered: number; practiced: number;
+    mastered: number; needs_review: number; mastery_pct: number;
+  };
+  quiz: {
+    total_questions: number; correct: number; accuracy_pct: number | null;
+  };
+  engagement: {
+    active_today: number; active_this_week: number; slots_done_this_week: number;
+  };
+}
+
+const LEVEL_META: Record<StudentLearning["reading_level"], { label: string; bg: string; text: string; bar: string }> = {
+  emerging:   { label: "Emerging",   bg: "#F3F4F6", text: "#374151", bar: "#9CA3AF" },
+  beginning:  { label: "Beginning",  bg: "#EFF6FF", text: "#1D4ED8", bar: "#3B82F6" },
+  developing: { label: "Developing", bg: "#FFFBEB", text: "#B45309", bar: "#F59E0B" },
+  expanding:  { label: "Expanding",  bg: "#ECFDF5", text: "#047857", bar: "#10B981" },
+  fluent:     { label: "Fluent",     bg: "#F5F3FF", text: "#6D28D9", bar: "#8B5CF6" },
+};
+
+const LEVEL_ORDER: StudentLearning["reading_level"][] = [
+  "emerging", "beginning", "developing", "expanding", "fluent",
+];
+
+function ClassroomLearningView({ teacher }: { teacher: TeacherProfile | null }) {
+  const [data, setData]           = useState<ClassroomLearning | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [err, setErr]             = useState<string | null>(null);
+  const [sort, setSort]           = useState<"name" | "level" | "vocab" | "quiz">("name");
+  const [asc, setAsc]             = useState(true);
+  const [aiData, setAiData]       = useState<TeacherAIResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState(true);
+  const [aiError, setAiError]     = useState(false);
+  const [aiRefreshing, setAiRefreshing] = useState(false);
+
+  const loadAI = useCallback(async (bust = false) => {
+    if (!teacher) return;
+    if (bust) setAiRefreshing(true); else setAiLoading(true);
+    setAiError(false);
+    try {
+      const res = await authedFetch("/api/teacher-insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacherId: teacher.id, bust }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setAiData(await res.json() as TeacherAIResponse);
+    } catch {
+      setAiError(true);
+    } finally {
+      setAiLoading(false);
+      setAiRefreshing(false);
+    }
+  }, [teacher]);
+
+  useEffect(() => {
+    if (!teacher) return;
+    setLoading(true); setErr(null);
+    supabase
+      .rpc("get_classroom_learning_summary", { p_teacher_id: teacher.id })
+      .then(({ data: d, error: e }) => {
+        setLoading(false);
+        if (e) { setErr(e.message); return; }
+        setData(d as ClassroomLearning);
+      });
+    void loadAI();
+  }, [teacher, loadAI]);
+
+  function toggleSort(col: typeof sort) {
+    if (sort === col) setAsc(a => !a);
+    else { setSort(col); setAsc(true); }
+  }
+
+  if (!teacher) return null;
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-32 animate-pulse rounded-[20px]" style={{ background: T.card, border: `1px solid ${T.border}` }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (err) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <AlertCircle className="w-9 h-9 text-red-400" />
+        <p className="font-bold text-[15px]" style={{ color: T.text }}>Couldn&apos;t load classroom data</p>
+        <p className="text-[13px]" style={{ color: T.muted }}>{err}</p>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { reading_levels: rl, vocabulary: v, quiz: q, engagement: e } = data;
+
+  // ── Summary stat tiles ─────────────────────────────────────────────────────
+  const summaryTiles = [
+    { label: "Students",       value: rl.total,              icon: "👥", color: T.brand    },
+    { label: "Active Today",   value: e.active_today,        icon: "⚡", color: "#D97706"  },
+    { label: "Words Mastered", value: v.mastered,            icon: "📗", color: "#7C3AED"  },
+    { label: "Quiz Accuracy",  value: q.accuracy_pct !== null ? `${q.accuracy_pct}%` : "—", icon: "🎯", color: "#0891B2" },
+  ];
+
+  // ── Sorted student table ───────────────────────────────────────────────────
+  const LEVEL_RANK: Record<StudentLearning["reading_level"], number> = {
+    emerging: 0, beginning: 1, developing: 2, expanding: 3, fluent: 4,
+  };
+  const students = [...(rl.per_student ?? [])].sort((a, b) => {
+    let diff = 0;
+    if (sort === "name")  diff = a.name.localeCompare(b.name);
+    if (sort === "level") diff = LEVEL_RANK[a.reading_level] - LEVEL_RANK[b.reading_level];
+    if (sort === "vocab") diff = a.mastered_words - b.mastered_words;
+    if (sort === "quiz")  diff = (a.quiz_accuracy_pct ?? -1) - (b.quiz_accuracy_pct ?? -1);
+    return asc ? diff : -diff;
+  });
+
+  const SortTh = ({ col, label }: { col: typeof sort; label: string }) => (
+    <th
+      onClick={() => toggleSort(col)}
+      className="text-left py-3 px-4 text-[11px] font-black uppercase tracking-wider cursor-pointer select-none whitespace-nowrap"
+      style={{ color: sort === col ? T.brand : T.muted, background: "#F9FAFB" }}
+    >
+      {label}{" "}
+      <span className="inline-block text-[9px] opacity-60">
+        {sort === col ? (asc ? "↑" : "↓") : "↕"}
+      </span>
+    </th>
+  );
+
+  return (
+    <div className="space-y-6">
+
+      {/* ── AI Insights Panel ─────────────────────────────────────────────── */}
+      <TeacherInsightsPanel
+        aiData={aiData}
+        loading={aiLoading}
+        error={aiError}
+        refreshing={aiRefreshing}
+        onRefresh={loadAI}
+      />
+
+      {/* ── Summary tiles ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryTiles.map(({ label, value, icon, color }) => (
+          <div key={label} className="p-5 flex flex-col gap-2"
+            style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: T.leaf }}>
+            <div className="flex items-center gap-2">
+              <span className="text-[22px] leading-none">{icon}</span>
+              <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: T.muted }}>{label}</span>
+            </div>
+            <p className="font-baloo font-black text-[28px] leading-none" style={{ color }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Reading Level Distribution ─────────────────────────────────────── */}
+      <div className="p-6" style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: T.leaf }}>
+        <div className="flex items-center gap-2 mb-5">
+          <BookOpen className="w-5 h-5 shrink-0" style={{ color: T.brand }} />
+          <h2 className="font-baloo font-black text-[17px]" style={{ color: T.text }}>Reading Level Distribution</h2>
+        </div>
+        <div className="grid grid-cols-5 gap-3">
+          {LEVEL_ORDER.map(level => {
+            const meta  = LEVEL_META[level];
+            const count = rl[level] as number;
+            const pct   = rl.total > 0 ? Math.round((count / rl.total) * 100) : 0;
+            const studentsAtLevel = students.filter(s => s.reading_level === level);
+            return (
+              <div key={level} className="flex flex-col gap-2">
+                {/* Bar */}
+                <div className="relative h-24 rounded-xl overflow-hidden" style={{ background: "#F3F4F6" }}>
+                  <div
+                    className="absolute bottom-0 left-0 right-0 rounded-xl transition-all duration-500"
+                    style={{ height: `${Math.max(pct, count > 0 ? 8 : 0)}%`, background: meta.bar }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-baloo font-black text-[22px]" style={{ color: count > 0 ? meta.text : "#D1D5DB" }}>{count}</span>
+                  </div>
+                </div>
+                {/* Label */}
+                <p className="text-center text-[10px] font-black uppercase tracking-wider" style={{ color: meta.text }}>
+                  {meta.label}
+                </p>
+                {/* Student chips */}
+                {studentsAtLevel.length > 0 && (
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    {studentsAtLevel.slice(0, 4).map(s => (
+                      <span key={s.child_id}
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded-full truncate max-w-[60px]"
+                        style={{ background: meta.bg, color: meta.text }}
+                        title={s.name}
+                      >
+                        {s.name.split(" ")[0]}
+                      </span>
+                    ))}
+                    {studentsAtLevel.length > 4 && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: meta.bg, color: meta.text }}>
+                        +{studentsAtLevel.length - 4}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Vocabulary & Engagement ────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Vocabulary */}
+        <div className="p-6" style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: T.leaf }}>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-[20px]">📗</span>
+            <h2 className="font-baloo font-black text-[16px]" style={{ color: T.text }}>Class Vocabulary</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {[
+              { label: "Encountered", val: v.encountered, color: "#6B7280" },
+              { label: "Practiced",   val: v.practiced,   color: "#D97706" },
+              { label: "Mastered",    val: v.mastered,    color: "#7C3AED" },
+            ].map(({ label, val, color }) => (
+              <div key={label} className="text-center p-3 rounded-xl" style={{ background: T.page }}>
+                <p className="font-baloo font-black text-[22px]" style={{ color }}>{val}</p>
+                <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: T.muted }}>{label}</p>
+              </div>
+            ))}
+          </div>
+          {/* Mastery bar */}
+          <div>
+            <div className="flex justify-between mb-1.5">
+              <span className="text-[11px] font-bold" style={{ color: T.muted }}>Class mastery</span>
+              <span className="text-[11px] font-black" style={{ color: T.brand }}>{v.mastery_pct}%</span>
+            </div>
+            <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "#F3F4F6" }}>
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${v.mastery_pct}%`, background: "#7C3AED" }} />
+            </div>
+            {v.needs_review > 0 && (
+              <p className="text-[11px] mt-2" style={{ color: "#B45309" }}>
+                🔁 {v.needs_review} word{v.needs_review !== 1 ? "s" : ""} flagged for review
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Engagement */}
+        <div className="p-6" style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: T.leaf }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-5 h-5 shrink-0" style={{ color: T.brand }} />
+            <h2 className="font-baloo font-black text-[16px]" style={{ color: T.text }}>This Week</h2>
+          </div>
+          <div className="space-y-4">
+            {[
+              {
+                label: "Active Today", val: e.active_today, total: rl.total,
+                icon: "⚡", color: "#D97706", note: `of ${rl.total} student${rl.total !== 1 ? "s" : ""}`,
+              },
+              {
+                label: "Active This Week", val: e.active_this_week, total: rl.total,
+                icon: "📅", color: T.brand, note: `of ${rl.total} student${rl.total !== 1 ? "s" : ""}`,
+              },
+              {
+                label: "Activities Completed", val: e.slots_done_this_week, total: null,
+                icon: "✅", color: "#0891B2", note: "across all students",
+              },
+            ].map(({ label, val, total, icon, color, note }) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="text-[18px] shrink-0">{icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-baloo font-black text-[20px]" style={{ color }}>{val}</span>
+                    <span className="text-[11px] font-nunito" style={{ color: T.muted }}>{note}</span>
+                  </div>
+                  {total !== null && total > 0 && (
+                    <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: "#F3F4F6" }}>
+                      <div className="h-full rounded-full"
+                        style={{ width: `${Math.min(100, Math.round((val / total) * 100))}%`, background: color }} />
+                    </div>
+                  )}
+                  <p className="text-[10px] font-black uppercase tracking-wider mt-0.5" style={{ color: T.muted }}>{label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {q.accuracy_pct !== null && (
+            <div className="mt-5 pt-4" style={{ borderTop: `1px solid ${T.border}` }}>
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-bold" style={{ color: T.muted }}>🎯 Quiz accuracy (all time)</span>
+                <span className="font-baloo font-black text-[16px]" style={{ color: "#0891B2" }}>{q.accuracy_pct}%</span>
+              </div>
+              <p className="text-[11px] font-nunito mt-0.5" style={{ color: T.muted }}>
+                {q.correct} of {q.total_questions} question{q.total_questions !== 1 ? "s" : ""} answered correctly
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Per-student table ──────────────────────────────────────────────── */}
+      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: T.leaf, overflow: "hidden" }}>
+        <div className="px-6 py-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${T.border}` }}>
+          <Users className="w-5 h-5 shrink-0" style={{ color: T.brand }} />
+          <h2 className="font-baloo font-black text-[17px]" style={{ color: T.text }}>Student Breakdown</h2>
+          <span className="ml-auto text-[11px] font-bold" style={{ color: T.muted }}>
+            Click column headers to sort
+          </span>
+        </div>
+        {students.length === 0 ? (
+          <div className="py-12 text-center">
+            <p className="text-[14px]" style={{ color: T.muted }}>No students yet — add students to see their learning data here.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse font-nunito">
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${T.border}` }}>
+                  <SortTh col="name"  label="Student"  />
+                  <SortTh col="level" label="Level"    />
+                  <th className="text-left py-3 px-4 text-[11px] font-black uppercase tracking-wider whitespace-nowrap" style={{ color: T.muted, background: "#F9FAFB" }}>
+                    Stories
+                  </th>
+                  <SortTh col="vocab" label="Mastered Words" />
+                  <SortTh col="quiz"  label="Quiz %"  />
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((s, i) => {
+                  const meta = LEVEL_META[s.reading_level];
+                  const isLast = i === students.length - 1;
+                  return (
+                    <tr key={s.child_id}
+                      style={{ borderBottom: isLast ? "none" : `1px solid ${T.border}` }}
+                      className="hover:bg-gray-50 transition-colors">
+                      {/* Name */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[12px] text-white"
+                            style={{ background: T.brand }}>
+                            {initials(s.name)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-[13px] truncate" style={{ color: T.text }}>{s.name}</p>
+                            <p className="text-[10px]" style={{ color: T.muted }}>{LANG_FLAG[s.language]} {LANG_FULL[s.language]}</p>
+                          </div>
+                        </div>
+                      </td>
+                      {/* Reading level */}
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black"
+                          style={{ background: meta.bg, color: meta.text }}>
+                          {meta.label}
+                        </span>
+                      </td>
+                      {/* Completed stories */}
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-[13px]" style={{ color: T.text }}>{s.completed_stories}</span>
+                      </td>
+                      {/* Vocab mastered */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13px]" style={{ color: "#7C3AED" }}>{s.mastered_words}</span>
+                          {s.total_words > 0 && (
+                            <span className="text-[10px]" style={{ color: T.muted }}>/ {s.total_words}</span>
+                          )}
+                        </div>
+                      </td>
+                      {/* Quiz accuracy */}
+                      <td className="py-3 px-4">
+                        {s.quiz_accuracy_pct !== null ? (
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-[13px]" style={{
+                              color: s.quiz_accuracy_pct >= 70 ? "#047857" : s.quiz_accuracy_pct >= 40 ? "#B45309" : "#DC2626",
+                            }}>
+                              {s.quiz_accuracy_pct}%
+                            </span>
+                            <span className="text-[10px]" style={{ color: T.muted }}>{s.quiz_questions}q</span>
+                          </div>
+                        ) : (
+                          <span className="text-[12px]" style={{ color: T.muted }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
 /* ─── Page ───────────────────────────────────────────────────────── */
 const VIEW_TITLE: Record<string, string> = {
   dashboard: "Overview", students: "Students", stories: "Stories",
   announcements: "Announcements", reports: "Reports", settings: "Settings",
+  learning:  "Classroom Learning",
+  lesson:    "Lesson Planner",
+  quiz:      "Quiz Maker",
+  homework:  "Homework",
+  saved:     "Saved Materials",
 };
 
 export default function TeacherPage() {
@@ -2083,6 +2521,11 @@ export default function TeacherPage() {
               {view === "students"      && <StudentsView students={students} loading={dataLoading} onAdd={() => setAddOpen(true)} onImport={() => setImportOpen(true)} teacher={teacher} />}
               {view === "assignments"   && <AssignmentsView students={students} stories={stories} />}
               {view === "stories"       && <StoryProgressView studentCount={students.length} teacherStories={stories} />}
+              {view === "learning"      && <ClassroomLearningView teacher={teacher} />}
+              {view === "lesson"        && <LessonGeneratorView teacher={teacher} stories={stories} />}
+              {view === "quiz"          && <QuizGeneratorView      teacher={teacher} stories={stories} />}
+              {view === "homework"      && <HomeworkGeneratorView  teacher={teacher} stories={stories} />}
+              {view === "saved"         && <SavedMaterialsView     teacher={teacher} />}
               {view === "announcements" && <AnnouncementsView teacher={teacher} announcements={announcements} onRefresh={refreshAnnouncements} />}
               {view === "reports"       && <ReportsView students={students} />}
               {view === "settings"      && <SettingsView teacher={teacher} onSaved={() => { clearTeacherCache(); getCachedTeacher().then(t => setTeacher(t)); }} />}

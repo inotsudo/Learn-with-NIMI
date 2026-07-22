@@ -37,7 +37,7 @@ export default function BadgeCircle({ slug, size = "md", imageUrl }: Props) {
     );
   }
 
-  // 2. Milestone emoji fallback (no image uploaded yet)
+  // 2. Milestone emoji (no image needed)
   if (milestoneMeta) {
     return (
       <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 bg-gradient-to-b from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg`}>
@@ -46,7 +46,21 @@ export default function BadgeCircle({ slug, size = "md", imageUrl }: Props) {
     );
   }
 
-  // 3. Generic placeholder for non-milestone badges with no image yet
+  // 3. Slug-based image — /badges/<slug>.png — falls back to champion on error
+  if (slug && imgOk) {
+    return (
+      <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 shadow-lg overflow-hidden`}>
+        <img
+          src={`/badges/${slug}.png`}
+          alt={slug}
+          onError={() => setImgOk(false)}
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
+
+  // 4. Champion fallback (null slug, or any image failed to load)
   return (
     <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 bg-gradient-to-b from-blue-600 to-blue-900 flex flex-col items-center justify-center shadow-lg overflow-hidden`}>
       <span className="text-yellow-300 leading-none" style={{ fontSize: cls.label }}>⭐</span>

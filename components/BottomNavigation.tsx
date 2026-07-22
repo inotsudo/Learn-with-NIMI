@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Users, UserCheck } from "lucide-react";
+import { Home, BookOpen, Users, UserCheck, Palette } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { launchMagic } from "@/lib/sparkle";
 
@@ -43,6 +43,14 @@ export default function BottomNavigation() {
       name: t("navStories"),
       href: "/stories",
       icon: BookOpen,
+      activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
+      hoverColor: "hover:bg-gray-50 hover:text-[var(--ds-nav-active-text)]",
+      underlineColor: "bg-[var(--ds-nav-active-text)]",
+    },
+    {
+      name: "Create",
+      href: "/create",
+      icon: Palette,
       activeColor: "bg-ds-nav-active text-[var(--ds-nav-active-text)]",
       hoverColor: "hover:bg-gray-50 hover:text-[var(--ds-nav-active-text)]",
       underlineColor: "bg-[var(--ds-nav-active-text)]",

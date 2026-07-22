@@ -9,6 +9,8 @@
 import supabase from "./supabaseClient";
 import { qinvalidate, lsinvalidate } from "./queryCache";
 import { queueOfflineSlotCompletion } from "./offlineSlotQueue";
+import { recordSlotVocab } from "./vocabularyProgress";
+import { incrementGoalProgressForChild } from "./learningGoals";
 import type {
   StoryCompletion,
   StoryIntroProgress,
@@ -52,7 +54,22 @@ export async function completeStorySlot(
   // Bust slot completion state so the story detail page reflects the new completion immediately.
   qinvalidate(`storySlots:${childId}`);
   qinvalidate(`storyLibrary:${childId}`);
-  return { queued: false, result: data as CompleteSlotResult };
+
+  const result = data as CompleteSlotResult;
+
+  // Record vocabulary exposure for this slot — fire-and-forget, non-fatal.
+  // (recordSlotVocab also increments the vocab_encounters goal internally.)
+  void recordSlotVocab(supabase, childId, missionId);
+
+  // Advance slot_completions goal for every completed slot.
+  void incrementGoalProgressForChild(supabase, childId, "slot_completions");
+
+  // Advance story_completions goal when the last slot finishes the story.
+  if (result.story_complete) {
+    void incrementGoalProgressForChild(supabase, childId, "story_completions");
+  }
+
+  return { queued: false, result };
 }
 
 export async function getStoryCompletion(

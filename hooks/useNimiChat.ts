@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { speakText, stopSpeaking } from "@/lib/speech";
 import supabase from "@/lib/supabaseClient";
@@ -13,11 +13,16 @@ export interface ChatMessage {
 interface UseNimiChatOptions {
   childName: string;
   onExchangeComplete?: () => void;
+  childId?: string | null;
+  childAge?: number | null;
+  storyId?: string | null;
   storyTitle?: string | null;
   storyEmoji?: string | null;
   storyProgress?: number;
   slotsDone?: number;
   slotsTotal?: number;
+  // When true, the hook auto-persists a conversation summary when the component unmounts.
+  persistOnUnmount?: boolean;
 }
 
 function lastNimiText(messages: ChatMessage[]): string {
@@ -27,12 +32,50 @@ function lastNimiText(messages: ChatMessage[]): string {
   return "";
 }
 
-export function useNimiChat(initialMessages: ChatMessage[], { childName, onExchangeComplete, storyTitle, storyEmoji, storyProgress, slotsDone, slotsTotal }: UseNimiChatOptions) {
+export function useNimiChat(initialMessages: ChatMessage[], { childName, onExchangeComplete, childId, childAge, storyId, storyTitle, storyEmoji, storyProgress, slotsDone, slotsTotal, persistOnUnmount }: UseNimiChatOptions) {
   const { language, t } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const lastReplyRef = useRef(lastNimiText(initialMessages));
+
+  // Keep a ref to the latest messages so the unmount effect always has current data
+  const messagesRef = useRef(messages);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+
+  // Persist conversation summary on unmount when there are enough exchanges
+  useEffect(() => {
+    if (!persistOnUnmount || !childId) return;
+    return () => {
+      const current = messagesRef.current;
+      if (current.filter(m => m.from === 'user').length < 2) return;
+      const apiMessages = current.map(m => ({
+        role: m.from === 'nimi' ? 'assistant' : 'user',
+        content: m.text,
+      }));
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session?.access_token) return;
+        void fetch('/api/nimi', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            messages:       apiMessages,
+            language,
+            childName,
+            childId,
+            storyId:        storyId ?? null,
+            persistSummary: true,
+          }),
+          // keepalive so the request survives page navigation
+          keepalive: true,
+        });
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistOnUnmount, childId]);
 
   const stopReading = useCallback(() => {
     stopSpeaking();
@@ -51,6 +94,75 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
       onEnd: () => setIsSpeaking(false),
     });
   }, [isSpeaking, language, stopReading]);
+
+  const sendVoice = useCallback(async (text: string, sttConfidence = 1) => {
+    const msg = text.trim();
+    if (!msg || isTyping) return;
+
+    stopReading();
+
+    const ageRange: "5-7" | "8-10" | "11+" =
+      childAge == null ? "8-10" :
+      childAge <= 7    ? "5-7"  :
+      childAge <= 10   ? "8-10" : "11+";
+
+    const history: ChatMessage[] = [...messages, { from: "user", text: msg }];
+    setMessages([...history, { from: "nimi", text: "" }]);
+    setIsTyping(true);
+
+    const updateReply = (replyText: string) => {
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { from: "nimi", text: replyText };
+        return next;
+      });
+    };
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/voice-conversation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          messages: history.map(m => ({
+            role: m.from === "nimi" ? "assistant" : "user",
+            content: m.text,
+          })),
+          language,
+          childName,
+          childId:       childId ?? null,
+          storyId:       storyId ?? null,
+          storyTitle:    storyTitle ?? null,
+          ageRange,
+          sttConfidence,
+        }),
+      });
+
+      if (!res.ok) throw new Error("voice AI request failed");
+
+      const data = await res.json() as { response?: string };
+      const reply = (data.response ?? "").trim();
+
+      if (!reply) {
+        updateReply(t("chatErrorMsg"));
+      } else {
+        updateReply(reply);
+        lastReplyRef.current = reply;
+        onExchangeComplete?.();
+        void speakText(reply, language, {
+          onStart: () => setIsSpeaking(true),
+          onEnd:   () => setIsSpeaking(false),
+        });
+      }
+    } catch {
+      updateReply(t("chatErrorMsg"));
+    } finally {
+      setIsTyping(false);
+    }
+  }, [messages, isTyping, language, childName, childId, childAge, storyId, storyTitle, t, onExchangeComplete, stopReading]);
 
   const send = useCallback(async (text: string) => {
     const msg = text.trim();
@@ -85,11 +197,13 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
           })),
           language,
           childName,
-          storyTitle: storyTitle ?? null,
-          storyEmoji: storyEmoji ?? null,
+          childId:       childId ?? null,
+          storyId:       storyId ?? null,
+          storyTitle:    storyTitle ?? null,
+          storyEmoji:    storyEmoji ?? null,
           storyProgress: storyProgress ?? 0,
-          slotsDone: slotsDone ?? 0,
-          slotsTotal: slotsTotal ?? 0,
+          slotsDone:     slotsDone ?? 0,
+          slotsTotal:    slotsTotal ?? 0,
         }),
       });
 
@@ -137,7 +251,7 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
     } finally {
       setIsTyping(false);
     }
-  }, [messages, isTyping, language, childName, t, onExchangeComplete, stopReading]);
+  }, [messages, isTyping, language, childName, childId, storyId, t, onExchangeComplete, stopReading]);
 
-  return { messages, setMessages, isTyping, send, isSpeaking, toggleSpeak };
+  return { messages, setMessages, isTyping, send, sendVoice, isSpeaking, toggleSpeak };
 }

@@ -27,6 +27,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
+import LearningBrainTab from "@/components/parents/LearningBrainTab";
 
 const NAME_COLORS = ["#6366f1","#8b5cf6","#ec4899","#f97316","#10b981","#3b82f6","#ef4444","#f59e0b"];
 function nameToColor(name: string): string {
@@ -63,7 +64,7 @@ export default function ParentsZonePage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
   const [referralRewards, setReferralRewards] = useState(0);
-  const [parentTab, setParentTab] = useState<"overview" | "stories" | "achievements" | "settings">("overview");
+  const [parentTab, setParentTab] = useState<"overview" | "stories" | "achievements" | "learning" | "settings">("overview");
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -595,6 +596,7 @@ export default function ParentsZonePage() {
                   { id: "overview",      emoji: "📊", label: t("tabOverview")  },
                   { id: "stories",       emoji: "📚", label: t("tabStories")   },
                   { id: "achievements",  emoji: "🏆", label: t("tabWins")      },
+                  { id: "learning",      emoji: "🧠", label: "Learning"        },
                   { id: "settings",      emoji: "⚙️", label: t("tabSettings")  },
                 ] as { id: typeof parentTab; emoji: string; label: string }[]).map(tab => (
                   <button
@@ -1113,6 +1115,15 @@ export default function ParentsZonePage() {
                       </div>
                     </div>
                   </motion.div>
+                )}
+
+                {/* ── LEARNING TAB ── */}
+                {parentTab === "learning" && (
+                  <LearningBrainTab
+                    childId={active.child.id}
+                    language={active.child.language}
+                    childName={active.child.name}
+                  />
                 )}
 
                 {/* ── SETTINGS TAB ── */}

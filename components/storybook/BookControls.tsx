@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Maximize, Type } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Maximize } from "lucide-react";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { useStoryBook } from "./StoryBookContext";
@@ -10,12 +10,9 @@ interface Props {
   onPrev: () => void;
   onNext: () => void;
   bookRef?: React.RefObject<HTMLDivElement | null>;
-  showText?: boolean;
-  onToggleText?: () => void;
-  hasText?: boolean;
 }
 
-export default function BookControls({ onPrev, onNext, bookRef, showText, onToggleText, hasText }: Props) {
+export default function BookControls({ onPrev, onNext, bookRef }: Props) {
   const { currentPage, totalPages, isPlaying, pageHasAudio, play, pause, replay } = useStoryBook();
   const m = useThemeMotion();
   useAppTheme(); // subscribe so CSS vars are live for themed buttons
@@ -46,18 +43,6 @@ export default function BookControls({ onPrev, onNext, bookRef, showText, onTogg
         {isPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white ml-1" />}
       </motion.button>
 
-      {/* Text toggle */}
-      {hasText && onToggleText && (
-        <motion.button whileTap={m.buttonPress} onClick={onToggleText}
-          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border flex items-center justify-center transition shadow ${
-            showText
-              ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-brand-primary)]/30 text-[var(--ds-brand-primary)]"
-              : "bg-gray-100 border-gray-200 text-gray-400"
-          }`}
-          title={showText ? "Hide text" : "Show text"}>
-          <Type size={16} />
-        </motion.button>
-      )}
 
       <motion.button whileTap={m.buttonPress}
         onClick={() => { try { (bookRef?.current ?? document.documentElement).requestFullscreen?.(); } catch {} }}

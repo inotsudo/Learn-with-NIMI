@@ -41,6 +41,8 @@ import HomeMasterpiecePanel  from "@/components/home/HomeMasterpiecePanel";
 import HomeAssignmentsPanel  from "@/components/home/HomeAssignmentsPanel";
 import NotificationOptInPrompt from "@/components/home/NotificationOptInPrompt";
 import WelcomeBackOverlay      from "@/components/home/WelcomeBackOverlay";
+import NimiProactiveBanner        from "@/components/home/NimiProactiveBanner";
+import NimiRecommendationsPanel   from "@/components/home/NimiRecommendationsPanel";
 import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
@@ -850,7 +852,7 @@ export default function HomePage() {
                         const isToday = i === todayIdx;
                         const future  = i > todayIdx;
                         return (
-                          <div key={day} className="flex flex-col items-center gap-1">
+                          <div key={i} className="flex flex-col items-center gap-1">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all ${
                               done    ? "bg-emerald-500 shadow-emerald-200" :
                               isToday ? "bg-amber-100 border-2 border-amber-400" :
@@ -990,6 +992,11 @@ export default function HomePage() {
               <aside className="w-full xl:w-[284px] xl:shrink-0 xl:self-start xl:sticky xl:top-[80px]">
                 <div className="flex flex-col gap-5 xl:max-h-[calc(100vh-100px)] xl:overflow-y-auto" style={{ scrollbarWidth: "none" }}>
 
+                  {/* ── Proactive Nimi Banner ────────────────────────────────── */}
+                  {activeChild && (
+                    <NimiProactiveBanner childId={activeChild.id} language={activeChild.language} />
+                  )}
+
                   {/* ── Story Journey ───────────────────────────────────────── */}
                   <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} />
 
@@ -1000,6 +1007,11 @@ export default function HomePage() {
 
                   {/* ── Week Streak ─────────────────────────────────────────── */}
                   <HomeWeekStreakPanel weekStreak={weekStreak} consecutiveStreak={consecutiveStreak} totalStars={totalStars} streakBroke={streakBroke} />
+
+                  {/* ── Nimi Recommendations ────────────────────────────────── */}
+                  {activeChild && (
+                    <NimiRecommendationsPanel childId={activeChild.id} language={activeChild.language} />
+                  )}
 
                   {/* ── My Achievements ─────────────────────────────────────── */}
                   <HomeAchievementsPanel achievements={achievements} />

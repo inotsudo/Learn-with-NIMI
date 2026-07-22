@@ -9,6 +9,7 @@ import { Palette, X, Brush, Eraser, Undo, Redo, Trash2, Save } from "lucide-reac
 import { getStorageUrl } from "@/lib/queries";
 import { playColorPick, playStamp, playPop, playSuccess } from "@/lib/sounds";
 import supabase from "@/lib/supabaseClient";
+import { emitColoringCompleted } from "@/lib/ai/eventBus";
 import type { Page } from "./types";
 
 // ── Flood fill (paint bucket) ────────────────────────────────
@@ -274,6 +275,9 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
 
   const savePage = useCallback(() => {
     saveToDb(pageIdx);
+    if (childId) {
+      emitColoringCompleted(childId, { creationId: getPageId(pageIdx) ?? undefined });
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     try {
@@ -284,7 +288,7 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
     } catch {}
     setShowSaved(true);
     setTimeout(() => setShowSaved(false), 2000);
-  }, [pageIdx, saveToDb]);
+  }, [pageIdx, saveToDb, childId, getPageId, pages]);
 
   const shareToNimi = useCallback(async () => {
     const canvas = canvasRef.current;

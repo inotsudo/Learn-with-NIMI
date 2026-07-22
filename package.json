@@ -12,9 +12,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --config eslint.config.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run --exclude '**/__tests__/integration/**'",
+    "test:watch": "vitest --exclude '**/__tests__/integration/**'",
+    "test:coverage": "vitest run --coverage --exclude '**/__tests__/integration/**'",
+    "test:integration": "vitest run __tests__/integration/"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

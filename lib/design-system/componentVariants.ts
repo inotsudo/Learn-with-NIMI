@@ -11,7 +11,8 @@ export type ZoneId =
   | "treasureRoom"    // The Treasure Room / Shop
   | "familyHub"       // Family Hub / Parents
   | "achievement"     // Treasure / Achievement vault
-  | "nimiChat";       // Talk to Nimi
+  | "nimiChat"        // Talk to Nimi
+  | "creative";       // Creative Studio
 
 export interface ZoneGradients {
   library:         string;
@@ -22,6 +23,7 @@ export interface ZoneGradients {
   familyHub:       string;
   achievement:     string;
   nimiChat:        string;
+  creative:        string;
 }
 
 // ─── Content gradients ────────────────────────────────────────────────────
@@ -246,6 +248,7 @@ const defaultVariant: ComponentVariant = {
     familyHub:       "from-sky-500 via-blue-500 to-indigo-500",
     achievement:     "from-yellow-400 via-amber-400 to-orange-400",
     nimiChat:        "from-violet-500 via-purple-500 to-indigo-500",
+    creative:        "from-rose-400 via-pink-500 to-purple-500",
   },
   contentGradients: {
     creationCards: [
@@ -377,6 +380,7 @@ const hpVariant: ComponentVariant = {
     familyHub:       "from-sky-500 via-blue-500 to-indigo-500",
     achievement:     "from-yellow-400 via-amber-400 to-orange-400",
     nimiChat:        "from-violet-500 via-purple-500 to-indigo-500",
+    creative:        "from-rose-400 via-pink-500 to-purple-500",
   },
   contentGradients: {
     creationCards: [
@@ -508,6 +512,7 @@ const oceanVariant: ComponentVariant = {
     familyHub:       "from-sky-500 via-blue-500 to-indigo-400",
     achievement:     "from-sky-400 via-cyan-400 to-teal-400",
     nimiChat:        "from-blue-500 via-sky-500 to-cyan-500",
+    creative:        "from-cyan-400 via-sky-400 to-blue-400",
   },
   contentGradients: {
     creationCards: [
