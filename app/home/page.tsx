@@ -154,8 +154,9 @@ export default function HomePage() {
   const [noChildrenYet,   setNoChildrenYet]   = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
-  const [isTrial,        setIsTrial]        = useState(false);
-  const [trialDaysLeft,  setTrialDaysLeft]  = useState(0);
+  const [isTrial,           setIsTrial]           = useState(false);
+  const [trialDaysLeft,     setTrialDaysLeft]     = useState(0);
+  const [trialJustExpired,  setTrialJustExpired]  = useState(false);
   const [stories,          setStories]          = useState<StoryLibraryItem[]>([]);
   const [slots,            setSlots]            = useState<StorySlot[]>([]);
   const [popularStories,   setPopularStories]   = useState<PopularStory[]>([]);
@@ -246,12 +247,26 @@ export default function HomePage() {
     ]);
     if (!user) { router.replace("/loginpage"); return; }
     setChildren(list);
-    getActiveSubscription(user.id).then(sub => {
+    getActiveSubscription(user.id).then(async (sub) => {
       setHasSubscription(!!sub);
       if (sub?.payment_provider === "trial" && sub.current_period_end) {
         setIsTrial(true);
         const msLeft = new Date(sub.current_period_end).getTime() - Date.now();
         setTrialDaysLeft(Math.max(0, Math.ceil(msLeft / 86_400_000)));
+      } else if (!sub) {
+        const dismissed = typeof window !== "undefined"
+          && localStorage.getItem("nimipiko_trial_expiry_seen") === "1";
+        if (!dismissed) {
+          const { data } = await supabase
+            .from("nimipiko_subscriptions")
+            .select("id")
+            .eq("parent_id", user.id)
+            .eq("payment_provider", "trial")
+            .eq("status", "expired")
+            .limit(1)
+            .maybeSingle();
+          if (data) setTrialJustExpired(true);
+        }
       }
     });
     if (list.length === 0) { router.replace("/onboarding"); return; }
@@ -964,6 +979,34 @@ export default function HomePage() {
               }}
             />
 
+
+            {/* ── Trial-expired one-shot banner ────────────────────────── */}
+            {trialJustExpired && (
+              <motion.div
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-20 mx-4 lg:mx-6 mt-4 max-w-[1400px] xl:mx-auto"
+              >
+                <div className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl px-4 py-3.5 shadow-sm">
+                  <span className="text-2xl shrink-0">⏳</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-baloo font-black text-amber-900 text-[14px] leading-tight">Your 7-day free trial has ended</p>
+                    <p className="text-amber-700 text-[12px] mt-0.5">
+                      You&apos;re now on the free plan — 3 stories & 10 Nimi chats/day.{" "}
+                      <Link href="/pricing" className="font-black underline underline-offset-2 hover:text-amber-900">Subscribe to restore full access →</Link>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (typeof window !== "undefined") localStorage.setItem("nimipiko_trial_expiry_seen", "1");
+                      setTrialJustExpired(false);
+                    }}
+                    className="w-7 h-7 rounded-full hover:bg-amber-100 flex items-center justify-center text-amber-500 hover:text-amber-700 transition shrink-0 text-[16px] font-black"
+                    aria-label="Dismiss"
+                  >✕</button>
+                </div>
+              </motion.div>
+            )}
 
             {/* ── Main flex grid ──────────────────────────────────────────── */}
             <div className="relative z-10 flex flex-col xl:flex-row xl:items-start gap-6 px-4 lg:px-6 py-6 max-w-[1400px] mx-auto">

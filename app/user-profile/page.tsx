@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getChildren,
@@ -24,6 +25,9 @@ import StreaksTab from "@/components/profile/StreaksTab";
 import { PageSurface } from "@/components/layout/primitives";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
+import supabase from "@/lib/supabaseClient";
+import { getActiveSubscription } from "@/lib/payments/products";
+import { Crown, Download, Loader2 } from "lucide-react";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -98,13 +102,51 @@ function EarnedAchievementsCard({
   earnedSlugs,
   imageMap,
   certificates,
+  hasSubscription,
+  childName,
 }: {
   earnedSlugs: string[];
   imageMap: Record<string, string>;
   certificates: ChildAchievement[];
+  hasSubscription: boolean;
+  childName: string;
 }) {
   const { t } = useLanguage();
+  const router = useRouter();
+  const [downloading, setDownloading] = useState<string | null>(null);
   const hasAny = earnedSlugs.length > 0 || certificates.length > 0;
+
+  const downloadCert = async (cert: ChildAchievement) => {
+    if (!hasSubscription) {
+      router.push("/pricing?reason=certificate");
+      return;
+    }
+    setDownloading(cert.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const title = certLabelFromSlug(cert.slug);
+      const params = new URLSearchParams({
+        child: childName,
+        story: title,
+        lang: cert.language,
+        format: "pdf",
+      });
+      const res = await fetch(`/api/certificate?${params}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${childName.replace(/\s+/g, "_")}_certificate.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   return (
     <div className="bg-ds-card border border-ds-border shadow-ds-card p-5" style={{ borderRadius: "var(--leaf-r)" }}>
@@ -159,26 +201,48 @@ function EarnedAchievementsCard({
             {t("certificatesLabel")} · {certificates.length}
           </p>
           <div className="space-y-2">
-            {certificates.map((cert, i) => (
-              <motion.div
-                key={cert.slug}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.07 }}
-                className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 px-3 py-2.5 rounded-xl"
-              >
-                <span className="text-2xl leading-none">🎓</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-nunito font-black text-ds-text text-[13px] leading-tight truncate">
-                    {certLabelFromSlug(cert.slug)}
-                  </p>
-                  <p className="text-ds-muted text-[10px] font-medium mt-0.5">
-                    {cert.earned_at ? new Date(cert.earned_at).toLocaleDateString() : ""}
-                  </p>
-                </div>
-                <span className="text-amber-500 font-black text-[11px] shrink-0">{t("certEarned")}</span>
-              </motion.div>
-            ))}
+            {certificates.map((cert, i) => {
+              const isDownloading = downloading === cert.id;
+              return (
+                <motion.div
+                  key={cert.slug}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.07 }}
+                  className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 px-3 py-2.5 rounded-xl"
+                >
+                  <span className="text-2xl leading-none">🎓</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-nunito font-black text-ds-text text-[13px] leading-tight truncate">
+                      {certLabelFromSlug(cert.slug)}
+                    </p>
+                    <p className="text-ds-muted text-[10px] font-medium mt-0.5">
+                      {cert.earned_at ? new Date(cert.earned_at).toLocaleDateString() : ""}
+                    </p>
+                  </div>
+
+                  {/* Download / upgrade CTA */}
+                  <motion.button
+                    whileTap={{ scale: 0.93 }}
+                    onClick={() => void downloadCert(cert)}
+                    disabled={isDownloading}
+                    className={`flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1.5 rounded-xl shrink-0 transition ${
+                      hasSubscription
+                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                        : "bg-violet-100 text-violet-700 hover:bg-violet-200"
+                    } disabled:opacity-60`}
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : hasSubscription ? (
+                      <><Download className="w-3 h-3" /> PDF</>
+                    ) : (
+                      <><Crown className="w-3 h-3" /> Club</>
+                    )}
+                  </motion.button>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -205,6 +269,7 @@ export default function UserProfilePage() {
   const [earnedBadgeSlugs, setEarnedBadgeSlugs] = useState<string[]>([]);
   const [badgeImageMap, setBadgeImageMap] = useState<Record<string, string>>({});
   const [certificates, setCertificates] = useState<ChildAchievement[]>([]);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const activeChildRef = useRef<Child | null>(null);
@@ -228,7 +293,7 @@ export default function UserProfilePage() {
     // Fire milestone-badge check in parallel with display data — don't block render.
     const milestonePromise = awardMilestoneBadges(child.id, child.language);
 
-    const [wStreak, wCounts, stars, dates, badges, streak, stories, imageMap, certs] = await Promise.all([
+    const [wStreak, wCounts, stars, dates, badges, streak, stories, imageMap, certs, authData] = await Promise.all([
       getWeekStreak(child.id, child.language),
       getWeekActivityCounts(child.id, child.language),
       getTotalStars(child.id, child.language),
@@ -238,7 +303,12 @@ export default function UserProfilePage() {
       getCompletedStoriesCount(child.id, child.language),
       getBadgeImages(),
       getChildCertificates(child.id, child.language),
+      supabase.auth.getUser(),
     ]);
+    if (authData.data.user) {
+      const sub = await getActiveSubscription(authData.data.user.id);
+      setHasSubscription(!!sub);
+    }
 
     if (silent && gen !== switchGenRef.current) return;
 
@@ -414,7 +484,7 @@ export default function UserProfilePage() {
                   currentStreak={currentStreak}
                 />
                 <WeeklyActivityChart weekCounts={weekCounts} />
-                <EarnedAchievementsCard earnedSlugs={earnedBadgeSlugs} imageMap={badgeImageMap} certificates={certificates} />
+                <EarnedAchievementsCard earnedSlugs={earnedBadgeSlugs} imageMap={badgeImageMap} certificates={certificates} hasSubscription={hasSubscription} childName={childName} />
               </motion.div>
             )}
 
