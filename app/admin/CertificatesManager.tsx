@@ -9,6 +9,7 @@ import { ACCENT, LANGUAGES, LANGUAGE_META, CATEGORY_ORDER, CATEGORY_META, FALLBA
 import { Skeleton, SkeletonHeaderBanner, SkeletonStatCards, SkeletonTable, SkeletonCardGrid, SkeletonList } from './Skeleton'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface CertificatesManagerProps {
   onNavigate: (table: string) => void
@@ -177,6 +178,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
       if (error) throw error
       setRows(prev => prev.filter(r => r.id !== row.id))
       toastOk(`Achievement revoked for ${childName}.`)
+      void logAdminAction({ action: 'revoke_certificate', entityType: 'achievement', entityId: row.id, entityLabel: `${desc.label} — ${childName}` })
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Failed to revoke achievement.')
     } finally {

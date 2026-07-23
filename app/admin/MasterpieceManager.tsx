@@ -9,6 +9,7 @@ import supabase from '@/lib/supabaseClient'
 import { authedFetch } from '@/lib/authedFetch'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 import { Skeleton, SkeletonStatCards } from './Skeleton'
 
 interface Story {
@@ -251,6 +252,7 @@ export default function MasterpieceManager({ onNavigate, onOpenSidebar }: Props)
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o))
       setChangingStatus(null)
       toastOk(`Order marked as ${status}.`)
+      void logAdminAction({ action: 'update_order_status', entityType: 'order', entityId: orderId, entityLabel: orderId, metadata: { status } })
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Status update failed.')
     } finally {
@@ -275,6 +277,7 @@ export default function MasterpieceManager({ onNavigate, onOpenSidebar }: Props)
       if (error) throw error
       setOrders(prev => prev.filter(o => o.id !== orderId))
       toastOk('Order deleted.')
+      void logAdminAction({ action: 'delete_order', entityType: 'order', entityId: orderId, entityLabel: childName })
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Delete failed.')
     } finally {

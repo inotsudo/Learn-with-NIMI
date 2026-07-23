@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
+import { logAdminAction } from '@/lib/adminAuditLog';
 import { MessagesSquare, RefreshCw, ChevronDown, ChevronUp, Search, Trash2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { useConfirmDialog } from './ConfirmDialog';
@@ -93,6 +94,7 @@ export default function ConversationHistoryManager({ onOpenSidebar }: Props) {
       if (err) throw err;
       setRows(prev => prev.filter(r => r.id !== id));
       toastOk('Conversation deleted.');
+      void logAdminAction({ action: 'delete_conversation', entityType: 'conversation', entityId: id, entityLabel: child_name });
     } catch (e) {
       toastErr('Failed to delete conversation.');
     }

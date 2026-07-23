@@ -4,6 +4,7 @@ import supabase from '@/lib/supabaseClient'
 import { Gift, CheckCircle, Clock, ChevronLeft, Trash2 } from 'lucide-react'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface GiftRow {
   id: string
@@ -58,6 +59,7 @@ export default function GiftManager({ onOpenSidebar }: { onOpenSidebar?: () => v
       if (error) throw error
       setGifts(prev => prev.map(g => g.id === id ? { ...g, redeemed_at: new Date().toISOString() } : g))
       toastOk('Gift marked as redeemed.')
+      void logAdminAction({ action: 'mark_gift_redeemed', entityType: 'gift', entityId: id, entityLabel: id })
     } catch (err) {
       toastErr('Failed to mark gift as redeemed.')
     }
@@ -79,6 +81,7 @@ export default function GiftManager({ onOpenSidebar }: { onOpenSidebar?: () => v
       if (error) throw error
       setGifts(prev => prev.map(g => g.id === id ? { ...g, redeemed_at: null } : g))
       toastOk('Gift revoked.')
+      void logAdminAction({ action: 'revoke_gift', entityType: 'gift', entityId: id, entityLabel: id })
     } catch (err) {
       toastErr('Failed to revoke gift.')
     }
@@ -98,6 +101,7 @@ export default function GiftManager({ onOpenSidebar }: { onOpenSidebar?: () => v
       if (error) throw error
       setGifts(prev => prev.filter(g => g.id !== id))
       toastOk('Gift deleted.')
+      void logAdminAction({ action: 'delete_gift', entityType: 'gift', entityId: id, entityLabel: recipient_name ?? recipient_email })
     } catch (err) {
       toastErr('Failed to delete gift.')
     }

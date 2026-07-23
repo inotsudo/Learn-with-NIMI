@@ -5,6 +5,7 @@ import { Menu, Rocket, XCircle, Archive } from 'lucide-react'
 import { computeReadiness } from '@/lib/storyReadiness'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 import PublishingStats from '@/components/admin/publishing/PublishingStats'
 import PublishingFilters, { type PublishingFilter } from '@/components/admin/publishing/PublishingFilters'
 import PublishingTable from '@/components/admin/publishing/PublishingTable'
@@ -95,6 +96,7 @@ const filtered = useMemo(() => {
         body: JSON.stringify({ storyId: id }),
       }).catch(err => toastErr(`Cache warm failed: ${err instanceof Error ? err.message : String(err)}`))
       toastOk(`"${title}" is now live.`)
+      void logAdminAction({ action: 'publish_story', entityType: 'story', entityId: id, entityLabel: title })
       await load()
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Failed to publish story.')
@@ -113,6 +115,7 @@ const filtered = useMemo(() => {
     try {
       await supabase.from('stories').update({ status: 'draft', published_at: null }).eq('id', id)
       toastOk(`"${title}" unpublished.`)
+      void logAdminAction({ action: 'unpublish_story', entityType: 'story', entityId: id, entityLabel: title })
       await load()
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Failed to unpublish story.')
@@ -151,12 +154,15 @@ const filtered = useMemo(() => {
           }
         }
         toastOk('Published eligible stories.')
+        void logAdminAction({ action: 'bulk_publish_stories', entityType: 'story', entityId: ids.join(','), entityLabel: `${count} stories`, metadata: { count } })
       } else if (action === 'unpublish') {
         await supabase.from('stories').update({ status: 'draft', published_at: null }).in('id', ids)
         toastOk(`${count} ${count === 1 ? 'story' : 'stories'} unpublished.`)
+        void logAdminAction({ action: 'bulk_unpublish_stories', entityType: 'story', entityId: ids.join(','), entityLabel: `${count} stories`, metadata: { count } })
       } else if (action === 'retire') {
         await supabase.from('stories').update({ status: 'retired' }).in('id', ids)
         toastOk(`${count} ${count === 1 ? 'story' : 'stories'} retired.`)
+        void logAdminAction({ action: 'bulk_retire_stories', entityType: 'story', entityId: ids.join(','), entityLabel: `${count} stories`, metadata: { count } })
       }
       setSelected(new Set())
       await load()

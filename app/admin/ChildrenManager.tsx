@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Search, Filter, Menu, ChevronLeft, ChevronRight, Baby, X } from 'lucide-react'
 import { useToast } from './Toast'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface Props {
   initialChildId?: string
@@ -116,6 +117,7 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
       if (error) throw error
       setChildren(prev => prev.map(c => ids.includes(c.id) ? { ...c, language: bulkLang } : c))
       toastOk(`Language updated to ${bulkLang.toUpperCase()} for ${ids.length} child${ids.length === 1 ? '' : 'ren'}.`)
+      void logAdminAction({ action: 'bulk_update_language', entityType: 'child', entityId: ids.join(','), entityLabel: `${ids.length} children`, metadata: { count: ids.length, language: bulkLang } })
       setSelectedIds(new Set())
       setShowLangPicker(false)
     } catch (err) {
@@ -136,6 +138,7 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
       if (error) throw error
       setChildren(prev => prev.filter(c => !ids.includes(c.id)))
       toastOk(`${ids.length} child${ids.length === 1 ? '' : 'ren'} deleted.`)
+      void logAdminAction({ action: 'bulk_delete_children', entityType: 'child', entityId: ids.join(','), entityLabel: `${ids.length} children`, metadata: { count: ids.length } })
       setSelectedIds(new Set())
     } catch (err) {
       console.error('[ChildrenManager] bulk delete failed:', err)

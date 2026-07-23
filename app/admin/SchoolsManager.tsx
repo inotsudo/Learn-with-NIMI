@@ -4,6 +4,7 @@ import supabase from '@/lib/supabaseClient'
 import { Search, School, Menu, Mail, Globe, Users, CheckCircle2, Clock, XCircle, Trash2 } from 'lucide-react'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface Props {
   onOpenSidebar?: () => void
@@ -69,6 +70,7 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
       if (error) throw error
       setRows(prev => prev.map(r => r.id === id ? { ...r, status } : r))
       toastOk('Status updated.')
+      void logAdminAction({ action: 'update_school_inquiry_status', entityType: 'school_inquiry', entityId: id, entityLabel: id, metadata: { status } })
     } catch (err) {
       toastErr('Failed to update status.')
     } finally {
@@ -89,6 +91,7 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
       if (error) throw error
       setRows(prev => prev.filter(r => r.id !== id))
       toastOk('Inquiry deleted.')
+      void logAdminAction({ action: 'delete_school_inquiry', entityType: 'school_inquiry', entityId: id, entityLabel: school })
     } catch (err) {
       toastErr('Failed to delete inquiry.')
     }

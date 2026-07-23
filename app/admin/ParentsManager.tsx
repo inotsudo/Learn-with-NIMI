@@ -9,6 +9,7 @@ import { ACCENT, LANGUAGE_META, CATEGORY_META, FALLBACK_META, type Lang } from '
 import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface ParentsManagerProps {
   initialParentId?: string
@@ -274,6 +275,7 @@ export default function ParentsManager({
       )
       setEditingNameId(null)
       toastOk('Name updated.')
+      void logAdminAction({ action: 'update_parent_name', entityType: 'parent', entityId: parentId, entityLabel: trimmed })
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Failed to update name.')
     } finally {
@@ -324,6 +326,7 @@ export default function ParentsManager({
       }
       setShowGrantId(null)
       toastOk('Club access granted.')
+      void logAdminAction({ action: 'grant_club', entityType: 'parent', entityId: parentId, entityLabel: parentId, metadata: { months } })
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Failed to grant access.')
     } finally {
@@ -354,6 +357,7 @@ export default function ParentsManager({
         return next
       })
       toastOk('Club access revoked.')
+      void logAdminAction({ action: 'revoke_club', entityType: 'parent', entityId: parentId, entityLabel: parentId })
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Failed to revoke access.')
     } finally {
@@ -404,6 +408,7 @@ export default function ParentsManager({
       setDeleteDialog(null)
       setDeleteEmailInput('')
       toastOk('Parent account deleted.')
+      void logAdminAction({ action: 'delete_parent', entityType: 'parent', entityId: dd.id, entityLabel: dd.email })
     } catch (err) {
       toastErr(err instanceof Error ? err.message : 'Failed to delete account.')
     } finally {

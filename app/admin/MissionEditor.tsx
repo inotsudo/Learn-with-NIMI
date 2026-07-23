@@ -15,6 +15,7 @@ import {
 } from './missionMeta'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface VersionForm {
   id: string
@@ -462,6 +463,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
 
       setMessage('Saved!')
       toastOk('Saved!')
+      void logAdminAction({ action: 'save_mission', entityType: 'mission', entityId: mission.id, entityLabel: vf.title || mission.id })
       onSaved()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save mission.'
@@ -531,6 +533,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
     } else {
       setMessage('All languages published!')
       toastOk('All languages published!')
+      void logAdminAction({ action: 'publish_mission_all_langs', entityType: 'mission', entityId: mission.id, entityLabel: vf.title || mission.id })
       onSaved()
     }
   }
@@ -552,6 +555,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
       await publishVersion(activeLang)
       setMessage('Mission published!')
       toastOk('Mission published!')
+      void logAdminAction({ action: 'publish_mission', entityType: 'mission', entityId: mission.id, entityLabel: vf.title || mission.id })
       onSaved()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to publish mission.'
@@ -599,6 +603,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
       if (rpcErr) throw rpcErr
       setMessage('Rolled back to the selected revision.')
       toastOk('Rolled back to the selected revision.')
+      void logAdminAction({ action: 'rollback_mission', entityType: 'mission', entityId: mission.id, entityLabel: vf.title || mission.id, metadata: { versionId } })
       onSaved()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to roll back.'

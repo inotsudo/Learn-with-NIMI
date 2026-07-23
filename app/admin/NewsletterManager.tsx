@@ -4,6 +4,7 @@ import supabase from '@/lib/supabaseClient'
 import { Mail, Download, Search, UserX, RotateCcw, Trash2 } from 'lucide-react'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface Row {
   id: string
@@ -78,6 +79,7 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
       if (error) throw error
       setRows(prev => prev.map(r => r.id === id ? { ...r, unsubscribed_at: new Date().toISOString() } : r))
       toastOk('Subscriber unsubscribed.')
+      void logAdminAction({ action: 'unsubscribe_newsletter', entityType: 'newsletter_subscriber', entityId: id, entityLabel: email })
     } catch (err) {
       toastErr('Failed to unsubscribe.')
     }
@@ -92,6 +94,7 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
       if (error) throw error
       setRows(prev => prev.map(r => r.id === id ? { ...r, unsubscribed_at: null } : r))
       toastOk('Subscriber re-subscribed.')
+      void logAdminAction({ action: 'resubscribe_newsletter', entityType: 'newsletter_subscriber', entityId: id, entityLabel: id })
     } catch (err) {
       toastErr('Failed to re-subscribe.')
     }
@@ -110,6 +113,7 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
       if (error) throw error
       setRows(prev => prev.filter(r => r.id !== id))
       toastOk('Subscriber deleted.')
+      void logAdminAction({ action: 'delete_newsletter_subscriber', entityType: 'newsletter_subscriber', entityId: id, entityLabel: email })
     } catch (err) {
       toastErr('Failed to delete subscriber.')
     }

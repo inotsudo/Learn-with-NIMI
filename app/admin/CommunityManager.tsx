@@ -5,6 +5,7 @@ import { getStorageUrl } from '@/lib/queries'
 import { Search, Menu, ChevronLeft, ChevronRight, Heart, CheckCircle2, XCircle, Trash2 } from 'lucide-react'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface Props {
   onNavigate: (table: string) => void
@@ -63,6 +64,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
       if (error) throw error
       setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'approved', is_public: true } : p))
       toastOk('Post approved.')
+      void logAdminAction({ action: 'approve_post', entityType: 'post', entityId: id, entityLabel: 'community post' })
     } catch (err) {
       toastErr('Failed to approve post.')
     }
@@ -81,6 +83,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
       if (error) throw error
       setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'rejected', is_public: false } : p))
       toastOk('Post rejected.')
+      void logAdminAction({ action: 'reject_post', entityType: 'post', entityId: id, entityLabel: 'community post' })
     } catch (err) {
       toastErr('Failed to reject post.')
     }
@@ -99,6 +102,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
       if (error) throw error
       setPosts(prev => prev.filter(p => p.id !== id))
       toastOk('Post deleted.')
+      void logAdminAction({ action: 'delete_post', entityType: 'post', entityId: id, entityLabel: child_name })
     } catch (err) {
       toastErr('Failed to delete post.')
     }

@@ -4,6 +4,7 @@ import supabase from '@/lib/supabaseClient'
 import { Share2, Gift, Users, CheckCircle2, Trash2 } from 'lucide-react'
 import { useToast } from './Toast'
 import { useConfirmDialog } from './ConfirmDialog'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface Redemption {
   id: string
@@ -59,6 +60,7 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
       if (error) throw error
       setRows(prev => prev.map(r => r.id === id ? { ...r, reward_granted_at: new Date().toISOString() } : r))
       toastOk('Reward granted.')
+      void logAdminAction({ action: 'grant_referral_reward', entityType: 'referral', entityId: id, entityLabel: id })
     } catch (err) {
       toastErr('Failed to grant reward.')
     }
@@ -77,6 +79,7 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
       if (error) throw error
       setRows(prev => prev.filter(r => r.id !== id))
       toastOk('Redemption deleted.')
+      void logAdminAction({ action: 'delete_referral', entityType: 'referral', entityId: id, entityLabel: id })
     } catch (err) {
       toastErr('Failed to delete redemption.')
     }

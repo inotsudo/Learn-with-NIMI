@@ -1,8 +1,9 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Menu, Save, CheckCircle2 } from 'lucide-react'
+import { Menu, Save, Loader2 } from 'lucide-react'
 import { useToast } from './Toast'
+import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface Props {
   initialSettingsChildId?: string
@@ -12,66 +13,80 @@ interface Props {
 
 type SettingsTab = 'general' | 'story' | 'notifications' | 'security'
 
-const STORAGE_KEY = 'nimipiko-admin-settings'
+type Config = Record<string, string | boolean>
 
-function loadSettings(): Record<string, string | boolean> {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') } catch { return {} }
-}
-function saveSettings(s: Record<string, string | boolean>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+const DEFAULTS: Config = {
+  platformName: 'NimiPiko',
+  tagline: 'Stories. Adventures. Values for Life.',
+  adminEmail: '',
+  supportEmail: '',
+  missionsPerStory: '6',
+  starsPerMission: '10',
+  autoUnlock: true,
+  introRequired: false,
+  pushNotifications: true,
+  dailyReminders: true,
+  achievementAlerts: true,
+  communityUpdates: false,
+  parentGate: true,
+  contentModeration: true,
+  dataEncryption: true,
 }
 
-export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
+export default function SettingsManager({ onOpenSidebar }: Props) {
   const [tab, setTab] = useState<SettingsTab>('general')
+  const [settings, setSettings] = useState<Config>(DEFAULTS)
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const { success: toastOk } = useToast()
-
-  const [settings, setSettings] = useState<Record<string, string | boolean>>({
-    platformName: 'NimiPiko',
-    tagline: 'Stories. Adventures. Values for Life.',
-    adminEmail: '',
-    supportEmail: '',
-    missionsPerStory: '6',
-    starsPerMission: '10',
-    autoUnlock: true,
-    introRequired: false,
-    pushNotifications: true,
-    dailyReminders: true,
-    achievementAlerts: true,
-    communityUpdates: false,
-    parentGate: true,
-    contentModeration: true,
-    dataEncryption: true,
-  })
+  const { success: toastOk, error: toastErr } = useToast()
 
   useEffect(() => {
-    const stored = loadSettings()
-    setSettings(prev => ({ ...prev, ...stored }))
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email) setSettings(prev => ({ ...prev, adminEmail: prev.adminEmail || user.email! }))
+      try {
+        const [{ data: row }, { data: { user } }] = await Promise.all([
+          supabase.from('admin_settings').select('config').eq('id', 1).single(),
+          supabase.auth.getUser(),
+        ])
+        const stored = (row?.config ?? {}) as Config
+        setSettings(prev => ({
+          ...prev,
+          ...stored,
+          adminEmail: String(stored.adminEmail || user?.email || ''),
+        }))
+      } catch {
+        // fallback to defaults — settings still usable
+      } finally {
+        setLoading(false)
+      }
     })()
   }, [])
 
-  const set = (key: string, value: string | boolean) => {
-    setSettings(prev => {
-      const next = { ...prev, [key]: value }
-      saveSettings(next)
-      return next
-    })
-  }
+  const set = (key: string, value: string | boolean) =>
+    setSettings(prev => ({ ...prev, [key]: value }))
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true)
-    saveSettings(settings)
-    setTimeout(() => { setSaving(false); toastOk('Settings saved') }, 300)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { error } = await supabase
+        .from('admin_settings')
+        .update({ config: settings, updated_at: new Date().toISOString(), updated_by: user?.email })
+        .eq('id', 1)
+      if (error) throw error
+      void logAdminAction({ action: 'update_settings', entityType: 'settings', entityId: '1', entityLabel: 'Platform Settings' })
+      toastOk('Settings saved')
+    } catch {
+      toastErr('Failed to save settings')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const TABS: { key: SettingsTab; label: string }[] = [
-    { key: 'general', label: 'General' },
-    { key: 'story', label: 'Story Settings' },
+    { key: 'general',       label: 'General' },
+    { key: 'story',         label: 'Story Settings' },
     { key: 'notifications', label: 'Notifications' },
-    { key: 'security', label: 'Security' },
+    { key: 'security',      label: 'Security' },
   ]
 
   const Toggle = ({ settingKey }: { settingKey: string }) => {
@@ -81,6 +96,14 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
         className={`w-11 h-6 rounded-full flex items-center px-0.5 transition ${on ? 'bg-emerald-500' : 'bg-gray-200'}`}>
         <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
       </button>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+      </div>
     )
   }
 
@@ -136,7 +159,7 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                 <div className="flex justify-end pt-2">
                   <button onClick={handleSave} disabled={saving}
                     className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-lg px-5 py-2.5 transition disabled:opacity-50">
-                    {saving ? 'Saving...' : <><Save size={15} /> Save Changes</>}
+                    {saving ? <><Loader2 size={15} className="animate-spin" /> Saving…</> : <><Save size={15} /> Save Changes</>}
                   </button>
                 </div>
               </div>
@@ -148,8 +171,8 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                 <p className="text-[12px] text-gray-400 mb-3">Configure how stories work for children.</p>
                 {[
                   { key: 'missionsPerStory', label: 'Missions per Story', desc: 'Number of missions required to complete a story', type: 'text' },
-                  { key: 'starsPerMission', label: 'Stars per Mission', desc: 'Default stars awarded per mission', type: 'text' },
-                  { key: 'autoUnlock', label: 'Auto-unlock Next Story', desc: 'Automatically unlock the next story when current is complete', type: 'toggle' },
+                  { key: 'starsPerMission',  label: 'Stars per Mission',  desc: 'Default stars awarded per mission', type: 'text' },
+                  { key: 'autoUnlock',   label: 'Auto-unlock Next Story', desc: 'Automatically unlock the next story when current is complete', type: 'toggle' },
                   { key: 'introRequired', label: 'Intro Required', desc: 'Require children to view intro items before missions', type: 'toggle' },
                 ].map(s => (
                   <div key={s.key} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
@@ -165,6 +188,12 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                     )}
                   </div>
                 ))}
+                <div className="flex justify-end pt-4">
+                  <button onClick={handleSave} disabled={saving}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-lg px-5 py-2.5 transition disabled:opacity-50">
+                    {saving ? <><Loader2 size={15} className="animate-spin" /> Saving…</> : <><Save size={15} /> Save Changes</>}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -173,9 +202,9 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                 <h2 className="text-[15px] font-extrabold text-gray-800 mb-1">Notification Settings</h2>
                 {[
                   { key: 'pushNotifications', label: 'Push Notifications', desc: 'Send push notifications to parents' },
-                  { key: 'dailyReminders', label: 'Daily Reminders', desc: 'Remind children to continue their story' },
+                  { key: 'dailyReminders',    label: 'Daily Reminders',    desc: 'Remind children to continue their story' },
                   { key: 'achievementAlerts', label: 'Achievement Alerts', desc: 'Notify when a child earns a badge or certificate' },
-                  { key: 'communityUpdates', label: 'Community Updates', desc: 'Notify about new community posts' },
+                  { key: 'communityUpdates',  label: 'Community Updates',  desc: 'Notify about new community posts' },
                 ].map(n => (
                   <div key={n.key} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                     <div className="flex-1 min-w-0 mr-3">
@@ -185,6 +214,12 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                     <Toggle settingKey={n.key} />
                   </div>
                 ))}
+                <div className="flex justify-end pt-4">
+                  <button onClick={handleSave} disabled={saving}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-lg px-5 py-2.5 transition disabled:opacity-50">
+                    {saving ? <><Loader2 size={15} className="animate-spin" /> Saving…</> : <><Save size={15} /> Save Changes</>}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -192,9 +227,9 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
               <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6 space-y-1">
                 <h2 className="text-[15px] font-extrabold text-gray-800 mb-1">Security Settings</h2>
                 {[
-                  { key: 'parentGate', label: 'Parent Gate Required', desc: 'Require parent confirmation before sharing content' },
-                  { key: 'contentModeration', label: 'Content Moderation', desc: 'Review community posts before publishing' },
-                  { key: 'dataEncryption', label: 'Data Encryption', desc: 'Encrypt sensitive child data at rest' },
+                  { key: 'parentGate',        label: 'Parent Gate Required', desc: 'Require parent confirmation before sharing content' },
+                  { key: 'contentModeration', label: 'Content Moderation',   desc: 'Review community posts before publishing' },
+                  { key: 'dataEncryption',    label: 'Data Encryption',      desc: 'Encrypt sensitive child data at rest' },
                 ].map(s => (
                   <div key={s.key} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                     <div className="flex-1 min-w-0 mr-3">
@@ -204,6 +239,12 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
                     <Toggle settingKey={s.key} />
                   </div>
                 ))}
+                <div className="flex justify-end pt-4">
+                  <button onClick={handleSave} disabled={saving}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-lg px-5 py-2.5 transition disabled:opacity-50">
+                    {saving ? <><Loader2 size={15} className="animate-spin" /> Saving…</> : <><Save size={15} /> Save Changes</>}
+                  </button>
+                </div>
               </div>
             )}
           </div>
