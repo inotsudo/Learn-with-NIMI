@@ -1,12 +1,11 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { getCachedAdmin } from './adminAuth'
 import {
-  Languages as LanguagesIcon, Menu, ChevronDown, PenTool,
+  Menu, PenTool,
 } from 'lucide-react'
 import { ACCENT, LANGUAGES, LANGUAGE_META, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META, CONTENT_STATUSES, STATUS_META, type Lang, type ContentStatus } from './missionMeta'
-import { Skeleton, SkeletonHeaderBanner, SkeletonStatCards, SkeletonTable } from './Skeleton'
+import { Skeleton, SkeletonStatCards, SkeletonTable } from './Skeleton'
 
 interface LanguagesManagerProps {
   onNavigate: (table: string) => void
@@ -35,9 +34,35 @@ function coverageColor(published: number, total: number) {
   return 'text-amber-600'
 }
 
+// Inline interfaces for Supabase join shapes
+interface MissionVersionRow {
+  language: Lang
+  published: boolean
+  status: ContentStatus
+}
+
+interface StoryPageVersionRow {
+  language: Lang
+  text: string | null
+  audio_url: string | null
+  published: boolean
+}
+
+interface StoryPageRow {
+  id: string
+  story_page_versions: StoryPageVersionRow[]
+}
+
+interface StoryDataRow {
+  id: string
+  title: string
+  theme_emoji: string | null
+  sort_order: number | null
+  story_pages: StoryPageRow[]
+}
+
 export default function LanguagesManager({ onNavigate, onOpenSidebar }: LanguagesManagerProps) {
   const [loading, setLoading] = useState(true)
-  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
   const [missionRows, setMissionRows] = useState<MissionCoverageRow[]>([])
   const [storyRows, setStoryRows] = useState<StoryCoverageRow[]>([])
   const [workflowCounts, setWorkflowCounts] = useState<Record<Lang, Record<ContentStatus, number>>>({
@@ -47,10 +72,6 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
   })
 
   const accent = ACCENT.sky
-
-  useEffect(() => {
-    void getCachedAdmin().then(d => { if (d) setAdmin(d) })
-  }, [])
 
   useEffect(() => {
     const fetchCoverage = async () => {
@@ -71,7 +92,7 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
         const slug = m.category_slug as string
         if (!grouped[slug]) grouped[slug] = { total: 0, published: { en: 0, fr: 0, rw: 0 } }
         grouped[slug].total += 1
-        const versions = (m.mission_versions ?? []) as any[]
+        const versions = (m.mission_versions ?? []) as MissionVersionRow[]
         for (const lang of LANGUAGES) {
           if (versions.some(v => v.language === lang && v.published)) grouped[slug].published[lang] += 1
           const status = (versions.find(v => v.language === lang)?.status ?? 'draft') as ContentStatus
@@ -86,13 +107,13 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
       )
 
       setStoryRows(
-        (stories ?? []).map((s: any) => {
+        (stories ?? []).map((s: StoryDataRow) => {
           const pages = s.story_pages ?? []
           const covered: Record<Lang, number> = { en: 0, fr: 0, rw: 0 }
           for (const p of pages) {
-            const versions = p.story_page_versions ?? []
+            const versions: StoryPageVersionRow[] = p.story_page_versions ?? []
             for (const lang of LANGUAGES) {
-              const v = versions.find((v: any) => v.language === lang)
+              const v = versions.find((v: StoryPageVersionRow) => v.language === lang)
               if (v?.published && (v.text || v.audio_url)) covered[lang] += 1
             }
           }
@@ -122,9 +143,19 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
 
   if (loading) {
     return (
-      <div>
-        <SkeletonHeaderBanner />
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+              <Menu size={17} />
+            </button>
+            <div className="space-y-1.5">
+              <Skeleton className="h-7 w-56" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto px-6 py-6 max-w-7xl mx-auto w-full space-y-8">
           <div>
             <Skeleton className="h-6 w-48 mb-4" />
             <SkeletonStatCards count={3} cols="sm:grid-cols-3" />
@@ -143,47 +174,25 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
   }
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 ${accent.soft}`}>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-3.5 min-w-0">
-            <button
-              onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
-            >
-              <Menu size={17} />
-            </button>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
-              <LanguagesIcon className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
-                Languages &amp; Translations <span className="text-lg">🌐</span>
-              </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
-                Translation coverage across English, French &amp; Kinyarwanda
-              </p>
-              <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
-                <span className="mx-1.5 text-gray-300">/</span>
-                <span className="font-bold text-gray-500">Languages</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-            <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
-            <div className="hidden sm:block leading-tight">
-              <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
-              <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
-            </div>
-            <ChevronDown size={14} className="text-gray-400" />
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onOpenSidebar}
+            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500"
+          >
+            <Menu size={17} />
+          </button>
+          <div>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Languages &amp; Translations</h1>
+            <p className="text-[13px] text-gray-500">Translation coverage across English, French &amp; Kinyarwanda</p>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Body */}
-      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+      <div className="flex-1 overflow-auto px-6 py-6 max-w-7xl mx-auto w-full space-y-8">
         {/* Language Overview */}
         <div>
           <h3 className="text-lg font-bold text-gray-800 mb-4">Language Overview</h3>
@@ -364,3 +373,4 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
     </div>
   )
 }
+

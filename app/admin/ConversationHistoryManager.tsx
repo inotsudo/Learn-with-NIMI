@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
-import { MessagesSquare, RefreshCw, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { MessagesSquare, RefreshCw, ChevronDown, ChevronUp, Search, Menu } from 'lucide-react';
 
 interface ConvSummaryRow {
   id: string;
@@ -96,25 +96,25 @@ export default function ConversationHistoryManager({ onOpenSidebar }: Props) {
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center gap-3 mb-1">
-          <button onClick={onOpenSidebar} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
-            <MessagesSquare size={18} />
-          </button>
-          <MessagesSquare className="w-5 h-5 text-emerald-600 hidden lg:block" />
-          <h1 className="text-lg font-bold text-gray-900">AI Chat History</h1>
-          <span className="ml-auto text-xs text-gray-400 italic">Read-only · Summaries only · No raw messages stored</span>
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+              <Menu size={17} />
+            </button>
+            <div>
+              <h1 className="text-[22px] font-extrabold text-gray-900">AI Chat History</h1>
+              <p className="text-[13px] text-gray-500">AI-inferred session summaries · no conversation text is stored</p>
+            </div>
+          </div>
           <button
             onClick={() => void load()}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition"
+            className="w-9 h-9 rounded-full border border-gray-100 hover:bg-gray-50 flex items-center justify-center text-gray-500 transition"
             title="Refresh"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
-        <p className="text-sm text-gray-500 pl-8">
-          AI-inferred session summaries. Vocabulary progress and topic coverage — no conversation text is stored.
-        </p>
       </div>
 
       {/* Filters */}

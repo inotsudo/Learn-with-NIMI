@@ -1,15 +1,14 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { getCachedAdmin } from './adminAuth'
 import {
-  Search, SlidersHorizontal, LayoutGrid, Eye, Bell, ChevronDown, Plus,
+  Search, SlidersHorizontal, LayoutGrid, Eye, Plus,
   MoreVertical, Pencil, Copy, ArrowUpDown, Archive, ArchiveRestore, ChevronLeft, ChevronRight,
   Star, ListChecks, Menu, AlertCircle, RefreshCw, X,
 } from 'lucide-react'
 import { ACCENT, CATEGORY_META, FALLBACK_META, TYPE_META, STATUS_META, LANGUAGES, LANGUAGE_META, COVERAGE_META, currentVersion, translationCoverage, type Lang, type MissionType, type MissionRow } from './missionMeta'
 import MissionEditor from './MissionEditor'
-import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
+import { SkeletonSplitPane } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
 import ArchiveImpactModal, { type ArchiveUsage } from './ArchiveImpactModal'
 
@@ -35,8 +34,6 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
   const { confirm, alert, dialog } = useConfirmDialog()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
-  const [notifCount, setNotifCount] = useState(0)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [defaultType, setDefaultType] = useState<MissionType>('sing')
   const [levelUsage, setLevelUsage] = useState<Record<string, number[]>>({})
@@ -123,29 +120,11 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
   }, [initialMissionId, missions])
 
   useEffect(() => {
-    void Promise.all([
-      getCachedAdmin(),
-      supabase.from('categories').select('default_type').eq('slug', categorySlug).maybeSingle(),
-    ]).then(([adminData, { data: cat }]) => {
-      if (adminData) setAdmin(adminData)
-      if (cat?.default_type) setDefaultType(cat.default_type as MissionType)
-    })
+    void supabase.from('categories').select('default_type').eq('slug', categorySlug).maybeSingle()
+      .then(({ data: cat }) => {
+        if (cat?.default_type) setDefaultType(cat.default_type as MissionType)
+      })
   }, [categorySlug])
-
-  useEffect(() => {
-    const fetchNotifs = async () => {
-      const missionIds = missions.map(m => m.id)
-      if (missionIds.length === 0) { setNotifCount(0); return }
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { count } = await supabase
-        .from('child_progress')
-        .select('*', { count: 'exact', head: true })
-        .in('mission_id', missionIds)
-        .gte('completed_at', since)
-      setNotifCount(count ?? 0)
-    }
-    fetchNotifs()
-  }, [missions])
 
   const totalStars = useMemo(() => missions.reduce((sum, m) => sum + (m.stars ?? 0), 0), [missions])
   const currentType: MissionType = (missions[0]?.type as MissionType) ?? defaultType
@@ -303,8 +282,8 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <SkeletonHeaderBanner />
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <div className="h-20 bg-gray-100 rounded-xl animate-pulse mx-6 mt-6" />
         <SkeletonSplitPane rows={8} />
       </div>
     )
@@ -328,14 +307,14 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 flex-shrink-0 z-30 ${accent.soft}`}>
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3.5 min-w-0">
             <button
               onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500"
             >
               <Menu size={17} />
             </button>
@@ -343,14 +322,14 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
               <meta.icon className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+              <h1 className="text-[22px] font-extrabold text-gray-900 flex items-center gap-2">
                 {meta.label} Missions <span className="text-lg">{TYPE_META[currentType]?.emoji}</span>
               </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
+              <p className="text-[13px] text-gray-500 mt-0.5">
                 Manage {meta.label.toLowerCase()} missions and their translations
               </p>
               <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Daily Adventures</button>
+                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-gray-600">Daily Adventures</button>
                 <span className="mx-1.5 text-gray-300">/</span>
                 <span className="font-bold text-gray-500">{meta.label}</span>
               </p>
@@ -366,22 +345,6 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
             <span className={`inline-flex items-center gap-1.5 bg-white border border-gray-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm ${accent.text}`}>
               <ListChecks className="w-3.5 h-3.5" /> {missions.length}
             </span>
-            <button className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 transition text-gray-500 shadow-sm">
-              <Bell size={17} />
-              {notifCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                  {notifCount}
-                </span>
-              )}
-            </button>
-            <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
-              <div className="hidden sm:block leading-tight">
-                <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
-                <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
-              </div>
-              <ChevronDown size={14} className="text-gray-400" />
-            </div>
           </div>
         </div>
         <div className="flex justify-end mt-4 items-center gap-2">
@@ -405,7 +368,7 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
             <Plus className="w-4 h-4" /> {creating ? 'Creating...' : 'Create New Mission'}
           </button>
         </div>
-      </header>
+      </div>
 
       {actionError && (
         <div className="mx-4 sm:mx-6 mt-3 flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5 flex-shrink-0">

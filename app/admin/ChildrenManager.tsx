@@ -5,7 +5,7 @@ import { Search, Filter, Menu, ChevronLeft, ChevronRight, Baby } from 'lucide-re
 
 interface Props {
   initialChildId?: string
-  onNavigate: (table: string) => void
+  onNavigate?: (table: string) => void
   onOpenSidebar?: () => void
 }
 

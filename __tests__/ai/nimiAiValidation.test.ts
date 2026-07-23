@@ -131,9 +131,9 @@ function makeSupabase(overrides: Record<string, (args: Record<string, unknown>) 
       return Promise.resolve({ data: null, error: null });
     },
 
-    from() {
+    from(..._t: unknown[]) {
       return {
-        select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: { id: 'owned-child-1' }, error: null }) }) }),
+        select: (..._a: unknown[]) => ({ eq: (..._b: unknown[]) => ({ single: () => Promise.resolve({ data: { id: 'owned-child-1' }, error: null }) }) }),
       };
     },
 

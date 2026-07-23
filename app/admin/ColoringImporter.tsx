@@ -2,7 +2,8 @@
 import React, { useState, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { smartUpload } from '@/lib/uploadWithProgress'
-import { Upload, CheckCircle2, AlertCircle, Image as ImageIcon, X } from 'lucide-react'
+import { Upload, CheckCircle2, Image as ImageIcon, X } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface Props {
   storyId: string
@@ -16,15 +17,14 @@ export default function ColoringImporter({ storyId, storyTitle, onDone, onClose 
   const [importing, setImporting] = useState(false)
   const [progress, setProgress] = useState(0)
   const [done, setDone] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const { error: toastErr } = useToast()
 
   const handleFiles = (fileList: FileList) => {
     const imgs = Array.from(fileList)
       .filter(f => f.name.toLowerCase().match(/\.(jpg|jpeg|png|webp|gif)$/))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
     setFiles(imgs)
-    setError(null)
   }
 
   const handleImport = async () => {
@@ -57,7 +57,7 @@ export default function ColoringImporter({ storyId, storyTitle, onDone, onClose 
       setDone(true)
       onDone()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed.')
+      toastErr(err instanceof Error ? err.message : 'Import failed.')
     } finally {
       setImporting(false)
     }
@@ -114,8 +114,6 @@ export default function ColoringImporter({ storyId, storyTitle, onDone, onClose 
                     </div>
                   </div>
                 )}
-
-                {error && <p className="text-[12px] text-red-600 flex items-center gap-1"><AlertCircle size={14} /> {error}</p>}
 
                 <div className="flex gap-3">
                   <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 font-bold text-[13px] rounded-xl py-2.5 hover:bg-gray-50">Cancel</button>

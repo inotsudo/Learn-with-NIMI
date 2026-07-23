@@ -185,6 +185,7 @@ export interface StoryRow {
   is_personalizable?: boolean
   personalization_config?: PersonalizationConfig
   story_pages: StoryPageRow[]
+  coloring_pages?: ColoringPageCountRow[]
   story_versions?: StoryVersionRow[]
   story_slots?: StorySlotRow[]
 }
@@ -209,6 +210,14 @@ export interface StorySlotRow {
   slot_key: string
   mission_id: string
   sort_order: number
+  missions?: {
+    id: string
+    mission_versions: { id: string; language: string; media_url: string | null }[]
+  } | null
+}
+
+export interface ColoringPageCountRow {
+  id: string
 }
 
 export const SLOT_KEYS = ['flipflop_audio', 'story_pdf', 'coloring', 'move_explore', 'sing_along', 'bonus_video'] as const

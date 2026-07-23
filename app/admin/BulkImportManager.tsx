@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import supabase from '@/lib/supabaseClient'
 import { Download, Upload, AlertCircle, AlertTriangle, CheckCircle2, FileSpreadsheet, X } from 'lucide-react'
 import { ACCENT, CATEGORY_ORDER, LANGUAGES, CONTENT_STATUSES } from './missionMeta'
+import { useToast } from './Toast'
 
 const TEMPLATE_COLUMNS = ['level', 'unit', 'category', 'language', 'title', 'content', 'status']
 
@@ -124,13 +125,12 @@ function validateRow(row: Record<string, unknown>, seen: Set<string>, levelNumbe
 }
 
 export default function BulkImportManager() {
+  const { success, error: toastError } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [rows, setRows] = useState<ParsedRow[]>([])
   const [parseError, setParseError] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
-  const [importError, setImportError] = useState<string | null>(null)
-  const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [levels, setLevels] = useState<CurriculumLevelRow[]>([])
   const [categoryTypes, setCategoryTypes] = useState<Record<string, string>>({})
 
@@ -189,8 +189,6 @@ export default function BulkImportManager() {
     const file = e.target.files?.[0]
     if (!file) return
     setParseError(null)
-    setImportError(null)
-    setImportResult(null)
     try {
       const buf = await file.arrayBuffer()
       const wb = XLSX.read(buf, { type: 'array' })
@@ -218,8 +216,6 @@ export default function BulkImportManager() {
     setRows([])
     setFileName(null)
     setParseError(null)
-    setImportError(null)
-    setImportResult(null)
   }
 
   const validRows = rows.filter(r => r.errors.length === 0)
@@ -228,8 +224,6 @@ export default function BulkImportManager() {
   const handleImport = async () => {
     if (validRows.length === 0) return
     setImporting(true)
-    setImportError(null)
-    setImportResult(null)
     try {
       const payload = validRows.map(r => ({
         level_number:  r.level_number,
@@ -242,11 +236,18 @@ export default function BulkImportManager() {
       }))
       const { data, error } = await supabase.rpc('admin_bulk_import_missions', { p_rows: payload })
       if (error) throw error
-      setImportResult(data as ImportResult)
+      const result = data as ImportResult
+      const msg = [
+        result.missions_created > 0 ? `${result.missions_created} mission${result.missions_created === 1 ? '' : 's'} created` : null,
+        `${result.level_missions_linked} slot${result.level_missions_linked === 1 ? '' : 's'} linked`,
+        `${result.versions_created} version${result.versions_created === 1 ? '' : 's'} created`,
+        result.versions_updated > 0 ? `${result.versions_updated} updated` : null,
+      ].filter(Boolean).join(', ')
+      success(`Import complete — ${msg}.`)
       setRows([])
       setFileName(null)
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : 'Import failed.')
+      toastError(err instanceof Error ? err.message : 'Import failed.')
     } finally {
       setImporting(false)
     }
@@ -296,30 +297,6 @@ export default function BulkImportManager() {
         <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span className="flex-1">{parseError}</span>
-        </div>
-      )}
-
-      {importError && (
-        <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span className="flex-1">{importError}</span>
-        </div>
-      )}
-
-      {importResult && (
-        <div className="flex items-start gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-xl px-3.5 py-2.5">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span className="flex-1">
-            Import complete —{' '}
-            {importResult.missions_created > 0 && (
-              <>{importResult.missions_created} new mission{importResult.missions_created === 1 ? '' : 's'} created, </>
-            )}
-            {importResult.level_missions_linked} curriculum slot{importResult.level_missions_linked === 1 ? '' : 's'} linked,{' '}
-            {importResult.versions_created} content version{importResult.versions_created === 1 ? '' : 's'} created
-            {importResult.versions_updated > 0 && (
-              <>, {importResult.versions_updated} updated</>
-            )}.
-          </span>
         </div>
       )}
 

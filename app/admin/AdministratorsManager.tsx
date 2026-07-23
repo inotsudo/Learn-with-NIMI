@@ -2,8 +2,9 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
 import {
-  ShieldCheck, Menu, ChevronDown, AlertCircle, RefreshCw, Trash2, UserPlus, Check,
+  ShieldCheck, Menu, AlertCircle, RefreshCw, Trash2, UserPlus, Check,
 } from 'lucide-react'
+import { useToast } from './Toast'
 import { ACCENT } from './missionMeta'
 import { Skeleton, SkeletonList } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
@@ -119,6 +120,7 @@ function AdminCard({ row, isSelf, amSuperadmin, roleSaving, roleError, savedFlas
 }
 
 export default function AdministratorsManager({ onNavigate, onOpenSidebar }: AdministratorsManagerProps) {
+  const { error: toastErr } = useToast()
   const [admins, setAdmins] = useState<AdminRow[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -189,7 +191,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
       if (error) throw error
       setAdmins(prev => prev.filter(a => a.id !== row.id))
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to remove admin.')
+      toastErr(err instanceof Error ? err.message : 'Failed to remove admin.')
     } finally {
       setRemoving(null)
     }
@@ -231,51 +233,27 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
   }
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-ds-border px-4 sm:px-6 py-5">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-3.5 min-w-0">
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500"
             >
               <Menu size={17} />
             </button>
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-green-50 text-green-600">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
-                Administrators <span className="text-lg">🛡️</span>
-              </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
-                Manage admin accounts &amp; roles
-              </p>
-              <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-green-600">Dashboard</button>
-                <span className="mx-1.5 text-gray-300">/</span>
-                <span className="font-bold text-gray-500">Administrators</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 bg-white border border-ds-border px-3.5 py-2 rounded-full text-sm font-bold shadow-sm text-green-600">
-              <ShieldCheck className="w-3.5 h-3.5" /> {admins.length} admins
-            </span>
-            <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
-              <div className="hidden sm:block leading-tight">
-                <p className="text-sm font-semibold text-gray-700">{currentAdmin?.name ?? 'Admin'}</p>
-                <p className="text-[10px] text-gray-400 uppercase font-bold">{currentAdmin?.role ?? 'admin'}</p>
-              </div>
-              <ChevronDown size={14} className="text-gray-400" />
+            <div>
+              <h1 className="text-[22px] font-extrabold text-gray-900">Administrators</h1>
+              <p className="text-[13px] text-gray-500">Manage admin accounts &amp; roles · {admins.length} admins</p>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Body */}
+      <div className="flex-1 overflow-auto">
       <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
         {loading ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -379,6 +357,7 @@ export default function AdministratorsManager({ onNavigate, onOpenSidebar }: Adm
             )}
           </>
         )}
+      </div>
       </div>
       {dialog}
     </div>

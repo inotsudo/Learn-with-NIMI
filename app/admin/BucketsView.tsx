@@ -1,9 +1,8 @@
 'use client'
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { getCachedAdmin } from './adminAuth'
 import {
-  HardDrive, Menu, ChevronDown, ChevronRight, ArrowLeft, Folder, Search, Upload,
+  HardDrive, Menu, ChevronRight, ArrowLeft, Folder, Search, Upload,
   ExternalLink, Trash2, ImageIcon, Video, Music, FileText, File as FileIcon,
   BookOpen, Palette, Film, AlertCircle, RefreshCw, X,
   type LucideIcon,
@@ -62,7 +61,6 @@ const KIND_ICON: Record<FileKind, LucideIcon> = {
 }
 
 export default function BucketsView({ onNavigate, onOpenSidebar }: BucketsViewProps) {
-  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
   const [bucket, setBucket] = useState<string>(BUCKETS[0])
   const [path, setPath] = useState('')
   const [entries, setEntries] = useState<StorageEntry[]>([])
@@ -73,10 +71,6 @@ export default function BucketsView({ onNavigate, onOpenSidebar }: BucketsViewPr
   const [deletingName, setDeletingName] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const { confirm, dialog } = useConfirmDialog()
-
-  useEffect(() => {
-    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[BucketsView] auth:', err))
-  }, [])
 
   const fetchEntries = useCallback(async (b: string, p: string) => {
     setLoading(true)
@@ -178,47 +172,25 @@ export default function BucketsView({ onNavigate, onOpenSidebar }: BucketsViewPr
   const meta = BUCKET_META[bucket] ?? { label: bucket, description: '', icon: HardDrive }
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 ${accent.soft}`}>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-3.5 min-w-0">
-            <button
-              onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
-            >
-              <Menu size={17} />
-            </button>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
-              <HardDrive className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
-                Media Library <span className="text-lg">🗂️</span>
-              </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
-                All your images, audio &amp; video in one place
-              </p>
-              <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
-                <span className="mx-1.5 text-gray-300">/</span>
-                <span className="font-bold text-gray-500">Media Library</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-            <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
-            <div className="hidden sm:block leading-tight">
-              <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
-              <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
-            </div>
-            <ChevronDown size={14} className="text-gray-400" />
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onOpenSidebar}
+            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500"
+          >
+            <Menu size={17} />
+          </button>
+          <div>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Media Library</h1>
+            <p className="text-[13px] text-gray-500">All your images, audio &amp; video in one place</p>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Body */}
-      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="flex-1 overflow-auto px-6 py-6 space-y-6">
         {actionError && (
           <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />

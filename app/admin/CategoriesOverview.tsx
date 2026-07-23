@@ -3,7 +3,13 @@ import React, { useCallback, useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { AlertCircle, RefreshCw, AlertTriangle } from 'lucide-react'
 import { ACCENT, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META, LANGUAGES, LANGUAGE_META, MISSION_TYPES, TYPE_META, type Lang, type MissionType } from './missionMeta'
+import { useToast } from './Toast'
 import { Skeleton, SkeletonTable } from './Skeleton'
+
+interface MissionVersionPub {
+  language: string
+  published: boolean
+}
 
 interface CategoryRow {
   slug: string
@@ -23,10 +29,10 @@ export default function CategoriesOverview() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [categories, setCategories] = useState<CategoryRow[]>([])
   const [stats, setStats] = useState<Record<string, CategoryStats>>({})
   const [savingSlug, setSavingSlug] = useState<string | null>(null)
+  const { error: toastErr } = useToast()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -47,7 +53,7 @@ export default function CategoriesOverview() {
         const s = next[m.category_slug]
         if (!s) continue
         s.total += 1
-        const versions = (m.mission_versions as any[]) ?? []
+        const versions = (m.mission_versions as MissionVersionPub[]) ?? []
         for (const lang of LANGUAGES) {
           if (versions.some(v => v.language === lang && v.published)) s.published[lang] += 1
         }
@@ -66,14 +72,13 @@ export default function CategoriesOverview() {
   useEffect(() => { fetchData() }, [fetchData, reloadKey])
 
   const handleDefaultTypeChange = async (slug: string, defaultType: MissionType) => {
-    setActionError(null)
     setSavingSlug(slug)
     try {
       const { error } = await supabase.from('categories').update({ default_type: defaultType }).eq('slug', slug)
       if (error) throw error
       setCategories(prev => prev.map(c => (c.slug === slug ? { ...c, default_type: defaultType } : c)))
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to update default type.')
+      toastErr(err instanceof Error ? err.message : 'Failed to update default type.')
     } finally {
       setSavingSlug(null)
     }
@@ -118,13 +123,6 @@ export default function CategoriesOverview() {
 
   return (
     <div className="space-y-4">
-      {actionError && (
-        <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span className="flex-1">{actionError}</span>
-        </div>
-      )}
-
       <div>
         <h3 className="text-base font-bold text-gray-800">Categories</h3>
         <p className="text-gray-500 text-sm">The 8 daily-adventure categories. Slug and order are fixed in the learner app — only the default mission type can be changed here.</p>

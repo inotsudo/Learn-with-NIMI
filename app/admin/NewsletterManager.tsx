@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Mail, Download, Search } from 'lucide-react'
+import { Mail, Download, Search, Menu } from 'lucide-react'
 
 interface Row {
   id: string
@@ -12,7 +12,7 @@ interface Row {
   unsubscribed_at: string | null
 }
 
-interface Props { onOpenSidebar: () => void }
+interface Props { onOpenSidebar?: () => void }
 
 type Filter = 'all' | 'active' | 'unsubscribed'
 
@@ -61,14 +61,15 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 lg:px-8 py-5 border-b border-gray-200 bg-white">
-        <button onClick={onOpenSidebar} className="lg:hidden p-1 text-gray-500">☰</button>
-        <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center">
-          <Mail className="w-5 h-5 text-green-700" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="font-black text-gray-900 text-[17px]">Newsletter</h1>
-          <p className="text-gray-500 text-[12px]">{activeRows.length} active · {unsubRows.length} unsubscribed</p>
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between gap-4 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+            <Menu size={17} />
+          </button>
+          <div>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Newsletter</h1>
+            <p className="text-[13px] text-gray-500">{activeRows.length} active · {unsubRows.length} unsubscribed</p>
+          </div>
         </div>
         <button onClick={exportCsv}
           className="flex items-center gap-1.5 text-[12px] font-bold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">

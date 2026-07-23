@@ -3,8 +3,9 @@ import React, { useEffect, useState } from 'react'
 import { getCachedAdmin } from './adminAuth'
 import {
   LayoutDashboard, BookOpen, Palette, Trophy, Star,
-  Users, Globe, Award, Bell, FolderOpen, Settings,
+  Users, Globe, Bell, FolderOpen, Settings,
   ChevronLeft, ChevronRight, X, CreditCard, Crown, BarChart3, ShieldCheck, GraduationCap, School, Mail, Share2, Tag, Gift, MessageSquareQuote, Handshake, GitMerge, MessagesSquare,
+  Medal, ScrollText, FileText,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -17,34 +18,67 @@ interface SidebarProps {
   onCloseMobile: () => void
 }
 
-const NAV = [
-  { icon: LayoutDashboard, label: 'Overview',           table: 'Dashboard' },
-  { icon: BookOpen,        label: 'Story Studio',       table: 'stories' },
-  { icon: Palette,         label: 'Content Library',    table: 'content_library' },
-  { icon: Trophy,          label: 'Weekly Challenges',  table: 'weekly_challenges' },
-  { icon: Star,            label: 'Rewards',            table: 'child_badges' },
-  { icon: Award,           label: 'Badge Images',       table: 'badge_images' },
-  { icon: Users,           label: 'Families',           table: 'families' },
-  { icon: Globe,           label: 'Community',          table: 'creations' },
-  { icon: Award,           label: 'Certificates',       table: 'child_achievements' },
-  { icon: Award,           label: 'Cert Templates',     table: 'certificate_templates' },
-  { icon: Bell,            label: 'Notifications',      table: 'notifications' },
-  { icon: FolderOpen,      label: 'Media Library',      table: 'Buckets' },
-  { icon: CreditCard,      label: 'Products & Pricing', table: 'products' },
-  { icon: Crown,           label: 'Masterpieces',       table: 'masterpieces' },
-  { icon: BarChart3,       label: 'Analytics',          table: 'child_progress' },
-  { icon: GraduationCap,   label: 'Curriculum',         table: 'curriculum' },
-  { icon: School,          label: 'Schools',            table: 'school_inquiries' },
-  { icon: GitMerge,       label: 'Roster Sync',        table: 'roster_provisioning' },
-  { icon: Mail,            label: 'Newsletter',         table: 'newsletter_signups' },
-  { icon: Share2,          label: 'Referrals',          table: 'referral_redemptions' },
-  { icon: Tag,             label: 'Discount Codes',     table: 'discount_codes' },
-  { icon: Gift,            label: 'Gift Subscriptions', table: 'gift_subscriptions' },
-  { icon: MessageSquareQuote, label: 'Testimonials',   table: 'testimonials' },
-  { icon: Handshake,          label: 'Partners',        table: 'partners' },
-  { icon: MessagesSquare,  label: 'AI Chat History',    table: 'conversation_history' },
-  { icon: ShieldCheck,     label: 'Administrators',     table: 'admins' },
-  { icon: Settings,        label: 'Settings',           table: 'parental_settings' },
+const NAV_SECTIONS: { label?: string; items: { icon: React.ElementType; label: string; table: string }[] }[] = [
+  {
+    items: [
+      { icon: LayoutDashboard, label: 'Overview',        table: 'Dashboard' },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { icon: BookOpen,          label: 'Story Studio',       table: 'stories' },
+      { icon: Trophy,            label: 'Weekly Challenges',  table: 'weekly_challenges' },
+      { icon: Star,              label: 'Rewards',            table: 'child_badges' },
+      { icon: Medal,             label: 'Badge Images',       table: 'badge_images' },
+      { icon: ScrollText,        label: 'Certificates',       table: 'child_achievements' },
+      { icon: FileText,          label: 'Cert Templates',     table: 'certificate_templates' },
+      { icon: FolderOpen,        label: 'Media Library',      table: 'Buckets' },
+      { icon: Crown,             label: 'Masterpieces',       table: 'masterpieces' },
+    ],
+  },
+  {
+    label: 'Users',
+    items: [
+      { icon: Users,             label: 'Families',           table: 'families' },
+      { icon: Globe,             label: 'Community',          table: 'creations' },
+      { icon: MessagesSquare,    label: 'AI Chat History',    table: 'conversation_history' },
+    ],
+  },
+  {
+    label: 'Schools',
+    items: [
+      { icon: GraduationCap,     label: 'Curriculum',         table: 'curriculum' },
+      { icon: School,            label: 'Schools',            table: 'school_inquiries' },
+      { icon: GitMerge,          label: 'Roster Sync',        table: 'roster_provisioning' },
+    ],
+  },
+  {
+    label: 'Commerce',
+    items: [
+      { icon: CreditCard,        label: 'Products & Pricing', table: 'products' },
+      { icon: Mail,              label: 'Newsletter',         table: 'newsletter_signups' },
+      { icon: Share2,            label: 'Referrals',          table: 'referral_redemptions' },
+      { icon: Tag,               label: 'Discount Codes',     table: 'discount_codes' },
+      { icon: Gift,              label: 'Gift Subscriptions', table: 'gift_subscriptions' },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { icon: BarChart3,         label: 'Analytics',          table: 'child_progress' },
+      { icon: MessageSquareQuote,label: 'Testimonials',       table: 'testimonials' },
+      { icon: Handshake,         label: 'Partners',           table: 'partners' },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { icon: Bell,              label: 'Notifications',      table: 'notifications' },
+      { icon: ShieldCheck,       label: 'Administrators',     table: 'admins' },
+      { icon: Settings,          label: 'Settings',           table: 'parental_settings' },
+    ],
+  },
 ]
 
 export default function Sidebar({ currentTable, onSelectTable, collapsed, onToggleCollapse, mobileOpen, onCloseMobile }: SidebarProps) {
@@ -78,22 +112,33 @@ export default function Sidebar({ currentTable, onSelectTable, collapsed, onTogg
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
-        {NAV.map(item => {
-          const active = isActive(item.table)
-          return (
-            <button key={item.table}
-              onClick={() => onSelectTable(item.table)}
-              title={collapsed ? item.label : undefined}
-              aria-current={active ? 'page' : undefined}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition ${
-                collapsed ? 'lg:justify-center lg:px-0' : ''
-              } ${active ? 'bg-green-50 text-green-700' : 'text-gray-500 hover:bg-gray-50 hover:text-ds-text'}`}>
-              <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-              <span className={`truncate ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
-            </button>
-          )
-        })}
+      <nav className="flex-1 overflow-y-auto px-3 py-2">
+        {NAV_SECTIONS.map((section, si) => (
+          <div key={si} className={si > 0 ? 'mt-3' : ''}>
+            {section.label && (
+              <p className={`px-3 mb-1 text-[9.5px] font-bold tracking-widest uppercase text-gray-400 select-none ${collapsed ? 'lg:hidden' : ''}`}>
+                {section.label}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {section.items.map(item => {
+                const active = isActive(item.table)
+                return (
+                  <button key={item.table}
+                    onClick={() => { onSelectTable(item.table); onCloseMobile() }}
+                    title={collapsed ? item.label : undefined}
+                    aria-current={active ? 'page' : undefined}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition ${
+                      collapsed ? 'lg:justify-center lg:px-0' : ''
+                    } ${active ? 'bg-green-50 text-green-700' : 'text-gray-500 hover:bg-gray-50 hover:text-ds-text'}`}>
+                    <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                    <span className={`truncate ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Collapse toggle */}
@@ -105,7 +150,7 @@ export default function Sidebar({ currentTable, onSelectTable, collapsed, onTogg
 
       {/* Admin profile */}
       <div className="border-t border-ds-border px-3 py-3">
-        <button onClick={() => onSelectTable('Profile')}
+        <button onClick={() => { onSelectTable('Profile'); onCloseMobile() }}
           title={collapsed ? (admin?.name ?? 'Admin') : undefined}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition text-left ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}>
           <div className="w-9 h-9 rounded-full bg-green-600 flex items-center justify-center text-white text-[13px] font-black flex-shrink-0">

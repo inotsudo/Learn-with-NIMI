@@ -1,7 +1,7 @@
 'use client'
 import React, { useCallback, useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Gift, CheckCircle, Clock, ChevronLeft } from 'lucide-react'
+import { Gift, CheckCircle, Clock, Menu } from 'lucide-react'
 
 interface GiftRow {
   id: string
@@ -48,19 +48,14 @@ export default function GiftManager({ onOpenSidebar }: { onOpenSidebar?: () => v
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-ds-border px-6 py-4 flex items-center justify-between gap-4 flex-shrink-0">
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between gap-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          {onOpenSidebar && (
-            <button onClick={onOpenSidebar} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition">
-              <ChevronLeft size={18} />
-            </button>
-          )}
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
-            <Gift className="w-5 h-5" />
-          </div>
+          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+            <Menu size={17} />
+          </button>
           <div>
-            <h1 className="font-extrabold text-ds-text text-lg leading-tight">Gift Subscriptions</h1>
-            <p className="text-gray-400 text-xs">{total} gifts · {redeemed} claimed · {pending} pending</p>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Gift Subscriptions</h1>
+            <p className="text-[13px] text-gray-500">{total} gifts · {redeemed} claimed · {pending} pending</p>
           </div>
         </div>
         <input

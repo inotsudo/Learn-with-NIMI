@@ -2,10 +2,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
 import {
-  Bell, Menu, ChevronDown, AlertCircle, RefreshCw, Send, Users, Smartphone, Clock,
+  Bell, Menu, AlertCircle, RefreshCw, Send, Users, Smartphone, Clock,
 } from 'lucide-react'
 import { ACCENT } from './missionMeta'
 import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 import { Skeleton, SkeletonStatCards, SkeletonForm, SkeletonList } from './Skeleton'
 
 interface NotificationsManagerProps {
@@ -39,13 +40,15 @@ function formatDateTime(dateStr: string) {
 
 function StatCard({ icon: Icon, label, value, hint }: { icon: React.ElementType; label: string; value: string | number; hint?: string }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${accent.tile}`}>
-        <Icon className="w-4 h-4" />
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
+      <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
+        <Icon className="w-4 h-4 text-violet-600" />
       </div>
-      <p className="text-2xl font-extrabold text-gray-800">{value}</p>
-      <p className="text-xs text-gray-500 font-medium">{label}</p>
-      {hint && <p className="text-[11px] text-gray-400 mt-0.5">{hint}</p>}
+      <div>
+        <p className="text-[22px] font-extrabold text-gray-900 leading-none tabular-nums whitespace-nowrap">{value}</p>
+        <p className="text-[11px] font-medium text-gray-400 mt-1">{label}</p>
+        {hint && <p className="text-[10px] text-gray-400 mt-0.5">{hint}</p>}
+      </div>
     </div>
   )
 }
@@ -65,8 +68,7 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
   const [targetParentId, setTargetParentId] = useState('')
   const [sending, setSending] = useState(false)
   const { success: toastOk, error: toastErr } = useToast()
-  const [sendError, setSendError] = useState<string | null>(null)
-  const [sendResult, setSendResult] = useState<string | null>(null)
+  const { confirm, dialog } = useConfirmDialog()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -98,9 +100,17 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
 
   const handleSend = async () => {
     if (!canSend) return
+
+    // Confirm before blasting all parents
+    if (!targetParentId) {
+      const ok = await confirm({
+        title: `Send to all ${subscribedCount} subscribed parent${subscribedCount !== 1 ? 's' : ''}?`,
+        message: `"${title.trim()}" will be pushed to ${totalDevices} device${totalDevices !== 1 ? 's' : ''}. This cannot be undone.`,
+      })
+      if (!ok) return
+    }
+
     setSending(true)
-    setSendError(null)
-    setSendResult(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('No active session.')
@@ -138,17 +148,13 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
         }
       }
 
-      const msg = `Sent to ${data.recipient_parents} parent${data.recipient_parents === 1 ? '' : 's'}, ${data.recipient_devices} device${data.recipient_devices === 1 ? '' : 's'}.`
-      setSendResult(msg)
-      toastOk(msg)
+      toastOk(`Sent to ${data.recipient_parents} parent${data.recipient_parents === 1 ? '' : 's'}, ${data.recipient_devices} device${data.recipient_devices === 1 ? '' : 's'}`)
       setTitle('')
       setMessage('')
       setUrl('')
       setTargetParentId('')
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'Failed to send notification.'
-      setSendError(errMsg)
-      toastErr(errMsg)
+      toastErr(err instanceof Error ? err.message : 'Failed to send notification.')
     } finally {
       setSending(false)
     }
@@ -162,43 +168,24 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
   const subscribedCount = useMemo(() => subscribedParentIds.size, [subscribedParentIds])
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 ${accent.soft}`}>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-3.5 min-w-0">
-            <button
-              onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
-            >
-              <Menu size={17} />
-            </button>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
-              <Bell className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
-                Notifications <span className="text-lg">🔔</span>
-              </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
-                Send push announcements to parents
-              </p>
-              <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
-                <span className="mx-1.5 text-gray-300">/</span>
-                <span className="font-bold text-gray-500">Notifications</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-            <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
-            <ChevronDown size={14} className="text-gray-400" />
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+            <Menu size={17} />
+          </button>
+          <div>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Notifications</h1>
+            <p className="text-[13px] text-gray-500">Push announcements to parent devices</p>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Body */}
-      <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+      <div className="flex-1 overflow-auto">
+      <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-5">
         {loading ? (
           <>
             <SkeletonStatCards count={3} cols="sm:grid-cols-3" />
@@ -212,16 +199,14 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
             </div>
           </>
         ) : loadError ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-red-50 text-red-400 flex items-center justify-center mb-3">
-              <AlertCircle className="w-6 h-6" />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
+              <AlertCircle className="w-6 h-6 text-red-400" />
             </div>
-            <p className="text-sm font-bold text-gray-700">Couldn&apos;t load notifications</p>
-            <p className="text-xs text-gray-400 mt-1 max-w-sm">{loadError}</p>
-            <button
-              onClick={fetchData}
-              className={`mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition ${accent.button}`}
-            >
+            <p className="text-[14px] font-bold text-gray-700">Couldn&apos;t load notifications</p>
+            <p className="text-[12px] text-gray-400 mt-1 max-w-sm">{loadError}</p>
+            <button onClick={fetchData}
+              className="mt-4 inline-flex items-center gap-2 text-white text-[12px] font-bold bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition">
               <RefreshCw className="w-3.5 h-3.5" /> Try again
             </button>
           </div>
@@ -235,53 +220,54 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
             </div>
 
             {/* Composer */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-1">
-                <Send className={`w-4 h-4 ${accent.text}`} /> Send Notification
-              </h2>
-              <p className="text-xs text-gray-400 mb-4">
-                Push a message to one parent or everyone with notifications enabled.
-              </p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-3">Send Notification</p>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Title</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Title</label>
+                    <span className={`text-[10px] font-bold tabular-nums ${title.length > 72 ? 'text-red-500' : 'text-gray-400'}`}>{title.length}/80</span>
+                  </div>
                   <input
                     type="text"
                     placeholder="New stories added!"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     maxLength={80}
-                    className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm ${accent.ring}`}
+                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-400 transition"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Message</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Message</label>
+                    <span className={`text-[10px] font-bold tabular-nums ${message.length > 180 ? 'text-red-500' : 'text-gray-400'}`}>{message.length}/200</span>
+                  </div>
                   <textarea
                     placeholder="We just added 3 new FlipFlop Books to the library!"
                     value={message}
                     onChange={e => setMessage(e.target.value)}
                     rows={3}
                     maxLength={200}
-                    className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm resize-none ${accent.ring}`}
+                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-[13px] text-gray-600 focus:outline-none focus:border-green-400 resize-none transition"
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 min-w-0">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Link (optional)</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Link (optional)</label>
                     <input
                       type="text"
                       placeholder="/certificates"
                       value={url}
                       onChange={e => setUrl(e.target.value)}
-                      className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm ${accent.ring}`}
+                      className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-400 transition"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Send to</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Send to</label>
                     <select
                       value={targetParentId}
                       onChange={e => setTargetParentId(e.target.value)}
-                      className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm bg-white ${accent.ring}`}
+                      className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-400 bg-white transition"
                     >
                       <option value="">All subscribed parents ({subscribedCount})</option>
                       {parents.map(p => (
@@ -292,44 +278,47 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
                     </select>
                   </div>
                 </div>
-                <div className="flex items-center justify-end gap-3 pt-1">
-                  {sendResult && <p className="text-xs font-bold text-emerald-600">{sendResult}</p>}
-                  {sendError && <p className="text-xs font-bold text-red-500">{sendError}</p>}
+                <div className="flex items-center justify-end pt-1">
                   <button
-                    onClick={handleSend}
+                    onClick={() => void handleSend()}
                     disabled={!canSend}
-                    className={`inline-flex items-center gap-2 text-sm font-bold text-white px-5 py-2.5 rounded-full transition whitespace-nowrap ${accent.button} disabled:opacity-40 disabled:cursor-not-allowed`}
+                    className="inline-flex items-center gap-2 text-[13px] font-bold text-white bg-green-600 hover:bg-green-700 px-5 py-2.5 rounded-xl shadow-sm transition whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <Send className="w-3.5 h-3.5" /> {sending ? 'Sending...' : 'Send'}
+                    <Send className="w-3.5 h-3.5" />
+                    {sending ? 'Sending…' : targetParentId ? 'Send to parent' : `Send to all ${subscribedCount}`}
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Recently sent */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-base font-bold text-gray-800 mb-4">Recently Sent</h3>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-3">Recently Sent</p>
               {broadcasts.length === 0 ? (
-                <p className="text-sm text-gray-400">No notifications sent yet.</p>
+                <div className="text-center py-10">
+                  <Bell size={32} className="mx-auto text-gray-200 mb-2" />
+                  <p className="text-[13px] font-bold text-gray-400">No broadcasts yet</p>
+                  <p className="text-[12px] text-gray-400 mt-0.5">Send your first notification above</p>
+                </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {broadcasts.map(b => (
-                    <div key={b.id} className="rounded-2xl border border-gray-100 p-4">
+                    <div key={b.id} className="rounded-xl border border-gray-100 px-4 py-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-bold text-gray-800 truncate">{b.title}</p>
-                          <p className="text-sm text-gray-500 mt-0.5">{b.body}</p>
+                          <p className="text-[13px] font-bold text-gray-800 truncate">{b.title}</p>
+                          <p className="text-[12px] text-gray-500 mt-0.5 line-clamp-2">{b.body}</p>
                         </div>
-                        <span className="text-[11px] text-gray-400 whitespace-nowrap">{formatDateTime(b.created_at)}</span>
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">{formatDateTime(b.created_at)}</span>
                       </div>
-                      <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-                        <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${accent.tile}`}>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-50 text-violet-600">
                           {targetLabel(b)}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-[11px] text-gray-400">
                           {b.recipient_parents} parent{b.recipient_parents === 1 ? '' : 's'} · {b.recipient_devices} device{b.recipient_devices === 1 ? '' : 's'}
                         </span>
-                        {b.url && <span className="text-xs text-gray-400">→ {b.url}</span>}
+                        {b.url && <span className="text-[11px] text-gray-400">→ {b.url}</span>}
                       </div>
                     </div>
                   ))}
@@ -339,6 +328,8 @@ export default function NotificationsManager({ onNavigate, onOpenSidebar }: Noti
           </>
         )}
       </div>
+      </div>
     </div>
   )
 }
+

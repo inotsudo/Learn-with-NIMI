@@ -9,6 +9,7 @@ import {
 } from './missionMeta'
 import { Skeleton, SkeletonTable } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
+import { useToast } from './Toast'
 
 interface PublishingCenterProps {
   onNavigate: (table: string) => void
@@ -32,6 +33,7 @@ function readinessClass(count: number) {
 }
 
 export default function PublishingCenter({ onNavigate }: PublishingCenterProps) {
+  const { error: toastError } = useToast()
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -43,7 +45,6 @@ export default function PublishingCenter({ onNavigate }: PublishingCenterProps) 
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null)
   const [mutatingSlug, setMutatingSlug] = useState<string | null>(null)
   const [bulkPublishing, setBulkPublishing] = useState(false)
-  const [actionError, setActionError] = useState<string | null>(null)
   const { confirm, dialog } = useConfirmDialog()
 
   const fetchData = useCallback(async () => {
@@ -162,28 +163,26 @@ export default function PublishingCenter({ onNavigate }: PublishingCenterProps) 
     })
 
   const setVersionStatus = async (slug: string, versionId: string, status: 'draft' | 'review') => {
-    setActionError(null)
     setMutatingSlug(slug)
     try {
       const { error } = await supabase.from('mission_versions').update({ status }).eq('id', versionId)
       if (error) throw error
       await fetchData()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to update status.')
+      toastError(err instanceof Error ? err.message : 'Failed to update status.')
     } finally {
       setMutatingSlug(null)
     }
   }
 
   const handlePublishOne = async (slug: string, versionId: string) => {
-    setActionError(null)
     setMutatingSlug(slug)
     try {
       const { error } = await supabase.rpc('publish_mission_version_revision', { p_version_id: versionId })
       if (error) throw error
       await fetchData()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to publish mission.')
+      toastError(err instanceof Error ? err.message : 'Failed to publish mission.')
     } finally {
       setMutatingSlug(null)
     }
@@ -200,7 +199,6 @@ export default function PublishingCenter({ onNavigate }: PublishingCenterProps) 
       danger: false,
     })
     if (!ok) return
-    setActionError(null)
     setBulkPublishing(true)
     try {
       for (const slug of ready) {
@@ -211,7 +209,7 @@ export default function PublishingCenter({ onNavigate }: PublishingCenterProps) 
         if (error) throw error
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to publish lessons.')
+      toastError(err instanceof Error ? err.message : 'Failed to publish lessons.')
     } finally {
       setBulkPublishing(false)
       await fetchData()
@@ -224,12 +222,6 @@ export default function PublishingCenter({ onNavigate }: PublishingCenterProps) 
         <h3 className="text-base font-bold text-gray-800">Publishing</h3>
         <p className="text-gray-500 text-sm">Pick a Level and Unit to see how close it is to fully published — move lessons from Draft to In Review to Published without opening each one individually.</p>
       </div>
-
-      {actionError && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-red-50 text-red-600 text-sm font-bold border border-red-100">
-          <AlertCircle size={16} className="flex-shrink-0" /> {actionError}
-        </div>
-      )}
 
       {levels.length === 0 ? (
         <div className="text-center text-gray-400 text-sm py-8">No curriculum levels yet — add one from the Levels tab first.</div>

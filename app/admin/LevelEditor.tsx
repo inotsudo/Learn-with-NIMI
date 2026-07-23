@@ -4,7 +4,14 @@ import supabase from '@/lib/supabaseClient'
 import { AlertCircle, Plus, Trash2, RefreshCw } from 'lucide-react'
 import { ACCENT, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META, STATUS_META, type ContentStatus } from './missionMeta'
 import { useConfirmDialog } from './ConfirmDialog'
+import { useToast } from './Toast'
 import { Skeleton, SkeletonTable } from './Skeleton'
+
+interface MissionVersionSummary {
+  language: string
+  title: string | null
+  status: string | null
+}
 
 interface MissionOption {
   id: string
@@ -34,13 +41,13 @@ export default function LevelEditor() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [grid, setGrid] = useState<Record<number, Record<string, LevelCell | undefined>>>({})
   const [optionsByCategory, setOptionsByCategory] = useState<Record<string, MissionOption[]>>({})
   const [frameworks, setFrameworks] = useState<Record<number, LevelFramework>>({})
   const [maxLevel, setMaxLevel] = useState(0)
   const [busy, setBusy] = useState(false)
   const { confirm, dialog } = useConfirmDialog()
+  const { error: toastErr } = useToast()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -65,7 +72,7 @@ export default function LevelEditor() {
       const options: Record<string, MissionOption[]> = {}
       for (const slug of CATEGORY_ORDER) options[slug] = []
       for (const m of missions ?? []) {
-        const en = (m.mission_versions as any[])?.find(v => v.language === 'en')
+        const en = (m.mission_versions as MissionVersionSummary[])?.find(v => v.language === 'en')
         const title = en?.title ?? 'Untitled'
         const status = (en?.status ?? 'draft') as ContentStatus
         missionById[m.id] = { missionId: m.id, title, sequence: m.sequence, status }
@@ -99,7 +106,6 @@ export default function LevelEditor() {
   }
 
   const handleFrameworkBlur = async (level: number) => {
-    setActionError(null)
     setBusy(true)
     try {
       const fw = frameworks[level] ?? EMPTY_FRAMEWORK
@@ -108,14 +114,13 @@ export default function LevelEditor() {
         .upsert({ level_number: level, age_range_label: fw.ageRangeLabel, framework_name: fw.frameworkName, primary_focus: fw.primaryFocus })
       if (error) throw error
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to save framework details.')
+      toastErr(err instanceof Error ? err.message : 'Failed to save framework details.')
     } finally {
       setBusy(false)
     }
   }
 
   const handleCellChange = async (levelNumber: number, categorySlug: string, missionId: string) => {
-    setActionError(null)
     setBusy(true)
     try {
       const { error } = await supabase
@@ -126,14 +131,13 @@ export default function LevelEditor() {
       if (error) throw error
       await fetchData()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to update mission.')
+      toastErr(err instanceof Error ? err.message : 'Failed to update mission.')
     } finally {
       setBusy(false)
     }
   }
 
   const handleAddLevel = async () => {
-    setActionError(null)
     setBusy(true)
     try {
       const nextLevel = maxLevel + 1
@@ -153,7 +157,7 @@ export default function LevelEditor() {
       if (fwError) throw fwError
       await fetchData()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to add level.')
+      toastErr(err instanceof Error ? err.message : 'Failed to add level.')
     } finally {
       setBusy(false)
     }
@@ -172,7 +176,6 @@ export default function LevelEditor() {
         : `No learners have completed Level ${maxLevel} yet. This removes all ${CATEGORY_ORDER.length} category assignments for this level. This cannot be undone.`,
     })
     if (!ok) return
-    setActionError(null)
     setBusy(true)
     try {
       const { error } = await supabase.from('level_missions').delete().eq('level_number', maxLevel)
@@ -181,7 +184,7 @@ export default function LevelEditor() {
       if (fwError) throw fwError
       await fetchData()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to delete level.')
+      toastErr(err instanceof Error ? err.message : 'Failed to delete level.')
     } finally {
       setBusy(false)
     }
@@ -217,13 +220,6 @@ export default function LevelEditor() {
 
   return (
     <div className="space-y-4">
-      {actionError && (
-        <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span className="flex-1">{actionError}</span>
-        </div>
-      )}
-
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h3 className="text-base font-bold text-gray-800">Levels</h3>

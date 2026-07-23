@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Crown, Check, Download, RefreshCw, Upload, Award } from 'lucide-react'
+import { Crown, Check, Download, RefreshCw, Upload, Award, Menu } from 'lucide-react'
 import supabase from '@/lib/supabaseClient'
 import { authedFetch } from '@/lib/authedFetch'
 import { useToast } from './Toast'
@@ -9,7 +9,11 @@ import { useToast } from './Toast'
 interface Story { id: string; title: string; slug: string; theme_emoji: string | null; is_personalizable: boolean; personalization_config: any; certificate_config: any }
 interface MasterpieceOrder { id: string; child_name: string; child_photo_url: string | null; status: string; pdf_url: string | null; created_at: string; stories: { title: string } }
 
-export default function MasterpieceManager() {
+interface Props {
+  onOpenSidebar?: () => void
+}
+
+export default function MasterpieceManager({ onOpenSidebar }: Props) {
   const [stories, setStories] = useState<Story[]>([])
   const [orders, setOrders] = useState<MasterpieceOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -92,17 +96,24 @@ export default function MasterpieceManager() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>
+  if (loading) return <div className="flex-1 flex items-center justify-center p-8 text-gray-400">Loading…</div>
 
   return (
-    <div className="space-y-8">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Crown className="w-6 h-6 text-yellow-500" /> Masterpiece Manager
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">Configure which stories can be personalized and manage orders</p>
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+            <Menu size={17} />
+          </button>
+          <div>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Masterpiece Manager</h1>
+            <p className="text-[13px] text-gray-500">Configure which stories can be personalized and manage orders</p>
+          </div>
+        </div>
       </div>
+
+      <div className="flex-1 overflow-auto p-6 lg:p-8 space-y-8">
 
       {/* Stories — toggle personalizable */}
       <div>
@@ -291,6 +302,7 @@ export default function MasterpieceManager() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   )

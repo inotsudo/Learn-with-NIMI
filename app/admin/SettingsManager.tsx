@@ -86,14 +86,14 @@ export default function SettingsManager({ onNavigate, onOpenSidebar }: Props) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 flex-shrink-0">
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500">
+          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
             <Menu size={17} />
           </button>
           <div>
-            <h1 className="text-[20px] sm:text-[22px] font-extrabold text-gray-900">Settings</h1>
-            <p className="text-[12px] sm:text-[13px] text-gray-500">Manage your platform settings.</p>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Settings</h1>
+            <p className="text-[13px] text-gray-500">Manage your platform settings.</p>
           </div>
         </div>
       </div>

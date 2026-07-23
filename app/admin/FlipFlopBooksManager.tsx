@@ -5,6 +5,7 @@ import { getStorageUrl } from '@/lib/queries'
 import { smartUpload } from '@/lib/uploadWithProgress'
 import { Menu, Plus, Trash2, Upload, CheckCircle2, ChevronDown, ChevronRight, Image as ImageIcon, FileArchive } from 'lucide-react'
 import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 import FlipFlopImporter from './FlipFlopImporter'
 import { LANGUAGES, LANGUAGE_META, type Lang } from './missionMeta'
 
@@ -38,6 +39,7 @@ interface StoryGroup {
 }
 
 export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Props) {
+  const { confirm, dialog } = useConfirmDialog()
   const [groups, setGroups] = useState<StoryGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedStory, setExpandedStory] = useState<string | null>(null)
@@ -84,6 +86,8 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
   }
 
   const handleDeletePage = async (pageId: string) => {
+    const ok = await confirm({ title: 'Delete page', message: 'Delete this page and all its content? This cannot be undone.', confirmLabel: 'Delete', danger: true })
+    if (!ok) return
     try {
       const { error } = await supabase.from('story_pages').delete().eq('id', pageId)
       if (error) throw error
@@ -131,6 +135,7 @@ export default function FlipFlopBooksManager({ onNavigate, onOpenSidebar }: Prop
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">

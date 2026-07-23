@@ -7,6 +7,7 @@ import {
   STATUS_META, COVERAGE_META, currentVersion, translationCoverage,
   type MissionRow,
 } from './missionMeta'
+import { useToast } from './Toast'
 import { Skeleton, SkeletonTable } from './Skeleton'
 import { exportXLSX } from './exportUtils'
 
@@ -48,23 +49,23 @@ export default function LessonManager({ onNavigate }: LessonManagerProps) {
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<number | null>(null)
   const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState<string | null>(null)
+  const { success: toastOk, error: toastErr } = useToast()
 
   const handleExportUnit = async (level: number, unit: number, unitTitle: string) => {
     setExporting(true)
-    setExportError(null)
     try {
       const { data, error } = await supabase.rpc('export_unit_content', { p_level_number: level, p_unit_number: unit })
       if (error) throw error
       const rows = (data as { rows: Record<string, unknown>[] }).rows ?? []
       if (rows.length === 0) {
-        setExportError('No published content to export for this unit.')
+        toastErr('No published content to export for this unit.')
         return
       }
       const filename = `level${level}-unit${unit}${unitTitle ? `-${unitTitle.toLowerCase().replace(/\s+/g, '-')}` : ''}.xlsx`
       exportXLSX(filename, [{ name: `L${level} U${unit}`, rows }])
+      toastOk('Export ready — check your downloads.')
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'Export failed.')
+      toastErr(err instanceof Error ? err.message : 'Export failed.')
     } finally {
       setExporting(false)
     }
@@ -252,9 +253,6 @@ export default function LessonManager({ onNavigate }: LessonManagerProps) {
                       </button>
                     </div>
                   </div>
-                  {exportError && (
-                    <p className="text-xs text-red-500 font-semibold">{exportError}</p>
-                  )}
 
                   <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-100">
                     <table className="w-full text-sm">

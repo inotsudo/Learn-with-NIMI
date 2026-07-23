@@ -368,20 +368,20 @@ export default function RosterProvisioningManager({ onOpenSidebar }: Props) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 bg-white flex items-center gap-3 flex-shrink-0">
-        <button onClick={onOpenSidebar} className="lg:hidden w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 transition">
-          <Menu className="w-4 h-4" />
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center gap-3 flex-shrink-0">
+        <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+          <Menu size={17} />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-[17px] font-bold text-ds-text">Roster Provisioning</h1>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Roster Provisioning</h1>
             {totalPending > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[11px] font-bold">
                 {totalPending} pending
               </span>
             )}
           </div>
-          <p className="text-gray-400 text-[12px] mt-0.5">
+          <p className="text-[13px] text-gray-500">
             Review users imported via Clever and ClassLink — link students to existing learner accounts
           </p>
         </div>

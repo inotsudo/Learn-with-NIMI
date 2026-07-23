@@ -1,7 +1,9 @@
 'use client'
 import React, { useCallback, useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Tag, Plus, X, CheckCircle, AlertCircle, Copy, ChevronLeft } from 'lucide-react'
+import { Tag, Plus, X, CheckCircle, AlertCircle, Copy, Menu } from 'lucide-react'
+import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface DiscountCode {
   id: string
@@ -31,17 +33,17 @@ const EMPTY: Omit<DiscountCode, 'id' | 'uses_count' | 'created_at'> = {
 }
 
 export default function DiscountCodesManager({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+  const { success: toastOk, error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
   const [codes, setCodes] = useState<DiscountCode[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ ...EMPTY })
   const [saving, setSaving] = useState(false)
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [search, setSearch] = useState('')
 
   const showToast = (msg: string, ok = true) => {
-    setToast({ msg, ok })
-    setTimeout(() => setToast(null), 3000)
+    if (ok) toastOk(msg); else toastErr(msg)
   }
 
   const load = useCallback(async () => {
@@ -98,7 +100,8 @@ export default function DiscountCodesManager({ onOpenSidebar }: { onOpenSidebar?
   }
 
   const deleteCode = async (id: string) => {
-    if (!confirm('Delete this discount code? This cannot be undone.')) return
+    const ok = await confirm({ title: 'Delete code', message: 'Delete this discount code? This cannot be undone.', confirmLabel: 'Delete', danger: true })
+    if (!ok) return
     const { error } = await supabase.from('discount_codes').delete().eq('id', id)
     if (error) { showToast(error.message, false); return }
     setCodes(cs => cs.filter(c => c.id !== id))
@@ -115,21 +118,17 @@ export default function DiscountCodesManager({ onOpenSidebar }: { onOpenSidebar?
   const isExhausted = (c: DiscountCode) => c.max_uses !== null && c.uses_count >= c.max_uses
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      {dialog}
       {/* Header */}
-      <div className="bg-white border-b border-ds-border px-6 py-4 flex items-center justify-between gap-4 flex-shrink-0">
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between gap-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          {onOpenSidebar && (
-            <button onClick={onOpenSidebar} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition">
-              <ChevronLeft size={18} />
-            </button>
-          )}
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
-            <Tag className="w-5 h-5" />
-          </div>
+          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+            <Menu size={17} />
+          </button>
           <div>
-            <h1 className="font-extrabold text-ds-text text-lg leading-tight">Discount Codes</h1>
-            <p className="text-gray-400 text-xs">{codes.length} code{codes.length !== 1 ? 's' : ''}</p>
+            <h1 className="text-[22px] font-extrabold text-gray-900">Discount Codes</h1>
+            <p className="text-[13px] text-gray-500">{codes.length} code{codes.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -338,13 +337,6 @@ export default function DiscountCodesManager({ onOpenSidebar }: { onOpenSidebar?
         </div>
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-bold ${toast.ok ? 'bg-green-600' : 'bg-red-500'}`}>
-          {toast.ok ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-          {toast.msg}
-        </div>
-      )}
     </div>
   )
 }

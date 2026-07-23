@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Upload, RefreshCw, Image as ImageIcon } from 'lucide-react'
+import { Upload, RefreshCw, Image as ImageIcon, Menu } from 'lucide-react'
 import supabase from '@/lib/supabaseClient'
 import { useToast } from './Toast'
 
@@ -104,7 +104,7 @@ export default function BadgesManager({ onOpenSidebar }: Props) {
   const totalSlots = stories.length * 3
 
   return (
-    <div className="flex-1 overflow-auto p-6 space-y-6">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       <input
         ref={fileInputRef}
         type="file"
@@ -114,27 +114,30 @@ export default function BadgesManager({ onOpenSidebar }: Props) {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-black text-gray-900">🏅 Badge Images</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Each story has 3 badges — one per language. Upload a PNG or SVG for each slot.
-          </p>
-          {!loading && (
-            <p className="text-xs text-gray-400 mt-1">
-              {uploadedCount} / {totalSlots} images uploaded
-            </p>
-          )}
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+              <Menu size={17} />
+            </button>
+            <div>
+              <h1 className="text-[22px] font-extrabold text-gray-900">Badge Images</h1>
+              <p className="text-[13px] text-gray-500">
+                {loading ? 'Loading…' : `${uploadedCount} / ${totalSlots} images uploaded · one per story per language`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={load}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+          >
+            <RefreshCw className="w-4 h-4" /> Refresh
+          </button>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-        >
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
       </div>
 
       {/* Story list */}
+      <div className="flex-1 overflow-auto p-6 space-y-6">
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
@@ -232,6 +235,7 @@ export default function BadgesManager({ onOpenSidebar }: Props) {
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

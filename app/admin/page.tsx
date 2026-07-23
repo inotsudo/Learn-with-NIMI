@@ -54,7 +54,6 @@ const FlipFlopBooksManager = dynamicView(() => import('./FlipFlopBooksManager'))
 const ContentMediaManager = dynamicView(() => import('./ContentMediaManager'))
 const WeeklyChallengesManager = dynamicView(() => import('./WeeklyChallengesManager'))
 const FamiliesManager = dynamicView(() => import('./FamiliesManager'))
-const ContentLibraryManager = dynamicView(() => import('./ContentLibraryManager'))
 const SchoolsManager             = dynamicView(() => import('./SchoolsManager'))
 const RosterProvisioningManager  = dynamicView(() => import('./RosterProvisioningManager'))
 const NewsletterManager    = dynamicView(() => import('./NewsletterManager'))
@@ -227,7 +226,6 @@ export default function AdminPanel() {
   const isGiftView          = currentTable === 'gift_subscriptions'
   const isTestimonialsView  = currentTable === 'testimonials'
   const isPartnersView      = currentTable === 'partners'
-  const isContentLibraryView = currentTable === 'content_library'
 
   const isColoringView = currentTable === 'coloring_pages' || currentTable.startsWith('coloring_pages:')
   const initialColoringBookId = isColoringView ? currentTable.split(':')[1] : undefined
@@ -308,7 +306,6 @@ export default function AdminPanel() {
           {isGiftView           && <GiftManager           onOpenSidebar={() => setSidebarOpen(true)} />}
           {isTestimonialsView   && <TestimonialsManager   onOpenSidebar={() => setSidebarOpen(true)} />}
           {isPartnersView       && <PartnersManager       onOpenSidebar={() => setSidebarOpen(true)} />}
-          {isContentLibraryView && <ContentLibraryManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isStoryView && (
             <StoryManager initialStoryId={initialStoryId} onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} defaultLang={adminLang} />
           )}
@@ -372,7 +369,7 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isContentLibraryView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isRosterProvisioningView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
+          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isRosterProvisioningView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !isTestimonialsView && !isPartnersView && !isConversationHistoryView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
             <TableView table={currentTable} />
           )}
           </ErrorBoundary>

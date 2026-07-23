@@ -1,17 +1,17 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { getCachedAdmin } from './adminAuth'
 import {
-  Search, ChevronDown, Menu, Trophy, Award, X, AlertCircle, RefreshCw,
+  Search, Menu, Trophy, Award, X, RefreshCw, AlertCircle,
 } from 'lucide-react'
 import { ACCENT, LANGUAGES, LANGUAGE_META, type Lang, type AccentKey } from './missionMeta'
 import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
+import { useToast } from './Toast'
 
 interface RewardsManagerProps {
   initialChildId?: string
-  onNavigate: (table: string) => void
+  onNavigate?: (table: string) => void
   onOpenSidebar?: () => void
 }
 
@@ -69,7 +69,8 @@ function Avatar({ avatarUrl, name, size }: { avatarUrl: string | null; name: str
   if (avatarUrl && avatarUrl.startsWith('http')) {
     return <img src={avatarUrl} alt={name} className={`${dims} object-cover flex-shrink-0 ring-2 ring-white shadow-sm`}  loading="lazy" />
   }
-  if (avatarUrl) {
+  // Short strings are emoji; long strings are JSON avatar-customization data — show initials instead
+  if (avatarUrl && avatarUrl.length <= 4) {
     return (
       <div className={`${dims} flex items-center justify-center flex-shrink-0 ${accent.tile} ${size === 'lg' ? 'text-3xl' : 'text-xl'}`}>
         <span className="leading-none">{avatarUrl}</span>
@@ -83,23 +84,18 @@ function Avatar({ avatarUrl, name, size }: { avatarUrl: string | null; name: str
   )
 }
 
-export default function RewardsManager({ initialChildId, onNavigate, onOpenSidebar }: RewardsManagerProps) {
+export default function RewardsManager({ initialChildId, onNavigate: _onNavigate, onOpenSidebar }: RewardsManagerProps) {
   const [children, setChildren] = useState<ChildRow[]>([])
   const [badges, setBadges] = useState<BadgeRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const appliedInitialIdRef = useRef<string | undefined>(undefined)
   const [search, setSearch] = useState('')
   const [langFilter, setLangFilter] = useState<Lang | 'all'>('all')
-  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
   const [pending, setPending] = useState<string | null>(null)
   const { confirm, dialog } = useConfirmDialog()
-
-  useEffect(() => {
-    void getCachedAdmin().then(d => { if (d) setAdmin(d) })
-  }, [])
+  const { error: toastErr } = useToast()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -153,7 +149,6 @@ export default function RewardsManager({ initialChildId, onNavigate, onOpenSideb
 
   const award = async (slug: string) => {
     if (!selectedId) return
-    setActionError(null)
     setPending(slug)
     try {
       const { data, error } = await supabase
@@ -164,7 +159,7 @@ export default function RewardsManager({ initialChildId, onNavigate, onOpenSideb
       if (error) throw error
       setBadges(prev => [...prev, data as BadgeRow])
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not award the badge.')
+      toastErr(err instanceof Error ? err.message : 'Could not award the badge.')
     } finally {
       setPending(null)
     }
@@ -178,14 +173,13 @@ export default function RewardsManager({ initialChildId, onNavigate, onOpenSideb
       confirmLabel: 'Revoke',
     })
     if (!ok) return
-    setActionError(null)
     setPending(row.badge_slug)
     try {
       const { error } = await supabase.from('child_badges').delete().eq('id', row.id)
       if (error) throw error
       setBadges(prev => prev.filter(b => b.id !== row.id))
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not revoke the badge.')
+      toastErr(err instanceof Error ? err.message : 'Could not revoke the badge.')
     } finally {
       setPending(null)
     }
@@ -220,57 +214,19 @@ export default function RewardsManager({ initialChildId, onNavigate, onOpenSideb
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-ds-border px-4 sm:px-6 py-5 flex-shrink-0 z-30">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-3.5 min-w-0">
-            <button
-              onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
-            >
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
               <Menu size={17} />
             </button>
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-green-50 text-green-600">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
-                Rewards &amp; Badges <span className="text-lg">🏆</span>
-              </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
-                Award special recognition badges to learners
-              </p>
-              <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-green-600">Dashboard</button>
-                <span className="mx-1.5 text-gray-300">/</span>
-                <span className="font-bold text-gray-500">Rewards &amp; Badges</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 bg-white border border-ds-border px-3.5 py-2 rounded-full text-sm font-bold shadow-sm text-green-600">
-              <Trophy className="w-3.5 h-3.5" /> {badges.length} awarded
-            </span>
-            <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
-              <div className="hidden sm:block leading-tight">
-                <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
-                <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
-              </div>
-              <ChevronDown size={14} className="text-gray-400" />
+            <div>
+              <h1 className="text-[22px] font-extrabold text-gray-900">Rewards &amp; Badges</h1>
+              <p className="text-[13px] text-gray-500">{badges.length} badges awarded · select a learner to manage</p>
             </div>
           </div>
         </div>
-      </header>
-
-      {actionError && (
-        <div className="mx-4 sm:mx-6 mt-3 flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5 flex-shrink-0">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span className="flex-1">{actionError}</span>
-          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 flex-shrink-0">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      </div>
 
       {/* Body */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">

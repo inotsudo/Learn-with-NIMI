@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Share2, Gift, Users, CheckCircle2 } from 'lucide-react'
+import { Share2, Gift, Users, CheckCircle2, Menu } from 'lucide-react'
 
 interface Redemption {
   id: string
@@ -12,7 +12,7 @@ interface Redemption {
   referred: { name: string | null; email: string | null } | null
 }
 
-interface Props { onOpenSidebar: () => void }
+interface Props { onOpenSidebar?: () => void }
 
 export default function ReferralManager({ onOpenSidebar }: Props) {
   const [rows, setRows]     = useState<Redemption[]>([])
@@ -45,14 +45,13 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 lg:px-8 py-5 border-b border-gray-200 bg-white">
-        <button onClick={onOpenSidebar} className="lg:hidden p-1 text-gray-500">☰</button>
-        <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
-          <Share2 className="w-5 h-5 text-amber-700" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="font-black text-gray-900 text-[17px]">Referrals</h1>
-          <p className="text-gray-500 text-[12px]">{rows.length} redemption{rows.length !== 1 ? 's' : ''} · {codes} codes issued</p>
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center gap-3 flex-shrink-0">
+        <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+          <Menu size={17} />
+        </button>
+        <div>
+          <h1 className="text-[22px] font-extrabold text-gray-900">Referrals</h1>
+          <p className="text-[13px] text-gray-500">{rows.length} redemption{rows.length !== 1 ? 's' : ''} · {codes} codes issued</p>
         </div>
       </div>
 

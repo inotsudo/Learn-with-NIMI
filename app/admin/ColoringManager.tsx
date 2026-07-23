@@ -1,17 +1,16 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { getCachedAdmin } from './adminAuth'
 import { getStorageUrl } from '@/lib/queries'
 import {
-  Search, SlidersHorizontal, LayoutGrid, Eye, Bell, ChevronDown, Plus,
+  Search, SlidersHorizontal, LayoutGrid, Eye, Plus,
   MoreVertical, Pencil, Copy, ArrowUpDown, Trash2, ChevronLeft, ChevronRight,
   PenTool, FileStack, Menu, AlertCircle, RefreshCw, X,
 } from 'lucide-react'
 import { useToast } from './Toast'
 import { ACCENT, type ColoringBookRow } from './missionMeta'
 import ColoringEditor from './ColoringEditor'
-import { SkeletonHeaderBanner, SkeletonSplitPane } from './Skeleton'
+import { SkeletonSplitPane } from './Skeleton'
 import { useConfirmDialog } from './ConfirmDialog'
 
 interface ColoringManagerProps {
@@ -36,8 +35,6 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
   const { confirm, alert, dialog } = useConfirmDialog()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
-  const [notifCount, setNotifCount] = useState(0)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const fetchBooks = useCallback(async () => {
@@ -76,29 +73,6 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
       appliedInitialIdRef.current = initialBookId
     }
   }, [initialBookId, books])
-
-  useEffect(() => {
-    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[ColoringManager] auth:', err))
-  }, [])
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const { data: coloringMissions } = await supabase.from('missions').select('id').eq('category_slug', 'coloring')
-        const missionIds = (coloringMissions ?? []).map(m => m.id)
-        if (missionIds.length === 0) { setNotifCount(0); return }
-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-        const { count } = await supabase
-          .from('child_progress')
-          .select('*', { count: 'exact', head: true })
-          .in('mission_id', missionIds)
-          .gte('completed_at', since)
-        setNotifCount(count ?? 0)
-      } catch (err) {
-        console.error('[ColoringManager] fetchNotifs failed:', err)
-      }
-    })()
-  }, [])
 
   const totalTemplates = useMemo(() => books.reduce((sum, b) => sum + b.coloring_pages.length, 0), [books])
 
@@ -198,8 +172,8 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <SkeletonHeaderBanner />
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <div className="h-20 bg-gray-100 rounded-xl animate-pulse mx-6 mt-6" />
         <SkeletonSplitPane rows={8} />
       </div>
     )
@@ -223,14 +197,14 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
-      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 flex-shrink-0 z-30 ${accent.soft}`}>
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3.5 min-w-0">
             <button
               onClick={onOpenSidebar}
-              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500"
             >
               <Menu size={17} />
             </button>
@@ -238,14 +212,14 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
               <PenTool className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+              <h1 className="text-[22px] font-extrabold text-gray-900 flex items-center gap-2">
                 Coloring Books <span className="text-lg">🎨</span>
               </h1>
-              <p className="text-sm text-gray-500 font-medium mt-0.5">
+              <p className="text-[13px] text-gray-500 mt-0.5">
                 Manage coloring page templates for each storybook
               </p>
               <p className="text-xs text-gray-400 mt-1.5">
-                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
+                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-gray-600">Dashboard</button>
                 <span className="mx-1.5 text-gray-300">/</span>
                 <span className="font-bold text-gray-500">Coloring Books</span>
               </p>
@@ -261,22 +235,6 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
             <span className={`inline-flex items-center gap-1.5 bg-white border border-gray-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm ${accent.text}`}>
               <FileStack className="w-3.5 h-3.5" /> {totalTemplates}
             </span>
-            <button className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 transition text-gray-500 shadow-sm">
-              <Bell size={17} />
-              {notifCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                  {notifCount}
-                </span>
-              )}
-            </button>
-            <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
-              <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
-              <div className="hidden sm:block leading-tight">
-                <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
-                <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
-              </div>
-              <ChevronDown size={14} className="text-gray-400" />
-            </div>
           </div>
         </div>
         <div className="flex justify-end mt-4">
@@ -288,7 +246,7 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
             <Plus className="w-4 h-4" /> {creating ? 'Creating...' : 'Create New Coloring Book'}
           </button>
         </div>
-      </header>
+      </div>
 
       {actionError && (
         <div className="mx-4 sm:mx-6 mt-3 flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-xl px-3.5 py-2.5 flex-shrink-0">

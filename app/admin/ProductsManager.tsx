@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Plus, Edit2, Trash2, Check, X, Eye, EyeOff, DollarSign, Repeat, Package } from 'lucide-react'
+import { Plus, Edit2, Trash2, Check, X, Eye, EyeOff, DollarSign, Repeat, Package, Menu } from 'lucide-react'
 import supabase from '@/lib/supabaseClient'
+import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface Product {
   id: string
@@ -31,7 +33,13 @@ const TIERS = ['discovery', 'story_pack', 'family_bundle', 'personalized', 'cham
 const ORG_TYPES = ['family', 'school', 'enterprise']
 const PRODUCT_TYPES = ['one_time', 'subscription']
 
-export default function ProductsManager() {
+interface Props {
+  onOpenSidebar?: () => void
+}
+
+export default function ProductsManager({ onOpenSidebar }: Props) {
+  const { error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Product | null>(null)
@@ -99,9 +107,11 @@ export default function ProductsManager() {
   }
 
   const remove = async (p: Product) => {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return
-    await supabase.from('products').delete().eq('id', p.id)
-    load()
+    const ok = await confirm({ title: 'Delete product', message: `Delete "${p.name}"? This cannot be undone.`, confirmLabel: 'Delete', danger: true })
+    if (!ok) return
+    const { error } = await supabase.from('products').delete().eq('id', p.id)
+    if (error) toastErr(error.message)
+    else void load()
   }
 
   const addFeature = () => {
@@ -114,21 +124,31 @@ export default function ProductsManager() {
     setForm(f => ({ ...f, features: f.features.filter((_, j) => j !== i) }))
   }
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Loading products...</div>
+  if (loading) return <div className="flex-1 flex items-center justify-center p-8 text-gray-400">Loading products…</div>
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Products & Pricing</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage subscription plans, one-time purchases, and school licensing tiers</p>
+      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
+              <Menu size={17} />
+            </button>
+            <div>
+              <h1 className="text-[22px] font-extrabold text-gray-900">Products &amp; Pricing</h1>
+              <p className="text-[13px] text-gray-500">Manage subscription plans, one-time purchases, and school licensing tiers</p>
+            </div>
+          </div>
+          <button onClick={startCreate}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition whitespace-nowrap flex-shrink-0">
+            <Plus className="w-4 h-4" /> Add Product
+          </button>
         </div>
-        <button onClick={startCreate}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition">
-          <Plus className="w-4 h-4" /> Add Product
-        </button>
       </div>
+
+      <div className="flex-1 overflow-auto p-6">
 
       {/* Product cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -195,6 +215,8 @@ export default function ProductsManager() {
             {p.description && <p className="text-[12px] text-gray-400 mt-2">{p.description}</p>}
           </div>
         ))}
+      </div>
+
       </div>
 
       {/* Edit/Create form */}
@@ -342,3 +364,4 @@ export default function ProductsManager() {
     </div>
   )
 }
+

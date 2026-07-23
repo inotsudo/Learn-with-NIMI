@@ -6,7 +6,7 @@ import { Search, Filter, Menu, ChevronLeft, ChevronRight, Heart, CheckCircle2, X
 import { useToast } from './Toast'
 
 interface Props {
-  onNavigate: (table: string) => void
+  onNavigate?: (table: string) => void
   onOpenSidebar?: () => void
 }
 

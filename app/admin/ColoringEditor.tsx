@@ -5,12 +5,13 @@ import { getStorageUrl } from '@/lib/queries'
 import { smartUpload } from '@/lib/uploadWithProgress'
 import {
   PenTool, Settings2, Image as ImageIcon, Upload, FileStack, Plus, Trash2,
-  Info, CheckCircle2, AlertCircle, Eye,
+  Info, Eye,
 } from 'lucide-react'
 import {
   ACCENT, type ColoringBookRow, type ColoringPageRow,
 } from './missionMeta'
 import { useConfirmDialog } from './ConfirmDialog'
+import { useToast } from './Toast'
 
 const accent = ACCENT.rose
 
@@ -43,21 +44,16 @@ export default function ColoringEditor({ book, onSaved }: ColoringEditorProps) {
   const sortedPages = useMemo(() => [...book.coloring_pages].sort((a, b) => a.page_number - b.page_number), [book.coloring_pages])
   const [selectedPageId, setSelectedPageId] = useState<string | null>(() => sortedPages[0]?.id ?? null)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const { success: toastOk, error: toastErr } = useToast()
 
   const resetForm = () => {
     setBookForm(bookFormFromRow(book))
-    setMessage('')
-    setError('')
   }
 
   const selectedPage = sortedPages.find(p => p.id === selectedPageId) ?? null
 
   const saveBook = async () => {
     setSaving(true)
-    setMessage('')
-    setError('')
     try {
       const { error: err } = await supabase.from('stories').update({
         title: bookForm.title,
@@ -66,17 +62,16 @@ export default function ColoringEditor({ book, onSaved }: ColoringEditorProps) {
         is_active: bookForm.is_active,
       }).eq('id', book.id)
       if (err) throw err
-      setMessage('Coloring book saved!')
+      toastOk('Coloring book saved!')
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save coloring book.')
+      toastErr(err instanceof Error ? err.message : 'Failed to save coloring book.')
     } finally {
       setSaving(false)
     }
   }
 
   const handleAddPage = async () => {
-    setError('')
     try {
       const maxPageNum = sortedPages.reduce((max, p) => Math.max(max, p.page_number), 0)
       const { data: newPage, error: err } = await supabase
@@ -88,24 +83,12 @@ export default function ColoringEditor({ book, onSaved }: ColoringEditorProps) {
       await onSaved()
       setSelectedPageId(newPage.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add page.')
+      toastErr(err instanceof Error ? err.message : 'Failed to add page.')
     }
   }
 
   return (
     <div className="p-5 sm:p-7 max-w-5xl mx-auto space-y-5">
-      {/* Toasts */}
-      {message && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-emerald-50 text-emerald-700 text-sm font-bold border border-emerald-100">
-          <CheckCircle2 size={16} className="flex-shrink-0" /> {message}
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-red-50 text-red-600 text-sm font-bold border border-red-100">
-          <AlertCircle size={16} className="flex-shrink-0" /> {error}
-        </div>
-      )}
-
       {/* Header row */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -255,14 +238,12 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
   const [imageUrl, setImageUrl] = useState(page.template_image_url ?? '')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
   const { confirm, dialog } = useConfirmDialog()
+  const { success: toastOk, error: toastErr } = useToast()
 
   const handleImageUpload = async (file: File) => {
     setUploadingImage(true)
-    setError('')
     try {
       const ext = file.name.split('.').pop()
       const path = `pages/${book.id}-${page.page_number}-${Date.now()}.${ext}`
@@ -270,7 +251,7 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
       if (uploadErr) throw uploadErr
       setImageUrl(storagePath)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.')
+      toastErr(err instanceof Error ? err.message : 'Upload failed.')
     } finally {
       setUploadingImage(false)
     }
@@ -278,15 +259,13 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
 
   const savePage = async () => {
     setSaving(true)
-    setMessage('')
-    setError('')
     try {
       const { error: err } = await supabase.from('coloring_pages').update({ template_image_url: imageUrl || null }).eq('id', page.id)
       if (err) throw err
-      setMessage('Page saved!')
+      toastOk('Page saved!')
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save page.')
+      toastErr(err instanceof Error ? err.message : 'Failed to save page.')
     } finally {
       setSaving(false)
     }
@@ -299,7 +278,6 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
     })
     if (!ok) return
     setDeleting(true)
-    setError('')
     try {
       const { error: err } = await supabase.from('coloring_pages').delete().eq('id', page.id)
       if (err) throw err
@@ -307,7 +285,7 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
       onSelectPage(remaining[0]?.id ?? null)
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete page.')
+      toastErr(err instanceof Error ? err.message : 'Failed to delete page.')
     } finally {
       setDeleting(false)
     }
@@ -315,18 +293,6 @@ function ColoringPageEditor({ book, page, pages, onSaved, onSelectPage }: Colori
 
   return (
     <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-6 space-y-4">
-      {/* Toasts */}
-      {message && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-emerald-50 text-emerald-700 text-sm font-bold border border-emerald-100">
-          <CheckCircle2 size={16} className="flex-shrink-0" /> {message}
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-red-50 text-red-600 text-sm font-bold border border-red-100">
-          <AlertCircle size={16} className="flex-shrink-0" /> {error}
-        </div>
-      )}
-
       {/* Header row */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">

@@ -5,7 +5,7 @@ import { getStorageUrl } from '@/lib/queries'
 import { smartUpload } from '@/lib/uploadWithProgress'
 import {
   Music, X, Play, Pause, Image as ImageIcon, Plus, Trash2, Copy as CopyIcon,
-  Info, Upload, Settings2, FileText, Eye, CheckCircle2, AlertCircle, Lightbulb,
+  Info, Upload, Settings2, FileText, Eye, AlertCircle, Lightbulb,
   History, Rocket, GitBranch, RotateCcw, BookOpen, HelpCircle, Volume2,
 } from 'lucide-react'
 import {
@@ -13,6 +13,7 @@ import {
   CONTENT_STATUSES, STATUS_META, type Lang, type MissionType, type MissionRow, type MissionVersionRow, type ContentStatus,
   type StoryRow,
 } from './missionMeta'
+import { useToast } from './Toast'
 
 interface VersionForm {
   id: string
@@ -20,7 +21,7 @@ interface VersionForm {
   subtitle: string
   tip_text: string
   media_url: string
-  content_json: Record<string, any>
+  content_json: Record<string, unknown>
   status: ContentStatus
   revision_number: number
   is_current: boolean
@@ -76,8 +77,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
   const [publishingAll, setPublishingAll] = useState(false)
   const [creatingRevision, setCreatingRevision] = useState(false)
   const [rollingBackId, setRollingBackId] = useState<string | null>(null)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const { success: toastOk, error: toastErr } = useToast()
   const [uploadingAudio, setUploadingAudio] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [uploadingVocabAudio, setUploadingVocabAudio] = useState<Record<number, boolean>>({})
@@ -135,8 +135,6 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
     })
     loadVersions()
     setActiveLang('en')
-    setMessage('')
-    setError('')
   }
 
   // Changes whenever the underlying revisions actually change (Publish /
@@ -165,7 +163,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
   const defaultLangInitRef = useRef(false)
   useEffect(() => {
     if (!defaultLang) return
-    if (defaultLangInitRef.current) setMessage(`${LANGUAGE_META[defaultLang].flag} Switched to ${LANGUAGE_META[defaultLang].label}`)
+    if (defaultLangInitRef.current) toastOk(`${LANGUAGE_META[defaultLang].flag} Switched to ${LANGUAGE_META[defaultLang].label}`)
     defaultLangInitRef.current = true
     setActiveLang(defaultLang)
   }, [defaultLang])
@@ -366,7 +364,6 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
 
   const handleAudioUpload = async (file: File) => {
     setUploadingAudio(true)
-    setError('')
     try {
       const ext = file.name.split('.').pop()
       const path = `missions/${mission.id}-${activeLang}-${Date.now()}.${ext}`
@@ -374,7 +371,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
       if (uploadErr) throw uploadErr
       updateVersionField('media_url', storagePath)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.')
+      toastErr(err instanceof Error ? err.message : 'Upload failed.')
     } finally {
       setUploadingAudio(false)
     }
@@ -382,7 +379,6 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
 
   const handleCoverUpload = async (file: File) => {
     setUploadingCover(true)
-    setError('')
     try {
       const ext = file.name.split('.').pop()
       const path = `covers/${mission.id}-${activeLang}-${Date.now()}.${ext}`
@@ -390,15 +386,13 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
       if (uploadErr) throw uploadErr
       updateContentJson('cover_image_url', storagePath)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.')
+      toastErr(err instanceof Error ? err.message : 'Upload failed.')
     } finally {
       setUploadingCover(false)
     }
   }
 
   const saveMission = async () => {
-    setMessage('')
-    setError('')
     setSaving(true)
     try {
       const anyPublished = LANGUAGES.some(lang => (lang === activeLang ? vf.status : versionForms[lang].status) === 'published')
@@ -412,7 +406,6 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
         active: anyPublished,
       }).eq('id', mission.id)
       if (missionErr) throw missionErr
-
       const fields = {
         title: vf.title,
         subtitle: vf.subtitle,
@@ -429,10 +422,10 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
         if (versionErr) throw versionErr
       }
 
-      setMessage('Saved!')
+      toastOk('Saved!')
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save mission.')
+      toastErr(err instanceof Error ? err.message : 'Failed to save mission.')
     } finally {
       setSaving(false)
     }
@@ -475,8 +468,6 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
   }
 
   const handlePublishAll = async () => {
-    setMessage('')
-    setError('')
     setPublishingAll(true)
     const errs: string[] = []
     for (const lang of LANGUAGES) {
@@ -491,9 +482,9 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
     }
     setPublishingAll(false)
     if (errs.length > 0) {
-      setError(errs.join(' · '))
+      toastErr(errs.join(' · '))
     } else {
-      setMessage('All languages published!')
+      toastOk('All languages published!')
       onSaved()
     }
   }
@@ -502,19 +493,17 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
   // (non-live) revision, then promotes it via the symmetric publish RPC,
   // which demotes the previously-published sibling to 'archived'.
   const handlePublish = async () => {
-    setMessage('')
-    setError('')
     if (!vf.title.trim()) {
-      setError(`Add a ${LANGUAGE_META[activeLang].label} title before publishing.`)
+      toastErr(`Add a ${LANGUAGE_META[activeLang].label} title before publishing.`)
       return
     }
     setPublishing(true)
     try {
       await publishVersion(activeLang)
-      setMessage('Mission published!')
+      toastOk('Mission published!')
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to publish mission.')
+      toastErr(err instanceof Error ? err.message : 'Failed to publish mission.')
     } finally {
       setPublishing(false)
     }
@@ -523,16 +512,14 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
   // Goal 2: Create Revision to Edit — clones the published row into a new
   // draft (is_current=true); the published row stays live for learners.
   const handleCreateRevision = async () => {
-    setMessage('')
-    setError('')
     setCreatingRevision(true)
     try {
       const { error: rpcErr } = await supabase.rpc('create_mission_version_revision', { p_version_id: vf.id })
       if (rpcErr) throw rpcErr
-      setMessage('New draft revision created — edit and Publish when ready.')
+      toastOk('New draft revision created — edit and Publish when ready.')
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create a new revision.')
+      toastErr(err instanceof Error ? err.message : 'Failed to create a new revision.')
     } finally {
       setCreatingRevision(false)
     }
@@ -540,16 +527,14 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
 
   // Goal 3: Rollback — same RPC as Publish, targeting an older revision.
   const handleRollback = async (versionId: string) => {
-    setMessage('')
-    setError('')
     setRollingBackId(versionId)
     try {
       const { error: rpcErr } = await supabase.rpc('publish_mission_version_revision', { p_version_id: versionId })
       if (rpcErr) throw rpcErr
-      setMessage('Rolled back to the selected revision.')
+      toastOk('Rolled back to the selected revision.')
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to roll back.')
+      toastErr(err instanceof Error ? err.message : 'Failed to roll back.')
     } finally {
       setRollingBackId(null)
     }
@@ -579,7 +564,6 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
 
   const handleVocabAudioUpload = async (idx: number, file: File) => {
     setUploadingVocabAudio(p => ({ ...p, [idx]: true }))
-    setError('')
     try {
       const ext = file.name.split('.').pop()
       const path = `vocab/${mission.id}-${activeLang}-${idx}-${Date.now()}.${ext}`
@@ -587,7 +571,7 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
       if (uploadErr) throw uploadErr
       updateVocabulary(vocabulary.map((v, i) => i === idx ? { ...v, audio_url: storagePath } : v))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Audio upload failed.')
+      toastErr(err instanceof Error ? err.message : 'Audio upload failed.')
     } finally {
       setUploadingVocabAudio(p => ({ ...p, [idx]: false }))
     }
@@ -595,18 +579,6 @@ export default function MissionEditor({ mission, onSaved, defaultLang }: Mission
 
   return (
     <div className="p-5 sm:p-7 max-w-5xl mx-auto space-y-5">
-      {/* Toasts */}
-      {message && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-emerald-50 text-emerald-700 text-sm font-bold border border-emerald-100">
-          <CheckCircle2 size={16} className="flex-shrink-0" /> {message}
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-red-50 text-red-600 text-sm font-bold border border-red-100">
-          <AlertCircle size={16} className="flex-shrink-0" /> {error}
-        </div>
-      )}
-
       {/* Header row */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
