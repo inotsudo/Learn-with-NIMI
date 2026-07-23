@@ -319,7 +319,15 @@ export default function LevelEditor() {
               )
             })}
             {levels.length === 0 && (
-              <tr><td colSpan={CATEGORY_ORDER.length + 1} className="py-8 text-center text-gray-400">No levels yet.</td></tr>
+              <tr>
+                <td colSpan={CATEGORY_ORDER.length + 1} className="py-12 text-center">
+                  <p className="text-[14px] font-bold text-gray-400 mb-1">No levels yet</p>
+                  <p className="text-[12px] text-gray-400 max-w-xs mx-auto mb-3">
+                    Levels map a learner&apos;s progression. Each row is a level; each column is a mission category. Start with Level 1 and assign one mission per slot.
+                  </p>
+                  <p className="text-[11px] text-gray-300">Click <strong className="text-gray-400">+ Add Level 1</strong> above to get started.</p>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
