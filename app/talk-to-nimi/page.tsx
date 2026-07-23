@@ -13,7 +13,7 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import {
   getChildren,
-  getTodayStars, getActivityDates, getChildBadges, getTodayMissions,
+  getTodayStars, getActivityDates, getChildBadges, getBadgeImages, getTodayMissions,
   getClaimedChallenges, claimChallengeReward,
 } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots } from "@/lib/storyRepository";
@@ -168,7 +168,8 @@ function NimiChatPageContent({
 
   const [todayStars,           setTodayStars]           = useState(0);
   const [chatStreakDays,        setChatStreakDays]        = useState(0);
-  const [badgeCount,           setBadgeCount]           = useState(0);
+  const [earnedBadges,         setEarnedBadges]         = useState<import("@/lib/queries").ChildBadge[]>([]);
+  const [badgeImageMap,        setBadgeImageMap]         = useState<Record<string, string>>({});
   const [activitiesCompleted,  setActivitiesCompleted]  = useState(0);
   const [exchangeCount,        setExchangeCount]        = useState(0);
   const [questClaimed,         setQuestClaimed]         = useState(false);
@@ -229,18 +230,20 @@ function NimiChatPageContent({
   }, [childId, childLanguage]);
 
   const loadStats = async (id: string, lang: "en" | "fr" | "rw") => {
-    const [stars, dates, badges, stories, claimed, todayMissions] = await Promise.all([
+    const [stars, dates, badges, stories, claimed, todayMissions, imageMap] = await Promise.all([
       getTodayStars(id, lang),
       getActivityDates(id, lang),
       getChildBadges(id, lang),
       getStoryLibrary(id, lang),
       getClaimedChallenges(id, lang),
       getTodayMissions(id, lang),
+      getBadgeImages(),
     ]);
     if (claimed.has(`daily-chat-${getDayPeriod()}`)) setQuestClaimed(true);
     setTodayStars(stars);
     setChatStreakDays(computeStreaks(dates).current);
-    setBadgeCount(badges.length);
+    setEarnedBadges(badges);
+    setBadgeImageMap(imageMap);
     setActivitiesCompleted(todayMissions.length);
 
     const curStory = stories.find((s: { unlocked: boolean; complete: boolean }) => s.unlocked && !s.complete) ?? stories[0];
@@ -629,7 +632,8 @@ function NimiChatPageContent({
             <ChatSidebar
               todayStars={todayStars}
               chatStreakDays={chatStreakDays}
-              badgeCount={badgeCount}
+              badges={earnedBadges}
+              badgeImageMap={badgeImageMap}
               activitiesCompleted={activitiesCompleted}
             />
           </div>

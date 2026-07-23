@@ -80,6 +80,8 @@ const nextConfig = {
       { source: "/login",     destination: "/loginpage",  permanent: true },
       { source: "/signup",    destination: "/signuppage", permanent: true },
       { source: "/dashboard", destination: "/home",       permanent: true },
+      // Story slug renames — keep old URLs alive after migration 156
+      { source: "/stories/new-story-1782593741408", destination: "/stories/the-talking-faces", permanent: true },
     ];
   },
 

@@ -255,7 +255,7 @@ export default function StoryManager({ initialStoryId, onNavigate, onOpenSidebar
       const maxSort = stories.reduce((max, s) => Math.max(max, s.sort_order), 0)
       const { data: newStory, error } = await supabase
         .from('stories')
-        .insert({ slug: `new-story-${Date.now()}`, title: 'New Story', sort_order: maxSort + 1, status: 'draft', theme_title: '', theme_emoji: '📚' })
+        .insert({ slug: `draft-story-${Date.now()}`, title: 'New Story', sort_order: maxSort + 1, status: 'draft', theme_title: '', theme_emoji: '📚' })
         .select().single()
       if (error) throw error
 

@@ -13,7 +13,7 @@ import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildBadges, getTodayMissions, type Child } from "@/lib/queries";
+import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildBadges, getBadgeImages, getTodayMissions, type Child } from "@/lib/queries";
 import { getStoryLibrary, getCurrentStoryId } from "@/lib/storyRepository";
 import { getActiveSubscription } from "@/lib/payments/products";
 import supabase from "@/lib/supabaseClient";
@@ -47,7 +47,8 @@ export default function StoryLibraryPage() {
   const [totalStars, setTotalStars] = useState(0);
   const [weekStreak, setWeekStreak] = useState<boolean[]>([false,false,false,false,false,false,false]);
   const [streakCount, setStreakCount] = useState(0);
-  const [badgeCount, setBadgeCount] = useState(0);
+  const [badges, setBadges] = useState<import("@/lib/queries").ChildBadge[]>([]);
+  const [badgeImageMap, setBadgeImageMap] = useState<Record<string, string>>({});
   const [missionsCompleted, setMissionsCompleted] = useState(0);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [search, setSearch] = useState("");
@@ -60,7 +61,7 @@ export default function StoryLibraryPage() {
   const loadForChild = useCallback(async (child: Child, lang: Language, silent = false) => {
     const gen = silent ? ++switchGenRef.current : 0;
     if (silent) setRefreshing(true); else setLoading(true);
-    const [lib, cur, streak, consStreak, badges, stars, todayMissions] = await Promise.all([
+    const [lib, cur, streak, consStreak, badges, stars, todayMissions, imageMap] = await Promise.all([
       getStoryLibrary(child.id, lang),
       getCurrentStoryId(child.id, lang),
       getWeekStreak(child.id, lang),
@@ -68,6 +69,7 @@ export default function StoryLibraryPage() {
       getChildBadges(child.id, lang),
       getTotalStars(child.id, lang),
       getTodayMissions(child.id, lang),
+      getBadgeImages(),
     ]);
 
     if (silent && gen !== switchGenRef.current) return;
@@ -75,7 +77,8 @@ export default function StoryLibraryPage() {
     setCurrentId(cur);
     setWeekStreak(streak);
     setStreakCount(consStreak);
-    setBadgeCount(badges.length);
+    setBadges(badges);
+    setBadgeImageMap(imageMap);
     setTotalStars(stars);
     setMissionsCompleted(todayMissions.length);
     if (silent) setRefreshing(false); else setLoading(false);
@@ -574,7 +577,8 @@ export default function StoryLibraryPage() {
         <StatsSidebar
           weekStreak={weekStreak}
           streakCount={streakCount}
-          badgeCount={badgeCount}
+          badges={badges}
+          badgeImageMap={badgeImageMap}
           todayStars={totalStars}
           activitiesCompleted={missionsCompleted}
         />

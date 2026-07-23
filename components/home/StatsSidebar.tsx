@@ -1,26 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, Trophy, Star, Lock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
+import type { ChildBadge } from "@/lib/queries";
+import { MILESTONE_BADGES } from "@/lib/milestoneBadges";
+import BadgeCircle from "@/components/stories/BadgeCircle";
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
-
-const BADGE_TYPES = [
-  { emoji: "⭐", gradient: "linear-gradient(135deg,#fbbf24,#f59e0b)" },
-  { emoji: "🎵", gradient: "linear-gradient(135deg,#f87171,#ef4444)" },
-  { emoji: "🏃", gradient: "linear-gradient(135deg,#4ade80,#22c55e)" },
-  { emoji: "🎨", gradient: "linear-gradient(135deg,#60a5fa,#3b82f6)" },
-  { emoji: "🔍", gradient: "linear-gradient(135deg,#2dd4bf,#14b8a6)" },
-];
 
 interface Props {
   weekStreak: boolean[];
   streakCount: number;
-  badgeCount: number;
+  badges: ChildBadge[];
+  badgeImageMap?: Record<string, string>;
   todayStars: number;
   activitiesCompleted: number;
 }
@@ -28,7 +25,8 @@ interface Props {
 export default function StatsSidebar({
   weekStreak,
   streakCount,
-  badgeCount,
+  badges,
+  badgeImageMap = {},
   todayStars,
   activitiesCompleted,
 }: Props) {
@@ -37,6 +35,7 @@ export default function StatsSidebar({
   const certProgress = Math.min(100, (activitiesCompleted / 8) * 100);
   const hasStreak = streakCount > 0;
   const hasStars = todayStars > 0;
+  const earnedCount = badges.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -100,42 +99,49 @@ export default function StatsSidebar({
           </Link>
         </div>
 
-        <div className="flex items-center justify-center gap-2">
-          {BADGE_TYPES.map((badge, i) => {
-            const earned = i < badgeCount;
-            return (
-              <motion.div key={i}
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: earned ? 1 : 0.85, opacity: earned ? 1 : 0.45 }}
+        {badges.length > 0 ? (
+          <div className="flex flex-wrap justify-center gap-2 mb-2">
+            {badges.slice(0, 8).map((b, i) => (
+              <motion.div key={b.badge_slug}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 transition={{ ...SPRING.bounce, delay: i * DURATION.fast }}
-                whileHover={earned ? { scale: 1.15, rotate: 8 } : { scale: 1.08 }}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-base cursor-default relative"
-                style={earned
-                  ? { background: badge.gradient, boxShadow: "0 3px 10px rgba(0,0,0,0.18)" }
-                  : { background: "#F3F4F6" }}>
-                {earned ? (
-                  badge.emoji
-                ) : (
-                  <>
-                    {/* Ghost of the badge — teases what's coming */}
-                    <span className="grayscale opacity-30 select-none">{badge.emoji}</span>
-                    {/* Pulsing lock pip */}
-                    <motion.span
-                      animate={{ scale: [1, 1.25, 1] }}
-                      transition={{ duration: DURATION.loopBase, repeat: Infinity, delay: i * 0.3 }}
-                      className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center">
-                      <Lock className="w-2 h-2 text-gray-400" />
-                    </motion.span>
-                  </>
-                )}
+                whileHover={{ scale: 1.15, rotate: 8 }}>
+                <BadgeCircle slug={b.badge_slug} size="sm" imageUrl={badgeImageMap?.[b.badge_slug]} />
               </motion.div>
-            );
-          })}
-        </div>
+            ))}
+            {badges.length > 8 && (
+              <div className="w-10 h-10 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                <span className="text-[10px] font-black text-gray-400">+{badges.length - 8}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Ghost milestone slots — motivate kids to earn their first badge */
+          <div className="flex items-center justify-center gap-2 mb-2">
+            {MILESTONE_BADGES.map((badge, i) => (
+              <motion.div key={badge.slug}
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 0.88, opacity: 1 }}
+                transition={{ ...SPRING.bounce, delay: i * DURATION.fast }}
+                whileHover={{ scale: 1.06 }}
+                title={`🔒 ${badge.desc}`}
+                className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center cursor-default relative">
+                <span className="grayscale opacity-25 select-none text-xl">{badge.emoji}</span>
+                <motion.span
+                  animate={{ scale: [1, 1.25, 1] }}
+                  transition={{ duration: DURATION.loopBase, repeat: Infinity, delay: i * 0.3 }}
+                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center">
+                  <Lock className="w-2 h-2 text-gray-400" />
+                </motion.span>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
-        <p className="text-[10px] text-ds-muted text-center mt-2 leading-snug">
-          {badgeCount > 0
-            ? t("badgesEarned").replace("{count}", String(badgeCount))
+        <p className="text-[10px] text-ds-muted text-center leading-snug">
+          {badges.length > 0
+            ? t("badgesEarned").replace("{count}", String(badges.length))
             : t("noBadgesYet")}
         </p>
       </div>

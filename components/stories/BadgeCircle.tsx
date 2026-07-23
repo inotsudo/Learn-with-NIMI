@@ -19,18 +19,20 @@ const SIZE_CLS: Record<Size, { outer: string; ring: string; icon: string; label:
 };
 
 export default function BadgeCircle({ slug, size = "md", imageUrl }: Props) {
-  const [imgOk, setImgOk] = useState(true);
+  // Separate error flags so a failed local file doesn't also break the Supabase URL
+  const [adminImgOk, setAdminImgOk] = useState(true);
+  const [localImgOk, setLocalImgOk] = useState(true);
   const cls = SIZE_CLS[size];
   const milestoneMeta = slug ? getMilestoneBadgeMeta(slug) : null;
 
   // 1. Supabase Storage URL from badge_images table (admin-uploaded)
-  if (imageUrl && imgOk) {
+  if (imageUrl && adminImgOk) {
     return (
       <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 shadow-lg overflow-hidden`}>
         <img
           src={imageUrl}
           alt={milestoneMeta?.label ?? slug ?? "badge"}
-          onError={() => setImgOk(false)}
+          onError={() => setAdminImgOk(false)}
           className="w-full h-full object-contain"
         />
       </div>
@@ -47,13 +49,13 @@ export default function BadgeCircle({ slug, size = "md", imageUrl }: Props) {
   }
 
   // 3. Slug-based image — /badges/<slug>.png — falls back to champion on error
-  if (slug && imgOk) {
+  if (slug && localImgOk) {
     return (
       <div className={`${cls.outer} rounded-full ${cls.ring} ring-yellow-400 shadow-lg overflow-hidden`}>
         <img
           src={`/badges/${slug}.png`}
           alt={slug}
-          onError={() => setImgOk(false)}
+          onError={() => setLocalImgOk(false)}
           className="w-full h-full object-contain"
         />
       </div>

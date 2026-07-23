@@ -3,27 +3,28 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Lock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-
-const BADGE_TYPES = [
-  { emoji: "🎵", bg: "bg-green-400",  shadow: "shadow-green-100",  labelKey: "musicBadgeLabel"  },
-  { emoji: "📖", bg: "bg-blue-400",   shadow: "shadow-blue-100",   labelKey: "storyBadgeLabel"  },
-  { emoji: "🎨", bg: "bg-orange-400", shadow: "shadow-orange-100", labelKey: "artBadgeLabel"    },
-];
+import { DURATION, SPRING } from "@/lib/design-system/motion";
+import type { ChildBadge } from "@/lib/queries";
+import { MILESTONE_BADGES } from "@/lib/milestoneBadges";
+import BadgeCircle from "@/components/stories/BadgeCircle";
 
 interface Props {
   todayStars: number;
   chatStreakDays: number;
-  badgeCount: number;
-  activitiesCompleted: number; // kept for API compat, no longer displayed
+  badges: ChildBadge[];
+  badgeImageMap?: Record<string, string>;
+  activitiesCompleted: number;
 }
 
-export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount }: Props) {
+export default function ChatSidebar({ todayStars, chatStreakDays, badges, badgeImageMap = {} }: Props) {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
+  const earnedCount = badges.length;
 
   return (
     <div className="flex flex-col gap-3">
@@ -63,31 +64,55 @@ export default function ChatSidebar({ todayStars, chatStreakDays, badgeCount }: 
         style={{ borderRadius:"var(--leaf-r)" }}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-black text-ds-text text-[12px] tracking-wide uppercase">{t("badgesEarnedTitle")}</h3>
-          <Link href="/user-profile"
-            className="text-[11px] font-bold text-nimi-green hover:underline">
+          <Link href="/user-profile" className="text-[11px] font-bold text-ds-brand hover:underline">
             {t("viewAll")}
           </Link>
         </div>
-        <div className="flex items-center justify-around gap-2">
-          {BADGE_TYPES.map((badge, i) => {
-            const earned = i < badgeCount;
-            return (
-              <div key={i} className="flex flex-col items-center gap-1.5">
-                <motion.div
-                  whileHover={earned ? { scale:1.12 } : {}}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center text-lg shadow-sm transition-all ${
-                    earned ? `${badge.bg} ${badge.shadow} shadow-md` : "bg-gray-100 grayscale opacity-40"
-                  }`}
-                >
-                  {badge.emoji}
-                </motion.div>
-                <p className="text-[11px] font-bold text-gray-400 text-center leading-tight">{t(badge.labelKey)}</p>
+
+        {badges.length > 0 ? (
+          <div className="flex flex-wrap justify-center gap-2">
+            {badges.slice(0, 6).map((b, i) => (
+              <motion.div key={b.badge_slug}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ ...SPRING.bounce, delay: i * DURATION.fast }}
+                whileHover={{ scale: 1.15, rotate: 8 }}>
+                <BadgeCircle slug={b.badge_slug} size="sm" imageUrl={badgeImageMap?.[b.badge_slug]} />
+              </motion.div>
+            ))}
+            {badges.length > 6 && (
+              <div className="w-10 h-10 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                <span className="text-[10px] font-black text-gray-400">+{badges.length - 6}</span>
               </div>
-            );
-          })}
-        </div>
-        {badgeCount === 0 && (
-          <p className="text-center text-[11px] text-gray-400 mt-3">Complete stories to earn badges!</p>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-around gap-1">
+            {MILESTONE_BADGES.map((badge, i) => (
+              <motion.div key={badge.slug}
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 0.88, opacity: 1 }}
+                transition={{ ...SPRING.bounce, delay: i * DURATION.fast }}
+                whileHover={{ scale: 1.06 }}
+                title={`🔒 ${badge.desc}`}
+                className="flex flex-col items-center gap-1 cursor-default">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center relative">
+                  <span className="grayscale opacity-25 text-xl">{badge.emoji}</span>
+                  <motion.span
+                    animate={{ scale: [1, 1.25, 1] }}
+                    transition={{ duration: DURATION.loopBase, repeat: Infinity, delay: i * 0.3 }}
+                    className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center">
+                    <Lock className="w-2 h-2 text-gray-400" />
+                  </motion.span>
+                </div>
+                <p className="text-[9px] font-bold text-center leading-tight text-gray-300">{badge.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {earnedCount === 0 && (
+          <p className="text-center text-[11px] text-ds-muted mt-2">Complete stories to earn badges!</p>
         )}
       </div>
 
