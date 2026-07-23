@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
-import { Send, ChevronRight, Mic, Volume2, VolumeX } from "lucide-react";
+import { Send, ChevronRight, Mic, Volume2, VolumeX, Crown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -33,7 +33,7 @@ export default function TalkToNimi({ childName }: Props) {
   const messagesRef = useRef<HTMLDivElement>(null);
   const exchangeCountRef = useRef(0);
 
-  const { messages, setMessages, isTyping, send, isSpeaking, toggleSpeak } = useNimiChat([greetingFor(childName)], {
+  const { messages, setMessages, isTyping, send, isSpeaking, toggleSpeak, dailyLimitReached } = useNimiChat([greetingFor(childName)], {
     childName,
     onExchangeComplete: () => { exchangeCountRef.current += 1; },
   });
@@ -124,7 +124,20 @@ export default function TalkToNimi({ childName }: Props) {
         </div>
 
         {/* Quick replies */}
-        <QuickReplyChips onSelect={text => sendChat(text)} disabled={isTyping} size="sm" />
+        {!dailyLimitReached && <QuickReplyChips onSelect={text => sendChat(text)} disabled={isTyping} size="sm" />}
+
+        {/* Daily limit upgrade banner */}
+        {dailyLimitReached && (
+          <motion.a href="/pricing" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl px-3 py-2.5 mb-2 mt-1 cursor-pointer group">
+            <Crown className="w-4 h-4 text-yellow-300 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-baloo font-black text-white text-[11px] leading-tight">Daily limit reached</p>
+              <p className="text-purple-200 text-[9.5px] leading-tight">Upgrade for unlimited Nimi chats 👑</p>
+            </div>
+            <span className="text-yellow-300 font-black text-[10px] shrink-0 group-hover:text-yellow-200">Upgrade →</span>
+          </motion.a>
+        )}
 
         {/* Mic error */}
         {micError && (
@@ -134,9 +147,11 @@ export default function TalkToNimi({ childName }: Props) {
         )}
 
         {/* Input */}
-        <div className="flex items-center gap-2 bg-gray-100 rounded-full border border-ds-border px-3 py-1 shadow-sm mb-3 mt-2 flex-shrink-0">
+        <div className={`flex items-center gap-2 rounded-full border px-3 py-1 shadow-sm mb-3 mt-2 flex-shrink-0 ${
+          dailyLimitReached ? "bg-gray-50 border-gray-200 opacity-50 pointer-events-none" : "bg-gray-100 border-ds-border"
+        }`}>
           {language !== "rw" && (
-            <motion.button onClick={toggleSpeak} whileTap={m.buttonPress} disabled={isTyping}
+            <motion.button onClick={toggleSpeak} whileTap={m.buttonPress} disabled={isTyping || dailyLimitReached}
               aria-label={isSpeaking ? t("stopReadingLabel") : t("readAloudLabel")}
               className="w-7 h-7 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600 flex-shrink-0 transition disabled:opacity-50">
               {isSpeaking ? (
@@ -152,8 +167,8 @@ export default function TalkToNimi({ childName }: Props) {
             type="text" value={chatInput}
             onChange={e => setChatInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && sendChat()}
-            placeholder={listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
-            disabled={isTyping || listening}
+            placeholder={dailyLimitReached ? "Daily limit reached" : listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
+            disabled={isTyping || listening || dailyLimitReached}
             className="flex-1 min-w-0 text-[10.5px] bg-transparent focus:outline-none text-ds-text placeholder-gray-400 disabled:opacity-60" />
           {showMic && (
             <motion.button onClick={() => (listening ? stopListening() : startListening())}
@@ -161,7 +176,7 @@ export default function TalkToNimi({ childName }: Props) {
               aria-label={t("micButtonLabel")}
               animate={listening ? { scale: [1, 1.15, 1] } : {}}
               transition={listening ? { duration: 0.8, repeat: Infinity } : {}}
-              disabled={isTyping}
+              disabled={isTyping || dailyLimitReached}
               className={`w-7 h-7 rounded-full flex items-center justify-center text-white flex-shrink-0 transition shadow disabled:opacity-50 ${
                 listening ? "bg-red-500 hover:bg-red-600" : "bg-green-300 hover:bg-green-400"
               }`}>
@@ -169,7 +184,7 @@ export default function TalkToNimi({ childName }: Props) {
             </motion.button>
           )}
           <motion.button onClick={() => sendChat()} whileTap={m.buttonPress}
-            disabled={isTyping || !chatInput.trim()}
+            disabled={isTyping || !chatInput.trim() || dailyLimitReached}
             className="w-7 h-7 disabled:bg-gray-200 flex items-center justify-center text-white flex-shrink-0 transition shadow"
             style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}>
             <Send className="w-3 h-3" />

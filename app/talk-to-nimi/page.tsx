@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
-import { ArrowLeft, Send, Mic, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Send, Mic, Volume2, VolumeX, Crown } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -176,7 +176,7 @@ function NimiChatPageContent({
     }
   };
 
-  const { messages, isTyping, send, sendVoice, isSpeaking, toggleSpeak } = useNimiChat(initialMessages, {
+  const { messages, isTyping, send, sendVoice, isSpeaking, toggleSpeak, dailyLimitReached } = useNimiChat(initialMessages, {
     childName,
     onExchangeComplete: handleExchangeComplete,
     childId:         childId,
@@ -503,9 +503,25 @@ function NimiChatPageContent({
             </div>
 
             {/* Quick replies */}
-            <div className="px-3 pt-2.5 pb-1 border-t border-ds-border">
-              <QuickReplyChips onSelect={text => sendChat(text)} disabled={isTyping} size="md" />
-            </div>
+            {!dailyLimitReached && (
+              <div className="px-3 pt-2.5 pb-1 border-t border-ds-border">
+                <QuickReplyChips onSelect={text => sendChat(text)} disabled={isTyping} size="md" />
+              </div>
+            )}
+
+            {/* Daily limit upgrade banner */}
+            {dailyLimitReached && (
+              <motion.a href="/pricing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="mx-3 mb-2 mt-3 flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer group"
+                style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)", boxShadow: "0 6px 20px rgba(109,40,217,0.25)" }}>
+                <Crown className="w-5 h-5 text-yellow-300 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-baloo font-black text-white text-[13px] leading-tight">You&apos;ve reached today&apos;s free limit</p>
+                  <p className="text-purple-200 text-[11px] leading-tight">Upgrade to NIMIPIKO Club for unlimited Nimi chats, every day.</p>
+                </div>
+                <span className="shrink-0 font-baloo font-black text-yellow-300 text-[12px] group-hover:text-yellow-200">Upgrade →</span>
+              </motion.a>
+            )}
 
             {/* Break nudge — gentle, non-blocking */}
             <BreakNudge
@@ -524,8 +540,11 @@ function NimiChatPageContent({
 
             {/* Input bar */}
             <div className="px-3 py-3 flex-shrink-0 bg-ds-surface border-t border-ds-border">
-              <div className="flex items-center gap-2 bg-white border border-gray-200 shadow-sm px-3 py-2 focus-within:border-[var(--nimi-green)] focus-within:ring-2 focus-within:ring-[var(--nimi-green)] focus-within:ring-opacity-20 transition-shadow"
-                style={{ borderRadius:"var(--leaf-r)" }}>
+              <div className={`flex items-center gap-2 border shadow-sm px-3 py-2 transition-shadow ${
+                dailyLimitReached
+                  ? "bg-gray-50 border-gray-200 opacity-50 pointer-events-none"
+                  : "bg-white border-gray-200 focus-within:border-[var(--nimi-green)] focus-within:ring-2 focus-within:ring-[var(--nimi-green)] focus-within:ring-opacity-20"
+              }`} style={{ borderRadius:"var(--leaf-r)" }}>
                 {showMic && (
                   <motion.button
                     onClick={() => listening ? stopListening() : startListening()}
@@ -533,7 +552,7 @@ function NimiChatPageContent({
                     aria-label={t("micButtonLabel")}
                     animate={listening && !noMotion ? { scale:[1,1.12,1] } : {}}
                     transition={listening && !noMotion ? { duration:0.8, repeat:Infinity } : {}}
-                    disabled={isTyping}
+                    disabled={isTyping || dailyLimitReached}
                     className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition disabled:opacity-40 ${
                       listening
                         ? "bg-red-500 text-white shadow-md shadow-red-200"
@@ -546,11 +565,11 @@ function NimiChatPageContent({
                   type="text" value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && sendChat()}
-                  placeholder={listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
-                  disabled={isTyping || listening}
+                  placeholder={dailyLimitReached ? "Daily limit reached" : listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
+                  disabled={isTyping || listening || dailyLimitReached}
                   className="flex-1 min-w-0 text-[14px] bg-transparent py-1.5 focus:outline-none text-gray-800 placeholder:text-gray-400 disabled:opacity-60 font-nunito" />
                 <motion.button onClick={() => sendChat()} whileTap={m.buttonPress}
-                  disabled={isTyping || !chatInput.trim()}
+                  disabled={isTyping || !chatInput.trim() || dailyLimitReached}
                   className="w-9 h-9 flex items-center justify-center flex-shrink-0 transition disabled:opacity-30 text-white shadow hover:opacity-90 disabled:shadow-none"
                   style={{ backgroundColor:"var(--nimi-green)", borderRadius:"var(--leaf-r-sm)" }}>
                   <Send className="w-4 h-4" />

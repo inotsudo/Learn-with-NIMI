@@ -37,6 +37,7 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
   const lastReplyRef = useRef(lastNimiText(initialMessages));
 
   // Keep a ref to the latest messages so the unmount effect always has current data
@@ -207,6 +208,12 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
         }),
       });
 
+      if (res.status === 429) {
+        setDailyLimitReached(true);
+        updateReply("Wow, we've talked so much today! 🌟 You've used all 10 of your free chats for today. Come back tomorrow — I'll be here! To chat with me anytime, ask a grown-up about NIMIPIKO Club. 👑");
+        return;
+      }
+
       if (!res.ok || !res.body) throw new Error("AI request failed");
 
       const reader = res.body.getReader();
@@ -253,5 +260,5 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
     }
   }, [messages, isTyping, language, childName, childId, storyId, t, onExchangeComplete, stopReading]);
 
-  return { messages, setMessages, isTyping, send, sendVoice, isSpeaking, toggleSpeak };
+  return { messages, setMessages, isTyping, send, sendVoice, isSpeaking, toggleSpeak, dailyLimitReached };
 }

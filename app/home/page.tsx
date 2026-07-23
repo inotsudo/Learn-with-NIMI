@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
-import { Heart, Star, Flame, Play, ChevronRight, Check } from "lucide-react";
+import { Heart, Star, Flame, Play, ChevronRight, Check, Crown } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import {
   getChildren, ensureParentRow, getStorageUrl,
@@ -154,6 +154,8 @@ export default function HomePage() {
   const [noChildrenYet,   setNoChildrenYet]   = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [isTrial,        setIsTrial]        = useState(false);
+  const [trialDaysLeft,  setTrialDaysLeft]  = useState(0);
   const [stories,          setStories]          = useState<StoryLibraryItem[]>([]);
   const [slots,            setSlots]            = useState<StorySlot[]>([]);
   const [popularStories,   setPopularStories]   = useState<PopularStory[]>([]);
@@ -244,7 +246,14 @@ export default function HomePage() {
     ]);
     if (!user) { router.replace("/loginpage"); return; }
     setChildren(list);
-    getActiveSubscription(user.id).then(sub => setHasSubscription(!!sub));
+    getActiveSubscription(user.id).then(sub => {
+      setHasSubscription(!!sub);
+      if (sub?.payment_provider === "trial" && sub.current_period_end) {
+        setIsTrial(true);
+        const msLeft = new Date(sub.current_period_end).getTime() - Date.now();
+        setTrialDaysLeft(Math.max(0, Math.ceil(msLeft / 86_400_000)));
+      }
+    });
     if (list.length === 0) { router.replace("/onboarding"); return; }
     const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
     const saved   = list.find(c => c.id === savedId);
@@ -992,6 +1001,44 @@ export default function HomePage() {
               {/* ══ RIGHT PANEL ════════════════════════════════════════════════ */}
               <aside className="w-full xl:w-[284px] xl:shrink-0 xl:self-start xl:sticky xl:top-[80px]">
                 <div className="flex flex-col gap-5 xl:max-h-[calc(100vh-100px)] xl:overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+
+                  {/* ── Trial Countdown ─────────────────────────────────────── */}
+                  {isTrial && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                    >
+                      <Link href="/pricing">
+                        <div className={`rounded-2xl p-4 cursor-pointer group transition-all border ${
+                          trialDaysLeft <= 2
+                            ? "bg-gradient-to-br from-red-50 to-orange-50 border-red-200 hover:border-red-300"
+                            : "bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 hover:border-amber-300"
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                              trialDaysLeft <= 2 ? "bg-red-100" : "bg-amber-100"
+                            }`}>
+                              <span className="text-xl">{trialDaysLeft <= 2 ? "⚡" : "⏳"}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-baloo font-black text-[13px] leading-tight ${
+                                trialDaysLeft <= 2 ? "text-red-800" : "text-amber-800"
+                              }`}>
+                                {trialDaysLeft === 0 ? "Trial ending today!" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left on trial`}
+                              </p>
+                              <p className={`text-[11px] mt-0.5 ${trialDaysLeft <= 2 ? "text-red-600" : "text-amber-600"}`}>
+                                {trialDaysLeft <= 2 ? "Subscribe now to keep full access" : "Enjoying Club? Subscribe to keep it →"}
+                              </p>
+                            </div>
+                            <Crown className={`w-4 h-4 shrink-0 group-hover:scale-110 transition-transform ${
+                              trialDaysLeft <= 2 ? "text-red-400" : "text-amber-400"
+                            }`} />
+                          </div>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  )}
 
                   {/* ── Proactive Nimi Banner ────────────────────────────────── */}
                   {activeChild && (
