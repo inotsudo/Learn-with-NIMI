@@ -467,7 +467,11 @@ export default function HomePage() {
   })();
   const dateLocale = activeChild?.language === "fr" ? "fr-FR" : "en-US";
 
-  const curStory   = stories.find(s => s.unlocked && !s.complete) ?? stories[0];
+  const curStory         = stories.find(s => s.unlocked && !s.complete) ?? stories[0];
+  // First premium-locked story — used as a Club upsell when a free user has finished all free stories
+  const nextPremiumStory = !hasSubscription && !stories.find(s => s.unlocked && !s.complete)
+    ? (stories.find(s => !s.unlocked && !s.is_free) ?? null)
+    : null;
   const doneSlots  = slots.filter(s => s.completed).length;
   const totalSlots = slots.length;
   const pct        = totalSlots > 0 ? Math.round((doneSlots / totalSlots) * 100) : 0;
@@ -1023,6 +1027,8 @@ export default function HomePage() {
                   slots={slots}
                   up={up}
                   stagger={stagger}
+                  hasSubscription={hasSubscription}
+                  nextPremiumStory={nextPremiumStory}
                 />
 
                 {/* ── STORY LIBRARY ─────────────────────────────────────────── */}
@@ -1089,7 +1095,7 @@ export default function HomePage() {
                   )}
 
                   {/* ── Story Journey ───────────────────────────────────────── */}
-                  <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} />
+                  <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} hasSubscription={hasSubscription} nextPremiumStory={nextPremiumStory} />
 
                   {/* ── Assignments ─────────────────────────────────────────── */}
                   {activeChild?.teacher_id && (

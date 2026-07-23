@@ -6,7 +6,7 @@ type PersonalizationData = { discount_code_id?: string; gift?: boolean };
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { verifyCybersourceTransaction } from "@/lib/cybersource/verify";
-import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
+import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation, sendWelcomeToClub } from "@/lib/email";
 
 // Shared helper used by confirm-payment (immediate) and the send-gift-emails cron (scheduled).
 // Checks send_at: if null or in the past, fires email + marks email_sent_at.
@@ -247,6 +247,15 @@ export async function POST(req: NextRequest) {
               provider: "cybersource",
               periodEnd: periodEnd.toISOString(),
             });
+            // Welcome-to-Club email for new Club subscriptions (tier = "club" or "club_annual")
+            if (product?.tier === "club" || product?.tier === "club_annual") {
+              void sendWelcomeToClub({
+                to: parent.email,
+                parentName: parent.name ?? "there",
+                billingInterval: product.billing_interval ?? "monthly",
+                renewsOn: periodEnd.toISOString(),
+              });
+            }
           }
         } else {
           await supabase.from("content_access").insert({

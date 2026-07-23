@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { sendPushToParent } from "@/lib/push";
 import { generateProactiveSuggestions } from "@/lib/intelligence/proactiveEngine";
 import { bestSuggestionForPush } from "@/lib/intelligence/proactiveEngine";
+import { sendTrialEndingSoon, sendTrialExpired } from "@/lib/email";
 import type { LearnerMemory, LearnerContext } from "@/lib/ai/types";
 
 export async function GET(req: NextRequest) {
@@ -24,6 +25,103 @@ export async function GET(req: NextRequest) {
   try {
     // Expire any trials whose 7-day window has passed (fire-and-forget, non-fatal)
     void sb.rpc("expire_trial_subscriptions");
+
+    // ── Trial lifecycle emails ────────────────────────────────────────────────
+    // Run in parallel; failures are non-fatal so the push loop still runs.
+    void (async () => {
+      try {
+        const now = new Date();
+
+        // 1. Trials expiring in exactly 3 days — send "ending soon" warning
+        // 2. Trials expiring in exactly 1 day — send urgent warning
+        // We check a ±12 h window around each threshold to avoid double-sends.
+        const in3days = new Date(now.getTime() + 3 * 86_400_000);
+        const in1day  = new Date(now.getTime() + 1 * 86_400_000);
+
+        const { data: endingSoon } = await sb
+          .from("nimipiko_subscriptions")
+          .select("parent_id, current_period_end")
+          .eq("payment_provider", "trial")
+          .eq("status", "active")
+          .or(
+            // 3-day window: expires between now+2.5d and now+3.5d
+            `current_period_end.gte.${new Date(in3days.getTime() - 12 * 3600_000).toISOString()},` +
+            `current_period_end.lte.${new Date(in3days.getTime() + 12 * 3600_000).toISOString()}`,
+          );
+
+        const { data: endingTomorrow } = await sb
+          .from("nimipiko_subscriptions")
+          .select("parent_id, current_period_end")
+          .eq("payment_provider", "trial")
+          .eq("status", "active")
+          .gte("current_period_end", new Date(in1day.getTime() - 12 * 3600_000).toISOString())
+          .lte("current_period_end", new Date(in1day.getTime() + 12 * 3600_000).toISOString());
+
+        // 3. Trials that just expired in the last 25 hours
+        const { data: justExpired } = await sb
+          .from("nimipiko_subscriptions")
+          .select("parent_id")
+          .eq("payment_provider", "trial")
+          .eq("status", "expired")
+          .gte("updated_at", new Date(now.getTime() - 25 * 3600_000).toISOString());
+
+        const parentIds = new Set<string>([
+          ...(endingSoon ?? []).map((r: { parent_id: string }) => r.parent_id),
+          ...(endingTomorrow ?? []).map((r: { parent_id: string }) => r.parent_id),
+          ...(justExpired ?? []).map((r: { parent_id: string }) => r.parent_id),
+        ]);
+
+        if (parentIds.size === 0) return;
+
+        // Fetch auth emails for all affected parents in one call
+        for (const parentId of parentIds) {
+          try {
+            const { data: authUser } = await sb.auth.admin.getUserById(parentId);
+            const email = authUser?.user?.email;
+            if (!email) continue;
+
+            const { data: parentRow } = await sb
+              .from("parents")
+              .select("name")
+              .eq("id", parentId)
+              .maybeSingle();
+            const name = (parentRow?.name as string | null) ?? "there";
+
+            const expiringSoon3 = (endingSoon ?? []).find((r: { parent_id: string }) => r.parent_id === parentId);
+            const expiringSoon1 = (endingTomorrow ?? []).find((r: { parent_id: string }) => r.parent_id === parentId);
+            const expired = (justExpired ?? []).find((r: { parent_id: string }) => r.parent_id === parentId);
+
+            if (expiringSoon3) {
+              await sendTrialEndingSoon({ to: email, parentName: name, daysLeft: 3, expiresOn: expiringSoon3.current_period_end as string });
+              void sendPushToParent(sb, parentId, {
+                title: "⏳ 3 days left on your free trial",
+                body: `${name}, your NIMIPIKO trial ends in 3 days. Subscribe to keep full access.`,
+                url: "/pricing",
+              });
+            } else if (expiringSoon1) {
+              await sendTrialEndingSoon({ to: email, parentName: name, daysLeft: 1, expiresOn: expiringSoon1.current_period_end as string });
+              void sendPushToParent(sb, parentId, {
+                title: "⚡ Trial ends tomorrow!",
+                body: "Subscribe now to keep all stories, unlimited Nimi AI, and certificates.",
+                url: "/pricing",
+              });
+            } else if (expired) {
+              await sendTrialExpired({ to: email, parentName: name });
+              void sendPushToParent(sb, parentId, {
+                title: "Your free trial has ended",
+                body: "You're on the free plan now. Subscribe to restore full Club access.",
+                url: "/pricing",
+              });
+            }
+          } catch (inner) {
+            console.error("[daily-reminder] trial email failed for", parentId, inner);
+          }
+        }
+      } catch (err) {
+        console.error("[daily-reminder] trial email batch failed:", err);
+      }
+    })();
+    // ── End trial lifecycle emails ────────────────────────────────────────────
 
     const { data: targets, error } = await sb.rpc("get_push_reminder_targets");
     if (error) {

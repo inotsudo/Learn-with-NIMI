@@ -105,11 +105,27 @@ export async function GET(req: NextRequest) {
 
       if (!childDigests.length) continue;
 
+      // Check for expiring trial (≤3 days left) to include a warning in the digest
+      let trialDaysLeft: number | undefined;
+      const { data: trialSub } = await sb
+        .from("nimipiko_subscriptions")
+        .select("current_period_end")
+        .eq("parent_id", parent.id)
+        .eq("payment_provider", "trial")
+        .eq("status", "active")
+        .maybeSingle();
+      if (trialSub?.current_period_end) {
+        const msLeft = new Date(trialSub.current_period_end as string).getTime() - Date.now();
+        const days = Math.max(0, Math.ceil(msLeft / 86_400_000));
+        if (days <= 3) trialDaysLeft = days;
+      }
+
       await sendWeeklyDigest({
         to: parent.email,
         parentName: parent.name ?? "there",
         weekOf: weekLabel(),
         children: childDigests,
+        trialDaysLeft,
       });
 
       sent++;

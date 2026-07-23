@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 type OrderProduct = { tier: string | null; story_id: string | null; billing_interval: string | null; product_type: string | null; name: string | null };
 type PersonalizationData = { discount_code_id?: string; gift?: boolean; phone?: string };
-import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation } from "@/lib/email";
+import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation, sendWelcomeToClub } from "@/lib/email";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -260,6 +260,14 @@ export async function GET(req: NextRequest) {
                 provider: "mtn_momo",
                 periodEnd: periodEnd.toISOString(),
               });
+              if (product?.tier === "club" || product?.tier === "club_annual") {
+                void sendWelcomeToClub({
+                  to: parent.email,
+                  parentName: parent.name ?? "there",
+                  billingInterval: product.billing_interval ?? "monthly",
+                  renewsOn: periodEnd.toISOString(),
+                });
+              }
             }
           } else {
             await supabase.from("content_access").insert({

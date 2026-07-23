@@ -13,7 +13,7 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import {
   getChildren,
-  getTodayStars, getActivityDates, getChildBadges,
+  getTodayStars, getActivityDates, getChildBadges, getTodayMissions,
   getClaimedChallenges, claimChallengeReward,
 } from "@/lib/queries";
 import { getStoryLibrary, getStorySlots } from "@/lib/storyRepository";
@@ -229,18 +229,19 @@ function NimiChatPageContent({
   }, [childId, childLanguage]);
 
   const loadStats = async (id: string, lang: "en" | "fr" | "rw") => {
-    const [stars, dates, badges, stories, claimed] = await Promise.all([
+    const [stars, dates, badges, stories, claimed, todayMissions] = await Promise.all([
       getTodayStars(id, lang),
       getActivityDates(id, lang),
       getChildBadges(id, lang),
       getStoryLibrary(id, lang),
       getClaimedChallenges(id, lang),
+      getTodayMissions(id, lang),
     ]);
     if (claimed.has(`daily-chat-${getDayPeriod()}`)) setQuestClaimed(true);
     setTodayStars(stars);
     setChatStreakDays(computeStreaks(dates).current);
     setBadgeCount(badges.length);
-    setActivitiesCompleted(stories.filter((s: { complete: boolean }) => s.complete).length);
+    setActivitiesCompleted(todayMissions.length);
 
     const curStory = stories.find((s: { unlocked: boolean; complete: boolean }) => s.unlocked && !s.complete) ?? stories[0];
     if (curStory) {
@@ -537,17 +538,32 @@ function NimiChatPageContent({
               </div>
             )}
 
+            {/* Soft upsell — 2 messages before the hard wall fires */}
+            {nimiMessagesUsed !== null && nimiMessagesUsed >= 8 && !dailyLimitReached && (
+              <motion.a href="/pricing" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                aria-label={`${10 - nimiMessagesUsed} messages left today. Upgrade to Club for unlimited.`}
+                className="mx-3 mb-1 mt-2 flex items-center gap-2.5 rounded-xl px-3.5 py-2 bg-ds-warn-surface border border-ds-warn cursor-pointer group">
+                <span className="text-base shrink-0" aria-hidden="true">⭐</span>
+                <p className="flex-1 min-w-0 font-nunito text-ds-warn text-xs leading-tight">
+                  <strong>{10 - nimiMessagesUsed}</strong>{" "}
+                  {10 - nimiMessagesUsed === 1 ? "message" : "messages"} left today —{" "}
+                  <span className="font-bold group-hover:underline">upgrade for unlimited</span>
+                </p>
+                <span className="shrink-0 font-baloo font-black text-ds-warn text-2xs group-hover:opacity-75">Club →</span>
+              </motion.a>
+            )}
+
             {/* Daily limit upgrade banner */}
             {dailyLimitReached && (
               <motion.a href="/pricing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="mx-3 mb-2 mt-3 flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer group"
-                style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)", boxShadow: "0 6px 20px rgba(109,40,217,0.25)" }}>
+                aria-label="Daily limit reached. Upgrade to Club for unlimited Nimi chats."
+                className="mx-3 mb-2 mt-3 flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer group bg-ds-club shadow-ds-club">
                 <Crown className="w-5 h-5 text-yellow-300 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-baloo font-black text-white text-[13px] leading-tight">You&apos;ve reached today&apos;s free limit</p>
-                  <p className="text-purple-200 text-[11px] leading-tight">Upgrade to NIMIPIKO Club for unlimited Nimi chats, every day.</p>
+                  <p className="text-white/70 text-2xs leading-tight">Upgrade to NIMIPIKO Club for unlimited Nimi chats, every day.</p>
                 </div>
-                <span className="shrink-0 font-baloo font-black text-yellow-300 text-[12px] group-hover:text-yellow-200">Upgrade →</span>
+                <span className="shrink-0 font-baloo font-black text-yellow-300 text-xs group-hover:text-yellow-200">Upgrade →</span>
               </motion.a>
             )}
 

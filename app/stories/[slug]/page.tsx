@@ -231,6 +231,7 @@ export default function StoryDetailPage() {
   const [parentId, setParentId] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [storyIsFree, setStoryIsFree] = useState(false);
   const [sharingCert, setSharingCert] = useState(false);
   const [downloadingCert, setDownloadingCert] = useState<"pdf" | "png" | null>(null);
   // Guard: prevent badge award effect from firing more than once per mount
@@ -484,6 +485,7 @@ export default function StoryDetailPage() {
     void (async () => {
       const library = await getStoryLibrary(childId, language);
       const entry = library.find(s => s.sid === storyId);
+      if (entry?.is_free) setStoryIsFree(true);
       if (entry && !entry.is_free && !entry.unlocked) setPremiumLocked(true);
     })();
   }, [childId, storyId, language]);
@@ -1346,7 +1348,7 @@ export default function StoryDetailPage() {
                                   <p className="font-nunito text-amber-500/80 text-[11px] truncate">Awarded to {childName}</p>
                                 </div>
                                 <div className="flex-shrink-0 flex flex-col gap-1">
-                                  {hasSubscription ? (
+                                  {hasSubscription || storyIsFree ? (
                                     <>
                                       <button
                                         onClick={() => void downloadCert("pdf")}
@@ -1715,6 +1717,20 @@ export default function StoryDetailPage() {
                             </div>
                           </motion.div>
                         </Link>
+                      ) : !nextStory.is_free && !hasSubscription ? (
+                        <Link href="/pricing" className="flex-1">
+                          <motion.div whileHover={{ scale: 1.02 }} whileTap={m.buttonPress}
+                            className="h-full p-3.5 flex flex-col items-center gap-2 cursor-pointer"
+                            style={{ borderRadius: "var(--leaf-r)", background: "linear-gradient(135deg,#6d28d9,#7c3aed)", border: "1px solid rgba(139,92,246,0.4)" }}>
+                            <p className="font-baloo font-black text-[9px] text-purple-200 uppercase tracking-widest">Story {nextStory.sort_order}</p>
+                            <span className="text-4xl leading-none opacity-60">{nextStory.theme_emoji ?? "📖"}</span>
+                            <p className="font-baloo font-black text-[12px] text-white text-center leading-tight line-clamp-2 flex-1">{nextStory.title}</p>
+                            <div className="w-full font-black text-[10px] py-1.5 flex items-center justify-center gap-1 bg-yellow-300 text-purple-900"
+                              style={{ borderRadius: "var(--leaf-r-sm)" }}>
+                              👑 Club Only
+                            </div>
+                          </motion.div>
+                        </Link>
                       ) : (
                         <div className="flex-1 p-3.5 flex flex-col items-center gap-2 bg-ds-card border border-ds-border opacity-50"
                           style={{ borderRadius: "var(--leaf-r)" }}>
@@ -1737,9 +1753,11 @@ export default function StoryDetailPage() {
                   <p className="font-nunito text-ds-muted text-[11px] mt-2.5">
                     {nextStory?.unlocked
                       ? "🎉 Your next adventure is ready — tap to begin!"
-                      : nextStory
-                        ? "Keep going — the next adventure will unlock soon!"
-                        : "You've explored all stories so far — more coming soon! 🌟"}
+                      : nextStory && !nextStory.is_free && !hasSubscription
+                        ? "👑 This story is Club-exclusive — subscribe to keep the adventure going!"
+                        : nextStory
+                          ? "Keep going — the next adventure will unlock soon!"
+                          : "You've explored all stories so far — more coming soon! 🌟"}
                   </p>
                 </motion.div>
 
@@ -1770,6 +1788,14 @@ export default function StoryDetailPage() {
                         className={`w-full font-baloo font-black text-[17px] py-3.5 flex items-center justify-center gap-2 text-white ${v.buttonStyle.primary}`}
                         style={{ borderRadius: "var(--leaf-r-lg)" }}>
                         🚀 {t("storyNextStory")}
+                      </motion.div>
+                    </Link>
+                  ) : nextStory && !nextStory.is_free && !hasSubscription ? (
+                    <Link href="/pricing" className="block">
+                      <motion.div whileTap={m.buttonPress} whileHover={{ scale: 1.02 }}
+                        className="w-full font-baloo font-black text-[17px] py-3.5 flex items-center justify-center gap-2 text-white bg-gradient-to-r from-violet-500 to-purple-600"
+                        style={{ borderRadius: "var(--leaf-r-lg)", boxShadow: "0 6px 20px rgba(109,40,217,0.30)" }}>
+                        👑 Unlock Next Story
                       </motion.div>
                     </Link>
                   ) : (

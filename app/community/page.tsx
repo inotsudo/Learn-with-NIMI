@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, RefObject } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { ArrowLeft, Loader2, Flame, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Flame, Plus, Sparkles, Crown } from "lucide-react";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -18,6 +18,7 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { Creation } from "@/components/community/types";
 import { getStoryLibrary } from "@/lib/storyRepository";
 import { generateCertificateImageUrl } from "@/lib/certificateImage";
+import { getActiveSubscription } from "@/lib/payments/products";
 
 const PAGE_SIZE = 20;
 const HOT_THRESHOLD = 8;
@@ -176,7 +177,7 @@ function CreationCard({
         </span>
 
         {/* Actions (report / delete) */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all ml-1">
+        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all ml-1">
           {isOwn ? (
             <button
               onClick={e => { e.stopPropagation(); onDelete(creation.id); }}
@@ -726,6 +727,7 @@ export default function CommunityPage() {
   const [hasMore, setHasMore]         = useState(false);
   const [page, setPage]               = useState(0);
   const [userId, setUserId]           = useState("");
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [friends, setFriends]         = useState<{ name: string; avatar: string }[]>([]);
   const [liking, setLiking]           = useState<Record<string, boolean>>({});
   const [reportingId, setReportingId] = useState<string | null>(null);
@@ -755,7 +757,11 @@ export default function CommunityPage() {
         supabase.auth.getUser(),
         supabase.from("children").select("name, avatar_url").order("created_at"),
       ]);
-      if (user) setUserId(user.id);
+      if (user) {
+        setUserId(user.id);
+        const sub = await getActiveSubscription(user.id);
+        setHasSubscription(!!sub);
+      }
       if (data) setFriends(data.map((c: { name: string | null; avatar_url: string | null }) => ({ name: c.name ?? "Friend", avatar: c.avatar_url || "🌟" })));
     })();
   }, []);
@@ -1100,15 +1106,48 @@ export default function CommunityPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <AnimatePresence mode="popLayout">
                 {visible.map((c, i) => (
-                  <CreationCard
-                    key={c.id}
-                    creation={c}
-                    index={i}
-                    onCheer={handleCheer}
-                    onReport={setReportingId}
-                    onDelete={handleDelete}
-                    isOwn={c.parentId === userId}
-                  />
+                  <React.Fragment key={c.id}>
+                    <CreationCard
+                      creation={c}
+                      index={i}
+                      onCheer={handleCheer}
+                      onReport={setReportingId}
+                      onDelete={handleDelete}
+                      isOwn={c.parentId === userId}
+                    />
+                    {i === 3 && !hasSubscription && (
+                      <motion.div
+                        key="club-upsell"
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                        className="col-span-1 sm:col-span-2"
+                      >
+                        <a
+                          href="/pricing"
+                          className="flex flex-col sm:flex-row items-center gap-4 rounded-2xl p-5 sm:p-6 shadow-ds-club overflow-hidden relative no-underline"
+                          style={{ background: "linear-gradient(135deg, var(--ds-club-hover) 0%, var(--ds-club-primary) 100%)" }}
+                        >
+                          <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/20 flex items-center justify-center shadow-inner">
+                            <Crown className="w-8 h-8 sm:w-9 sm:h-9 text-yellow-300 drop-shadow" />
+                          </div>
+                          <div className="flex-1 text-center sm:text-left">
+                            <p className="font-baloo font-black text-white text-[17px] sm:text-[19px] leading-tight mb-0.5">
+                              Share premium story achievements 👑
+                            </p>
+                            <p className="text-white/80 text-[13px] font-semibold leading-snug">
+                              Club members can share certificate completions for all stories — including exclusive premium adventures.
+                            </p>
+                          </div>
+                          <div className="shrink-0 mt-2 sm:mt-0">
+                            <span className="inline-flex items-center gap-1.5 bg-white text-ds-club-text font-baloo font-black text-[13px] px-4 py-2 rounded-2xl shadow whitespace-nowrap">
+                              <Crown className="w-3.5 h-3.5" /> Join Club
+                            </span>
+                          </div>
+                        </a>
+                      </motion.div>
+                    )}
+                  </React.Fragment>
                 ))}
               </AnimatePresence>
 

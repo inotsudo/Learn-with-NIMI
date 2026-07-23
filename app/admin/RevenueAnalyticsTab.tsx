@@ -6,6 +6,7 @@ import { useToast } from './Toast'
 
 interface SubRow {
   id: string
+  parent_id: string
   status: string
   amount: number
   currency: string
@@ -48,7 +49,7 @@ export default function RevenueAnalyticsTab() {
     void (async () => {
       try {
         const [{ data: s }, { data: o }] = await Promise.all([
-          supabase.from('nimipiko_subscriptions').select('id, status, amount, currency, payment_provider, cancel_at_period_end, created_at, current_period_end').order('created_at'),
+          supabase.from('nimipiko_subscriptions').select('id, parent_id, status, amount, currency, payment_provider, cancel_at_period_end, created_at, current_period_end').order('created_at'),
           supabase.from('orders').select('amount, currency, payment_status, completed_at').order('completed_at'),
         ])
         setSubs((s ?? []) as SubRow[])
@@ -84,6 +85,18 @@ export default function RevenueAnalyticsTab() {
   const momoSubs = activeSubs.filter(s => s.payment_provider === 'mtn_momo').length
 
   const churnRate = subs.length > 0 ? ((subs.filter(s => s.status === 'cancelled' || s.status === 'expired').length / subs.length) * 100) : 0
+
+  // ── Trial conversion funnel ─────────────────────────────────────────────
+  const trialSubs = subs.filter(s => s.payment_provider === 'trial')
+  const trialsStarted = trialSubs.length
+  const trialsActive  = trialSubs.filter(s => s.status === 'active').length
+  const trialsExpired = trialSubs.filter(s => s.status === 'expired').length
+  // A parent is "converted" if they have both a trial record AND at least one paid sub
+  const trialParentIds = new Set(trialSubs.map(s => s.parent_id).filter(Boolean))
+  const paidParentIds  = new Set(subs.filter(s => s.payment_provider !== 'trial' && s.status === 'active').map(s => s.parent_id).filter(Boolean))
+  const trialsConverted = [...trialParentIds].filter(id => paidParentIds.has(id)).length
+  const conversionRate  = trialsStarted > 0 ? ((trialsConverted / trialsStarted) * 100) : 0
+  const trialsThisMonth = trialSubs.filter(s => new Date(s.created_at) >= thisMonthStart).length
 
   // Monthly revenue trend (last 6 months)
   const months: { label: string; revenue: number; subs: number }[] = []
@@ -209,6 +222,50 @@ export default function RevenueAnalyticsTab() {
               <span className={`font-bold text-[14px] ${churnRate > 20 ? 'text-red-600' : 'text-gray-600'}`}>{churnRate.toFixed(0)}%</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Trial conversion funnel */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-800">Trial → Paid Conversion Funnel</h3>
+            <p className="text-gray-400 text-[12px]">All time · {trialsThisMonth} new trials this month</p>
+          </div>
+          <div className={`text-[13px] font-black px-3 py-1 rounded-full ${conversionRate >= 20 ? 'bg-green-100 text-green-700' : conversionRate >= 10 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>
+            {conversionRate.toFixed(1)}% conversion
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          {[
+            { label: 'Trials started',  value: trialsStarted,  color: 'text-blue-600 bg-blue-50' },
+            { label: 'Active trials',   value: trialsActive,   color: 'text-amber-600 bg-amber-50' },
+            { label: 'Converted',       value: trialsConverted, color: 'text-green-600 bg-green-50' },
+            { label: 'Expired (no pay)', value: trialsExpired, color: 'text-red-500 bg-red-50' },
+          ].map(s => (
+            <div key={s.label} className={`rounded-xl p-3 text-center ${s.color}`}>
+              <p className="text-[22px] font-extrabold tabular-nums">{s.value}</p>
+              <p className="text-[10px] font-semibold mt-0.5 opacity-80">{s.label}</p>
+            </div>
+          ))}
+        </div>
+        {/* Funnel bar */}
+        <div className="space-y-2">
+          {[
+            { label: 'Trials started', count: trialsStarted, color: 'bg-blue-400' },
+            { label: 'Converted to paid', count: trialsConverted, color: 'bg-green-500' },
+          ].map(step => (
+            <div key={step.label} className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-500 w-32 shrink-0">{step.label}</span>
+              <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${step.color} transition-all`}
+                  style={{ width: trialsStarted > 0 ? `${(step.count / trialsStarted) * 100}%` : '0%' }}
+                />
+              </div>
+              <span className="text-[11px] font-bold text-gray-700 w-8 text-right tabular-nums">{step.count}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

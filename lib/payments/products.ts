@@ -113,5 +113,20 @@ export async function getActiveSubscription(parentId: string): Promise<Subscript
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return data ?? null;
+  if (data) return data;
+
+  // 24-hour grace period for recently-expired trials — lets the user finish
+  // their session and see a clear "your trial ended" message rather than an
+  // abrupt content lockout at the exact expiry second.
+  const { data: grace } = await supabase
+    .from("nimipiko_subscriptions")
+    .select("*")
+    .eq("parent_id", parentId)
+    .eq("payment_provider", "trial")
+    .eq("status", "expired")
+    .gte("current_period_end", new Date(Date.now() - 24 * 3600_000).toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return grace ?? null;
 }

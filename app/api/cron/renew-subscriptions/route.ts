@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
-import { sendRenewalConfirmation } from "@/lib/email";
+import { sendRenewalConfirmation, sendRenewalFailed, sendAdminAlert } from "@/lib/email";
 
 type CyberSourceResult = { ok: boolean; transactionId: string | null; error: string | null };
 type MoMoResult        = { ok: boolean; referenceId: string | null;   error: string | null };
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const now = new Date();
-    const results = { renewed: 0, failed: 0, expired: 0, momo_pending: 0 };
+    const results = { renewed: 0, failed: 0, expired: 0, momo_pending: 0, no_token: 0 };
 
     // 1. Find subscriptions due for renewal (period ended, still active)
     const { data: dueSubs } = await supabase
@@ -170,11 +170,18 @@ export async function GET(req: NextRequest) {
       } else {
         // No usable payment method (CyberSource TMS not enabled → null token, or MoMo without phone).
         // Mark past_due with grace period so the subscriber has time to re-add a payment method.
+        const reason = pm.provider === "cybersource" && !pm.token
+          ? "cybersource_no_token — enable Token Management Service in CyberSource Business Center"
+          : "no_usable_payment_method";
+        console.error("[renew-subscriptions] Cannot charge sub", JSON.stringify({
+          subId: sub.id, parentId: sub.parent_id, provider: pm.provider, reason,
+        }));
         await supabase.from("nimipiko_subscriptions").update({
           status: "past_due",
           grace_ends_at: new Date(now.getTime() + GRACE_DAYS * 86400000).toISOString(),
         }).eq("id", sub.id);
-        results.failed++;
+        if (pm.provider === "cybersource" && !pm.token) results.no_token++;
+        else results.failed++;
         continue;
       }
 
@@ -233,6 +240,22 @@ export async function GET(req: NextRequest) {
         await supabase.from("nimipiko_subscriptions").update({
           renewal_attempts: (sub.renewal_attempts ?? 0) + 1,
         }).eq("id", sub.id);
+
+        // Notify parent so they can update payment details before grace period ends
+        const { data: failedParent } = await supabase
+          .from("parents")
+          .select("email, name")
+          .eq("id", sub.parent_id)
+          .maybeSingle();
+        if (failedParent?.email) {
+          void sendRenewalFailed({
+            to: failedParent.email,
+            parentName: failedParent.name ?? "there",
+            amount: String(sub.amount),
+            currency: sub.currency,
+          });
+        }
+
         results.failed++;
       }
     }
@@ -250,6 +273,26 @@ export async function GET(req: NextRequest) {
       await supabase.from("content_access").update({ is_active: false })
         .eq("subscription_id", sub.id);
       results.expired++;
+    }
+
+    // Alert admin if any subscriptions couldn't renew due to missing CyberSource token
+    if (results.no_token > 0) {
+      void sendAdminAlert({
+        subject: `${results.no_token} subscription(s) failed renewal — no CyberSource token`,
+        body: [
+          `${results.no_token} active subscription(s) could not be renewed because CyberSource`,
+          `Token Management Service (TMS) is not enabled or the token was never stored.`,
+          ``,
+          `These subscriptions have been moved to past_due with a ${GRACE_DAYS}-day grace period.`,
+          ``,
+          `Action required:`,
+          `  1. Enable TMS in CyberSource Business Center → Payment Configuration → Tokenization`,
+          `  2. Contact affected parents to re-enter payment details`,
+          ``,
+          `Cron results: ${JSON.stringify(results)}`,
+          `Timestamp: ${now.toISOString()}`,
+        ].join("\n"),
+      });
     }
 
     return NextResponse.json({ ok: true, results, timestamp: now.toISOString() });

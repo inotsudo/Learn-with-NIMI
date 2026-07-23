@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Crown, Sparkles, Shield, CreditCard, Phone, Star, CheckCircle2, Tag } from "lucide-react";
@@ -55,6 +55,8 @@ export default function PricingPage() {
   const m = useThemeMotion();
   const searchParams = useSearchParams();
   const addChildReason = searchParams.get("reason") === "add-child";
+  const certReason = searchParams.get("reason") === "certificate";
+  const codeParam = searchParams.get("code");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<Currency>("USD");
@@ -67,7 +69,7 @@ export default function PricingPage() {
   const [showGift, setShowGift] = useState(false);
 
   // Promo code state
-  const [discountInput, setDiscountInput] = useState("");
+  const [discountInput, setDiscountInput] = useState(codeParam ?? "");
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo | null>(null);
   const [discountStatus, setDiscountStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [discountError, setDiscountError] = useState("");
@@ -94,6 +96,17 @@ export default function PricingPage() {
       setLoading(false);
     })();
   }, []);
+
+  // Auto-apply discount code from URL param once products are loaded
+  const autoAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!codeParam || autoAppliedRef.current) return;
+    const slug = products.find(p => p.slug === "nimipiko-club")?.slug;
+    if (!slug) return;
+    autoAppliedRef.current = true;
+    void applyCode(slug);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]);
 
   const applyCode = useCallback(async (slug: string) => {
     const code = discountInput.trim();
@@ -144,22 +157,81 @@ export default function PricingPage() {
   const club = (billingAnnual && clubAnnual) ? clubAnnual : clubMonthly;
   const masterpiece = products.find(p => p.slug === "masterpiece");
 
+  const isActiveTrial = activeSub?.payment_provider === "trial";
+  const isPaidClub = !!activeSub && !isActiveTrial;
+  const trialDaysLeft = isActiveTrial && activeSub.current_period_end
+    ? Math.max(0, Math.ceil((new Date(activeSub.current_period_end).getTime() - Date.now()) / 86_400_000))
+    : 0;
+
   return (
     <AppShell>
       <PageSurface>
         <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-28 w-full content-enter">
 
-          {/* Contextual upsell banner — shown when redirected from "Add Kid" paywall */}
+          {/* ── Contextual banners ── */}
+
+          {/* Certificate gate upsell */}
+          {certReason && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="mb-6 flex items-start gap-3 bg-ds-warn-surface border border-ds-warn rounded-2xl px-4 py-3.5">
+              <span className="text-2xl shrink-0">🎓</span>
+              <div>
+                <p className="font-black text-ds-text text-[14px]">Certificate downloads are a Club feature</p>
+                <p className="text-gray-500 text-[13px] mt-0.5">
+                  Subscribe to NIMIPIKO Club to download achievement certificates as PDF for every completed story.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Add-child upsell */}
           {addChildReason && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-              className="mb-6 flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3.5"
-            >
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="mb-6 flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3.5">
               <span className="text-2xl shrink-0">👨‍👩‍👧‍👦</span>
               <div>
                 <p className="font-black text-ds-text text-[14px]">Your free plan includes 1 explorer</p>
                 <p className="text-gray-500 text-[13px] mt-0.5">
                   Subscribe to Nimipiko Club and add unlimited children to the same account.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Active trial status banner */}
+          {isActiveTrial && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="mb-6 relative overflow-hidden rounded-2xl px-5 py-4 flex items-center gap-4 bg-ds-club shadow-ds-club">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl shrink-0 border border-white/30">⏳</div>
+              <div className="flex-1 min-w-0">
+                <p className="font-baloo font-black text-white text-[16px] leading-tight">
+                  {trialDaysLeft > 0
+                    ? `Your free trial ends in ${trialDaysLeft} ${trialDaysLeft === 1 ? "day" : "days"}`
+                    : "Your free trial ends today"}
+                </p>
+                <p className="text-white/70 text-xs mt-0.5">
+                  Subscribe below to keep unlimited stories, Nimi AI, and certificate downloads.
+                </p>
+              </div>
+              {trialDaysLeft <= 2 && (
+                <span className="shrink-0 bg-[var(--ds-state-error)] text-white font-black text-2xs px-3 py-1 rounded-full animate-pulse">
+                  Expires soon!
+                </span>
+              )}
+            </motion.div>
+          )}
+
+          {/* Paid Club — already subscribed */}
+          {isPaidClub && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-4 py-3.5">
+              <CheckCircle2 className="w-6 h-6 text-green-600 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-ds-text text-[14px]">You&apos;re a Club Member ✓</p>
+                <p className="text-gray-500 text-[13px] mt-0.5">
+                  {activeSub?.cancel_at_period_end
+                    ? `Your subscription cancels at the end of the current period${activeSub.current_period_end ? ` (${new Date(activeSub.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "long" })})` : ""}.`
+                    : "All Club features are active. Manage your subscription from the Parents Zone."}
                 </p>
               </div>
             </motion.div>
@@ -184,12 +256,13 @@ export default function PricingPage() {
             </div>
           </HeroBanner>
 
-          {/* ═══ DISCOVERY — 7-DAY TRIAL ENTRY POINT ═══ */}
+          {/* ═══ DISCOVERY — 7-DAY TRIAL ENTRY POINT (hidden if already subscribed/on trial) ═══ */}
+          {!activeSub && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="mb-8 relative overflow-hidden shadow-sm"
-            style={{ borderRadius: "var(--leaf-r-lg)", border: '2px solid #6ee7b7', background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 60%, #a7f3d0 100%)' }}>
+            className="mb-8 relative overflow-hidden shadow-sm bg-ds-action-subtle border-2 border-[var(--ds-brand-primary)]/30"
+            style={{ borderRadius: "var(--leaf-r-lg)" }}>
             {/* Decorative shimmer */}
-            <div className="absolute top-0 right-0 w-32 h-32 opacity-20" style={{ background: 'radial-gradient(circle, #10b981 0%, transparent 70%)' }} />
+            <div className="absolute top-0 right-0 w-32 h-32 opacity-20" style={{ background: 'radial-gradient(circle, var(--ds-brand-primary) 0%, transparent 70%)' }} />
             <div className="relative z-10 p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Left: label + description */}
@@ -230,22 +303,27 @@ export default function PricingPage() {
               </div>
             </div>
           </motion.div>
+          )}
 
           {/* Billing toggle */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-2 mb-8">
             <div role="tablist" aria-label="Billing period" className="flex items-center gap-3 bg-ds-page rounded-full p-1 border border-ds-border">
               <button
+                id="tab-monthly"
                 role="tab"
                 aria-selected={!billingAnnual}
+                aria-controls="tabpanel-plans"
                 onClick={() => setBillingAnnual(false)}
                 className={`px-5 py-2 rounded-full font-baloo font-black text-[13px] transition-all ${
                   !billingAnnual ? "bg-ds-card text-ds-text shadow-sm" : "text-ds-muted"
                 }`}
               >Monthly</button>
               <button
+                id="tab-annual"
                 role="tab"
                 aria-selected={billingAnnual}
+                aria-controls="tabpanel-plans"
                 onClick={() => setBillingAnnual(true)}
                 className={`px-5 py-2 rounded-full font-baloo font-black text-[13px] transition-all flex items-center gap-2 ${
                   billingAnnual ? "bg-ds-card text-ds-text shadow-sm" : "text-ds-muted"
@@ -257,7 +335,7 @@ export default function PricingPage() {
                   const annual = getPrice(clubAnnual, currency).amount;
                   const pct = Math.round((1 - annual / (monthly * 12)) * 100);
                   return pct > 0
-                    ? <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">SAVE {pct}%</span>
+                    ? <span className="bg-ds-action text-white text-2xs font-black px-2 py-0.5 rounded-full">SAVE {pct}%</span>
                     : null;
                 })()}
               </button>
@@ -267,7 +345,7 @@ export default function PricingPage() {
               const annual  = getPrice(clubAnnual,  currency).amount;
               const monthsFree = Math.round((monthly * 12 - annual) / monthly);
               return (
-                <p className="font-nunito text-green-700 text-[12px] font-bold">
+                <p className="font-nunito text-ds-brand text-xs font-bold">
                   🎉 {monthsFree} months free — billed once per year
                 </p>
               );
@@ -299,7 +377,8 @@ export default function PricingPage() {
           </div>
 
           {/* Two pillars side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div id="tabpanel-plans" role="tabpanel" aria-labelledby={billingAnnual ? "tab-annual" : "tab-monthly"}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* ═══ PILLAR 1: Nimipiko Club ═══ */}
             {club && (() => {
@@ -316,7 +395,7 @@ export default function PricingPage() {
                   </div>
 
                   {/* Header */}
-                  <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 pt-10">
+                  <div className="p-6 pt-10" style={{ background: "linear-gradient(135deg, var(--ds-club-hover) 0%, var(--ds-club-primary) 100%)" }}>
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
                         <Sparkles className="w-7 h-7 text-white" />
@@ -391,11 +470,19 @@ export default function PricingPage() {
 
                   {/* CTA */}
                   <div className="px-6 pb-6">
-                    {activeSub ? (
+                    {isPaidClub ? (
                       <div className="w-full py-3.5 leaf bg-green-50 border-2 border-green-200 flex items-center justify-center gap-2 text-green-700 font-black text-[15px]">
                         <CheckCircle2 className="w-5 h-5" />
-                        {activeSub.cancel_at_period_end ? "Cancels at period end" : "You're a Club Member ✓"}
+                        {activeSub?.cancel_at_period_end ? "Cancels at period end" : "You're a Club Member ✓"}
                       </div>
+                    ) : isActiveTrial ? (
+                      <motion.button
+                        whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
+                        onClick={() => club && handlePurchase(club, undefined, undefined, typeof window !== "undefined" ? window.location.href : undefined)}
+                        className="w-full font-baloo font-black text-white text-[17px] bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl px-6 py-4 shadow-lg shadow-orange-400/25"
+                      >
+                        ⚡ Subscribe Now — {trialDaysLeft}d left on trial
+                      </motion.button>
                     ) : (
                       <>
                         {/* Promo code input */}
@@ -431,7 +518,7 @@ export default function PricingPage() {
                             </div>
                           )}
                           {discountStatus === "err" && (
-                            <p className="text-red-500 text-[11px] mt-1 font-semibold">{discountError}</p>
+                            <p className="text-ds-danger text-[11px] mt-1 font-semibold">{discountError}</p>
                           )}
                         </div>
 

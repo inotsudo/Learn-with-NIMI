@@ -261,7 +261,7 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
                 <div className="flex items-baseline justify-center gap-2">
                   {hasDiscount && <span className="line-through text-gray-400 text-[16px] font-bold">{price.formatted}</span>}
                   <p className="font-baloo font-black text-yellow-600 text-[26px]">{priceDisplay}</p>
-                  {hasDiscount && <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">PROMO</span>}
+                  {hasDiscount && <span className="bg-ds-action text-white text-2xs font-black px-2 py-0.5 rounded-full">PROMO</span>}
                 </div>
               </div>
               <p className="text-[11px] font-bold text-gray-500 text-center mb-3 uppercase tracking-wide">Choose payment method</p>
@@ -385,19 +385,38 @@ export default function PricingPaymentModal({ product, currency, effectiveAmount
 
           {/* ── Success ──────────────────────────────────────────────── */}
           {step === "success" && (
-            <div className="text-center py-8">
+            <div className="text-center py-6">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                className="text-6xl mb-4">🎉</motion.div>
+                className="text-6xl mb-3">🎉</motion.div>
               <motion.h3 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                 className="font-baloo font-black text-ds-text text-[24px]">
-                Welcome to the Universe!
+                Welcome to Club! 👑
               </motion.h3>
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                className="text-gray-500 text-[14px] mt-2">
-                Your {product.name} is now active.
+                className="text-gray-500 text-[13px] mt-1">
+                {product.name} is now active on your account.
               </motion.p>
-              <motion.a href={successRedirectUrl ?? "/stories"} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
-                className="inline-flex items-center gap-2 mt-6 px-8 py-3.5 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[15px] shadow-xl">
+
+              {/* Feature unlock list */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
+                className="mt-4 mx-auto max-w-xs text-left space-y-2 bg-ds-club-subtle border border-ds-club rounded-2xl p-4"
+              >
+                {[
+                  { emoji: "📚", text: "All premium stories unlocked" },
+                  { emoji: "🤖", text: "Unlimited Nimi AI chats, every day" },
+                  { emoji: "🏆", text: "Certificate downloads for every story" },
+                  { emoji: "👨‍👩‍👦", text: "Multiple learner profiles" },
+                ].map(f => (
+                  <div key={f.text} className="flex items-center gap-2.5 text-xs font-semibold text-ds-club-text">
+                    <span className="text-base shrink-0">{f.emoji}</span>
+                    {f.text}
+                  </div>
+                ))}
+              </motion.div>
+
+              <motion.a href={successRedirectUrl ?? "/stories"} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
+                className="inline-flex items-center gap-2 mt-5 px-8 py-3.5 leaf bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black text-[15px] shadow-xl">
                 {successRedirectUrl === "/masterpiece" ? "👑 Create My Masterpiece" : successRedirectUrl ? "▶ Continue Story" : "📖 Go to Stories"}
                 <span className="bg-white/30 rounded-full text-[11px] font-black px-2 py-0.5">{countdown}s</span>
               </motion.a>

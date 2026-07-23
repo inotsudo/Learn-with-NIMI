@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { DURATION, EASE } from "@/lib/design-system/motion";
-import { Star, CheckCircle2, Lock, ChevronRight, Plus } from "lucide-react";
+import { Star, CheckCircle2, Lock, ChevronRight, Plus, Loader2, AlertTriangle } from "lucide-react";
 import ParentControls from "@/components/parents/ParentControls";
 import ReferralCard from "@/components/parents/ReferralCard";
 import AppShell from "@/components/layout/AppShell";
@@ -20,6 +20,7 @@ import { getChildren, getChildAchievements, getActivityDates, getTotalStars, get
 import { getStoryLibrary, getStorySlots } from "@/lib/storyRepository";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { getActiveSubscription } from "@/lib/payments/products";
+import type { Subscription } from "@/lib/payments/types";
 import { computeStreaks } from "@/lib/parentInsights";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -62,6 +63,11 @@ export default function ParentsZonePage() {
   const [hasSubscription, setHasSubscription] = useState(false);
   const [isTrial, setIsTrial] = useState(false);
   const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [showManageSub, setShowManageSub] = useState(false);
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
+  const [cancelSubError, setCancelSubError] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [feelings, setFeelings] = useState<{ story_id: string; title: string; feeling: string; felt_at: string }[]>([]);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
@@ -126,6 +132,7 @@ export default function ParentsZonePage() {
       // Subscription status
       const sub = await getActiveSubscription(user.id);
       setHasSubscription(!!sub);
+      setSubscription(sub);
       if (sub?.payment_provider === "trial" && sub.current_period_end) {
         setIsTrial(true);
         const msLeft = new Date(sub.current_period_end).getTime() - Date.now();
@@ -205,6 +212,33 @@ export default function ParentsZonePage() {
     void getTodayMissions(selectedChild, data.child.language as "en" | "fr" | "rw")
       .then(setTodayActivity);
   }, [selectedChild, childrenData]);
+
+  const handleCancelSub = async (action: "cancel" | "reactivate") => {
+    setCancellingSubscription(true);
+    setCancelSubError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const res = await fetch("/api/account/subscription", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) {
+        const j = await res.json() as { error?: string };
+        setCancelSubError(j.error ?? "Something went wrong");
+        return;
+      }
+      setSubscription(prev => prev ? { ...prev, cancel_at_period_end: action === "cancel" } : prev);
+    } catch {
+      setCancelSubError("Network error — please try again");
+    } finally {
+      setCancellingSubscription(false);
+    }
+  };
 
   const active = childrenData.find(d => d.child.id === selectedChild);
 
@@ -293,17 +327,15 @@ export default function ParentsZonePage() {
                 )}
               </motion.button>
 
-              {/* Edit pencil badge */}
-              <motion.button
-                onClick={() => setEditParentOpen(true)}
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg border-2 border-white hover:scale-110 transition-transform"
-                whileHover={{ rotate: -10 }}
-                aria-label="Edit profile"
+              {/* Edit pencil badge — decorative, parent avatar button handles the click */}
+              <motion.div
+                aria-hidden="true"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg border-2 border-white pointer-events-none"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={parentColor} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-              </motion.button>
+              </motion.div>
             </div>
 
             {/* Name + subtitle */}
@@ -395,22 +427,105 @@ export default function ParentsZonePage() {
           <div className="lg:hidden mb-5">
             {hasSubscription && !isTrial ? (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="overflow-hidden border border-violet-200/80 bg-gradient-to-r from-violet-50/95 to-purple-50/90 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+                className="overflow-hidden border border-ds-club bg-ds-club-subtle shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                 <div className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center text-xl shadow-sm shrink-0">👑</div>
+                  <div className="w-10 h-10 bg-ds-club rounded-xl flex items-center justify-center text-xl shadow-sm shrink-0">👑</div>
                   <div className="flex-1 min-w-0">
                     <p className="font-baloo font-black text-ds-text text-[15px]">NIMIPIKO Club Active</p>
-                    <p className="text-violet-600 text-[11px] font-bold">All premium stories unlocked ✓</p>
+                    {subscription?.cancel_at_period_end ? (
+                      <p className="text-ds-danger text-[11px] font-bold">
+                        Cancels {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                      </p>
+                    ) : subscription?.current_period_end ? (
+                      <p className="text-ds-club-text text-[11px] font-bold">
+                        Renews {new Date(subscription.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    ) : (
+                      <p className="text-ds-club-text text-[11px] font-bold">All premium stories unlocked ✓</p>
+                    )}
                   </div>
-                  <Link href="/pricing"><ChevronRight className="w-4 h-4 text-violet-500" /></Link>
+                  <button onClick={() => { setShowManageSub(s => !s); setConfirmCancel(false); }} className="text-ds-club hover:opacity-75 transition shrink-0">
+                    <ChevronRight className={`w-4 h-4 transition-transform ${showManageSub ? "rotate-90" : ""}`} />
+                  </button>
                 </div>
+                {showManageSub && (
+                  <div className="px-4 pb-4 border-t border-ds-club pt-3 space-y-2">
+                    {cancelSubError && (
+                      <p className="text-ds-danger text-[11px] font-bold flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 shrink-0" /> {cancelSubError}
+                      </p>
+                    )}
+                    {subscription?.cancel_at_period_end ? (
+                      <button
+                        onClick={() => void handleCancelSub("reactivate")}
+                        disabled={cancellingSubscription}
+                        className="w-full py-2 text-[12px] font-black text-ds-club-text bg-ds-club-subtle hover:opacity-90 rounded-xl transition flex items-center justify-center gap-2"
+                      >
+                        {cancellingSubscription ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                        Reactivate Subscription
+                      </button>
+                    ) : confirmCancel ? (
+                      <div className="space-y-2">
+                        {/* Retention offer */}
+                        <div className="bg-ds-warn-surface border border-ds-warn rounded-xl p-3 text-[11px]">
+                          <p className="font-black text-ds-warn mb-1">💛 Before you go...</p>
+                          <p className="text-ds-warn mb-2 opacity-90">Use code <strong>STAY20</strong> for 20% off your next renewal — keep everything you love.</p>
+                          <a
+                            href="/pricing?code=STAY20"
+                            className="block w-full text-center py-1.5 font-black text-[11px] text-white bg-[var(--ds-warn-icon)] hover:opacity-90 rounded-lg transition"
+                          >
+                            Claim 20% Off →
+                          </a>
+                        </div>
+                        <div className="bg-ds-danger-surface border border-ds-danger rounded-xl p-3 text-[11px] space-y-1.5">
+                          <p className="font-black text-ds-danger">You&apos;ll lose access to:</p>
+                          <ul className="text-ds-danger/80 space-y-0.5 list-none">
+                            <li>📚 All premium stories (locked after period ends)</li>
+                            <li>🤖 Unlimited Nimi AI chats (back to 10/day)</li>
+                            <li>🏆 Certificate downloads for premium stories</li>
+                            <li>👨‍👩‍👦 Multiple learner profiles</li>
+                          </ul>
+                        </div>
+                        <button
+                          onClick={() => setConfirmCancel(false)}
+                          className="w-full py-2 text-[12px] font-black text-ds-club-text bg-ds-club-subtle hover:opacity-90 rounded-xl transition"
+                        >
+                          Keep Subscription
+                        </button>
+                        <button
+                          onClick={() => { void handleCancelSub("cancel"); setConfirmCancel(false); }}
+                          disabled={cancellingSubscription}
+                          className="w-full py-1.5 text-[11px] font-semibold text-red-500 hover:text-red-700 transition flex items-center justify-center gap-1.5"
+                        >
+                          {cancellingSubscription ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                          Cancel anyway
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmCancel(true)}
+                        disabled={cancellingSubscription}
+                        className="w-full py-2 text-[12px] font-black text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition flex items-center justify-center gap-2"
+                      >
+                        Cancel at Period End
+                      </button>
+                    )}
+                    {!confirmCancel && (
+                      <p className="text-[10px] text-ds-muted text-center">
+                        {subscription?.cancel_at_period_end
+                          ? "Your access continues until the period ends."
+                          : "You won't be charged again. Access continues until period end."}
+                      </p>
+                    )}
+                  </div>
+                )}
               </motion.div>
             ) : isTrial ? (
               <Link href="/pricing">
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   whileHover={{ scale: 1.01 }} whileTap={m.buttonPress}
-                  className="overflow-hidden shadow-ds-card cursor-pointer" style={{ borderRadius: 'var(--leaf-r-lg)', border: '1px solid #fbbf24' }}>
-                  <div className="p-4 flex items-center gap-3 bg-gradient-to-r from-amber-50/95 to-yellow-50/90">
+                  className="overflow-hidden shadow-ds-card cursor-pointer" style={{ borderRadius: 'var(--leaf-r-lg)', border: '1px solid var(--ds-warn-icon)' }}>
+                  <div className="p-4 flex items-center gap-3 bg-ds-warn-surface">
                     <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-400 rounded-xl flex items-center justify-center text-xl shadow-sm shrink-0">⏳</div>
                     <div className="flex-1 min-w-0">
                       <p className="font-baloo font-black text-ds-text text-[15px]">Free Trial — {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left</p>
@@ -500,13 +615,98 @@ export default function ParentsZonePage() {
 
               {/* Subscription */}
               {hasSubscription && !isTrial ? (
-                <div className="overflow-hidden border border-violet-200/80 bg-gradient-to-r from-violet-50 to-purple-50 shadow-ds-card p-4 flex items-center gap-3" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
-                  <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0">👑</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-ds-text text-[13px]">{t("clubActive")}</p>
-                    <p className="text-violet-600 text-[10px] font-bold">{t("allStoriesUnlocked")}</p>
+                <div className="overflow-hidden border border-ds-club bg-ds-club-subtle shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-9 h-9 bg-ds-club rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0">👑</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-ds-text text-[13px]">{t("clubActive")}</p>
+                      {subscription?.cancel_at_period_end ? (
+                        <p className="text-ds-danger text-[10px] font-bold">
+                          Cancels {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+                        </p>
+                      ) : subscription?.current_period_end ? (
+                        <p className="text-ds-club-text text-[10px] font-bold">
+                          Renews {new Date(subscription.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                        </p>
+                      ) : (
+                        <p className="text-ds-club-text text-[10px] font-bold">{t("allStoriesUnlocked")}</p>
+                      )}
+                    </div>
+                    <button onClick={() => { setShowManageSub(s => !s); setConfirmCancel(false); }} className="text-ds-club hover:opacity-75 transition shrink-0">
+                      <ChevronRight className={`w-4 h-4 transition-transform ${showManageSub ? "rotate-90" : ""}`} />
+                    </button>
                   </div>
-                  <Link href="/pricing"><ChevronRight className="w-4 h-4 text-violet-400" /></Link>
+                  {showManageSub && (
+                    <div className="px-3 pb-3 border-t border-ds-club pt-2.5 space-y-2">
+                      {cancelSubError && (
+                        <p className="text-ds-danger text-[10px] font-bold flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 shrink-0" /> {cancelSubError}
+                        </p>
+                      )}
+                      {subscription?.cancel_at_period_end ? (
+                        <button
+                          onClick={() => void handleCancelSub("reactivate")}
+                          disabled={cancellingSubscription}
+                          className="w-full py-1.5 text-[11px] font-black text-ds-club-text bg-ds-club-subtle hover:opacity-90 rounded-xl transition flex items-center justify-center gap-1.5"
+                        >
+                          {cancellingSubscription ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                          Reactivate
+                        </button>
+                      ) : confirmCancel ? (
+                        <div className="space-y-2">
+                          {/* Retention offer */}
+                          <div className="bg-ds-warn-surface border border-ds-warn rounded-xl p-2.5 text-[10px]">
+                            <p className="font-black text-ds-warn mb-1">💛 Before you go...</p>
+                            <p className="text-ds-warn opacity-90 mb-1.5">Code <strong>STAY20</strong> = 20% off next renewal</p>
+                            <a
+                              href="/pricing?code=STAY20"
+                              className="block w-full text-center py-1 font-black text-[10px] text-white bg-[var(--ds-warn-icon)] hover:opacity-90 rounded-lg transition"
+                            >
+                              Claim 20% Off →
+                            </a>
+                          </div>
+                          <div className="bg-ds-danger-surface border border-ds-danger rounded-xl p-2.5 text-[10px] space-y-1">
+                            <p className="font-black text-ds-danger">You&apos;ll lose:</p>
+                            <ul className="text-ds-danger/80 space-y-0.5">
+                              <li>📚 All premium stories</li>
+                              <li>🤖 Unlimited Nimi AI chats</li>
+                              <li>🏆 Premium certificates</li>
+                              <li>👨‍👩‍👦 Multiple profiles</li>
+                            </ul>
+                          </div>
+                          <button
+                            onClick={() => setConfirmCancel(false)}
+                            className="w-full py-1.5 text-[11px] font-black text-ds-club-text bg-ds-club-subtle hover:opacity-90 rounded-xl transition"
+                          >
+                            Keep Subscription
+                          </button>
+                          <button
+                            onClick={() => { void handleCancelSub("cancel"); setConfirmCancel(false); }}
+                            disabled={cancellingSubscription}
+                            className="w-full py-1 text-[10px] font-semibold text-ds-danger hover:opacity-80 transition flex items-center justify-center gap-1"
+                          >
+                            {cancellingSubscription ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                            Cancel anyway
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmCancel(true)}
+                          disabled={cancellingSubscription}
+                          className="w-full py-1.5 text-[11px] font-black text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition flex items-center justify-center gap-1.5"
+                        >
+                          Cancel at period end
+                        </button>
+                      )}
+                      {!confirmCancel && (
+                        <p className="text-[9px] text-ds-muted text-center leading-tight">
+                          {subscription?.cancel_at_period_end
+                            ? "Access continues until period ends."
+                            : "Access continues until your current period ends."}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : isTrial ? (
                 <Link href="/pricing">

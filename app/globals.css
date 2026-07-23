@@ -303,6 +303,26 @@ body::after {
     --ds-state-error:   #DC2626;
     --ds-state-warning: #D97706;
     --ds-state-focus:   #15803D;
+
+    /* Warning surfaces — caution / trial countdown banners */
+    --ds-warn-surface: #FFFBEB;
+    --ds-warn-border:  #FDE68A;
+    --ds-warn-text:    #92400E;
+    --ds-warn-icon:    #F59E0B;
+
+    /* Danger surfaces — error / expired / critical banners */
+    --ds-danger-surface: #FEF2F2;
+    --ds-danger-border:  #FECACA;
+    --ds-danger-text:    #991B1B;
+
+    /* Club / premium accent — intentional violet for Club-tier branding */
+    --ds-club-primary: #7C3AED;
+    --ds-club-hover:   #6D28D9;
+    --ds-club-soft:    rgba(124,58,237,0.10);
+    --ds-club-subtle:  #F5F3FF;
+    --ds-club-border:  #DDD6FE;
+    --ds-club-text:    #5B21B6;
+    --ds-shadow-club:  0 6px 20px rgba(109,40,217,0.25);
   }
 
   /* Every element's default border color uses the token.
@@ -494,6 +514,26 @@ body::after {
   .bg-ds-action-hover         { background-color: var(--ds-brand-hover); }
   .hover\:bg-ds-action:hover  { background-color: var(--ds-brand-primary); }
   .hover\:opacity-90:hover    { opacity: 0.9; }
+
+  /* Warning state surfaces */
+  .bg-ds-warn-surface   { background-color: var(--ds-warn-surface); }
+  .border-ds-warn       { border-color: var(--ds-warn-border); }
+  .text-ds-warn         { color: var(--ds-warn-text); }
+
+  /* Danger state surfaces */
+  .bg-ds-danger-surface { background-color: var(--ds-danger-surface); }
+  .border-ds-danger     { border-color: var(--ds-danger-border); }
+  .text-ds-danger       { color: var(--ds-danger-text); }
+
+  /* Club / premium surfaces */
+  .bg-ds-club           { background-color: var(--ds-club-primary); }
+  .bg-ds-club-subtle    { background-color: var(--ds-club-subtle); }
+  .bg-ds-club-soft      { background-color: var(--ds-club-soft); }
+  .hover\:bg-ds-club:hover { background-color: var(--ds-club-hover); }
+  .border-ds-club       { border-color: var(--ds-club-border); }
+  .text-ds-club         { color: var(--ds-club-primary); }
+  .text-ds-club-text    { color: var(--ds-club-text); }
+  .shadow-ds-club       { box-shadow: var(--ds-shadow-club); }
 
   /* Sub-12px text size (below Tailwind's text-xs=12px) */
   .text-2xs { font-size: 0.625rem; line-height: 1rem; }

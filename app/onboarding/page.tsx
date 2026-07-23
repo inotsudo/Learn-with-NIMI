@@ -339,6 +339,15 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
+                {/* 7-day trial callout */}
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-ds-club bg-ds-club-subtle">
+                  <span className="text-[24px] shrink-0">👑</span>
+                  <div>
+                    <p className="font-baloo font-black text-ds-club-text text-[13px] leading-tight">7-day free trial — all of Club is yours</p>
+                    <p className="font-nunito text-ds-club text-[11px]">Every story, unlimited Nimi AI & certificates. No credit card needed.</p>
+                  </div>
+                </div>
+
                 {/* What they'll get */}
                 <div className="space-y-2.5">
                   {[
@@ -397,6 +406,9 @@ export default function OnboardingPage() {
                   {childName} is ready!
                 </h2>
                 <p className="font-nunito text-gray-500 text-[14px]">
+                  Your 7-day free trial is active — enjoy everything! 🎉
+                </p>
+                <p className="font-nunito text-gray-400 text-[12px] mt-1">
                   Taking you to the Story Library…
                 </p>
                 <motion.div className="mt-6 h-1.5 bg-emerald-100 rounded-full overflow-hidden w-48">

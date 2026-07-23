@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User } from "lucide-react";
+import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User, X } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useUser } from "@/contexts/UserContext";
 import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildBadges, getCurrentLevel, updateChildLanguage, getChildCosmetics, getCurriculumMissions, getActiveStories, getStreakShieldsPurchased, getUsedShieldDates } from "@/lib/queries";
@@ -28,6 +28,8 @@ import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
 import { MotionConfig } from "framer-motion";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
+import supabase from "@/lib/supabaseClient";
+import { getActiveSubscription } from "@/lib/payments/products";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -75,6 +77,10 @@ export default function AppShell({ children }: AppShellProps) {
   const [switchingLanguage, setSwitchingLanguage] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cosmetics, setCosmetics] = useState<ChildCosmetics>({ nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null });
+  const [trialBannerDays, setTrialBannerDays] = useState<number | null>(null);
+  const [trialExpiredBanner, setTrialExpiredBanner] = useState(false);
+  const [trialGraceBanner, setTrialGraceBanner] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -134,6 +140,34 @@ export default function AppShell({ children }: AppShellProps) {
         void getStoryLibrary(child.id, child.language);
         void getActiveStories();
       }
+
+      // Trial banner logic — non-blocking, runs after children load
+      void (async () => {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (!u) return;
+        const sub = await getActiveSubscription(u.id);
+        if (sub?.payment_provider === "trial" && sub.current_period_end) {
+          // Grace period: status is 'expired' but within 24h — show specific copy
+          if ((sub as { status?: string }).status === "expired") {
+            setTrialGraceBanner(true);
+          } else {
+            const daysLeft = Math.max(0, Math.ceil((new Date(sub.current_period_end).getTime() - Date.now()) / 86_400_000));
+            if (daysLeft <= 3) setTrialBannerDays(daysLeft);
+          }
+        } else if (!sub) {
+          // Check for a recently expired trial (within 7 days) to show the "trial ended" banner
+          const { data: expired } = await supabase
+            .from("nimipiko_subscriptions")
+            .select("id")
+            .eq("parent_id", u.id)
+            .eq("payment_provider", "trial")
+            .eq("status", "expired")
+            .gte("updated_at", new Date(Date.now() - 7 * 86_400_000).toISOString())
+            .limit(1)
+            .maybeSingle();
+          if (expired) setTrialExpiredBanner(true);
+        }
+      })();
     })();
   }, [user, router]);
 
@@ -267,8 +301,53 @@ export default function AppShell({ children }: AppShellProps) {
       <div className="relative lg:pl-[200px] flex flex-col min-h-screen">
 
         {!isOnline && (
-          <div className="bg-amber-50 text-amber-800 text-xs font-semibold text-center py-1.5 px-3 border-b border-amber-200">
+          <div className="bg-ds-warn-surface text-ds-warn text-xs font-semibold text-center py-1.5 px-3 border-b border-ds-warn">
             📡 {t("offlineBanner")}
+          </div>
+        )}
+
+        {/* ── Trial countdown / expired banner ─────────────────────────── */}
+        {!bannerDismissed && (trialBannerDays !== null || trialExpiredBanner || trialGraceBanner) && (
+          <div
+            className={`flex items-center justify-between gap-3 px-4 py-2 text-xs font-semibold border-b ${
+              trialExpiredBanner || trialGraceBanner || trialBannerDays === 0
+                ? "bg-ds-danger-surface text-ds-danger border-ds-danger"
+                : "bg-ds-warn-surface text-ds-warn border-ds-warn"
+            }`}
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="text-base shrink-0">{trialExpiredBanner || trialGraceBanner || trialBannerDays === 0 ? "🔴" : "⏳"}</span>
+              <span className="truncate">
+                {trialExpiredBanner
+                  ? "Your free trial has ended — subscribe to restore full access."
+                  : trialGraceBanner
+                  ? "Your trial ended — you have 24 hours of grace access. Subscribe to keep Club."
+                  : trialBannerDays === 0
+                  ? "Your trial ends today! Subscribe now to keep all premium stories."
+                  : trialBannerDays === 1
+                  ? "1 day left on your trial — subscribe before tomorrow to keep Club access."
+                  : `${trialBannerDays} days left on your free trial.`}
+              </span>
+            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <a
+                href="/pricing"
+                className={`font-black px-3 py-1 rounded-xl text-2xs transition ${
+                  trialExpiredBanner || trialGraceBanner || trialBannerDays === 0
+                    ? "bg-[var(--ds-state-error)] text-white hover:opacity-90"
+                    : "bg-[var(--ds-warn-icon)] text-white hover:opacity-90"
+                }`}
+              >
+                {trialExpiredBanner || trialGraceBanner ? "Subscribe" : "Subscribe →"}
+              </a>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="text-current opacity-50 hover:opacity-100 transition"
+                aria-label="Dismiss banner"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -442,7 +521,7 @@ export default function AppShell({ children }: AppShellProps) {
                     onClick={() => { setShowProfileMenu(p => !p); setShowLangPicker(false); setShowNotifications(false); }}
                     className="flex items-center gap-2 rounded-full border border-gray-200/80 bg-white/90 pl-1 pr-2.5 py-1 shadow-sm transition-all hover:shadow-md hover:border-gray-300 hover:-translate-y-0.5 active:scale-95"
                   >
-                    <div className="w-8 h-8 rounded-full border-2 overflow-hidden shrink-0" style={{ borderColor: 'var(--nimi-green)' }}>
+                    <div className="w-8 h-8 rounded-full border-2 overflow-hidden shrink-0" style={{ borderColor: 'var(--ds-brand-primary)' }}>
                       <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={32} />
                     </div>
                     <div className="hidden md:block text-left leading-none">
@@ -465,7 +544,7 @@ export default function AppShell({ children }: AppShellProps) {
                       <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
                       <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200/80 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5">
                         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full border-2 overflow-hidden shrink-0" style={{ borderColor: 'var(--nimi-green)' }}>
+                          <div className="w-10 h-10 rounded-full border-2 overflow-hidden shrink-0" style={{ borderColor: 'var(--ds-brand-primary)' }}>
                             <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={40} />
                           </div>
                           <div className="min-w-0">
@@ -556,7 +635,7 @@ export default function AppShell({ children }: AppShellProps) {
                   <button
                     type="submit"
                     className="w-10 h-10 flex items-center justify-center transition shrink-0"
-                    style={{ backgroundColor: 'var(--nimi-green)', borderRadius: 'var(--leaf-r-sm)' }}
+                    style={{ backgroundColor: 'var(--ds-brand-primary)', borderRadius: 'var(--leaf-r-sm)' }}
                   >
                     <Search className="w-4 h-4 text-white" />
                   </button>

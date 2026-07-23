@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Play, BookOpen } from "lucide-react";
+import { Play, BookOpen, Crown } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,12 +12,15 @@ interface Props {
   curStory: StoryLibraryItem | undefined;
   slots: StorySlot[];
   pct: number;
+  hasSubscription?: boolean;
+  nextPremiumStory?: StoryLibraryItem | null;
 }
 
-export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
+export default function HomeStoryJourneyPanel({ curStory, slots, pct, hasSubscription, nextPremiumStory }: Props) {
   const { t } = useLanguage();
   const done    = slots.filter(s => s.completed).length;
   const total   = slots.length;
+  const showPremiumUpsell = !!nextPremiumStory && !hasSubscription && (!curStory || curStory.complete);
 
   return (
     <div className="overflow-hidden leaf-lg border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.07)]">
@@ -91,7 +94,14 @@ export default function HomeStoryJourneyPanel({ curStory, slots, pct }: Props) {
         )}
 
         {/* CTA */}
-        {curStory ? (
+        {showPremiumUpsell ? (
+          <Link href="/pricing"
+            className="flex items-center justify-center gap-2 w-full font-baloo font-black text-white text-[13px] py-3 rounded-xl transition-all hover:-translate-y-0.5 active:scale-95 shadow-md"
+            style={{ background: "linear-gradient(135deg,#6d28d9,#7c3aed)", boxShadow: "0 4px 14px rgba(109,40,217,0.3)" }}>
+            <Crown className="w-3.5 h-3.5 text-yellow-300" />
+            Unlock next story
+          </Link>
+        ) : curStory ? (
           <Link href={`/stories/${curStory.slug}`}
             className="flex items-center justify-center gap-2 w-full font-baloo font-black text-white text-[13px] py-3 rounded-xl transition-all hover:-translate-y-0.5 active:scale-95 shadow-md"
             style={{

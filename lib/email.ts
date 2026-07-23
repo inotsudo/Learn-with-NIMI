@@ -113,30 +113,92 @@ export async function sendAuthInvite(to: string, inviteUrl: string): Promise<voi
 export async function sendWelcomeEmail(to: string, parentName: string): Promise<void> {
   await send(
     to,
-    "Welcome to NIMIPIKO! 🌿",
-    `
-<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827">
-  <div style="background:#15803d;padding:32px 24px;text-align:center;border-radius:12px 12px 0 0">
-    <h1 style="color:#fff;margin:0;font-size:28px">Welcome, ${parentName}! 🎉</h1>
-    <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:15px">Your child's learning adventure starts now</p>
-  </div>
-  <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-    <p style="font-size:15px;line-height:1.6">NIMIPIKO gives your child a magical learning experience through interactive stories, songs, coloring, and AI companion Nimi — in English, French, and Kinyarwanda.</p>
-    <p style="font-size:15px;line-height:1.6">Here's what to do next:</p>
-    <ol style="font-size:14px;line-height:1.8;color:#374151">
-      <li>Create your child's profile (choose their name, age, and learning language)</li>
-      <li>Start Story 1 — it's completely free!</li>
-      <li>Watch their progress in the <strong>Parents Zone</strong></li>
-    </ol>
-    <div style="text-align:center;margin:24px 0">
-      <a href="https://nimipiko.com/stories" style="background:#15803d;color:#fff;padding:14px 32px;border-radius:9999px;font-weight:700;font-size:15px;text-decoration:none;display:inline-block">
-        🚀 Start Learning
-      </a>
-    </div>
-    <p style="font-size:13px;color:#6b7280;text-align:center">Questions? Reply to this email or contact <a href="mailto:support@nimipiko.com" style="color:#15803d">support@nimipiko.com</a></p>
-  </div>
-</div>
-    `.trim(),
+    "Welcome to NIMIPIKO — your 7-day free trial has started! 🌿",
+    authBase(
+      "Welcome to NIMIPIKO",
+      `<p style="margin:0 0 6px;font-size:26px;font-weight:900;color:#14532d;text-align:center;">Welcome, ${parentName}! 🎉</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Your child's learning adventure starts now</p>
+      <div style="background:#ecfdf5;border:2px solid #6ee7b7;border-radius:14px;padding:18px 20px;margin-bottom:22px">
+        <p style="margin:0 0 8px;font-size:15px;font-weight:800;color:#065f46;">🎁 Your 7-day free trial is active</p>
+        <p style="margin:0;font-size:14px;color:#047857;line-height:1.6;">For the next 7 days you have <strong>full Club access</strong> — every story, every language, unlimited Nimi AI chats, and certificate downloads. No credit card needed.</p>
+      </div>
+      <p style="margin:0 0 10px;font-size:15px;color:#374151;line-height:1.6;">Here's what to do first:</p>
+      <ol style="margin:0 0 20px;font-size:14px;line-height:1.9;color:#374151;padding-left:20px">
+        <li>Create your child's profile — choose their name, age &amp; language</li>
+        <li>Open any story and follow along together</li>
+        <li>Chat with Nimi, earn stars, and download your first certificate</li>
+      </ol>
+      ${ctaButton("https://nimipiko.com/stories", "🚀 Start exploring")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">After 7 days you'll move to the free plan (3 stories, 10 Nimi chats/day) unless you subscribe. You can upgrade any time from <a href="https://nimipiko.com/pricing" style="color:#22c55e">Pricing</a>.</p>`,
+    ),
+  );
+}
+
+// ── Trial ending soon (sent 3 days and 1 day before expiry) ─────────────────
+export async function sendTrialEndingSoon(opts: {
+  to: string;
+  parentName: string;
+  daysLeft: number;
+  expiresOn: string; // ISO date string
+}): Promise<void> {
+  const { to, parentName, daysLeft, expiresOn } = opts;
+  const expiryDate = new Date(expiresOn).toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric",
+  });
+  const urgency = daysLeft <= 1;
+
+  await send(
+    to,
+    urgency
+      ? `⚠️ Your NIMIPIKO free trial ends tomorrow`
+      : `Your NIMIPIKO free trial ends in ${daysLeft} days`,
+    authBase(
+      "Trial ending soon",
+      `<p style="margin:0 0 6px;font-size:${urgency ? "24px" : "22px"};font-weight:900;color:${urgency ? "#991b1b" : "#92400e"};text-align:center;">${urgency ? "⚠️ Last chance!" : "⏳ Trial ending soon"}</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Hi ${parentName} — your free trial expires on <strong>${expiryDate}</strong>.</p>
+      <div style="background:${urgency ? "#fef2f2" : "#fffbeb"};border:2px solid ${urgency ? "#fca5a5" : "#fcd34d"};border-radius:14px;padding:18px 20px;margin-bottom:22px">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:800;color:${urgency ? "#991b1b" : "#92400e"};">After your trial, you'll move to the free plan:</p>
+        <ul style="margin:0;font-size:14px;color:${urgency ? "#7f1d1d" : "#78350f"};line-height:1.8;padding-left:18px">
+          <li>3 stories (instead of all ${urgency ? "stories" : "of them"})</li>
+          <li>10 Nimi AI chats per day (instead of unlimited)</li>
+          <li>Certificate downloads paused</li>
+        </ul>
+      </div>
+      <p style="margin:0 0 4px;font-size:15px;color:#374151;text-align:center;">Subscribe now to keep full access — your child's progress is never lost.</p>
+      ${ctaButton("https://nimipiko.com/pricing", "👑 Keep full access →")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">If you choose not to subscribe, your account stays open on the free plan forever.</p>`,
+    ),
+  );
+}
+
+// ── Trial expired (sent the day the trial transitions to expired) ─────────────
+export async function sendTrialExpired(opts: {
+  to: string;
+  parentName: string;
+}): Promise<void> {
+  const { to, parentName } = opts;
+
+  await send(
+    to,
+    "Your NIMIPIKO free trial has ended",
+    authBase(
+      "Trial ended",
+      `<p style="margin:0 0 6px;font-size:22px;font-weight:900;color:#374151;text-align:center;">Your free trial has ended</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Hi ${parentName} — your 7-day NIMIPIKO trial is now over.</p>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:18px 20px;margin-bottom:22px">
+        <p style="margin:0 0 10px;font-size:14px;font-weight:800;color:#374151;">You're now on the free plan:</p>
+        <ul style="margin:0;font-size:14px;color:#4b5563;line-height:1.8;padding-left:18px">
+          <li>✅ 3 free stories — always accessible</li>
+          <li>✅ 10 Nimi AI chats per day</li>
+          <li>✅ All child progress &amp; stars saved</li>
+          <li>⏸ Premium stories paused</li>
+          <li>⏸ Certificate downloads paused</li>
+        </ul>
+      </div>
+      <p style="margin:0 0 4px;font-size:15px;color:#374151;text-align:center;">Subscribe to restore full access instantly — no setup needed.</p>
+      ${ctaButton("https://nimipiko.com/pricing", "👑 Restore full access")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">Your child's account stays open on the free plan with no action needed.</p>`,
+    ),
   );
 }
 
@@ -369,8 +431,9 @@ export async function sendWeeklyDigest(opts: {
   parentName: string;
   weekOf: string; // e.g. "July 7 – July 13, 2026"
   children: WeeklyDigestChild[];
+  trialDaysLeft?: number; // set when parent is on trial with ≤3 days remaining
 }): Promise<void> {
-  const { to, parentName, weekOf, children } = opts;
+  const { to, parentName, weekOf, children, trialDaysLeft } = opts;
 
   const childBlocks = children.map(c => {
     const feelingsRow = c.feelings.length > 0
@@ -435,6 +498,21 @@ export async function sendWeeklyDigest(opts: {
     ${childBlocks}
   </div>
 
+  <!-- Trial warning (only when on trial with ≤3 days left) -->
+  ${trialDaysLeft !== undefined ? `
+  <div style="margin-bottom:8px;background:${trialDaysLeft <= 1 ? "#fef2f2" : "#fffbeb"};border:2px solid ${trialDaysLeft <= 1 ? "#fca5a5" : "#fcd34d"};border-radius:12px;padding:18px 20px">
+    <p style="margin:0 0 6px;font-size:15px;font-weight:900;color:${trialDaysLeft <= 1 ? "#991b1b" : "#92400e"}">
+      ${trialDaysLeft <= 1 ? "⚠️ Your free trial ends tomorrow!" : `⏳ Your free trial ends in ${trialDaysLeft} days`}
+    </p>
+    <p style="margin:0 0 14px;font-size:13px;color:${trialDaysLeft <= 1 ? "#7f1d1d" : "#78350f"};line-height:1.6">
+      After your trial you'll move to the free plan (3 stories, 10 Nimi chats/day). Subscribe now to keep full Club access — no interruption, no setup.
+    </p>
+    <a href="https://nimipiko.com/pricing"
+       style="display:inline-block;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;font-size:14px;font-weight:900;padding:11px 26px;border-radius:50px;text-decoration:none">
+      👑 Keep full access →
+    </a>
+  </div>` : ""}
+
   <!-- CTA -->
   <div style="background:#fff;border:1px solid #e5e7eb;border-radius:0 0 16px 16px;padding:24px;text-align:center">
     <a href="https://nimipiko.com/parents"
@@ -448,6 +526,82 @@ export async function sendWeeklyDigest(opts: {
   </div>
 </div>
     `.trim(),
+  );
+}
+
+// ── Welcome to Club (sent on first paid subscription) ───────────────────────
+export async function sendWelcomeToClub(opts: {
+  to: string;
+  parentName: string;
+  billingInterval: "monthly" | "annual" | string;
+  renewsOn: string; // ISO date
+}): Promise<void> {
+  const { to, parentName, billingInterval, renewsOn } = opts;
+  const renewDate = new Date(renewsOn).toLocaleDateString("en-US", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+  const intervalLabel = billingInterval === "annual" ? "year" : "month";
+
+  await send(
+    to,
+    "You're now a NIMIPIKO Club member! 👑",
+    authBase(
+      "Welcome to Club",
+      `<p style="margin:0 0 6px;font-size:26px;font-weight:900;color:#4c1d95;text-align:center;">👑 Welcome to Club, ${parentName}!</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Your subscription is active — everything is unlocked right now.</p>
+      <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid #c4b5fd;border-radius:14px;padding:18px 20px;margin-bottom:22px">
+        <p style="margin:0 0 10px;font-size:14px;font-weight:800;color:#4c1d95;">What you now have access to:</p>
+        <table cellpadding="0" cellspacing="0" width="100%">
+          ${[
+            ["📚", "All stories", "Every language — English, French &amp; Kinyarwanda"],
+            ["🤖", "Unlimited Nimi AI", "No daily chat limit, ever"],
+            ["🎓", "Certificate downloads", "PDF &amp; PNG for every completed story"],
+            ["👨‍👩‍👧‍👦", "Unlimited children", "Add as many learner profiles as you need"],
+            ["🏆", "All challenges", "Badges, rewards &amp; champion status"],
+          ].map(([icon, title, desc]) =>
+            `<tr><td style="padding:5px 0;vertical-align:top;width:28px;font-size:18px">${icon}</td>
+             <td style="padding:5px 0 5px 6px;vertical-align:top">
+               <span style="font-size:13px;font-weight:800;color:#3b0764">${title}</span>
+               <span style="font-size:12px;color:#6b7280"> — ${desc}</span>
+             </td></tr>`
+          ).join("")}
+        </table>
+      </div>
+      <p style="margin:0 0 4px;font-size:13px;color:#6b7280;text-align:center;">
+        Billed every ${intervalLabel}. Next renewal: <strong style="color:#374151">${renewDate}</strong>.
+      </p>
+      ${ctaButton("https://nimipiko.com/stories", "🚀 Start exploring")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">
+        Manage your subscription any time from the <a href="https://nimipiko.com/parents" style="color:#22c55e">Parents Zone</a>.
+      </p>`,
+    ),
+  );
+}
+
+// ── Reactivation confirmation (sent when cancel_at_period_end is reversed) ───
+export async function sendReactivationConfirmation(opts: {
+  to: string;
+  parentName: string;
+  renewsOn: string; // ISO date
+}): Promise<void> {
+  const { to, parentName, renewsOn } = opts;
+  const renewDate = new Date(renewsOn).toLocaleDateString("en-US", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+
+  await send(
+    to,
+    "Your NIMIPIKO Club is back on ✓",
+    authBase(
+      "Subscription reactivated",
+      `<p style="margin:0 0 6px;font-size:22px;font-weight:900;color:#14532d;text-align:center;">Subscription reactivated ✓</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Hi ${parentName} — your NIMIPIKO Club subscription is staying active.</p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:16px 20px;margin-bottom:22px;text-align:center">
+        <p style="margin:0;font-size:14px;color:#15803d;line-height:1.6;">Your next payment will be collected on <strong>${renewDate}</strong>. Nothing else changes — all Club features remain active.</p>
+      </div>
+      ${ctaButton("https://nimipiko.com/parents", "View my account")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">Changed your mind again? You can cancel any time from the Parents Zone.</p>`,
+    ),
   );
 }
 
@@ -476,5 +630,60 @@ export async function sendCancellationConfirmation(opts: {
   </div>
 </div>
     `.trim(),
+  );
+}
+
+// ── Payment renewal failure notification (sent to parent when charge is declined) ─
+export async function sendRenewalFailed(opts: {
+  to: string;
+  parentName: string;
+  amount: string;
+  currency: string;
+}): Promise<void> {
+  const { to, parentName, amount, currency } = opts;
+  const formattedAmount = currency === "RWF"
+    ? `${Math.round(Number(amount)).toLocaleString()} RWF`
+    : `${currency} ${Number(amount).toFixed(2)}`;
+
+  await send(
+    to,
+    "Action required: NIMIPIKO Club payment failed",
+    authBase(
+      "Payment failed",
+      `<p style="margin:0 0 6px;font-size:22px;font-weight:900;color:#7c2d12;text-align:center;">Payment failed ⚠️</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Hi ${parentName} — we were unable to collect your NIMIPIKO Club renewal of <strong>${formattedAmount}</strong>.</p>
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:16px 20px;margin-bottom:22px">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#9a3412">What happens next?</p>
+        <ul style="margin:0;padding-left:18px;font-size:14px;color:#78350f;line-height:1.8">
+          <li>Your subscription stays active while we retry the charge</li>
+          <li>We'll try up to 3 times over the next few days</li>
+          <li>If payment isn't collected, access to Club will pause</li>
+        </ul>
+      </div>
+      <p style="margin:0 0 18px;font-size:14px;color:#6b7280;text-align:center;line-height:1.6;">To avoid any interruption, please update your payment details now.</p>
+      ${ctaButton("https://nimipiko.com/parents", "Update payment details")}
+      <p style="margin:12px 0 0;font-size:12px;color:#9ca3af;text-align:center;">Questions? Reply to this email and we'll help right away.</p>`,
+    ),
+  );
+}
+
+// ── Admin operational alert ──────────────────────────────────────────────────
+// Sends a plain ops alert to ADMIN_ALERT_EMAIL. Used for renewal failures that
+// need human attention (e.g. CyberSource TMS not enabled → no token to charge).
+export async function sendAdminAlert(opts: {
+  subject: string;
+  body: string;
+}): Promise<void> {
+  const adminEmail = process.env.ADMIN_ALERT_EMAIL;
+  if (!adminEmail) return;
+  const { subject, body } = opts;
+  await send(
+    adminEmail,
+    `[NIMIPIKO OPS] ${subject}`,
+    `<!DOCTYPE html><html><body style="font-family:monospace;font-size:13px;color:#111;padding:24px;max-width:600px">
+<h2 style="color:#dc2626;margin-top:0">[NIMIPIKO OPS] ${subject}</h2>
+<pre style="background:#f3f4f6;padding:16px;border-radius:8px;white-space:pre-wrap;word-break:break-all">${body.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+<p style="color:#6b7280;font-size:11px;margin-top:16px">Sent automatically by NIMIPIKO · ${new Date().toISOString()}</p>
+</body></html>`,
   );
 }

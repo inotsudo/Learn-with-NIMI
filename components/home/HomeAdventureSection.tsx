@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
-import { Play, ChevronRight } from "lucide-react";
+import { Play, ChevronRight, Crown } from "lucide-react";
 import { getStorageUrl } from "@/lib/queries";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,16 +16,62 @@ interface Props {
   slots: StorySlot[];
   up: Variants;
   stagger: Variants;
+  hasSubscription?: boolean;
+  nextPremiumStory?: StoryLibraryItem | null;
 }
 
-export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, pct, slots, up, stagger }: Props) {
+export default function HomeAdventureSection({ curStory, doneSlots, totalSlots, pct, slots, up, stagger, hasSubscription, nextPremiumStory }: Props) {
   const { t } = useLanguage();
+
+  // Free user has finished all free stories — show the next premium story as a Club upsell
+  const showPremiumUpsell = !!nextPremiumStory && !hasSubscription && (!curStory || curStory.complete);
+
   return (
     <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="relative">
       <motion.div variants={up}
         className="leaf-lg overflow-hidden border border-white/80 shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
 
-        {curStory ? (
+        {showPremiumUpsell ? (
+          /* ── Premium upsell: free user finished all free stories ── */
+          <Link href="/pricing" className="block">
+            <div className="relative overflow-hidden" style={{ aspectRatio: "16/7" }}>
+              {nextPremiumStory.cover_url ? (
+                <Image src={getStorageUrl(nextPremiumStory.cover_url)} alt={nextPremiumStory.title}
+                  fill className="object-cover scale-105 blur-[2px] brightness-50" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg,#4c1d95,#5b21b6)" }}>
+                  <span className="text-[64px] opacity-30">{nextPremiumStory.theme_emoji ?? "📖"}</span>
+                </div>
+              )}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                <motion.div
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-2xl shadow-purple-900/50 border border-white/20">
+                  <Crown className="w-8 h-8 text-yellow-300" />
+                </motion.div>
+                <div>
+                  <p className="font-baloo font-black text-white text-[20px] sm:text-[22px] leading-tight drop-shadow-lg">
+                    🎉 You finished all free stories!
+                  </p>
+                  <p className="font-nunito text-white/75 text-[13px] mt-1">
+                    Next up: <span className="font-bold text-white/90">{nextPremiumStory.title}</span> — Club exclusive
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-violet-600 to-purple-700 px-4 sm:px-5 py-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-baloo font-black text-white text-[15px] leading-tight">Unlock with NIMIPIKO Club</p>
+                <p className="text-purple-200 text-[12px] mt-0.5">All stories · Unlimited Nimi · Certificates</p>
+              </div>
+              <span className="shrink-0 bg-yellow-300 text-purple-900 font-black text-[13px] px-4 py-2 rounded-full shadow-lg">
+                👑 Subscribe →
+              </span>
+            </div>
+          </Link>
+        ) : curStory ? (
           <>
             {/* Cover hero — full-bleed image with gradient overlay */}
             <Link href={`/stories/${curStory.slug}`} className="relative block w-full overflow-hidden group"
