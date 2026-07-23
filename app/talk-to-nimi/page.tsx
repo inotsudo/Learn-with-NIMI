@@ -30,6 +30,7 @@ import { useScreenTime } from "@/lib/screenTime";
 import BreakNudge from "@/components/learn/BreakNudge";
 import VoiceCompanionView from "@/components/voice/VoiceCompanionView";
 import supabase from "@/lib/supabaseClient";
+import { getActiveSubscription } from "@/lib/payments/products";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -48,6 +49,7 @@ export default function TalkToNimiPage() {
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState<number | null>(null);
   const [childLanguage, setChildLanguage] = useState<"en" | "fr" | "rw">("en");
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [initialMessages, setInitialMessages] = useState<ChatMessage[] | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
@@ -87,6 +89,13 @@ export default function TalkToNimiPage() {
 
     setInitialMessages(initial);
     setPendingMessage(pending);
+
+    // Non-blocking subscription check for the message counter
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const sub = await getActiveSubscription(user.id);
+      setHasSubscription(!!sub);
+    }
   };
 
   if (initialMessages === null) {
@@ -113,6 +122,7 @@ export default function TalkToNimiPage() {
         childName={childName}
         childAge={childAge}
         childLanguage={childLanguage}
+        hasSubscription={hasSubscription}
         initialMessages={initialMessages}
         pendingMessage={pendingMessage}
         initialMode={initialMode}
@@ -122,12 +132,13 @@ export default function TalkToNimiPage() {
 }
 
 function NimiChatPageContent({
-  childId, childName, childAge, childLanguage, initialMessages, pendingMessage, initialMode,
+  childId, childName, childAge, childLanguage, hasSubscription, initialMessages, pendingMessage, initialMode,
 }: {
   childId: string | null;
   childName: string;
   childAge: number | null;
   childLanguage: "en" | "fr" | "rw";
+  hasSubscription: boolean;
   initialMessages: ChatMessage[];
   pendingMessage: string | null;
   initialMode: "chat" | "practice";
@@ -176,7 +187,7 @@ function NimiChatPageContent({
     }
   };
 
-  const { messages, isTyping, send, sendVoice, isSpeaking, toggleSpeak, dailyLimitReached } = useNimiChat(initialMessages, {
+  const { messages, isTyping, send, sendVoice, isSpeaking, toggleSpeak, dailyLimitReached, nimiMessagesUsed } = useNimiChat(initialMessages, {
     childName,
     onExchangeComplete: handleExchangeComplete,
     childId:         childId,
@@ -188,6 +199,7 @@ function NimiChatPageContent({
     slotsDone,
     slotsTotal,
     persistOnUnmount: true,
+    hasSubscription,
   });
 
   const { status: screenStatus, offlineSuggestion, dismiss: dismissBreak } =
@@ -445,6 +457,22 @@ function NimiChatPageContent({
                   {t("nimiOnlineLabel")}
                 </p>
               </div>
+
+              {/* Daily message counter (free users only, visible from 5/10 onwards) */}
+              {nimiMessagesUsed !== null && nimiMessagesUsed >= 5 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black shrink-0 ${
+                    nimiMessagesUsed >= 9
+                      ? "bg-red-500/90 text-white"
+                      : nimiMessagesUsed >= 7
+                      ? "bg-amber-400/90 text-amber-900"
+                      : "bg-white/20 text-white"
+                  }`}>
+                  {nimiMessagesUsed}/10
+                </motion.div>
+              )}
 
               {/* Read-aloud toggle — lives in the header now */}
               {language !== "rw" && (

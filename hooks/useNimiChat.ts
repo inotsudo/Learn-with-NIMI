@@ -23,6 +23,8 @@ interface UseNimiChatOptions {
   slotsTotal?: number;
   // When true, the hook auto-persists a conversation summary when the component unmounts.
   persistOnUnmount?: boolean;
+  // Pass true for Club/trial members — disables the daily cap counter entirely.
+  hasSubscription?: boolean;
 }
 
 function lastNimiText(messages: ChatMessage[]): string {
@@ -32,12 +34,14 @@ function lastNimiText(messages: ChatMessage[]): string {
   return "";
 }
 
-export function useNimiChat(initialMessages: ChatMessage[], { childName, onExchangeComplete, childId, childAge, storyId, storyTitle, storyEmoji, storyProgress, slotsDone, slotsTotal, persistOnUnmount }: UseNimiChatOptions) {
+export function useNimiChat(initialMessages: ChatMessage[], { childName, onExchangeComplete, childId, childAge, storyId, storyTitle, storyEmoji, storyProgress, slotsDone, slotsTotal, persistOnUnmount, hasSubscription }: UseNimiChatOptions) {
   const { language, t } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  // null = unlimited (Club); number = today's count so far (free users)
+  const [nimiMessagesUsed, setNimiMessagesUsed] = useState<number | null>(null);
   const lastReplyRef = useRef(lastNimiText(initialMessages));
 
   // Keep a ref to the latest messages so the unmount effect always has current data
@@ -77,6 +81,27 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistOnUnmount, childId]);
+
+  // Fetch today's message count for free users so the counter is accurate on mount
+  useEffect(() => {
+    if (hasSubscription || !childId) {
+      setNimiMessagesUsed(null);
+      return;
+    }
+    void (async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from("nimi_message_counts")
+        .select("count")
+        .eq("child_id", childId)
+        .eq("date", today)
+        .maybeSingle();
+      const used = (data?.count as number | null) ?? 0;
+      setNimiMessagesUsed(used);
+      if (used >= 10) setDailyLimitReached(true);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [childId, hasSubscription]);
 
   const stopReading = useCallback(() => {
     stopSpeaking();
@@ -210,6 +235,7 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
 
       if (res.status === 429) {
         setDailyLimitReached(true);
+        setNimiMessagesUsed(10);
         updateReply("Wow, we've talked so much today! 🌟 You've used all 10 of your free chats for today. Come back tomorrow — I'll be here! To chat with me anytime, ask a grown-up about NIMIPIKO Club. 👑");
         return;
       }
@@ -252,6 +278,7 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
       } else {
         onExchangeComplete?.();
         lastReplyRef.current = reply;
+        setNimiMessagesUsed(prev => (prev === null ? null : prev + 1));
       }
     } catch {
       updateReply(t("chatErrorMsg"));
@@ -260,5 +287,5 @@ export function useNimiChat(initialMessages: ChatMessage[], { childName, onExcha
     }
   }, [messages, isTyping, language, childName, childId, storyId, t, onExchangeComplete, stopReading]);
 
-  return { messages, setMessages, isTyping, send, sendVoice, isSpeaking, toggleSpeak, dailyLimitReached };
+  return { messages, setMessages, isTyping, send, sendVoice, isSpeaking, toggleSpeak, dailyLimitReached, nimiMessagesUsed };
 }
