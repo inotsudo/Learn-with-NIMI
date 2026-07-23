@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue } from 'framer-motion'
-import { Crown, Save, X } from 'lucide-react'
+import { CheckCircle2, Crown, Save, X } from 'lucide-react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
 import type { PagePhotoConfig, PersonalizationConfig, StoryPageRow, StoryRow } from './missionMeta'
@@ -162,12 +162,14 @@ interface Props {
 }
 
 export default function PersonalizationEditor({ story, onSaved }: Props) {
+  const { success: toastOk, error: toastErr } = useToast()
   const [isPersonalizable, setIsPersonalizable] = useState(story.is_personalizable ?? false)
   const [pageConfigs, setPageConfigs] = useState<Record<string, PagePhotoConfig>>(() => {
     return story.personalization_config?.pages ?? {}
   })
   const [saving, setSaving] = useState(false)
-  const { success: toastOk, error: toastErr } = useToast()
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const pages = story.story_pages.slice().sort((a, b) => a.page_number - b.page_number)
 
@@ -188,6 +190,7 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
 
   const handleSave = async () => {
     setSaving(true)
+    setSaveError(null)
     try {
       const personalizationConfig: PersonalizationConfig = { pages: pageConfigs }
       const { error } = await supabase.from('stories').update({
@@ -195,11 +198,13 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
         personalization_config: isPersonalizable ? personalizationConfig : null,
       }).eq('id', story.id)
       if (error) throw error
-      toastOk('Placement saved!')
+      toastOk('Saved.')
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
       onSaved()
     } catch (err) {
-      console.error('[PersonalizationEditor] save failed:', err)
-      toastErr(err instanceof Error ? err.message : 'Save failed. Please try again.')
+      toastErr(err instanceof Error ? err.message : 'Save failed.')
+      setSaveError(err instanceof Error ? err.message : 'Save failed. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -272,11 +277,16 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
 
           {/* Save button */}
           <div className="flex flex-col items-end gap-2 pt-2">
+            {saveError && (
+              <p className="text-[11px] font-bold text-red-500">{saveError}</p>
+            )}
             <button onClick={handleSave} disabled={saving}
               className="flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-white font-black text-[13px] px-5 py-2.5 rounded-xl shadow transition disabled:opacity-60">
-              {saving
-                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving…</>
-                : <><Save size={15} /> Save Placement</>
+              {saved
+                ? <><CheckCircle2 size={15} /> Saved!</>
+                : saving
+                  ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving…</>
+                  : <><Save size={15} /> Save Placement</>
               }
             </button>
           </div>
@@ -292,6 +302,9 @@ export default function PersonalizationEditor({ story, onSaved }: Props) {
             className="mt-3 text-[12px] font-bold text-amber-500 hover:text-amber-700 transition">
             Save disabled state →
           </button>
+          {saveError && (
+            <p className="text-[11px] font-bold text-red-500 mt-2">{saveError}</p>
+          )}
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Search, Filter, Menu, ChevronLeft, ChevronRight, Baby, X } from 'lucide-react'
 import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 import { logAdminAction } from '@/lib/adminAuditLog'
 
 interface Props {
@@ -36,6 +37,7 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
   const [bulkLang, setBulkLang] = useState('en')
   const [showLangPicker, setShowLangPicker] = useState(false)
   const { error: toastErr, success: toastOk } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
     void (async () => {
@@ -67,7 +69,7 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
         })
         setChildren(rows)
       } catch (err) {
-        console.error('[ChildrenManager] load failed:', err)
+        toastErr(err instanceof Error ? err.message : 'Failed to load children.')
       } finally {
         setLoading(false)
       }
@@ -121,8 +123,7 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
       setSelectedIds(new Set())
       setShowLangPicker(false)
     } catch (err) {
-      console.error('[ChildrenManager] bulk language update failed:', err)
-      toastErr('Language update failed. Check console for details.')
+      toastErr('Language update failed. Please try again.')
     } finally {
       setBulkBusy(false)
     }
@@ -131,7 +132,13 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
   async function handleBulkDelete() {
     const ids = Array.from(selectedIds).filter(id => filtered.some(c => c.id === id))
     if (ids.length === 0) return
-    if (!confirm(`Delete ${ids.length} child${ids.length === 1 ? '' : 'ren'}? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: `Delete ${ids.length} child${ids.length === 1 ? '' : 'ren'}?`,
+      message: 'This permanently removes all selected children and cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
     setBulkBusy(true)
     try {
       const { error } = await supabase.from('children').delete().in('id', ids)
@@ -141,8 +148,7 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
       void logAdminAction({ action: 'bulk_delete_children', entityType: 'child', entityId: ids.join(','), entityLabel: `${ids.length} children`, metadata: { count: ids.length } })
       setSelectedIds(new Set())
     } catch (err) {
-      console.error('[ChildrenManager] bulk delete failed:', err)
-      toastErr('Bulk delete failed. Check console for details.')
+      toastErr('Bulk delete failed. Please try again.')
     } finally {
       setBulkBusy(false)
     }
@@ -152,6 +158,7 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">

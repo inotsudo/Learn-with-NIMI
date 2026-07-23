@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { DollarSign, CreditCard, TrendingUp, TrendingDown, Users, Phone, BarChart3 } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface SubRow {
   id: string
@@ -38,6 +39,7 @@ function monthLabel(d: Date) {
 }
 
 export default function RevenueAnalyticsTab() {
+  const { error: toastErr } = useToast()
   const [subs, setSubs] = useState<SubRow[]>([])
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,7 +54,7 @@ export default function RevenueAnalyticsTab() {
         setSubs((s ?? []) as SubRow[])
         setOrders((o ?? []) as OrderRow[])
       } catch (err) {
-        console.error('[RevenueAnalyticsTab] load failed:', err)
+        toastErr('Failed to load revenue data.')
       } finally {
         setLoading(false)
       }

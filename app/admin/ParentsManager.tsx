@@ -220,7 +220,7 @@ export default function ParentsManager({
       }
       setSubsByParent(bySub)
     } catch (err) {
-      console.error(err)
+      toastErr(err instanceof Error ? err.message : 'Operation failed.')
       setLoadError(err instanceof Error ? err.message : 'Failed to load parents.')
     } finally {
       setLoading(false)

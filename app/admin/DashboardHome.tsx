@@ -4,6 +4,7 @@ import supabase from "@/lib/supabaseClient"
 import {
   BookOpen, CheckCircle2, AlertTriangle, Users, Award, Trophy,
   Plus, Upload, Rocket, Bell, ArrowRight, DollarSign, CreditCard, TrendingUp,
+  AlertCircle, RefreshCw,
 } from 'lucide-react'
 import { computeReadiness, type ReadinessResult } from '@/lib/storyReadiness'
 import ReadinessRing from '@/components/admin/story-readiness/ReadinessRing'
@@ -26,6 +27,7 @@ interface RevenueStats {
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
   const [loading, setLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
   const [stats, setStats] = useState({ published: 0, ready: 0, missing: 0, children: 0, certs: 0, challenges: 0 })
   const [revenue, setRevenue] = useState<RevenueStats>({ activeSubscriptions: 0, mrr: 0, totalRevenue: 0, newThisMonth: 0 })
   const [stories, setStories] = useState<StoryRow[]>([])
@@ -87,7 +89,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         })
         setStoryReadiness(readinessData)
       } catch (err) {
-        console.error('[Dashboard]', err)
+        setHasError(true)
       } finally {
         setLoading(false)
       }
@@ -146,6 +148,24 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           </div>
           <div className="h-72 bg-gray-50 rounded-xl" />
         </div>
+      </div>
+    )
+  }
+
+  if (hasError) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+        <div className="w-12 h-12 rounded-full bg-red-50 text-red-400 flex items-center justify-center mb-3">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-bold text-gray-700">Failed to load dashboard</p>
+        <p className="text-xs text-gray-400 mt-1">Please refresh the page or try again.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-full transition bg-green-600 hover:bg-green-700"
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> Reload
+        </button>
       </div>
     )
   }

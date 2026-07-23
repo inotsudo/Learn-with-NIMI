@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { MessageSquareQuote, Plus, Pencil, Trash2, CheckCircle, XCircle, Star, ChevronUp, ChevronDown, Menu } from 'lucide-react'
-import { useConfirmDialog } from './ConfirmDialog'
+import { useToast } from './Toast'
 
 interface TestimonialsManagerProps {
   onOpenSidebar?: () => void
@@ -27,7 +27,7 @@ const EMPTY: Omit<Testimonial, 'id' | 'created_at'> = {
 }
 
 export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManagerProps) {
-  const { confirm, dialog } = useConfirmDialog()
+  const { success: toastOk, error: toastErr } = useToast()
   const [rows, setRows] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Testimonial | null>(null)
@@ -45,7 +45,7 @@ export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManag
         .order('created_at', { ascending: false })
       setRows((data ?? []) as Testimonial[])
     } catch (err) {
-      console.error('[TestimonialsManager] load failed:', err)
+      toastErr('Failed to load testimonials.')
     } finally {
       setLoading(false)
     }
@@ -95,20 +95,21 @@ export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManag
   const toggleApprove = async (r: Testimonial) => {
     try {
       await supabase.from('testimonials').update({ approved: !r.approved }).eq('id', r.id)
+      toastOk('Updated.')
       void load()
     } catch (err) {
-      console.error('[TestimonialsManager] toggleApprove failed:', err)
+      toastErr('Failed to update testimonial.')
     }
   }
 
   const remove = async (id: string) => {
-    const ok = await confirm({ title: 'Delete testimonial', message: 'Delete this testimonial? This cannot be undone.', confirmLabel: 'Delete', danger: true })
-    if (!ok) return
+    if (!confirm('Delete this testimonial?')) return
     try {
       await supabase.from('testimonials').delete().eq('id', id)
+      toastOk('Deleted.')
       void load()
     } catch (err) {
-      console.error('[TestimonialsManager] remove failed:', err)
+      toastErr('Failed to delete testimonial.')
     }
   }
 
@@ -121,9 +122,10 @@ export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManag
         supabase.from('testimonials').update({ sort_order: swap.sort_order }).eq('id', r.id),
         supabase.from('testimonials').update({ sort_order: r.sort_order }).eq('id', swap.id),
       ])
+      toastOk('Reordered.')
       void load()
     } catch (err) {
-      console.error('[TestimonialsManager] move failed:', err)
+      toastErr('Failed to reorder testimonial.')
     }
   }
 
@@ -131,20 +133,24 @@ export default function TestimonialsManager({ onOpenSidebar }: TestimonialsManag
 
   return (
     <div className="flex flex-col h-full">
-      {dialog}
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between gap-4 shrink-0">
+      <div className="bg-white border-b border-ds-border px-6 py-4 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
-            <Menu size={17} />
-          </button>
+          {onOpenSidebar && (
+            <button onClick={onOpenSidebar} className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+              <Menu size={18} />
+            </button>
+          )}
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+            <MessageSquareQuote className="w-5 h-5 text-amber-500" />
+          </div>
           <div>
-            <h1 className="text-[22px] font-extrabold text-gray-900">Testimonials</h1>
-            <p className="text-[13px] text-gray-500">{approvedCount} approved · {rows.length - approvedCount} pending</p>
+            <h1 className="font-baloo font-black text-ds-text text-[18px] leading-tight">Testimonials</h1>
+            <p className="text-gray-400 text-[12px]">{approvedCount} approved · {rows.length - approvedCount} pending</p>
           </div>
         </div>
         <button onClick={openNew}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] px-4 py-2 rounded-xl transition shadow-sm">
+          className="flex items-center gap-2 bg-[#15803d] hover:bg-green-700 text-white font-bold text-[13px] px-4 py-2 rounded-xl transition shadow-sm">
           <Plus size={15} /> Add Testimonial
         </button>
       </div>

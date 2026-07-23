@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Search, Menu, ChevronDown, ChevronRight, Users, Baby, Crown, Gift, X } from 'lucide-react'
 import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface Props {
   onNavigate: (table: string) => void
@@ -41,6 +42,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
   const { error: toastErr, success: toastOk } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
     void (async () => {
@@ -63,7 +65,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
         }))
         setFamilies(result)
       } catch (err) {
-        console.error('[FamiliesManager] load failed:', err)
+        toastErr(err instanceof Error ? err.message : 'Failed to load families.')
       } finally {
         setLoading(false)
       }
@@ -100,7 +102,6 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
       const { data: newSub } = await supabase.from('nimipiko_subscriptions').select('*').eq('parent_id', parentId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle()
       setFamilies(prev => prev.map(f => f.parent_id === parentId ? { ...f, subscription: newSub } : f))
     } catch (err) {
-      console.error('[FamiliesManager] handleGrantAccess failed:', err)
       toastErr(err instanceof Error ? err.message : 'Failed to grant access. Please try again.')
     } finally {
       setGrantingFor(null)
@@ -186,8 +187,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
       toastOk(`Club granted to ${targets.length} famil${targets.length === 1 ? 'y' : 'ies'}.`)
       setSelectedIds(new Set())
     } catch (err) {
-      console.error('[FamiliesManager] bulk grant failed:', err)
-      toastErr('Bulk grant failed. Check console for details.')
+      toastErr('Bulk grant failed. Please try again.')
     } finally {
       setBulkBusy(false)
     }
@@ -199,7 +199,13 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
       toastErr('No selected families have Club.')
       return
     }
-    if (!confirm(`Revoke Club from ${targets.length} famil${targets.length === 1 ? 'y' : 'ies'}?`)) return
+    const ok = await confirm({
+      title: `Revoke Club from ${targets.length} ${targets.length === 1 ? 'family' : 'families'}?`,
+      message: 'This will immediately remove their active Club subscriptions.',
+      confirmLabel: 'Revoke',
+      danger: true,
+    })
+    if (!ok) return
     setBulkBusy(true)
     try {
       const ids = targets.map(t => t.parent_id)
@@ -213,8 +219,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
       toastOk(`Club revoked from ${targets.length} famil${targets.length === 1 ? 'y' : 'ies'}.`)
       setSelectedIds(new Set())
     } catch (err) {
-      console.error('[FamiliesManager] bulk revoke failed:', err)
-      toastErr('Bulk revoke failed. Check console for details.')
+      toastErr('Bulk revoke failed. Please try again.')
     } finally {
       setBulkBusy(false)
     }
@@ -223,7 +228,13 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
   async function handleBulkDeleteAccounts() {
     const targets = filtered.filter(f => selectedIds.has(f.parent_id))
     if (targets.length === 0) return
-    if (!confirm(`Delete ${targets.length} parent account${targets.length === 1 ? '' : 's'}? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: `Delete ${targets.length} parent account${targets.length === 1 ? '' : 's'}?`,
+      message: 'This permanently removes all selected parent accounts and cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
     setBulkBusy(true)
     try {
       const ids = targets.map(t => t.parent_id)
@@ -233,8 +244,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
       toastOk(`${targets.length} account${targets.length === 1 ? '' : 's'} deleted.`)
       setSelectedIds(new Set())
     } catch (err) {
-      console.error('[FamiliesManager] bulk delete failed:', err)
-      toastErr('Bulk delete failed. Check console for details.')
+      toastErr('Bulk delete failed. Please try again.')
     } finally {
       setBulkBusy(false)
     }
@@ -244,6 +254,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">

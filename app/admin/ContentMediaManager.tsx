@@ -29,7 +29,7 @@ export default function ContentMediaManager({ title, description, missionType, m
   const [rows, setRows] = useState<MediaRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const { error: toastErr } = useToast()
+  const { success: toastOk, error: toastErr } = useToast()
 
   useEffect(() => {
     void (async () => {
@@ -64,7 +64,7 @@ export default function ContentMediaManager({ title, description, missionType, m
         }
         setRows(result)
       } catch (err) {
-        console.error('[ContentMediaManager] load failed:', err)
+        toastErr('Failed to load media content.')
       } finally {
         setLoading(false)
       }
@@ -76,8 +76,8 @@ export default function ContentMediaManager({ title, description, missionType, m
       const { error } = await supabase.from('mission_versions').update({ media_url: url || null }).eq('id', versionId)
       if (error) throw error
       setRows(prev => prev.map(r => r.version_id === versionId ? { ...r, media_url: url || null } : r))
+      toastOk('Saved.')
     } catch (err) {
-      console.error('[ContentMediaManager] handleSave failed:', err)
       toastErr(err instanceof Error ? err.message : 'Save failed')
     }
   }

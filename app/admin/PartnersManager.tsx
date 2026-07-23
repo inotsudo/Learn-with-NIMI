@@ -35,7 +35,7 @@ export default function PartnersManager({ onOpenSidebar }: PartnersManagerProps)
         .order('sort_order', { ascending: true }).order('created_at', { ascending: true })
       setRows((data ?? []) as Partner[])
     } catch (err) {
-      console.error('[PartnersManager] load failed:', err)
+      toastErr('Failed to load partners.')
     } finally {
       setLoading(false)
     }

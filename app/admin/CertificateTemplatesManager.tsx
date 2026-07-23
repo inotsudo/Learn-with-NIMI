@@ -1,11 +1,12 @@
 'use client'
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Menu, Upload, Save, RefreshCw, CheckCircle2, Eye } from 'lucide-react'
+import { getCachedAdmin } from './adminAuth'
+import { Award, Menu, ChevronDown, Upload, Save, RefreshCw, CheckCircle2, AlertCircle, Eye } from 'lucide-react'
 import { useToast } from './Toast'
 
 interface CertificateTemplatesManagerProps {
-  onNavigate?: (table: string) => void
+  onNavigate: (table: string) => void
   onOpenSidebar?: () => void
 }
 
@@ -26,13 +27,15 @@ interface LangConfig {
 
 const DEFAULTS: LangConfig = { image_url: null, name_x: 438, name_y: 1089, name_size: 50, name_color: '#0d1b4b' }
 
-export default function CertificateTemplatesManager({ onNavigate: _onNavigate, onOpenSidebar }: CertificateTemplatesManagerProps) {
-  const { success: toastOk, error: toastErr } = useToast()
+export default function CertificateTemplatesManager({ onNavigate, onOpenSidebar }: CertificateTemplatesManagerProps) {
+  const { error: toastErr } = useToast()
+  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
   const [activeLang, setActiveLang] = useState<LangKey>('en')
   const [configs, setConfigs] = useState<Record<LangKey, LangConfig>>({ en: { ...DEFAULTS }, fr: { ...DEFAULTS }, rw: { ...DEFAULTS } })
   const [loadingInit, setLoadingInit] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [toast, setToast] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null)
   const [previewName, setPreviewName] = useState('NATHAN JOYEUX')
   const [dragging, setDragging] = useState(false)
 
@@ -40,11 +43,15 @@ export default function CertificateTemplatesManager({ onNavigate: _onNavigate, o
   const imgRef    = useRef<HTMLImageElement | null>(null)
   const fileRef   = useRef<HTMLInputElement>(null)
 
-  // ── Load existing templates ──────────────────────────
+  // ── Load admin + existing templates ──────────────────────────
   useEffect(() => {
     void (async () => {
       try {
-        const { data: rows } = await supabase.from('certificate_templates').select('*')
+        const [adminData, { data: rows }] = await Promise.all([
+          getCachedAdmin(),
+          supabase.from('certificate_templates').select('*'),
+        ])
+        if (adminData) setAdmin(adminData)
         if (rows?.length) {
           setConfigs(prev => {
             const next = { ...prev }
@@ -64,7 +71,7 @@ export default function CertificateTemplatesManager({ onNavigate: _onNavigate, o
           })
         }
       } catch (err) {
-        console.error('[CertificateTemplatesManager] init failed:', err)
+        toastErr('Failed to load certificate templates.')
       } finally {
         setLoadingInit(false)
       }
@@ -169,9 +176,9 @@ export default function CertificateTemplatesManager({ onNavigate: _onNavigate, o
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage.from('certificates').getPublicUrl(path)
       setConfigs(prev => ({ ...prev, [activeLang]: { ...prev[activeLang], image_url: publicUrl } }))
-      toastOk('Image uploaded successfully')
+      showToast('ok', 'Image uploaded successfully')
     } catch (err) {
-      toastErr(err instanceof Error ? err.message : 'Upload failed')
+      showToast('err', err instanceof Error ? err.message : 'Upload failed')
     }
     setUploading(false)
     e.target.value = ''
@@ -192,34 +199,62 @@ export default function CertificateTemplatesManager({ onNavigate: _onNavigate, o
         updated_at: new Date().toISOString(),
       }, { onConflict: 'lang' })
       if (error) throw error
-      toastOk(`${activeLang.toUpperCase()} certificate template saved`)
+      showToast('ok', `${activeLang.toUpperCase()} certificate template saved`)
     } catch (err) {
-      toastErr(err instanceof Error ? err.message : 'Save failed')
+      showToast('err', err instanceof Error ? err.message : 'Save failed')
     } finally {
       setSaving(false)
     }
   }
 
+  const showToast = (type: 'ok' | 'err', msg: string) => {
+    setToast({ type, msg })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   const cfg = configs[activeLang]
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={onOpenSidebar}
-            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
-            <Menu size={17} />
-          </button>
-          <div>
-            <h1 className="text-[22px] font-extrabold text-gray-900">Certificate Templates</h1>
-            <p className="text-[13px] text-gray-500">Upload and configure the story certificate design per language</p>
+      <header className="bg-white border-b border-gray-100 px-4 sm:px-6 py-5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-start gap-3.5 min-w-0">
+            <button onClick={onOpenSidebar}
+              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5">
+              <Menu size={17} />
+            </button>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-amber-50 text-amber-600">
+              <Award className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+                Certificate Templates 🎓
+              </h1>
+              <p className="text-sm text-gray-500 font-medium mt-0.5">
+                Upload and configure the story certificate design per language
+              </p>
+              <p className="text-xs text-gray-400 mt-1.5">
+                <button onClick={() => onNavigate('Dashboard')} className="font-bold hover:underline text-green-600">Dashboard</button>
+                <span className="mx-1.5 text-gray-300">/</span>
+                <button onClick={() => onNavigate('child_achievements')} className="font-bold hover:underline text-green-600">Certificates</button>
+                <span className="mx-1.5 text-gray-300">/</span>
+                <span className="font-bold text-gray-500">Templates</span>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
+            <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
+            <div className="hidden sm:block leading-tight">
+              <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
+              <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
+            </div>
+            <ChevronDown size={14} className="text-gray-400" />
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Body */}
-      <div className="flex-1 overflow-auto">
       <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
 
         {/* Info banner */}
@@ -360,7 +395,16 @@ export default function CertificateTemplatesManager({ onNavigate: _onNavigate, o
           </div>
         </div>
       </div>
-      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-5 py-3 rounded-2xl shadow-xl text-white text-sm font-bold z-50 ${
+          toast.type === 'ok' ? 'bg-green-600' : 'bg-red-500'
+        }`}>
+          {toast.type === 'ok' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {toast.msg}
+        </div>
+      )}
     </div>
   )
 }

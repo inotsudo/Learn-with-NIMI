@@ -1,13 +1,15 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
+import { getCachedAdmin } from './adminAuth'
 import {
-  BarChart3, Menu, Sparkles, Star, Users, TrendingUp, Globe, ArrowUpRight, AlertCircle, RefreshCw,
+  BarChart3, Menu, ChevronDown, Sparkles, Star, Users, TrendingUp, Globe, ArrowUpRight, AlertCircle, RefreshCw,
   Layers, Award, FileText, FileSpreadsheet,
 } from 'lucide-react'
 import { ACCENT, LANGUAGES, LANGUAGE_META, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META, CONTENT_STATUSES, type Lang } from './missionMeta'
 import type { ActivityCategory } from '@/app/_activityData'
 import { Skeleton, SkeletonHeaderBanner, SkeletonStatCards, SkeletonBarChart, SkeletonTable, SkeletonCardGrid, SkeletonList } from './Skeleton'
+import { useToast } from './Toast'
 import StatCard from './StatCard'
 import LearnerAnalyticsTab from './LearnerAnalyticsTab'
 import CurriculumAnalyticsTab from './CurriculumAnalyticsTab'
@@ -94,8 +96,10 @@ function missionTitle(row: ProgressRow) {
 }
 
 export default function AnalyticsManager({ onNavigate, onOpenSidebar }: AnalyticsManagerProps) {
+  const { error: toastErr } = useToast()
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [admin, setAdmin] = useState<{ name: string; role: string } | null>(null)
   const [rows, setRows] = useState<ProgressRow[]>([])
   const [totalChildren, setTotalChildren] = useState(0)
   const [langFilter, setLangFilter] = useState<'all' | Lang>('all')
@@ -106,6 +110,10 @@ export default function AnalyticsManager({ onNavigate, onOpenSidebar }: Analytic
   const [missionVersions, setMissionVersions] = useState<AdminMissionVersionRow[]>([])
   const [levelMissions, setLevelMissions] = useState<LevelMissionRow[]>([])
   const [languageSwitches, setLanguageSwitches] = useState<AdminLanguageSwitchRow[]>([])
+
+  useEffect(() => {
+    void getCachedAdmin().then(d => { if (d) setAdmin(d) })
+  }, [])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -144,7 +152,7 @@ export default function AnalyticsManager({ onNavigate, onOpenSidebar }: Analytic
       setLevelMissions((levelMissionRows ?? []) as unknown as LevelMissionRow[])
       setLanguageSwitches((switchRows ?? []) as unknown as AdminLanguageSwitchRow[])
     } catch (err) {
-      console.error(err)
+      toastErr(err instanceof Error ? err.message : 'Failed to load analytics.')
       setLoadError(err instanceof Error ? err.message : 'Failed to load analytics.')
     } finally {
       setLoading(false)
@@ -324,21 +332,58 @@ export default function AnalyticsManager({ onNavigate, onOpenSidebar }: Analytic
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+    <div>
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
+      <header className={`border-b border-gray-100 px-4 sm:px-6 py-5 ${accent.soft}`}>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-start gap-3.5 min-w-0">
             <button
               onClick={onOpenSidebar}
-              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500"
+              className="lg:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 hover:bg-gray-50 text-gray-600 shadow-sm transition mt-0.5"
             >
               <Menu size={17} />
             </button>
-            <div>
-              <h1 className="text-[22px] font-extrabold text-gray-900">Analytics &amp; Insights</h1>
-              <p className="text-[13px] text-gray-500">Engagement trends and learning progress across NIMIPIKO</p>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm bg-white ${accent.text}`}>
+              <BarChart3 className="w-6 h-6" />
             </div>
+            <div className="min-w-0">
+              <h1 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+                Analytics &amp; Insights <span className="text-lg">📊</span>
+              </h1>
+              <p className="text-sm text-gray-500 font-medium mt-0.5">
+                Engagement trends and learning progress across NIMIPIKO
+              </p>
+              <p className="text-xs text-gray-400 mt-1.5">
+                <button onClick={() => onNavigate('Dashboard')} className={`font-bold hover:underline ${accent.text}`}>Dashboard</button>
+                <span className="mx-1.5 text-gray-300">/</span>
+                <span className="font-bold text-gray-500">Analytics</span>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-white border border-gray-100 pl-1.5 pr-3 py-1.5 rounded-full shadow-sm">
+            <img src="/nimi-logo-circle.png" alt="Profile" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-white"  loading="lazy" />
+            <div className="hidden sm:block leading-tight">
+              <p className="text-sm font-semibold text-gray-700">{admin?.name ?? 'Admin'}</p>
+              <p className="text-[10px] text-gray-400 uppercase font-bold">{admin?.role ?? 'admin'}</p>
+            </div>
+            <ChevronDown size={14} className="text-gray-400" />
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center justify-between gap-3 mt-5 flex-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            {TABS.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold transition whitespace-nowrap ${
+                  tab === t.key ? `text-white shadow-sm ${accent.button}` : 'text-gray-500 hover:bg-white/70'
+                }`}
+              >
+                <t.icon size={14} /> {t.label}
+              </button>
+            ))}
           </div>
           <button
             onClick={handleExportFullReport}
@@ -347,25 +392,9 @@ export default function AnalyticsManager({ onNavigate, onOpenSidebar }: Analytic
             <FileSpreadsheet className="w-3.5 h-3.5" /> Export Full Report (XLSX)
           </button>
         </div>
-
-        {/* Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto mt-4">
-          {TABS.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold transition whitespace-nowrap ${
-                tab === t.key ? `text-white shadow-sm ${accent.button}` : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              <t.icon size={14} /> {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      </header>
 
       {/* Body */}
-      <div className="flex-1 overflow-auto">
       <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
         {tab === 'revenue' && <RevenueAnalyticsTab />}
         {tab === 'learners' && <LearnerAnalyticsTab analytics={learnerAnalytics} />}
@@ -567,7 +596,6 @@ export default function AnalyticsManager({ onNavigate, onOpenSidebar }: Analytic
         </div>
         </>
         )}
-      </div>
       </div>
     </div>
   )

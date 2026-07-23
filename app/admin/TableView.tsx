@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import supabase from "@/lib/supabaseClient";
 import { SkeletonTable } from './Skeleton'
+import { useToast } from './Toast'
 
 interface TableViewProps {
   /** Table name, or "table:rowId" to scroll to and highlight a specific row */
@@ -33,6 +34,7 @@ function formatCell(val: unknown) {
 }
 
 export default function TableView({ table }: TableViewProps) {
+  const { error: toastErr } = useToast()
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const highlightRef = useRef<HTMLTableRowElement>(null);
@@ -54,7 +56,7 @@ export default function TableView({ table }: TableViewProps) {
         if (error) throw error;
         setRows(data || []);
       } catch (err: any) {
-        console.error(`Error fetching table "${tableName}":`, err);
+        toastErr(`Failed to load table "${tableName}".`);
         setRows([]);
       } finally {
         setLoading(false);
