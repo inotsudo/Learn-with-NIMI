@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Lock, Play, Star, Volume2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Lock, Loader2, Play, Star, Volume2 } from "lucide-react";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, EASE, SPRING } from "@/lib/design-system/motion";
 import AppShell from "@/components/layout/AppShell";
@@ -232,6 +232,7 @@ export default function StoryDetailPage() {
   const [showCertModal, setShowCertModal] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [sharingCert, setSharingCert] = useState(false);
+  const [downloadingCert, setDownloadingCert] = useState<"pdf" | "png" | null>(null);
   // Guard: prevent badge award effect from firing more than once per mount
   const badgeAwardedRef = useRef(false);
 
@@ -266,6 +267,35 @@ export default function StoryDetailPage() {
     } finally {
       clearTimeout(safety);
       setSharingCert(false);
+    }
+  };
+
+  const downloadCert = async (format: "pdf" | "png") => {
+    setDownloadingCert(format);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const params = new URLSearchParams({
+        child: childName,
+        story: storyTitle,
+        stars: String(totalStars),
+        lang: language,
+        format,
+        ...(storyId ? { storyId } : {}),
+      });
+      const res = await fetch(`/api/certificate?${params}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${childName.replace(/\s+/g, "_")}_certificate.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloadingCert(null);
     }
   };
 
@@ -1319,31 +1349,16 @@ export default function StoryDetailPage() {
                                   {hasSubscription ? (
                                     <>
                                       <button
-                                        onClick={() => {
-                                          const params = new URLSearchParams({
-                                            child: childName, story: storyTitle,
-                                            stars: String(totalStars), lang: language,
-                                            ...(storyId ? { storyId } : {}),
-                                            date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-                                          });
-                                          window.open(`/api/certificate?${params}`, "_blank");
-                                        }}
-                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
-                                        📥 PDF
+                                        onClick={() => void downloadCert("pdf")}
+                                        disabled={downloadingCert !== null}
+                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition disabled:opacity-60 flex items-center gap-1">
+                                        {downloadingCert === "pdf" ? <Loader2 className="w-3 h-3 animate-spin" /> : "📥"} PDF
                                       </button>
                                       <button
-                                        onClick={() => {
-                                          const params = new URLSearchParams({
-                                            child: childName, story: storyTitle,
-                                            stars: String(totalStars), lang: language,
-                                            ...(storyId ? { storyId } : {}),
-                                            date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-                                            format: "png",
-                                          });
-                                          window.open(`/api/certificate?${params}`, "_blank");
-                                        }}
-                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
-                                        🖼️ PNG
+                                        onClick={() => void downloadCert("png")}
+                                        disabled={downloadingCert !== null}
+                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition disabled:opacity-60 flex items-center gap-1">
+                                        {downloadingCert === "png" ? <Loader2 className="w-3 h-3 animate-spin" /> : "🖼️"} PNG
                                       </button>
                                     </>
                                   ) : (
