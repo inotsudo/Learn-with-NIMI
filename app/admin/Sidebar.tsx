@@ -53,7 +53,7 @@ export default function Sidebar({ currentTable, onSelectTable, collapsed, onTogg
   const baseTable = currentTable.split(':')[0]
 
   useEffect(() => {
-    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[Sidebar] auth:', err))
+    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(() => {})
   }, [])
 
   const isActive = (table: string) => {

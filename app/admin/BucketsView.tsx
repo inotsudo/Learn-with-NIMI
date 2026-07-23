@@ -75,7 +75,7 @@ export default function BucketsView({ onNavigate, onOpenSidebar }: BucketsViewPr
   const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
-    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(err => console.error('[BucketsView] auth:', err))
+    getCachedAdmin().then(a => { if (a) setAdmin(a) }).catch(() => {})
   }, [])
 
   const fetchEntries = useCallback(async (b: string, p: string) => {

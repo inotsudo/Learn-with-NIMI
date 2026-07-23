@@ -130,7 +130,6 @@ export default function AdminPanel() {
         if (cancelled) return
         if (adminError) {
           // DB error (network blip, RLS issue) — don't sign out, let user retry
-          console.error('[admin] admins lookup failed:', adminError.message)
           setCheckTimedOut(true)
           return
         }
@@ -145,7 +144,6 @@ export default function AdminPanel() {
       } catch (err) {
         if (cancelled) return
         // Network/timeout error — show retry UI, don't kick user out
-        console.error('[admin] auth check error:', err)
         setCheckTimedOut(true)
       }
     }
