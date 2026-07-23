@@ -328,7 +328,9 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-bold text-gray-800">{f.parent_name}</p>
-                  <p className="text-[11px] text-gray-400">{f.parent_email}</p>
+                  {f.parent_name !== f.parent_email && (
+                    <p className="text-[11px] text-gray-400">{f.parent_email}</p>
+                  )}
                 </div>
                 {f.subscription ? (
                   <span className="text-[11px] font-bold text-green-700 bg-green-100 px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
