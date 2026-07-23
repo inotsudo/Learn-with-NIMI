@@ -58,7 +58,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
 
         const result: FamilyRow[] = (parents ?? []).map(p => ({
           parent_id: p.id,
-          parent_name: p.name ?? 'Unknown',
+          parent_name: (p.name && p.name !== 'Parent' && p.name !== 'parent') ? p.name : (p.email ?? 'Unknown'),
           parent_email: p.email ?? '',
           children: (children ?? []).filter(c => c.parent_id === p.id),
           subscription: subMap.get(p.id) ?? null,
@@ -392,7 +392,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
                       {f.children.map(c => (
                         <div key={c.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3">
                           <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-[14px] font-black shrink-0 border border-ds-border">
-                            {c.avatar_url && !c.avatar_url.startsWith('http') ? c.avatar_url : c.name[0]?.toUpperCase()}
+                            {c.avatar_url && !c.avatar_url.startsWith('http') && c.avatar_url.length <= 4 ? c.avatar_url : c.name[0]?.toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-bold text-gray-800">{c.name}</p>
