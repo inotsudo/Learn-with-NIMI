@@ -3,9 +3,12 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import supabase from '@/lib/supabaseClient'
 import {
   Award, Menu, Trophy, Medal, Users, Sparkles, ArrowUpRight, AlertCircle, RefreshCw,
+  Trash2, Search, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { ACCENT, LANGUAGES, LANGUAGE_META, CATEGORY_ORDER, CATEGORY_META, FALLBACK_META, type Lang, type AccentKey } from './missionMeta'
 import { Skeleton, SkeletonHeaderBanner, SkeletonStatCards, SkeletonTable, SkeletonCardGrid, SkeletonList } from './Skeleton'
+import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface CertificatesManagerProps {
   onNavigate: (table: string) => void
@@ -73,6 +76,8 @@ function StatCard({ icon: Icon, label, value, accentKey }: { icon: React.Element
   )
 }
 
+const PAGE_SIZE = 20
+
 export default function CertificatesManager({ onNavigate, onOpenSidebar }: CertificatesManagerProps) {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -80,6 +85,11 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
   const [totalChildren, setTotalChildren] = useState(0)
   const [typeFilter, setTypeFilter] = useState<'all' | 'badge' | 'certificate'>('all')
   const [langFilter, setLangFilter] = useState<'all' | Lang>('all')
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const { success: toastOk, error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -101,7 +111,6 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
       setRows((achievements ?? []) as unknown as AchievementRow[])
       setTotalChildren((children ?? []).length)
     } catch (err) {
-      console.error(err)
       setLoadError(err instanceof Error ? err.message : 'Failed to load achievements.')
     } finally {
       setLoading(false)
@@ -138,10 +147,42 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
   }, [rows])
 
   const filteredRows = useMemo(() => {
-    return rows
-      .filter(r => (typeFilter === 'all' || r.type === typeFilter) && (langFilter === 'all' || r.language === langFilter))
-      .slice(0, 30)
-  }, [rows, typeFilter, langFilter])
+    let result = rows.filter(
+      r => (typeFilter === 'all' || r.type === typeFilter) && (langFilter === 'all' || r.language === langFilter),
+    )
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(r => (r.children?.name ?? '').toLowerCase().includes(q))
+    }
+    return result
+  }, [rows, typeFilter, langFilter, search])
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE))
+  const pageClamped = Math.min(page, totalPages)
+  const pageRows = filteredRows.slice((pageClamped - 1) * PAGE_SIZE, pageClamped * PAGE_SIZE)
+
+  async function handleRevoke(row: AchievementRow) {
+    const childName = row.children?.name ?? 'this learner'
+    const desc = describeAchievement(row)
+    const ok = await confirm({
+      title: `Revoke ${desc.label}?`,
+      message: `This will permanently remove the achievement for ${childName}. The learner will lose this certificate/badge record.`,
+      confirmLabel: 'Revoke',
+      danger: true,
+    })
+    if (!ok) return
+    setDeletingId(row.id)
+    try {
+      const { error } = await supabase.from('child_achievements').delete().eq('id', row.id)
+      if (error) throw error
+      setRows(prev => prev.filter(r => r.id !== row.id))
+      toastOk(`Achievement revoked for ${childName}.`)
+    } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'Failed to revoke achievement.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -186,6 +227,7 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -290,7 +332,10 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
         {/* Recently Earned */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-            <h3 className="text-base font-bold text-gray-800">Recently Earned</h3>
+            <h3 className="text-base font-bold text-gray-800">
+              All Achievements
+              <span className="ml-2 text-sm font-normal text-gray-400">({filteredRows.length})</span>
+            </h3>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1">
                 {(['all', 'badge', 'certificate'] as const).map(t => (
@@ -329,8 +374,20 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
             </div>
           </div>
 
+          {/* Search */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by learner name…"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-[13px] text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400"
+            />
+          </div>
+
           <div className="space-y-2">
-            {filteredRows.map(row => {
+            {pageRows.map(row => {
               const desc = describeAchievement(row)
               const descAccent = ACCENT[desc.accentKey]
               return (
@@ -351,13 +408,59 @@ export default function CertificatesManager({ onNavigate, onOpenSidebar }: Certi
                   >
                     View Learner <ArrowUpRight className="w-3 h-3" />
                   </button>
+                  <button
+                    onClick={() => void handleRevoke(row)}
+                    disabled={deletingId === row.id}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500 disabled:opacity-40 flex-shrink-0"
+                    title="Revoke achievement"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )
             })}
-            {filteredRows.length === 0 && (
+            {pageRows.length === 0 && (
               <div className="py-8 text-center text-gray-400 text-sm">No achievements match these filters yet.</div>
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 text-[12px] text-gray-400">
+              <span>
+                {(pageClamped - 1) * PAGE_SIZE + 1}–{Math.min(pageClamped * PAGE_SIZE, filteredRows.length)} of {filteredRows.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={pageClamped <= 1}
+                  className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 transition"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setPage(i + 1)}
+                    className={`w-8 h-8 rounded-lg text-[12px] font-bold transition ${
+                      i + 1 === pageClamped
+                        ? 'bg-amber-400 text-white'
+                        : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={pageClamped >= totalPages}
+                  className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 transition"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       </div>

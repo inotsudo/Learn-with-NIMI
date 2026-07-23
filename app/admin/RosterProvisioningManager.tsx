@@ -6,6 +6,7 @@ import {
   Search, ChevronDown, AlertCircle, CheckCircle2, Clock, Menu,
   X, ExternalLink,
 } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface Props {
   onOpenSidebar?: () => void
@@ -300,6 +301,7 @@ function RosterRow({ row, onLink, onArchive }: RosterRowProps) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function RosterProvisioningManager({ onOpenSidebar }: Props) {
+  const { success: toastOk, error: toastErr } = useToast()
   const [recordType, setRecordType] = useState<RecordType>('student')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending')
   const [rows, setRows] = useState<StagedRow[]>([])
@@ -320,13 +322,21 @@ export default function RosterProvisioningManager({ onOpenSidebar }: Props) {
         `/api/admin/roster?type=${recordType}&status=${statusFilter}`,
         { headers: { Authorization: `Bearer ${token}` } },
       )
-      if (!res.ok) { setError('Failed to load roster data'); setLoading(false); return }
+      if (!res.ok) {
+        const msg = 'Failed to load roster data'
+        setError(msg)
+        toastErr(msg)
+        setLoading(false)
+        return
+      }
 
       const json = await res.json() as { rows: StagedRow[]; counts: Record<string, number> }
       setRows(json.rows)
       setCounts(json.counts)
     } catch (e) {
-      setError(String(e))
+      const msg = String(e)
+      setError(msg)
+      toastErr(msg)
     } finally {
       setLoading(false)
     }
@@ -337,30 +347,42 @@ export default function RosterProvisioningManager({ onOpenSidebar }: Props) {
   async function handleLink(rowId: string, childId: string) {
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token
-    if (!token) return
-    await fetch('/api/admin/roster', {
-      method:  'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ id: rowId, linkedChildId: childId }),
-    })
-    setRows(prev => prev.map(r => r.id === rowId ? { ...r, status: 'linked', linked_child_id: childId } : r))
-    setCounts(prev => ({ ...prev, pending: Math.max(0, (prev.pending ?? 0) - 1), linked: (prev.linked ?? 0) + 1 }))
+    if (!token) { toastErr('Not authenticated.'); return }
+    try {
+      const res = await fetch('/api/admin/roster', {
+        method:  'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ id: rowId, linkedChildId: childId }),
+      })
+      if (!res.ok) throw new Error(`Link failed (${res.status})`)
+      setRows(prev => prev.map(r => r.id === rowId ? { ...r, status: 'linked', linked_child_id: childId } : r))
+      setCounts(prev => ({ ...prev, pending: Math.max(0, (prev.pending ?? 0) - 1), linked: (prev.linked ?? 0) + 1 }))
+      toastOk('Student linked successfully.')
+    } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'Failed to link student.')
+    }
   }
 
   async function handleArchive(id: string) {
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token
-    if (!token) return
-    await fetch(`/api/admin/roster?id=${id}`, {
-      method:  'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    setRows(prev => prev.filter(r => r.id !== id))
-    setCounts(prev => ({
-      ...prev,
-      [statusFilter]: Math.max(0, (prev[statusFilter] ?? 0) - 1),
-      archived: (prev.archived ?? 0) + 1,
-    }))
+    if (!token) { toastErr('Not authenticated.'); return }
+    try {
+      const res = await fetch(`/api/admin/roster?id=${id}`, {
+        method:  'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error(`Archive failed (${res.status})`)
+      setRows(prev => prev.filter(r => r.id !== id))
+      setCounts(prev => ({
+        ...prev,
+        [statusFilter]: Math.max(0, (prev[statusFilter] ?? 0) - 1),
+        archived: (prev.archived ?? 0) + 1,
+      }))
+      toastOk('Record archived.')
+    } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'Failed to archive record.')
+    }
   }
 
   const totalPending = counts.pending ?? 0
@@ -368,20 +390,20 @@ export default function RosterProvisioningManager({ onOpenSidebar }: Props) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center gap-3 flex-shrink-0">
-        <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
-          <Menu size={17} />
+      <div className="px-6 py-4 border-b border-gray-100 bg-white flex items-center gap-3 flex-shrink-0">
+        <button onClick={onOpenSidebar} className="lg:hidden w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 transition">
+          <Menu className="w-4 h-4" />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-[22px] font-extrabold text-gray-900">Roster Provisioning</h1>
+            <h1 className="text-[17px] font-bold text-ds-text">Roster Provisioning</h1>
             {totalPending > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[11px] font-bold">
                 {totalPending} pending
               </span>
             )}
           </div>
-          <p className="text-[13px] text-gray-500">
+          <p className="text-gray-400 text-[12px] mt-0.5">
             Review users imported via Clever and ClassLink — link students to existing learner accounts
           </p>
         </div>

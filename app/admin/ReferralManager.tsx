@@ -1,7 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Share2, Gift, Users, CheckCircle2, Menu } from 'lucide-react'
+import { Share2, Gift, Users, CheckCircle2, Trash2 } from 'lucide-react'
+import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface Redemption {
   id: string
@@ -12,12 +14,18 @@ interface Redemption {
   referred: { name: string | null; email: string | null } | null
 }
 
-interface Props { onOpenSidebar?: () => void }
+interface Props { onOpenSidebar: () => void }
+
+type RewardFilter = 'all' | 'pending' | 'rewarded'
 
 export default function ReferralManager({ onOpenSidebar }: Props) {
   const [rows, setRows]     = useState<Redemption[]>([])
   const [codes, setCodes]   = useState<number>(0)
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [rewardFilter, setRewardFilter] = useState<RewardFilter>('all')
+  const { success: toastOk, error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
     void (async () => {
@@ -33,7 +41,7 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
         setRows((redemptions as any[]) ?? [])
         setCodes(count ?? 0)
       } catch (err) {
-        console.error('[ReferralManager] load failed:', err)
+        toastErr('Failed to load referral data.')
       } finally {
         setLoading(false)
       }
@@ -42,16 +50,70 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
 
   const rewarded = rows.filter(r => r.reward_granted_at).length
 
+  async function handleGrantReward(id: string) {
+    try {
+      const { error } = await supabase
+        .from('referral_redemptions')
+        .update({ reward_granted_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw error
+      setRows(prev => prev.map(r => r.id === id ? { ...r, reward_granted_at: new Date().toISOString() } : r))
+      toastOk('Reward granted.')
+    } catch (err) {
+      toastErr('Failed to grant reward.')
+    }
+  }
+
+  async function handleDelete(id: string) {
+    const ok = await confirm({
+      title: 'Delete this redemption?',
+      message: 'This will permanently remove this referral record.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      const { error } = await supabase.from('referral_redemptions').delete().eq('id', id)
+      if (error) throw error
+      setRows(prev => prev.filter(r => r.id !== id))
+      toastOk('Redemption deleted.')
+    } catch (err) {
+      toastErr('Failed to delete redemption.')
+    }
+  }
+
+  const filteredRows = useMemo(() => {
+    let list = rows
+    if (rewardFilter === 'pending') list = list.filter(r => !r.reward_granted_at)
+    if (rewardFilter === 'rewarded') list = list.filter(r => !!r.reward_granted_at)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(r => {
+        const referrer = r.referrer as any
+        const referred = r.referred as any
+        return (
+          (referrer?.name ?? '').toLowerCase().includes(q) ||
+          (referrer?.email ?? '').toLowerCase().includes(q) ||
+          (referred?.name ?? '').toLowerCase().includes(q) ||
+          (referred?.email ?? '').toLowerCase().includes(q)
+        )
+      })
+    }
+    return list
+  }, [rows, search, rewardFilter])
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {dialog}
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center gap-3 flex-shrink-0">
-        <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
-          <Menu size={17} />
-        </button>
-        <div>
-          <h1 className="text-[22px] font-extrabold text-gray-900">Referrals</h1>
-          <p className="text-[13px] text-gray-500">{rows.length} redemption{rows.length !== 1 ? 's' : ''} · {codes} codes issued</p>
+      <div className="flex items-center gap-3 px-6 lg:px-8 py-5 border-b border-gray-200 bg-white">
+        <button onClick={onOpenSidebar} className="lg:hidden p-1 text-gray-500">☰</button>
+        <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
+          <Share2 className="w-5 h-5 text-amber-700" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-black text-gray-900 text-[17px]">Referrals</h1>
+          <p className="text-gray-500 text-[12px]">{rows.length} redemption{rows.length !== 1 ? 's' : ''} · {codes} codes issued</p>
         </div>
       </div>
 
@@ -70,13 +132,33 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
           ))}
         </div>
 
+        {/* Search + filter tabs */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="flex gap-1">
+            {(['all', 'pending', 'rewarded'] as RewardFilter[]).map(f => (
+              <button key={f} onClick={() => setRewardFilter(f)}
+                className={`px-3 py-1.5 rounded-lg text-[12px] font-bold capitalize transition ${
+                  rewardFilter === f ? 'bg-green-600 text-white' : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}>
+                {f}
+              </button>
+            ))}
+          </div>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name or email…"
+            className="flex-1 min-w-[180px] border border-gray-200 rounded-xl px-3 py-1.5 text-[13px] font-medium text-gray-700 focus:outline-none focus:border-green-400"
+          />
+        </div>
+
         {loading ? (
           <div className="text-center text-gray-400 py-20 text-[14px]">Loading…</div>
-        ) : rows.length === 0 ? (
+        ) : filteredRows.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <Share2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-bold text-[15px]">No referrals yet</p>
-            <p className="text-[13px] mt-1">Referral activity will appear here as users share their codes.</p>
+            <p className="font-bold text-[15px]">{rows.length === 0 ? 'No referrals yet' : 'No referrals match this filter.'}</p>
+            {rows.length === 0 && <p className="text-[13px] mt-1">Referral activity will appear here as users share their codes.</p>}
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
@@ -88,10 +170,11 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide hidden sm:table-cell">Code</th>
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Date</th>
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Reward</th>
+                  <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => {
+                {filteredRows.map((r, i) => {
                   const referrer = r.referrer as any
                   const referred = r.referred as any
                   return (
@@ -110,6 +193,26 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
                         ) : (
                           <span className="text-gray-400 text-[11px]">Pending</span>
                         )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          {!r.reward_granted_at && (
+                            <button
+                              onClick={() => handleGrantReward(r.id)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                              title="Grant reward"
+                            >
+                              <Gift size={14} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(r.id)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500"
+                            title="Delete redemption"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )

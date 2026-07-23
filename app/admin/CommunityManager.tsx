@@ -2,11 +2,12 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
-import { Search, Filter, Menu, ChevronLeft, ChevronRight, Heart, CheckCircle2, XCircle } from 'lucide-react'
+import { Search, Menu, ChevronLeft, ChevronRight, Heart, CheckCircle2, XCircle, Trash2 } from 'lucide-react'
 import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface Props {
-  onNavigate?: (table: string) => void
+  onNavigate: (table: string) => void
   onOpenSidebar?: () => void
 }
 
@@ -31,16 +32,17 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<TabKey>('all')
   const [page, setPage] = useState(1)
-  const { success: toastOk } = useToast()
+  const { success: toastOk, error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
 
   const load = async () => {
     setLoading(true)
     try {
       const { data, error } = await supabase.rpc('admin_get_all_creations')
-      if (error) console.error('[Community] RPC error:', error.message)
+      if (error) toastErr('[Community] RPC error: ' + error.message)
       setPosts((data ?? []) as PostRow[])
     } catch (err) {
-      console.error('[CommunityManager] load failed:', err)
+      toastErr('Failed to load community posts.')
     } finally {
       setLoading(false)
     }
@@ -49,24 +51,56 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
   useEffect(() => { void load() }, [])
 
   const handleApprove = async (id: string) => {
+    const ok = await confirm({
+      title: 'Approve this post?',
+      message: 'The post will be made public and visible to the community.',
+      confirmLabel: 'Approve',
+      danger: false,
+    })
+    if (!ok) return
     try {
       const { error } = await supabase.from('creations').update({ status: 'approved', is_public: true }).eq('id', id)
       if (error) throw error
-      await load()
-      toastOk('Post approved')
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'approved', is_public: true } : p))
+      toastOk('Post approved.')
     } catch (err) {
-      console.error('[CommunityManager] handleApprove failed:', err)
+      toastErr('Failed to approve post.')
     }
   }
 
   const handleReject = async (id: string) => {
+    const ok = await confirm({
+      title: 'Reject this post?',
+      message: 'The post will be hidden from the community.',
+      confirmLabel: 'Reject',
+      danger: true,
+    })
+    if (!ok) return
     try {
       const { error } = await supabase.from('creations').update({ status: 'rejected', is_public: false }).eq('id', id)
       if (error) throw error
-      await load()
-      toastOk('Post rejected')
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'rejected', is_public: false } : p))
+      toastOk('Post rejected.')
     } catch (err) {
-      console.error('[CommunityManager] handleReject failed:', err)
+      toastErr('Failed to reject post.')
+    }
+  }
+
+  const handleDelete = async (id: string, child_name: string) => {
+    const ok = await confirm({
+      title: `Delete post by ${child_name}?`,
+      message: 'This will permanently delete the post and cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      const { error } = await supabase.from('creations').delete().eq('id', id)
+      if (error) throw error
+      setPosts(prev => prev.filter(p => p.id !== id))
+      toastOk('Post deleted.')
+    } catch (err) {
+      toastErr('Failed to delete post.')
     }
   }
 
@@ -102,6 +136,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
@@ -119,9 +154,6 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
               <input type="text" placeholder="Search posts..." value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
                 className="pl-9 pr-4 py-2 bg-ds-input border border-ds-border rounded-xl text-[13px] font-medium text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500 w-48" />
             </div>
-            <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-50">
-              <Filter size={14} /> Filter
-            </button>
           </div>
         </div>
 
@@ -164,7 +196,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
                         <div className="flex items-center gap-3">
                           {p.image_url ? (
                             <img src={p.image_url.startsWith('/') ? p.image_url : getStorageUrl(p.image_url)}
-                              alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100"  loading="lazy" />
+                              alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100" loading="lazy" />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300 text-lg">
                               {p.type === 'challenge' ? '🏆' : p.type === 'certificate' ? '📜' : '🎨'}
@@ -188,15 +220,19 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
                           {(!p.status || p.status === 'pending') && (
                             <>
                               <button onClick={() => handleApprove(p.id)}
-                                className="w-7 h-7 rounded-lg border border-emerald-200 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 transition" title="Approve">
+                                className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-gray-100 text-gray-400 hover:text-gray-700" title="Approve">
                                 <CheckCircle2 size={14} />
                               </button>
                               <button onClick={() => handleReject(p.id)}
-                                className="w-7 h-7 rounded-lg border border-red-200 flex items-center justify-center text-red-400 hover:bg-red-50 transition" title="Reject">
+                                className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500" title="Reject">
                                 <XCircle size={14} />
                               </button>
                             </>
                           )}
+                          <button onClick={() => handleDelete(p.id, p.child_name)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500" title="Delete post">
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>

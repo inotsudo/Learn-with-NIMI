@@ -6,7 +6,9 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import supabase from '@/lib/supabaseClient';
-import { MessagesSquare, RefreshCw, ChevronDown, ChevronUp, Search, Menu } from 'lucide-react';
+import { MessagesSquare, RefreshCw, ChevronDown, ChevronUp, Search, Trash2 } from 'lucide-react';
+import { useToast } from './Toast';
+import { useConfirmDialog } from './ConfirmDialog';
 
 interface ConvSummaryRow {
   id: string;
@@ -35,6 +37,8 @@ export default function ConversationHistoryManager({ onOpenSidebar }: Props) {
   const [search, setSearch]         = useState('');
   const [expanded, setExpanded]     = useState<Set<string>>(new Set());
   const [langFilter, setLangFilter] = useState<string>('all');
+  const { success: toastOk, error: toastErr } = useToast();
+  const { confirm, dialog } = useConfirmDialog();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,6 +80,24 @@ export default function ConversationHistoryManager({ onOpenSidebar }: Props) {
     });
   };
 
+  const handleDelete = async (id: string, child_name: string) => {
+    const ok = await confirm({
+      title: `Delete conversation for ${child_name}?`,
+      message: 'This will permanently delete the conversation summary.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      const { error: err } = await supabase.from('conversation_summaries').delete().eq('id', id);
+      if (err) throw err;
+      setRows(prev => prev.filter(r => r.id !== id));
+      toastOk('Conversation deleted.');
+    } catch (e) {
+      toastErr('Failed to delete conversation.');
+    }
+  };
+
   const filtered = rows.filter(r => {
     const matchLang = langFilter === 'all' || r.language === langFilter;
     const q = search.toLowerCase();
@@ -95,26 +117,27 @@ export default function ConversationHistoryManager({ onOpenSidebar }: Props) {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
+      {dialog}
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
-              <Menu size={17} />
-            </button>
-            <div>
-              <h1 className="text-[22px] font-extrabold text-gray-900">AI Chat History</h1>
-              <p className="text-[13px] text-gray-500">AI-inferred session summaries · no conversation text is stored</p>
-            </div>
-          </div>
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center gap-3 mb-1">
+          <button onClick={onOpenSidebar} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+            <MessagesSquare size={18} />
+          </button>
+          <MessagesSquare className="w-5 h-5 text-emerald-600 hidden lg:block" />
+          <h1 className="text-lg font-bold text-gray-900">AI Chat History</h1>
+          <span className="ml-auto text-xs text-gray-400 italic">Read-only · Summaries only · No raw messages stored</span>
           <button
             onClick={() => void load()}
-            className="w-9 h-9 rounded-full border border-gray-100 hover:bg-gray-50 flex items-center justify-center text-gray-500 transition"
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition"
             title="Refresh"
           >
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
+        <p className="text-sm text-gray-500 pl-8">
+          AI-inferred session summaries. Vocabulary progress and topic coverage — no conversation text is stored.
+        </p>
       </div>
 
       {/* Filters */}
@@ -172,32 +195,41 @@ export default function ConversationHistoryManager({ onOpenSidebar }: Props) {
               return (
                 <div key={row.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
                   {/* Row header */}
-                  <button
-                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-gray-50 transition"
-                    onClick={() => toggleExpand(row.id)}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-sm font-bold text-emerald-700">
-                      {(row.child_name ?? '?').charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm text-gray-800">{row.child_name}</span>
-                        <span className="text-xs text-gray-400">{LANG_LABELS[row.language] ?? row.language}</span>
-                        <span className="text-xs text-gray-400">·</span>
-                        <span className="text-xs text-gray-400">{row.exchange_count} exchanges</span>
-                        {row.mastered_vocab.length > 0 && (
-                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                            {row.mastered_vocab.length} word{row.mastered_vocab.length > 1 ? 's' : ''} mastered
-                          </span>
-                        )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="flex-1 flex items-center gap-4 px-4 py-3 text-left hover:bg-gray-50 transition"
+                      onClick={() => toggleExpand(row.id)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-sm font-bold text-emerald-700">
+                        {(row.child_name ?? '?').charAt(0).toUpperCase()}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">{row.summary}</p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-gray-400 hidden sm:block">{fmtDate(row.created_at)}</span>
-                      {isOpen ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
-                    </div>
-                  </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm text-gray-800">{row.child_name}</span>
+                          <span className="text-xs text-gray-400">{LANG_LABELS[row.language] ?? row.language}</span>
+                          <span className="text-xs text-gray-400">·</span>
+                          <span className="text-xs text-gray-400">{row.exchange_count} exchanges</span>
+                          {row.mastered_vocab.length > 0 && (
+                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                              {row.mastered_vocab.length} word{row.mastered_vocab.length > 1 ? 's' : ''} mastered
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">{row.summary}</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-xs text-gray-400 hidden sm:block">{fmtDate(row.created_at)}</span>
+                        {isOpen ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(row.id, row.child_name ?? '—')}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500 mr-2 shrink-0"
+                      title="Delete conversation"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
 
                   {/* Expanded detail */}
                   {isOpen && (

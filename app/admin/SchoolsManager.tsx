@@ -1,7 +1,9 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Search, School, Menu, Mail, Globe, Users, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { Search, School, Menu, Mail, Globe, Users, CheckCircle2, Clock, XCircle, Trash2 } from 'lucide-react'
+import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface Props {
   onOpenSidebar?: () => void
@@ -35,6 +37,8 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'closed'>('all')
   const [updating, setUpdating] = useState<string | null>(null)
+  const { success: toastOk, error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
     void (async () => {
@@ -42,7 +46,7 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
         const { data } = await supabase.from('school_inquiries').select('*').order('created_at', { ascending: false })
         setRows((data ?? []) as InquiryRow[])
       } catch (err) {
-        console.error('[SchoolsManager] load failed:', err)
+        toastErr('Failed to load school inquiries.')
       } finally {
         setLoading(false)
       }
@@ -50,14 +54,43 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
   }, [])
 
   async function updateStatus(id: string, status: 'new' | 'contacted' | 'closed') {
+    if (status === 'closed') {
+      const ok = await confirm({
+        title: 'Close this inquiry?',
+        message: 'Marking as closed is permanent. You can reopen it later if needed.',
+        confirmLabel: 'Close inquiry',
+        danger: true,
+      })
+      if (!ok) return
+    }
     setUpdating(id)
     try {
-      await supabase.from('school_inquiries').update({ status }).eq('id', id)
+      const { error } = await supabase.from('school_inquiries').update({ status }).eq('id', id)
+      if (error) throw error
       setRows(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+      toastOk('Status updated.')
     } catch (err) {
-      console.error('[SchoolsManager] updateStatus failed:', err)
+      toastErr('Failed to update status.')
     } finally {
       setUpdating(null)
+    }
+  }
+
+  async function handleDelete(id: string, school: string) {
+    const ok = await confirm({
+      title: `Delete inquiry from ${school}?`,
+      message: 'This will permanently remove the inquiry and cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      const { error } = await supabase.from('school_inquiries').delete().eq('id', id)
+      if (error) throw error
+      setRows(prev => prev.filter(r => r.id !== id))
+      toastOk('Inquiry deleted.')
+    } catch (err) {
+      toastErr('Failed to delete inquiry.')
     }
   }
 
@@ -72,6 +105,7 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      {dialog}
       <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
@@ -177,6 +211,11 @@ export default function SchoolsManager({ onOpenSidebar }: Props) {
                           Reopen
                         </button>
                       )}
+                      <button onClick={() => handleDelete(r.id, r.school)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500"
+                        title="Delete inquiry">
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 </div>

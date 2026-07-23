@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Mail, Download, Search, Menu } from 'lucide-react'
+import { Mail, Download, Search, UserX, RotateCcw, Trash2 } from 'lucide-react'
+import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 
 interface Row {
   id: string
@@ -12,7 +14,7 @@ interface Row {
   unsubscribed_at: string | null
 }
 
-interface Props { onOpenSidebar?: () => void }
+interface Props { onOpenSidebar: () => void }
 
 type Filter = 'all' | 'active' | 'unsubscribed'
 
@@ -21,6 +23,8 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
   const [loading, setLoading] = useState(true)
   const [search, setSearch]   = useState('')
   const [filter, setFilter]   = useState<Filter>('active')
+  const { success: toastOk, error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
 
   useEffect(() => {
     void (async () => {
@@ -31,7 +35,7 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
           .order('created_at', { ascending: false })
         setRows(data ?? [])
       } catch (err) {
-        console.error('[NewsletterManager] load failed:', err)
+        toastErr('Failed to load newsletter subscribers.')
       } finally {
         setLoading(false)
       }
@@ -58,18 +62,71 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
   }
 
+  async function handleUnsubscribe(id: string, email: string) {
+    const ok = await confirm({
+      title: `Unsubscribe ${email}?`,
+      message: 'This will mark them as unsubscribed. They will no longer receive newsletters.',
+      confirmLabel: 'Unsubscribe',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      const { error } = await supabase
+        .from('newsletter_signups')
+        .update({ unsubscribed_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw error
+      setRows(prev => prev.map(r => r.id === id ? { ...r, unsubscribed_at: new Date().toISOString() } : r))
+      toastOk('Subscriber unsubscribed.')
+    } catch (err) {
+      toastErr('Failed to unsubscribe.')
+    }
+  }
+
+  async function handleResubscribe(id: string) {
+    try {
+      const { error } = await supabase
+        .from('newsletter_signups')
+        .update({ unsubscribed_at: null })
+        .eq('id', id)
+      if (error) throw error
+      setRows(prev => prev.map(r => r.id === id ? { ...r, unsubscribed_at: null } : r))
+      toastOk('Subscriber re-subscribed.')
+    } catch (err) {
+      toastErr('Failed to re-subscribe.')
+    }
+  }
+
+  async function handleDelete(id: string, email: string) {
+    const ok = await confirm({
+      title: `Delete ${email}?`,
+      message: 'This will permanently remove this subscriber from the list.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      const { error } = await supabase.from('newsletter_signups').delete().eq('id', id)
+      if (error) throw error
+      setRows(prev => prev.filter(r => r.id !== id))
+      toastOk('Subscriber deleted.')
+    } catch (err) {
+      toastErr('Failed to delete subscriber.')
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {dialog}
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between gap-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={onOpenSidebar} className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100 text-gray-500">
-            <Menu size={17} />
-          </button>
-          <div>
-            <h1 className="text-[22px] font-extrabold text-gray-900">Newsletter</h1>
-            <p className="text-[13px] text-gray-500">{activeRows.length} active · {unsubRows.length} unsubscribed</p>
-          </div>
+      <div className="flex items-center gap-3 px-6 lg:px-8 py-5 border-b border-gray-200 bg-white">
+        <button onClick={onOpenSidebar} className="lg:hidden p-1 text-gray-500">☰</button>
+        <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center">
+          <Mail className="w-5 h-5 text-green-700" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-black text-gray-900 text-[17px]">Newsletter</h1>
+          <p className="text-gray-500 text-[12px]">{activeRows.length} active · {unsubRows.length} unsubscribed</p>
         </div>
         <button onClick={exportCsv}
           className="flex items-center gap-1.5 text-[12px] font-bold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition">
@@ -135,6 +192,7 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide hidden md:table-cell">Source</th>
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Signed up</th>
                   <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Status</th>
+                  <th className="text-left px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -158,6 +216,34 @@ export default function NewsletterManager({ onOpenSidebar }: Props) {
                       ) : (
                         <span className="bg-green-50 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded-full">Active</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        {!r.unsubscribed_at ? (
+                          <button
+                            onClick={() => handleUnsubscribe(r.id, r.email)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500"
+                            title="Unsubscribe"
+                          >
+                            <UserX size={14} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleResubscribe(r.id)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                            title="Re-subscribe"
+                          >
+                            <RotateCcw size={14} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(r.id, r.email)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500"
+                          title="Delete subscriber"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

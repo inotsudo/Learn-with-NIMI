@@ -64,6 +64,7 @@ const TestimonialsManager         = dynamicView(() => import('./TestimonialsMana
 const PartnersManager             = dynamicView(() => import('./PartnersManager'))
 const CertificateTemplatesManager     = dynamicView(() => import('./CertificateTemplatesManager'))
 const ConversationHistoryManager      = dynamicView(() => import('./ConversationHistoryManager'))
+const AuditLogManager                 = dynamicView(() => import('./AuditLogManager'))
 
 const tables = [
   'categories', 'mission_versions',
@@ -226,7 +227,6 @@ export default function AdminPanel() {
   const isGiftView          = currentTable === 'gift_subscriptions'
   const isTestimonialsView  = currentTable === 'testimonials'
   const isPartnersView      = currentTable === 'partners'
-
   const isColoringView = currentTable === 'coloring_pages' || currentTable.startsWith('coloring_pages:')
   const initialColoringBookId = isColoringView ? currentTable.split(':')[1] : undefined
 
@@ -252,6 +252,7 @@ export default function AdminPanel() {
 
   const isBucketsView = currentTable === 'Buckets'
 
+  const isAuditLogView = currentTable === 'audit_log'
   const isConversationHistoryView = currentTable === 'conversation_history'
   const isAdministratorsView = currentTable === 'admins'
 
@@ -341,6 +342,7 @@ export default function AdminPanel() {
           )}
           {isBucketsView && <BucketsView onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {currentTable === 'Profile' && <AdminProfile />}
+          {isAuditLogView && <AuditLogManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isConversationHistoryView && <ConversationHistoryManager onOpenSidebar={() => setSidebarOpen(true)} />}
           {isAdministratorsView && <AdministratorsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isNotificationsView && <NotificationsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
@@ -369,7 +371,7 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isRosterProvisioningView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !isTestimonialsView && !isPartnersView && !isConversationHistoryView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
+          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isSchoolsView && !isRosterProvisioningView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !isAuditLogView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
             <TableView table={currentTable} />
           )}
           </ErrorBoundary>

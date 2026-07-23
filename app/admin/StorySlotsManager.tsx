@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Menu, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
 import { SLOT_META, type SlotKey } from './missionMeta'
+import { useToast } from './Toast'
 
 interface Props {
   onNavigate: (table: string) => void
@@ -21,6 +22,7 @@ interface StorySlotRow {
 }
 
 export default function StorySlotsManager({ onNavigate, onOpenSidebar }: Props) {
+  const { error: toastErr } = useToast()
   const [rows, setRows] = useState<StorySlotRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -52,7 +54,7 @@ export default function StorySlotsManager({ onNavigate, onOpenSidebar }: Props) 
         }
         setRows(result)
       } catch (err) {
-        console.error('[StorySlotsManager] load failed:', err)
+        toastErr(err instanceof Error ? err.message : 'Failed to load story slots.')
       } finally {
         setLoading(false)
       }

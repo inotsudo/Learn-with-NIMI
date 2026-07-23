@@ -5,7 +5,7 @@ import { Search, Menu, ChevronDown, ChevronRight, Users, Baby, Crown, Gift, X } 
 import { useToast } from './Toast'
 
 interface Props {
-  onNavigate?: (table: string) => void
+  onNavigate: (table: string) => void
   onOpenSidebar?: () => void
 }
 
@@ -38,7 +38,9 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
   const [grantingId, setGrantingId] = useState<string | null>(null)
   const [grantMonths, setGrantMonths] = useState(1)
   const [grantingFor, setGrantingFor] = useState<string | null>(null)
-  const { error: toastErr } = useToast()
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const { error: toastErr, success: toastOk } = useToast()
 
   useEffect(() => {
     void (async () => {
@@ -114,6 +116,132 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
     return f.parent_name.toLowerCase().includes(q) || f.parent_email.toLowerCase().includes(q) || f.children.some(c => c.name.toLowerCase().includes(q))
   })
 
+  // — Bulk selection helpers —
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const allFilteredIds = filtered.map(f => f.parent_id)
+  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id))
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(allFilteredIds))
+    }
+  }
+
+  async function handleBulkGrantClub() {
+    const targets = filtered.filter(f => selectedIds.has(f.parent_id) && !f.subscription)
+    if (targets.length === 0) {
+      toastErr('All selected families already have Club.')
+      return
+    }
+    setBulkBusy(true)
+    try {
+      const { data: clubProduct } = await supabase.from('products').select('id').eq('slug', 'nimipiko-club').maybeSingle()
+      const periodEnd = new Date()
+      periodEnd.setMonth(periodEnd.getMonth() + 1)
+
+      for (const f of targets) {
+        await supabase.from('nimipiko_subscriptions').insert({
+          parent_id: f.parent_id,
+          product_id: clubProduct?.id ?? null,
+          status: 'active',
+          currency: 'USD',
+          amount: 0,
+          billing_interval: 'month',
+          current_period_start: new Date().toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          payment_provider: 'admin_grant',
+          cancel_at_period_end: true,
+        })
+        await supabase.from('content_access').insert({
+          parent_id: f.parent_id,
+          access_type: 'club',
+          story_id: null,
+        })
+      }
+
+      // Refresh subscriptions for granted families
+      const grantedIds = targets.map(t => t.parent_id)
+      const { data: freshSubs } = await supabase
+        .from('nimipiko_subscriptions')
+        .select('parent_id, status, amount, currency, billing_interval, current_period_end, cancel_at_period_end, payment_provider')
+        .eq('status', 'active')
+        .in('parent_id', grantedIds)
+
+      const subMap = new Map<string, SubRow>()
+      for (const s of freshSubs ?? []) subMap.set(s.parent_id, s)
+
+      setFamilies(prev => prev.map(f =>
+        subMap.has(f.parent_id) ? { ...f, subscription: subMap.get(f.parent_id)! } : f
+      ))
+      toastOk(`Club granted to ${targets.length} famil${targets.length === 1 ? 'y' : 'ies'}.`)
+      setSelectedIds(new Set())
+    } catch (err) {
+      console.error('[FamiliesManager] bulk grant failed:', err)
+      toastErr('Bulk grant failed. Check console for details.')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  async function handleBulkRevokeClub() {
+    const targets = filtered.filter(f => selectedIds.has(f.parent_id) && f.subscription)
+    if (targets.length === 0) {
+      toastErr('No selected families have Club.')
+      return
+    }
+    if (!confirm(`Revoke Club from ${targets.length} famil${targets.length === 1 ? 'y' : 'ies'}?`)) return
+    setBulkBusy(true)
+    try {
+      const ids = targets.map(t => t.parent_id)
+      const { error } = await supabase
+        .from('nimipiko_subscriptions')
+        .delete()
+        .in('parent_id', ids)
+        .eq('status', 'active')
+      if (error) throw error
+      setFamilies(prev => prev.map(f => ids.includes(f.parent_id) ? { ...f, subscription: null } : f))
+      toastOk(`Club revoked from ${targets.length} famil${targets.length === 1 ? 'y' : 'ies'}.`)
+      setSelectedIds(new Set())
+    } catch (err) {
+      console.error('[FamiliesManager] bulk revoke failed:', err)
+      toastErr('Bulk revoke failed. Check console for details.')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  async function handleBulkDeleteAccounts() {
+    const targets = filtered.filter(f => selectedIds.has(f.parent_id))
+    if (targets.length === 0) return
+    if (!confirm(`Delete ${targets.length} parent account${targets.length === 1 ? '' : 's'}? This cannot be undone.`)) return
+    setBulkBusy(true)
+    try {
+      const ids = targets.map(t => t.parent_id)
+      const { error } = await supabase.from('parents').delete().in('id', ids)
+      if (error) throw error
+      setFamilies(prev => prev.filter(f => !ids.includes(f.parent_id)))
+      toastOk(`${targets.length} account${targets.length === 1 ? '' : 's'} deleted.`)
+      setSelectedIds(new Set())
+    } catch (err) {
+      console.error('[FamiliesManager] bulk delete failed:', err)
+      toastErr('Bulk delete failed. Check console for details.')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  const selectedCount = Array.from(selectedIds).filter(id => filtered.some(f => f.parent_id === id)).length
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
       <div className="bg-white border-b border-gray-100 px-6 py-5 flex-shrink-0">
@@ -143,9 +271,23 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Select all row — only visible when list is non-empty and not loading */}
+        {!loading && filtered.length > 0 && (
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 accent-green-600 cursor-pointer"
+              aria-label="Select all families"
+            />
+            <span className="text-[12px] font-medium text-gray-500">Select all ({filtered.length})</span>
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-auto px-6 py-4 space-y-3">
+      <div className="flex-1 overflow-auto px-6 py-4 space-y-3 pb-24">
         {loading ? (
           <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}</div>
         ) : filtered.length === 0 ? (
@@ -155,10 +297,21 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
           </div>
         ) : filtered.map(f => {
           const isOpen = expandedId === f.parent_id
+          const isSelected = selectedIds.has(f.parent_id)
           return (
-            <div key={f.parent_id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div key={f.parent_id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition ${isSelected ? 'border-green-300 ring-1 ring-green-200' : 'border-gray-100'}`}>
               <button onClick={() => setExpandedId(isOpen ? null : f.parent_id)}
                 className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50/50 transition text-left">
+                {/* Checkbox — stop propagation so it doesn't expand/collapse the row */}
+                <span onClick={e => { e.stopPropagation() }} className="shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSelect(f.parent_id)}
+                    className="w-4 h-4 accent-green-600 cursor-pointer"
+                    aria-label={`Select ${f.parent_name}`}
+                  />
+                </span>
                 <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-black text-[16px] shrink-0">
                   {f.parent_name[0]?.toUpperCase() ?? 'P'}
                 </div>
@@ -246,6 +399,45 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
           )
         })}
       </div>
+
+      {/* Floating bulk action bar */}
+      {selectedCount > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-3 flex-wrap">
+          <span className="text-[13px] font-bold text-gray-200 shrink-0">
+            {selectedCount} famil{selectedCount === 1 ? 'y' : 'ies'} selected
+          </span>
+          <div className="w-px h-5 bg-gray-700 shrink-0" />
+          <button
+            onClick={handleBulkGrantClub}
+            disabled={bulkBusy}
+            className="text-[12px] font-bold bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+          >
+            <Crown size={12} /> Grant Club (1 mo)
+          </button>
+          <button
+            onClick={handleBulkRevokeClub}
+            disabled={bulkBusy}
+            className="text-[12px] font-bold bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition"
+          >
+            Revoke Club
+          </button>
+          <button
+            onClick={handleBulkDeleteAccounts}
+            disabled={bulkBusy}
+            className="text-[12px] font-bold bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition"
+          >
+            Delete accounts
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            disabled={bulkBusy}
+            className="ml-1 text-gray-400 hover:text-white transition disabled:opacity-50"
+            aria-label="Deselect all"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

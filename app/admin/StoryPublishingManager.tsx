@@ -3,6 +3,8 @@ import React, { useEffect, useState, useMemo } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Menu, Rocket, XCircle, Archive } from 'lucide-react'
 import { computeReadiness } from '@/lib/storyReadiness'
+import { useToast } from './Toast'
+import { useConfirmDialog } from './ConfirmDialog'
 import PublishingStats from '@/components/admin/publishing/PublishingStats'
 import PublishingFilters, { type PublishingFilter } from '@/components/admin/publishing/PublishingFilters'
 import PublishingTable from '@/components/admin/publishing/PublishingTable'
@@ -19,13 +21,15 @@ interface StoryData {
 }
 
 export default function StoryPublishingManager({ onNavigate, onOpenSidebar }: Props) {
+  const { success: toastOk, error: toastErr } = useToast()
+  const { confirm, dialog } = useConfirmDialog()
+
   const [stories, setStories] = useState<StoryData[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<PublishingFilter>('all')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [checklistStory, setChecklistStory] = useState<StoryData | null>(null)
-  const [bulkAction, setBulkAction] = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -35,7 +39,7 @@ export default function StoryPublishingManager({ onNavigate, onOpenSidebar }: Pr
         .order('sort_order')
       setStories((storiesData ?? []) as unknown as StoryData[])
     } catch (err) {
-      console.error('[StoryPublishingManager] load failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Failed to load stories.')
     } finally {
       setLoading(false)
     }
@@ -73,6 +77,14 @@ const filtered = useMemo(() => {
   }, [stories])
 
   const handlePublish = async (id: string) => {
+    const story = stories.find(s => s.id === id)
+    const title = story?.title ?? id
+    if (!await confirm({
+      title: `Publish "${title}"?`,
+      message: 'This makes the story live for all learners immediately.',
+      confirmLabel: 'Publish',
+      danger: false,
+    })) return
     try {
       await supabase.from('stories').update({ status: 'published', published_at: new Date().toISOString() }).eq('id', id)
       // Auto-warm story knowledge cache + seed concept graph — fire-and-forget
@@ -81,25 +93,53 @@ const filtered = useMemo(() => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storyId: id }),
-      }).catch(err => console.error('[StoryPublishingManager] cache warm failed:', err))
+      }).catch(err => toastErr(`Cache warm failed: ${err instanceof Error ? err.message : String(err)}`))
+      toastOk(`"${title}" is now live.`)
       await load()
     } catch (err) {
-      console.error('[StoryPublishingManager] handlePublish failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Failed to publish story.')
     }
   }
 
   const handleUnpublish = async (id: string) => {
+    const story = stories.find(s => s.id === id)
+    const title = story?.title ?? id
+    if (!await confirm({
+      title: `Unpublish "${title}"?`,
+      message: 'Learners currently using this story will lose access.',
+      confirmLabel: 'Unpublish',
+      danger: true,
+    })) return
     try {
       await supabase.from('stories').update({ status: 'draft', published_at: null }).eq('id', id)
+      toastOk(`"${title}" unpublished.`)
       await load()
     } catch (err) {
-      console.error('[StoryPublishingManager] handleUnpublish failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Failed to unpublish story.')
     }
   }
 
   const handleBulkAction = async (action: string) => {
     if (selected.size === 0) return
+    const count = selected.size
     const ids = Array.from(selected)
+
+    if (action === 'retire') {
+      if (!await confirm({
+        title: `Retire ${count} ${count === 1 ? 'story' : 'stories'}?`,
+        message: 'Retired stories are hidden from learners and cannot be easily restored.',
+        confirmLabel: 'Retire',
+        danger: true,
+      })) return
+    } else if (action === 'unpublish') {
+      if (!await confirm({
+        title: `Unpublish ${count} ${count === 1 ? 'story' : 'stories'}?`,
+        message: 'This removes them from the learner library immediately.',
+        confirmLabel: 'Unpublish',
+        danger: true,
+      })) return
+    }
+
     try {
       if (action === 'publish') {
         for (const id of ids) {
@@ -110,16 +150,18 @@ const filtered = useMemo(() => {
             await supabase.from('stories').update({ status: 'published', published_at: new Date().toISOString() }).eq('id', id)
           }
         }
+        toastOk('Published eligible stories.')
       } else if (action === 'unpublish') {
         await supabase.from('stories').update({ status: 'draft', published_at: null }).in('id', ids)
+        toastOk(`${count} ${count === 1 ? 'story' : 'stories'} unpublished.`)
       } else if (action === 'retire') {
         await supabase.from('stories').update({ status: 'retired' }).in('id', ids)
+        toastOk(`${count} ${count === 1 ? 'story' : 'stories'} retired.`)
       }
       setSelected(new Set())
-      setBulkAction(null)
       await load()
     } catch (err) {
-      console.error('[StoryPublishingManager] handleBulkAction failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Bulk action failed.')
     }
   }
 
@@ -152,15 +194,15 @@ const filtered = useMemo(() => {
           {selected.size > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-[12px] font-bold text-gray-500">{selected.size} selected</span>
-              <button onClick={() => setBulkAction('publish')}
+              <button onClick={() => void handleBulkAction('publish')}
                 className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] rounded-lg px-3 py-2 transition">
                 <Rocket size={14} /> Publish
               </button>
-              <button onClick={() => setBulkAction('unpublish')}
+              <button onClick={() => void handleBulkAction('unpublish')}
                 className="flex items-center gap-1.5 bg-gray-600 hover:bg-gray-700 text-white font-bold text-[12px] rounded-lg px-3 py-2 transition">
                 <XCircle size={14} /> Unpublish
               </button>
-              <button onClick={() => setBulkAction('retire')}
+              <button onClick={() => void handleBulkAction('retire')}
                 className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-[12px] rounded-lg px-3 py-2 transition">
                 <Archive size={14} /> Retire
               </button>
@@ -199,38 +241,7 @@ const filtered = useMemo(() => {
         <PublishingChecklistModal story={checklistStory} onClose={() => setChecklistStory(null)} />
       )}
 
-      {/* Bulk action confirmation */}
-      {bulkAction && (
-        <>
-          <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setBulkAction(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 max-w-sm w-full text-center">
-              <h3 className="text-[16px] font-extrabold text-gray-800 mb-2">
-                {bulkAction === 'publish' ? 'Publish' : bulkAction === 'unpublish' ? 'Unpublish' : 'Retire'} {selected.size} stor{selected.size === 1 ? 'y' : 'ies'}?
-              </h3>
-              <p className="text-[13px] text-gray-500 mb-4">
-                {bulkAction === 'publish' ? 'Only stories with 100% readiness and at least one published language will be published.' :
-                 bulkAction === 'retire' ? 'Retired stories will no longer be visible to children.' :
-                 'Stories will be moved back to draft status.'}
-              </p>
-              <div className="flex gap-3">
-                <button onClick={() => setBulkAction(null)}
-                  className="flex-1 border border-gray-200 text-gray-600 font-bold text-[13px] rounded-xl py-2.5 hover:bg-gray-50 transition">
-                  Cancel
-                </button>
-                <button onClick={() => handleBulkAction(bulkAction)}
-                  className={`flex-1 text-white font-bold text-[13px] rounded-xl py-2.5 transition ${
-                    bulkAction === 'publish' ? 'bg-emerald-600 hover:bg-emerald-700' :
-                    bulkAction === 'retire' ? 'bg-red-600 hover:bg-red-700' :
-                    'bg-gray-600 hover:bg-gray-700'
-                  }`}>
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      {dialog}
     </div>
   )
 }

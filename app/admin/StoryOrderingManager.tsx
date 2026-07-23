@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Menu, GripVertical, ArrowUp, ArrowDown, Save, CheckCircle2 } from 'lucide-react'
+import { useToast } from './Toast'
 
 interface Props {
   onNavigate: (table: string) => void
@@ -18,6 +19,7 @@ interface StoryOrder {
 }
 
 export default function StoryOrderingManager({ onNavigate, onOpenSidebar }: Props) {
+  const { success: toastOk, error: toastErr } = useToast()
   const [stories, setStories] = useState<StoryOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -36,7 +38,7 @@ export default function StoryOrderingManager({ onNavigate, onOpenSidebar }: Prop
         }))
         setStories(result)
       } catch (err) {
-        console.error('[StoryOrderingManager] load failed:', err)
+        toastErr(err instanceof Error ? err.message : 'Failed to load stories.')
       } finally {
         setLoading(false)
       }
@@ -60,9 +62,10 @@ export default function StoryOrderingManager({ onNavigate, onOpenSidebar }: Prop
     try {
       await Promise.all(stories.map(s => supabase.from('stories').update({ sort_order: s.sort_order }).eq('id', s.id)))
       setSaved(true)
+      toastOk('Story order saved.')
       setTimeout(() => setSaved(false), 3000)
     } catch (err) {
-      console.error('[StoryOrderingManager] handleSave failed:', err)
+      toastErr(err instanceof Error ? err.message : 'Failed to save story order.')
     } finally {
       setSaving(false)
     }
