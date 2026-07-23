@@ -293,19 +293,57 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // ── Freemium gate: 10 Nimi messages/day for free users ───────────────────
+  // Parse body early so we have childId for the cap check.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: any;
   try {
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-    }
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const childId = (body.childId as string | null) ?? null;
 
+  if (childId) {
+    const svcClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const [{ data: sub }, { data: cur }] = await Promise.all([
+      svcClient
+        .from("nimipiko_subscriptions")
+        .select("id")
+        .eq("parent_id", user.id)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle(),
+      svcClient
+        .from("nimi_message_counts")
+        .select("count")
+        .eq("child_id", childId)
+        .eq("date", new Date().toISOString().slice(0, 10))
+        .maybeSingle(),
+    ]);
+
+    if (!sub) {
+      const todayCount = (cur?.count ?? 0);
+      if (todayCount >= 10) {
+        return NextResponse.json(
+          { error: "daily_limit_reached", limit: 10 },
+          { status: 429 }
+        );
+      }
+      // Increment atomically — fire and forget, non-blocking
+      void svcClient.rpc("increment_nimi_count", { p_child_id: childId });
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  try {
     const {
       messages,
       language = "en",
       childName = "",
-      childId = null,
       storyId = null,
       storyTitle = null,
       storyEmoji = null,

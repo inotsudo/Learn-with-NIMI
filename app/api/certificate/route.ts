@@ -279,6 +279,22 @@ export async function GET(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Certificate download is a Club feature — free users can earn certs but not download them
+  const { data: sub } = await supabase
+    .from("nimipiko_subscriptions")
+    .select("id")
+    .eq("parent_id", user.id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  if (!sub) {
+    return NextResponse.json(
+      { error: "club_required", message: "Certificate downloads require a NIMIPIKO Club subscription." },
+      { status: 403 }
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const childName  = searchParams.get("child") || "Explorer";
   const storyId    = searchParams.get("storyId");

@@ -1,5 +1,5 @@
 export type Currency = "USD" | "EUR" | "RWF";
-export type PaymentProvider = "cybersource" | "mtn_momo" | "free";
+export type PaymentProvider = "cybersource" | "mtn_momo" | "free" | "admin_grant" | "trial";
 export type PaymentStatus = "pending" | "processing" | "completed" | "failed" | "refunded";
 export type ProductTier = "discovery" | "story_pack" | "family_bundle" | "personalized" | "champion_pack" | "club";
 

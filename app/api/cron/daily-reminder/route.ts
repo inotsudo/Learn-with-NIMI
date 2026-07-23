@@ -22,6 +22,9 @@ export async function GET(req: NextRequest) {
   );
 
   try {
+    // Expire any trials whose 7-day window has passed (fire-and-forget, non-fatal)
+    void sb.rpc("expire_trial_subscriptions");
+
     const { data: targets, error } = await sb.rpc("get_push_reminder_targets");
     if (error) {
       console.error("[daily-reminder] RPC error:", error.message);

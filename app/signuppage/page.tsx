@@ -149,6 +149,15 @@ function SignupInner() {
             <p className="text-gray-500 text-sm mt-1">Create your account to begin your creative journey.</p>
           </div>
 
+          {/* Trial badge */}
+          <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2.5">
+            <span className="text-xl shrink-0">🎁</span>
+            <div>
+              <p className="font-baloo font-black text-emerald-800 text-[13px] leading-tight">7-day free trial included</p>
+              <p className="text-emerald-700/80 text-[11px]">Full Club access free — no credit card needed</p>
+            </div>
+          </div>
+
           {error && (
             <div className="leaf p-2.5 text-center text-sm font-semibold bg-red-50 text-red-600">
               {error}

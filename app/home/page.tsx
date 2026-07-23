@@ -977,6 +977,7 @@ export default function HomePage() {
                 <HomeStoryLibrarySection
                   stories={stories}
                   curStory={curStory}
+                  hasSubscription={hasSubscription}
                   up={up}
                   stagger={stagger}
                   pop={pop}

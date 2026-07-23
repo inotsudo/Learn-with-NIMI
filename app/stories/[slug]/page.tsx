@@ -230,6 +230,7 @@ export default function StoryDetailPage() {
   const [clubProduct, setClubProduct] = useState<Product | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [sharingCert, setSharingCert] = useState(false);
   // Guard: prevent badge award effect from firing more than once per mount
   const badgeAwardedRef = useRef(false);
@@ -276,6 +277,16 @@ export default function StoryDetailPage() {
         getStoryBySlug(slug),
       ]);
       setParentId(user?.id ?? null);
+      if (user?.id) {
+        supabase
+          .from("nimipiko_subscriptions")
+          .select("id")
+          .eq("parent_id", user.id)
+          .eq("status", "active")
+          .limit(1)
+          .maybeSingle()
+          .then(({ data }) => setHasSubscription(!!data));
+      }
       if (!story) { setLoading(false); return; }
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0];
@@ -1305,33 +1316,43 @@ export default function StoryDetailPage() {
                                   <p className="font-nunito text-amber-500/80 text-[11px] truncate">Awarded to {childName}</p>
                                 </div>
                                 <div className="flex-shrink-0 flex flex-col gap-1">
-                                  <button
-                                    onClick={() => {
-                                      const params = new URLSearchParams({
-                                        child: childName, story: storyTitle,
-                                        stars: String(totalStars), lang: language,
-                                        ...(storyId ? { storyId } : {}),
-                                        date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-                                      });
-                                      window.open(`/api/certificate?${params}`, "_blank");
-                                    }}
-                                    className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
-                                    📥 PDF
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      const params = new URLSearchParams({
-                                        child: childName, story: storyTitle,
-                                        stars: String(totalStars), lang: language,
-                                        ...(storyId ? { storyId } : {}),
-                                        date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-                                        format: "png",
-                                      });
-                                      window.open(`/api/certificate?${params}`, "_blank");
-                                    }}
-                                    className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
-                                    🖼️ PNG
-                                  </button>
+                                  {hasSubscription ? (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          const params = new URLSearchParams({
+                                            child: childName, story: storyTitle,
+                                            stars: String(totalStars), lang: language,
+                                            ...(storyId ? { storyId } : {}),
+                                            date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+                                          });
+                                          window.open(`/api/certificate?${params}`, "_blank");
+                                        }}
+                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
+                                        📥 PDF
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          const params = new URLSearchParams({
+                                            child: childName, story: storyTitle,
+                                            stars: String(totalStars), lang: language,
+                                            ...(storyId ? { storyId } : {}),
+                                            date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+                                            format: "png",
+                                          });
+                                          window.open(`/api/certificate?${params}`, "_blank");
+                                        }}
+                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-black text-[11px] rounded-xl px-3 py-1.5 transition">
+                                        🖼️ PNG
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() => setShowPricingModal(true)}
+                                      className="bg-amber-400 hover:bg-amber-500 text-white font-black text-[11px] rounded-xl px-3 py-1.5 transition flex items-center gap-1">
+                                      👑 Unlock
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                               {/* Badge row */}

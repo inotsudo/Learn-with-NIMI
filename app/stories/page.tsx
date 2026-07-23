@@ -6,7 +6,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { DURATION, SPRING } from "@/lib/design-system/motion";
-import { Lock, CheckCircle2, Play, Star, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Lock, CheckCircle2, Play, Star, Search, ChevronLeft, ChevronRight, Crown } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { RefreshingBadge } from "@/components/layout/RefreshingBadge";
@@ -15,6 +15,8 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getChildren, getStorageUrl, getTotalStars, getWeekStreak, getConsecutiveStreak, getChildBadges, type Child } from "@/lib/queries";
 import { getStoryLibrary, getCurrentStoryId } from "@/lib/storyRepository";
+import { getActiveSubscription } from "@/lib/payments/products";
+import supabase from "@/lib/supabaseClient";
 import type { StoryLibraryItem } from "@/lib/story-types";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import StatsSidebar from "@/components/home/StatsSidebar";
@@ -46,6 +48,7 @@ export default function StoryLibraryPage() {
   const [weekStreak, setWeekStreak] = useState<boolean[]>([false,false,false,false,false,false,false]);
   const [streakCount, setStreakCount] = useState(0);
   const [badgeCount, setBadgeCount] = useState(0);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
@@ -77,6 +80,11 @@ export default function StoryLibraryPage() {
 
   useEffect(() => {
     void (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const sub = await getActiveSubscription(user.id);
+        setHasSubscription(!!sub);
+      }
       const list = await getChildren();
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0];
@@ -259,10 +267,35 @@ export default function StoryLibraryPage() {
               <p className="font-baloo font-bold text-gray-400 text-[18px]">{t("storyNoResults")}</p>
             </div>
           ) : (
+            <>
+            {/* Upgrade wall — shown when a free user has free stories on this page and there are premium-locked stories */}
+            {!hasSubscription && category === "all" && !search.trim() && paginated.some(s => s.is_free) && stories.some(s => !s.is_free && !s.unlocked) && (
+              <Link href="/pricing" className="block mb-4">
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-4 rounded-2xl px-5 py-4 cursor-pointer group transition-all hover:scale-[1.01]"
+                  style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 60%, #8b5cf6 100%)", boxShadow: "0 6px 24px rgba(109,40,217,0.25)" }}>
+                  <motion.div animate={{ y: [0, -4, 0] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 border border-white/30">
+                    <Crown className="w-6 h-6 text-yellow-300" />
+                  </motion.div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-baloo font-black text-white text-[16px] leading-tight">You&apos;ve reached the end of your free stories!</p>
+                    <p className="text-purple-200 text-[12px] mt-0.5">
+                      {stories.filter(s => !s.is_free && !s.unlocked).length} more stories are waiting — subscribe to unlock them all.
+                    </p>
+                  </div>
+                  <span className="shrink-0 font-baloo font-black text-yellow-300 text-[13px] group-hover:text-yellow-200 transition-colors">
+                    Unlock All →
+                  </span>
+                </motion.div>
+              </Link>
+            )}
+
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {paginated.map((story, i) => {
                 const isCurrent = story.sid === currentId;
                 const hasCover = !!story.cover_url;
+                const isPremiumLocked = !story.unlocked && !story.is_free && !hasSubscription;
 
                 return (
                   <motion.div key={story.sid}
@@ -329,6 +362,36 @@ export default function StoryLibraryPage() {
                           </div>
                         </motion.div>
                       </Link>
+                    ) : isPremiumLocked ? (
+                      <Link href="/pricing">
+                        <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={m.buttonPress}
+                          className="overflow-hidden cursor-pointer group" style={{ borderRadius: 'var(--leaf-r-lg)', border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 4px 16px rgba(109,40,217,0.12)' }}>
+                          <div className="relative aspect-[4/3] overflow-hidden">
+                            {hasCover ? (
+                              <Image src={getStorageUrl(story.cover_url!)} alt={story.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500 opacity-60 group-hover:opacity-90" draggable={false} />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center">
+                                <span className="text-5xl opacity-40">{story.theme_emoji}</span>
+                              </div>
+                            )}
+                            <div className="absolute top-2.5 left-2.5 w-8 h-8 bg-purple-100/90 rounded-xl flex items-center justify-center font-baloo font-black text-purple-400 text-[14px]">
+                              {story.sort_order}
+                            </div>
+                            <div className="absolute inset-0 bg-purple-900/30 group-hover:bg-purple-900/10 transition-colors flex flex-col items-center justify-center gap-1.5">
+                              <div className="w-12 h-12 bg-white/95 shadow-md rounded-full flex items-center justify-center group-hover:bg-yellow-300 transition-colors">
+                                <Crown className="w-5 h-5 text-purple-600 group-hover:text-purple-800" />
+                              </div>
+                              <span className="font-baloo font-black text-white text-[11px] group-hover:text-yellow-200 transition-colors drop-shadow">Club Only</span>
+                            </div>
+                          </div>
+                          <div className="p-3 bg-purple-50 group-hover:bg-purple-100 transition-colors">
+                            <h3 className="font-baloo font-black text-purple-700 text-[14px] sm:text-[15px] leading-tight truncate">{story.title}</h3>
+                            <p className="text-purple-500 text-[10px] font-semibold mt-1.5 flex items-center gap-1">
+                              <Crown className="w-2.5 h-2.5" /> Subscribe to unlock
+                            </p>
+                          </div>
+                        </motion.div>
+                      </Link>
                     ) : (
                       <div>
                         <motion.div whileHover={{ scale: 1.01 }}
@@ -366,6 +429,7 @@ export default function StoryLibraryPage() {
                 );
               })}
             </div>
+            </>
           )}
 
           {/* Pagination */}

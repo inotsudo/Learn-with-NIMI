@@ -60,6 +60,8 @@ export default function ParentsZonePage() {
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [showAddChild, setShowAddChild] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [isTrial, setIsTrial] = useState(false);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
   const [feelings, setFeelings] = useState<{ story_id: string; title: string; feeling: string; felt_at: string }[]>([]);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
@@ -124,6 +126,11 @@ export default function ParentsZonePage() {
       // Subscription status
       const sub = await getActiveSubscription(user.id);
       setHasSubscription(!!sub);
+      if (sub?.payment_provider === "trial" && sub.current_period_end) {
+        setIsTrial(true);
+        const msLeft = new Date(sub.current_period_end).getTime() - Date.now();
+        setTrialDaysLeft(Math.max(0, Math.ceil(msLeft / 86_400_000)));
+      }
 
       const children = await getChildren();
       if (children.length === 0) { setLoading(false); return; }
@@ -341,11 +348,18 @@ export default function ParentsZonePage() {
             </div>
 
             {/* Sub status pill */}
-            {hasSubscription ? (
+            {hasSubscription && !isTrial ? (
               <Link href="/pricing" className="shrink-0">
                 <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center gap-1.5">
                   <span className="text-[14px]">👑</span>
                   <span className="text-white text-[10px] font-black">CLUB</span>
+                </div>
+              </Link>
+            ) : isTrial ? (
+              <Link href="/pricing" className="shrink-0">
+                <div className="bg-amber-400/90 border border-amber-300/60 rounded-full px-3 py-1.5 flex items-center gap-1.5 hover:bg-amber-400 transition">
+                  <span className="text-[14px]">⏳</span>
+                  <span className="text-amber-900 text-[10px] font-black">{trialDaysLeft}d LEFT</span>
                 </div>
               </Link>
             ) : (
@@ -379,7 +393,7 @@ export default function ParentsZonePage() {
 
           {/* Subscription banner — full on mobile, hidden on desktop (in sidebar) */}
           <div className="lg:hidden mb-5">
-            {hasSubscription ? (
+            {hasSubscription && !isTrial ? (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 className="overflow-hidden border border-violet-200/80 bg-gradient-to-r from-violet-50/95 to-purple-50/90 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                 <div className="p-4 flex items-center gap-3">
@@ -391,6 +405,25 @@ export default function ParentsZonePage() {
                   <Link href="/pricing"><ChevronRight className="w-4 h-4 text-violet-500" /></Link>
                 </div>
               </motion.div>
+            ) : isTrial ? (
+              <Link href="/pricing">
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.01 }} whileTap={m.buttonPress}
+                  className="overflow-hidden shadow-ds-card cursor-pointer" style={{ borderRadius: 'var(--leaf-r-lg)', border: '1px solid #fbbf24' }}>
+                  <div className="p-4 flex items-center gap-3 bg-gradient-to-r from-amber-50/95 to-yellow-50/90">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-400 rounded-xl flex items-center justify-center text-xl shadow-sm shrink-0">⏳</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-baloo font-black text-ds-text text-[15px]">Free Trial — {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left</p>
+                      <p className="text-amber-700 text-[11px] font-bold">
+                        {trialDaysLeft <= 2
+                          ? "Trial ends soon — upgrade to keep access!"
+                          : "Enjoying Club? Subscribe to keep it going."}
+                      </p>
+                    </div>
+                    <span className="bg-amber-400 text-amber-900 font-black text-[11px] px-3 py-1 shrink-0" style={{ borderRadius: 'var(--leaf-r-sm)' }}>Upgrade</span>
+                  </div>
+                </motion.div>
+              </Link>
             ) : (
               <Link href="/pricing">
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -466,7 +499,7 @@ export default function ParentsZonePage() {
             <aside className="hidden lg:flex lg:flex-col lg:w-64 xl:w-72 shrink-0 gap-4 sticky top-20">
 
               {/* Subscription */}
-              {hasSubscription ? (
+              {hasSubscription && !isTrial ? (
                 <div className="overflow-hidden border border-violet-200/80 bg-gradient-to-r from-violet-50 to-purple-50 shadow-ds-card p-4 flex items-center gap-3" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
                   <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0">👑</div>
                   <div className="flex-1 min-w-0">
@@ -475,6 +508,19 @@ export default function ParentsZonePage() {
                   </div>
                   <Link href="/pricing"><ChevronRight className="w-4 h-4 text-violet-400" /></Link>
                 </div>
+              ) : isTrial ? (
+                <Link href="/pricing">
+                  <div className="overflow-hidden shadow-ds-card p-4 flex items-center gap-3 cursor-pointer hover:shadow-md transition" style={{ borderRadius: 'var(--leaf-r-lg)', border: '1px solid #fbbf24', background: 'linear-gradient(to right, #fffbeb, #fef3c7)' }}>
+                    <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-400 rounded-xl flex items-center justify-center text-lg shadow-sm shrink-0">⏳</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-ds-text text-[13px]">Trial — {trialDaysLeft}d left</p>
+                      <p className="text-[10px] font-bold" style={{ color: trialDaysLeft <= 2 ? '#dc2626' : '#b45309' }}>
+                        {trialDaysLeft <= 2 ? "Expires soon — upgrade!" : "Upgrade to keep access"}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-amber-600 shrink-0" />
+                  </div>
+                </Link>
               ) : (
                 <Link href="/pricing">
                   <div className="overflow-hidden border border-yellow-200/80 bg-gradient-to-r from-yellow-50 to-orange-50 shadow-ds-card p-4 flex items-center gap-3 cursor-pointer hover:shadow-md transition" style={{ borderRadius: 'var(--leaf-r-lg)' }}>

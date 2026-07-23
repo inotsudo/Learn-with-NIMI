@@ -49,6 +49,14 @@ export default function NimiChat({
       }),
     });
 
+    if (response.status === 429) {
+      setChatLog((prev) => [
+        ...prev,
+        `🤖 Nimi: Wow, we've talked so much today! 🌟 You've used all 10 of your free chats for today. Come back tomorrow — I'll be here! To chat with me anytime, ask a grown-up about NIMIPIKO Club. 👑`,
+      ]);
+      return;
+    }
+
     const reader = response.body?.getReader();
     const decoder = new TextDecoder("utf-8");
     let aiReply = "";

@@ -184,40 +184,42 @@ export default function PricingPage() {
             </div>
           </HeroBanner>
 
-          {/* ═══ DISCOVERY — FREE ENTRY POINT ═══ */}
+          {/* ═══ DISCOVERY — 7-DAY TRIAL ENTRY POINT ═══ */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="mb-8 relative overflow-hidden border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 shadow-sm"
-            style={{ borderRadius: "var(--leaf-r-lg)" }}>
+            className="mb-8 relative overflow-hidden shadow-sm"
+            style={{ borderRadius: "var(--leaf-r-lg)", border: '2px solid #6ee7b7', background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 60%, #a7f3d0 100%)' }}>
+            {/* Decorative shimmer */}
+            <div className="absolute top-0 right-0 w-32 h-32 opacity-20" style={{ background: 'radial-gradient(circle, #10b981 0%, transparent 70%)' }} />
             <div className="relative z-10 p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Left: label + description */}
                 <div className="flex items-start gap-3 flex-1">
-                  <div className="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center text-2xl shrink-0">🎁</div>
+                  <div className="w-11 h-11 rounded-xl bg-emerald-200 flex items-center justify-center text-2xl shrink-0 shadow-sm">🎁</div>
                   <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-baloo font-black text-green-700 text-[18px]">Start for FREE</span>
-                      <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">NO CARD NEEDED</span>
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="font-baloo font-black text-emerald-800 text-[18px]">7-Day Free Trial</span>
+                      <span className="bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">NO CARD NEEDED</span>
                     </div>
-                    <p className="text-gray-600 text-[13px]">
-                      Experience the Nimipiko Learning Universe before you subscribe. Your first adventure is completely free.
+                    <p className="text-emerald-800/80 text-[13px]">
+                      New accounts get full Club access free for 7 days — every story, every language, Nimi AI unlimited. No credit card required.
                     </p>
                   </div>
                 </div>
                 {/* Right: CTA */}
                 <a href="/signup"
-                  className="shrink-0 px-6 py-3 rounded-full bg-green-500 hover:bg-green-600 text-white font-black text-[14px] transition flex items-center gap-2 justify-center">
-                  Create Free Account →
+                  className="shrink-0 px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[14px] transition flex items-center gap-2 justify-center shadow-sm">
+                  Start Free Trial →
                 </a>
               </div>
-              {/* What's free */}
+              {/* What's included in trial */}
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
-                  { icon: "🎵", label: "A full song", sub: "Sing along in 3 languages" },
-                  { icon: "📖", label: "A real story", sub: "Read it together, free" },
-                  { icon: "🦸", label: "Meet Zilo & Nimi", sub: "Your child's new friends" },
-                  { icon: "🏆", label: "First challenge", sub: "Win your first badge" },
+                  { icon: "📚", label: "All stories", sub: "English, French & Kinyarwanda" },
+                  { icon: "🤖", label: "Nimi AI", sub: "Unlimited chats for 7 days" },
+                  { icon: "🎓", label: "Certificates", sub: "Download when you complete" },
+                  { icon: "🏆", label: "All challenges", sub: "Badges & rewards unlocked" },
                 ].map(({ icon, label, sub }) => (
-                  <div key={label} className="flex items-center gap-2 bg-white/80 rounded-xl px-3 py-2 border border-green-200/60">
+                  <div key={label} className="flex items-center gap-2 bg-white/70 rounded-xl px-3 py-2 border border-emerald-200/60">
                     <span className="text-lg shrink-0">{icon}</span>
                     <div>
                       <p className="font-bold text-[12px] text-gray-800">{label}</p>
@@ -754,7 +756,7 @@ export default function PricingPage() {
             <p className="font-black text-ds-text text-[15px] mb-4 text-center">💬 Frequently asked questions</p>
             <div className="space-y-4">
               {([
-                { q: "Can I try before subscribing?", a: "Yes! Create a free account and explore the first story in each language before subscribing." },
+                { q: "Can I try before subscribing?", a: "Yes! Every new account gets a 7-day free trial with full Club access — all stories, all languages, unlimited Nimi AI, and certificate downloads. No credit card needed. After 7 days, your account moves to the free plan (3 stories, 10 Nimi chats/day) unless you subscribe." },
                 { q: "How many children can use one subscription?", a: "The Nimipiko Club covers your whole family — add up to 5 child profiles, each with their own progress and achievements." },
                 { q: "Can I cancel anytime?", a: "Absolutely. Cancel in one click from the Parents Zone — no fees, no questions asked. Your child keeps their progress even after cancelling." },
                 { q: "Which payment methods are accepted?", a: "We accept Visa, Mastercard and Amex for card payments. Rwandan families can pay with MTN Mobile Money or by card." },

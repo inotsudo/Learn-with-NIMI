@@ -62,6 +62,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
   const [grantingId, setGrantingId] = useState<string | null>(null)
   const [grantMonths, setGrantMonths] = useState(1)
   const [grantingFor, setGrantingFor] = useState<string | null>(null)
+  const [grantError, setGrantError]   = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
   const { error: toastErr, success: toastOk } = useToast()
@@ -116,42 +117,74 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
     })()
   }, [])
 
-  const clubCount     = families.filter(f => f.subscription !== null).length
-  const freeCount     = families.length - clubCount
+  const trialCount    = families.filter(f => f.subscription?.payment_provider === 'trial').length
+  const clubCount     = families.filter(f => f.subscription !== null && f.subscription.payment_provider !== 'trial').length
+  const freeCount     = families.length - clubCount - trialCount
   const totalChildren = families.reduce((n, f) => n + f.children.length, 0)
 
   async function handleGrantAccess(parentId: string, months: number) {
     setGrantingFor(parentId)
+    setGrantError(null)
     try {
-      const periodEnd = new Date()
+      const now = new Date()
+      const periodEnd = new Date(now)
       periodEnd.setMonth(periodEnd.getMonth() + months)
-      const { data: clubProduct } = await supabase.from('products').select('id').eq('slug', 'nimipiko-club').maybeSingle()
-      const { error: subErr } = await supabase.from('nimipiko_subscriptions').insert({
-        parent_id: parentId,
-        product_id: clubProduct?.id ?? null,
-        status: 'active',
-        currency: 'USD',
-        amount: 0,
-        billing_interval: 'month',
-        current_period_start: new Date().toISOString(),
-        current_period_end: periodEnd.toISOString(),
-        payment_provider: 'admin_grant',
-        cancel_at_period_end: true,
-      })
-      if (subErr) throw subErr
-      await supabase.from('content_access').insert({ parent_id: parentId, access_type: 'club', story_id: null })
-      const { data: newSub } = await supabase
-        .from('nimipiko_subscriptions').select('*')
-        .eq('parent_id', parentId).eq('status', 'active')
-        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+
+      // Step 1: optional product lookup (fire-and-forget style, non-blocking)
+      const { data: clubProduct } = await supabase
+        .from('products').select('id').eq('slug', 'nimipiko-club').maybeSingle()
+
+      // Step 2: insert subscription WITHOUT chained .select() to avoid the
+      // "Prefer: return=representation" hang that occurs on some RLS setups
+      const { error: subErr } = await supabase
+        .from('nimipiko_subscriptions')
+        .insert({
+          parent_id: parentId,
+          product_id: clubProduct?.id ?? null,
+          status: 'active',
+          currency: 'USD',
+          amount: 0,
+          billing_interval: 'month',
+          current_period_start: now.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          payment_provider: 'admin_grant',
+          cancel_at_period_end: true,
+        })
+      if (subErr) throw new Error(`Subscription insert: ${subErr.message} (${subErr.code})`)
+
+      // Step 3: fetch the subscription we just created (separate read)
+      const { data: newSub, error: fetchErr } = await supabase
+        .from('nimipiko_subscriptions')
+        .select('id, status, amount, currency, billing_interval, current_period_end, cancel_at_period_end, payment_provider')
+        .eq('parent_id', parentId)
+        .eq('status', 'active')
+        .eq('payment_provider', 'admin_grant')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      if (fetchErr) throw new Error(`Subscription fetch: ${fetchErr.message} (${fetchErr.code})`)
+
+      // Step 4: insert content_access row linked to the new subscription
+      const { error: accessErr } = await supabase
+        .from('content_access')
+        .insert({ parent_id: parentId, access_type: 'club', story_id: null, subscription_id: newSub.id })
+      if (accessErr) {
+        // Best-effort rollback
+        void supabase.from('nimipiko_subscriptions').delete().eq('id', newSub.id)
+        throw new Error(`Access insert: ${accessErr.message} (${accessErr.code})`)
+      }
+
       setFamilies(prev => prev.map(f => f.parent_id === parentId ? { ...f, subscription: newSub } : f))
+      setGrantingId(null)
+      setGrantError(null)
       toastOk(`Club granted for ${months} month${months > 1 ? 's' : ''}.`)
-      void logAdminAction({ action: 'grant_club', entityType: 'subscription', entityId: parentId, entityLabel: parentId, metadata: { months } })
+      void logAdminAction({ action: 'grant_club', entityType: 'subscription', entityId: newSub.id, entityLabel: parentId, metadata: { months, parent_id: parentId } })
     } catch (err) {
-      toastErr(err instanceof Error ? err.message : 'Failed to grant access. Please try again.')
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      setGrantError(msg)
+      toastErr(msg)
     } finally {
       setGrantingFor(null)
-      setGrantingId(null)
     }
   }
 
@@ -312,7 +345,7 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
           {[
             { label: 'Total Families',  value: families.length,  color: 'bg-gray-50 text-gray-700' },
             { label: 'Club Members',    value: clubCount,         color: 'bg-green-50 text-green-700' },
-            { label: 'Free Accounts',   value: freeCount,         color: 'bg-amber-50 text-amber-700' },
+            { label: 'On Trial',        value: trialCount,        color: 'bg-amber-50 text-amber-700' },
             { label: 'Children',        value: totalChildren,     color: 'bg-blue-50 text-blue-700' },
           ].map(s => (
             <div key={s.label} className={`${s.color} rounded-2xl p-4`}>
@@ -367,7 +400,11 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {f.subscription ? (
+                  {f.subscription?.payment_provider === 'trial' ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                      ⏳ Trial
+                    </span>
+                  ) : f.subscription ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
                       <Crown size={10} /> Club
                     </span>
@@ -389,7 +426,19 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
                 <div className="border-t border-gray-100 bg-gray-50/40 px-5 py-4 space-y-3">
 
                   {/* Subscription card */}
-                  {f.subscription ? (
+                  {f.subscription?.payment_provider === 'trial' ? (
+                    <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                      <span className="text-[18px] shrink-0">⏳</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-black text-amber-800">7-Day Free Trial</p>
+                        <p className="text-[10px] text-amber-700 mt-0.5">
+                          Expires {new Date(f.subscription.current_period_end).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {' · '}
+                          {Math.max(0, Math.ceil((new Date(f.subscription.current_period_end).getTime() - Date.now()) / 86_400_000))} days left
+                        </p>
+                      </div>
+                    </div>
+                  ) : f.subscription ? (
                     <div className="flex items-center gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
                       <Crown size={16} className="text-green-600 shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -405,27 +454,34 @@ export default function FamiliesManager({ onNavigate, onOpenSidebar }: Props) {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between gap-3 bg-white border border-gray-100 rounded-xl px-4 py-3 flex-wrap">
-                      <p className="text-[11px] text-gray-400 font-semibold">Free plan — no active subscription</p>
-                      {grantingId === f.parent_id ? (
-                        <div className="flex items-center gap-2">
-                          <select value={grantMonths} onChange={e => setGrantMonths(Number(e.target.value))}
-                            className="text-[12px] border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
-                            {[1, 2, 3, 6, 12].map(m => <option key={m} value={m}>{m} month{m > 1 ? 's' : ''}</option>)}
-                          </select>
-                          <button onClick={() => handleGrantAccess(f.parent_id, grantMonths)} disabled={grantingFor === f.parent_id}
-                            className="text-[12px] font-bold bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 px-3 py-1.5 rounded-lg transition">
-                            {grantingFor === f.parent_id ? 'Granting…' : 'Confirm'}
+                    <div className="flex flex-col gap-2 bg-white border border-gray-100 rounded-xl px-4 py-3">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-[11px] text-gray-400 font-semibold">Free plan — no active subscription</p>
+                        {grantingId === f.parent_id ? (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <select value={grantMonths} onChange={e => setGrantMonths(Number(e.target.value))}
+                              className="text-[12px] border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
+                              {[1, 2, 3, 6, 12].map(m => <option key={m} value={m}>{m} month{m > 1 ? 's' : ''}</option>)}
+                            </select>
+                            <button onClick={() => handleGrantAccess(f.parent_id, grantMonths)} disabled={grantingFor === f.parent_id}
+                              className="text-[12px] font-bold bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 px-3 py-1.5 rounded-lg transition">
+                              {grantingFor === f.parent_id ? 'Granting…' : 'Confirm'}
+                            </button>
+                            <button onClick={() => { setGrantingId(null); setGrantError(null) }} className="text-gray-400 hover:text-gray-600">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setGrantingId(f.parent_id); setGrantError(null) }}
+                            className="flex items-center gap-1.5 text-[12px] font-bold text-green-700 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg transition">
+                            <Gift size={12} /> Grant Club Access
                           </button>
-                          <button onClick={() => setGrantingId(null)} className="text-gray-400 hover:text-gray-600">
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setGrantingId(f.parent_id)}
-                          className="flex items-center gap-1.5 text-[12px] font-bold text-green-700 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg transition">
-                          <Gift size={12} /> Grant Club Access
-                        </button>
+                        )}
+                      </div>
+                      {grantingId === f.parent_id && grantError && (
+                        <p className="text-[11px] font-semibold text-red-600 bg-red-50 rounded-lg px-3 py-2 break-all">
+                          ⚠ {grantError}
+                        </p>
                       )}
                     </div>
                   )}
