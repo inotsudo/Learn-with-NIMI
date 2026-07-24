@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
-import { Menu, Save, Loader2 } from 'lucide-react'
+import { Menu, Save, Loader2, RefreshCw } from 'lucide-react'
 import { useToast } from './Toast'
 import { logAdminAction } from '@/lib/adminAuditLog'
 
@@ -11,7 +11,17 @@ interface Props {
   onOpenSidebar?: () => void
 }
 
-type SettingsTab = 'general' | 'story' | 'notifications' | 'security'
+type SettingsTab = 'general' | 'story' | 'notifications' | 'security' | 'audit'
+
+interface AuditRow {
+  id: string
+  created_at: string
+  admin_email: string
+  action: string
+  entity_type: string
+  entity_label: string | null
+  metadata: Record<string, unknown> | null
+}
 
 type Config = Record<string, string | boolean>
 
@@ -38,7 +48,34 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
   const [settings, setSettings] = useState<Config>(DEFAULTS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [auditRows, setAuditRows] = useState<AuditRow[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
+  const [auditPage, setAuditPage] = useState(0)
+  const [auditHasMore, setAuditHasMore] = useState(false)
+  const AUDIT_PAGE_SIZE = 25
   const { success: toastOk, error: toastErr } = useToast()
+
+  const loadAudit = async (page = 0) => {
+    setAuditLoading(true)
+    try {
+      const from = page * AUDIT_PAGE_SIZE
+      // fetch one extra to detect if there's a next page
+      const { data, error } = await supabase
+        .from('admin_audit_log')
+        .select('id, created_at, admin_email, action, entity_type, entity_label, metadata')
+        .order('created_at', { ascending: false })
+        .range(from, from + AUDIT_PAGE_SIZE) // AUDIT_PAGE_SIZE is the extra row
+      if (error) throw error
+      const rows = data ?? []
+      setAuditHasMore(rows.length > AUDIT_PAGE_SIZE)
+      setAuditRows(rows.slice(0, AUDIT_PAGE_SIZE))
+      setAuditPage(page)
+    } catch {
+      // leave empty
+    } finally {
+      setAuditLoading(false)
+    }
+  }
 
   useEffect(() => {
     void (async () => {
@@ -82,11 +119,16 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
     }
   }
 
+  useEffect(() => {
+    if (tab === 'audit' && auditRows.length === 0) void loadAudit(0)
+  }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const TABS: { key: SettingsTab; label: string }[] = [
     { key: 'general',       label: 'General' },
     { key: 'story',         label: 'Story Settings' },
     { key: 'notifications', label: 'Notifications' },
     { key: 'security',      label: 'Security' },
+    { key: 'audit',         label: 'Audit Log' },
   ]
 
   const Toggle = ({ settingKey }: { settingKey: string }) => {
@@ -220,6 +262,77 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
                     {saving ? <><Loader2 size={15} className="animate-spin" /> Saving…</> : <><Save size={15} /> Save Changes</>}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {tab === 'audit' && (
+              <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-[15px] font-extrabold text-gray-800">Audit Log</h2>
+                    <p className="text-[12px] text-gray-400">Recent admin actions on this platform.</p>
+                  </div>
+                  <button onClick={() => void loadAudit(0)} disabled={auditLoading}
+                    className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-[12px] font-semibold border border-gray-200 rounded-lg px-3 py-1.5 transition disabled:opacity-40">
+                    <RefreshCw size={13} className={auditLoading ? 'animate-spin' : ''} /> Refresh
+                  </button>
+                </div>
+
+                {auditLoading && auditRows.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+                  </div>
+                ) : auditRows.length === 0 ? (
+                  <p className="text-center text-[13px] text-gray-400 py-12">No audit entries yet.</p>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto -mx-5 sm:-mx-6">
+                      <table className="w-full text-[12px] text-left">
+                        <thead>
+                          <tr className="border-b border-gray-100 text-[10px] uppercase tracking-wide font-bold text-gray-400">
+                            <th className="py-2 px-5 sm:px-6">Time</th>
+                            <th className="py-2 px-3">Admin</th>
+                            <th className="py-2 px-3">Action</th>
+                            <th className="py-2 px-3">Entity</th>
+                            <th className="py-2 px-3">Detail</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {auditRows.map(row => (
+                            <tr key={row.id} className="hover:bg-gray-50/60 transition">
+                              <td className="py-2.5 px-5 sm:px-6 whitespace-nowrap text-gray-400 tabular-nums">
+                                {new Date(row.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </td>
+                              <td className="py-2.5 px-3 text-gray-600 font-medium max-w-[140px] truncate" title={row.admin_email}>
+                                {row.admin_email}
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className="inline-block bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                                  {row.action.replace(/_/g, ' ')}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-gray-500">{row.entity_type}</td>
+                              <td className="py-2.5 px-3 text-gray-700 font-medium max-w-[200px] truncate" title={row.entity_label ?? ''}>
+                                {row.entity_label ?? '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-50">
+                      <button onClick={() => void loadAudit(auditPage - 1)} disabled={auditPage === 0 || auditLoading}
+                        className="text-[12px] font-semibold text-gray-500 hover:text-gray-700 disabled:opacity-30 transition">
+                        ← Newer
+                      </button>
+                      <span className="text-[11px] text-gray-400">Page {auditPage + 1}</span>
+                      <button onClick={() => void loadAudit(auditPage + 1)} disabled={!auditHasMore || auditLoading}
+                        className="text-[12px] font-semibold text-gray-500 hover:text-gray-700 disabled:opacity-30 transition">
+                        Older →
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

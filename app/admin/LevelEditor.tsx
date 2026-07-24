@@ -53,14 +53,24 @@ export default function LevelEditor() {
     setLoading(true)
     setLoadError(null)
     try {
-      const [{ data: lm, error: lmErr }, { data: missions, error: mErr }, { data: levels, error: lvlErr }] = await Promise.all([
+      // Step 1: fast queries — level grid + curriculum level metadata
+      const [{ data: lm, error: lmErr }, { data: levels, error: lvlErr }] = await Promise.all([
         supabase.from('level_missions').select('level_number, category_slug, mission_id'),
-        supabase.from('missions').select('id, category_slug, sequence, mission_versions(language, title, status)').order('sequence'),
         supabase.from('curriculum_levels').select('level_number, age_range_label, framework_name, primary_focus').order('level_number'),
       ])
       if (lmErr) throw lmErr
-      if (mErr) throw mErr
       if (lvlErr) throw lvlErr
+
+      // Step 2: fetch mission metadata — only EN version title+status to avoid
+      // fetching all language versions which blows up the payload size
+      const { data: missions, error: mErr } = await supabase
+        .from('missions')
+        .select('id, category_slug, sequence, mission_versions!inner(title, status)')
+        .eq('mission_versions.language', 'en')
+        .order('sequence')
+        .limit(500)
+      // Non-fatal: missions query failing just means dropdowns are empty
+      if (mErr) console.warn('[LevelEditor] missions fetch:', mErr.message)
 
       const fw: Record<number, LevelFramework> = {}
       for (const row of levels ?? []) {
@@ -72,9 +82,9 @@ export default function LevelEditor() {
       const options: Record<string, MissionOption[]> = {}
       for (const slug of CATEGORY_ORDER) options[slug] = []
       for (const m of missions ?? []) {
-        const en = (m.mission_versions as MissionVersionSummary[])?.find(v => v.language === 'en')
-        const title = en?.title ?? 'Untitled'
-        const status = (en?.status ?? 'draft') as ContentStatus
+        const ver = (m.mission_versions as MissionVersionSummary[])?.[0]
+        const title = ver?.title ?? 'Untitled'
+        const status = (ver?.status ?? 'draft') as ContentStatus
         missionById[m.id] = { missionId: m.id, title, sequence: m.sequence, status }
         if (options[m.category_slug]) {
           options[m.category_slug].push({ id: m.id, sequence: m.sequence, title, status })

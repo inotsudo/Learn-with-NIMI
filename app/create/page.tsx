@@ -8,7 +8,7 @@
  * Stars earned in any view bubble up and are reflected in the header.
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
@@ -36,7 +36,7 @@ const TABS: { id: TabId; emoji: string; label: string }[] = [
   { id: "story",      emoji: "📖", label: "Story"      },
 ];
 
-export default function CreativeStudioPage() {
+function CreativeStudioPage() {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
@@ -247,5 +247,13 @@ export default function CreativeStudioPage() {
         </main>
       </PageSurface>
     </AppShell>
+  );
+}
+
+export default function CreativeStudioPageWrapper() {
+  return (
+    <Suspense>
+      <CreativeStudioPage />
+    </Suspense>
   );
 }
