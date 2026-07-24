@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { sendPushToParent } from "@/lib/push";
+import { sendReferralCodeUsed, sendReferralAppliedToReferee } from "@/lib/email";
+import { REFERRAL_CODE_LENGTH } from "@/lib/referralConstants";
 import crypto from "crypto";
 
 const serviceSupabase = createClient(
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Bad request" }, { status: 400 }); }
 
   const code = typeof body.code === "string" ? body.code.toUpperCase().trim() : "";
-  if (!code) return NextResponse.json({ error: "Code required" }, { status: 422 });
+  if (!code || code.length !== REFERRAL_CODE_LENGTH) return NextResponse.json({ error: "Invalid code" }, { status: 422 });
 
   // Look up the referrer by code
   const { data: referralRow } = await serviceSupabase
@@ -86,7 +88,36 @@ export async function POST(req: NextRequest) {
     code,
   });
 
-  // Notify referrer — someone used their code (best-effort)
+  // Look up both parties for email notifications
+  const [referrerRow, refereeRow] = await Promise.all([
+    serviceSupabase.from("parents").select("email, name").eq("id", referralRow.parent_id).maybeSingle(),
+    serviceSupabase.from("parents").select("email, name").eq("id", user.id).maybeSingle(),
+  ]);
+
+  const referrerEmail = referrerRow.data?.email;
+  const referrerName  = referrerRow.data?.name ?? null;
+  const refereeName   = refereeRow.data?.name ?? null;
+  const refereeEmail  = refereeRow.data?.email;
+
+  // Email referrer — someone used their code
+  if (referrerEmail) {
+    void sendReferralCodeUsed({
+      to: referrerEmail,
+      referrerName: referrerName ?? "there",
+      refereeName,
+    }).catch(() => {});
+  }
+
+  // Email referee — confirm their code is locked in
+  if (refereeEmail) {
+    void sendReferralAppliedToReferee({
+      to: refereeEmail,
+      refereeName: refereeName ?? "there",
+      referrerName,
+    }).catch(() => {});
+  }
+
+  // Push to referrer (best-effort, complements the email)
   void sendPushToParent(serviceSupabase, referralRow.parent_id, {
     title: "🎉 Someone used your code!",
     body: "A friend just signed up with your NIMIPIKO referral code. They'll get 1 free month when they subscribe — and so will you!",

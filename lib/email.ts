@@ -667,6 +667,87 @@ export async function sendRenewalFailed(opts: {
   );
 }
 
+// ── Referral: someone used your code ────────────────────────────────────────
+export async function sendReferralCodeUsed(opts: {
+  to: string;
+  referrerName: string;
+  refereeName: string | null;
+}): Promise<void> {
+  const { to, referrerName, refereeName } = opts;
+  const who = refereeName ?? "A friend";
+  await send(
+    to,
+    `${who} just joined NIMIPIKO with your invite! 🎉`,
+    authBase("Someone used your invite", `
+      <p style="margin:0 0 6px;font-size:26px;font-weight:900;color:#14532d;text-align:center;">Your invite worked! 🎉</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Hi ${referrerName}! <strong>${who}</strong> just created their NIMIPIKO account using your referral code.</p>
+      <div style="background:#ecfdf5;border:2px solid #6ee7b7;border-radius:14px;padding:18px 20px;margin-bottom:22px">
+        <p style="margin:0 0 8px;font-size:15px;font-weight:800;color:#065f46;">🎁 What happens next?</p>
+        <p style="margin:0;font-size:14px;color:#047857;line-height:1.7;">Once <strong>${who}</strong> subscribes to NIMIPIKO Club, you'll automatically receive <strong>1 free month</strong> added to your account. We'll email you the moment it's applied!</p>
+      </div>
+      ${ctaButton("https://nimipiko.com/parents?tab=settings", "View my referrals")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">Keep sharing — every friend who subscribes earns you another free month. 🌿</p>
+    `),
+  );
+}
+
+// ── Referral: free month earned ──────────────────────────────────────────────
+export async function sendReferralRewardGranted(opts: {
+  to: string;
+  referrerName: string;
+  refereeName: string | null;
+  freeMonthEnd: string; // ISO date
+}): Promise<void> {
+  const { to, referrerName, refereeName, freeMonthEnd } = opts;
+  const who = refereeName ?? "Your friend";
+  const untilDate = new Date(freeMonthEnd).toLocaleDateString("en-US", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+  await send(
+    to,
+    "🎁 You earned 1 free month of NIMIPIKO Club!",
+    authBase("Free month earned", `
+      <p style="margin:0 0 6px;font-size:26px;font-weight:900;color:#14532d;text-align:center;">1 free month — just for you! 🎁</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Hi ${referrerName}! <strong>${who}</strong> just subscribed to NIMIPIKO Club. As a thank you for the invite, we've added <strong>1 free month</strong> to your account.</p>
+      <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid #c4b5fd;border-radius:14px;padding:18px 20px;margin-bottom:22px;text-align:center">
+        <p style="margin:0 0 6px;font-size:32px">🎉</p>
+        <p style="margin:0 0 4px;font-size:18px;font-weight:900;color:#4c1d95;">+1 Free Month Added</p>
+        <p style="margin:0;font-size:13px;color:#6d28d9;">Valid through <strong>${untilDate}</strong></p>
+      </div>
+      ${ctaButton("https://nimipiko.com/parents?tab=settings", "View my account")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">Every friend who subscribes earns you another free month. Keep sharing! 🌿</p>
+    `),
+  );
+}
+
+// ── Referral: code applied confirmation (to referee) ─────────────────────────
+export async function sendReferralAppliedToReferee(opts: {
+  to: string;
+  refereeName: string;
+  referrerName: string | null;
+}): Promise<void> {
+  const { to, refereeName, referrerName } = opts;
+  const inviter = referrerName ?? "A friend";
+  await send(
+    to,
+    `Your NIMIPIKO referral reward is locked in! 🌿`,
+    authBase("Referral code applied", `
+      <p style="margin:0 0 6px;font-size:26px;font-weight:900;color:#14532d;text-align:center;">Referral applied! 🌿</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;text-align:center;line-height:1.6;">Hi ${refereeName}! <strong>${inviter}</strong> invited you to NIMIPIKO. Your referral reward is confirmed.</p>
+      <div style="background:#ecfdf5;border:2px solid #6ee7b7;border-radius:14px;padding:18px 20px;margin-bottom:22px">
+        <p style="margin:0 0 8px;font-size:15px;font-weight:800;color:#065f46;">🎁 Here's the deal:</p>
+        <ul style="margin:0;padding-left:18px;font-size:14px;color:#047857;line-height:1.8">
+          <li>You get <strong>1 free month of NIMIPIKO Club</strong> when you subscribe</li>
+          <li><strong>${inviter}</strong> also gets 1 free month as a thank-you</li>
+          <li>No coupon codes needed — it's applied automatically</li>
+        </ul>
+      </div>
+      ${ctaButton("https://nimipiko.com/pricing", "👑 Subscribe to Club")}
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">Your 7-day free trial is already running. Subscribing before it ends keeps full access without interruption.</p>
+    `),
+  );
+}
+
 // ── Admin operational alert ──────────────────────────────────────────────────
 // Sends a plain ops alert to ADMIN_ALERT_EMAIL. Used for renewal failures that
 // need human attention (e.g. CyberSource TMS not enabled → no token to charge).

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendPushToParent } from "@/lib/push";
+import { sendReferralRewardGranted } from "@/lib/email";
 
 // Cron fallback: finds referral redemptions where the referred user now has an
 // active paid subscription but the reward was never granted (e.g. the real-time
@@ -83,6 +84,25 @@ export async function GET(req: Request) {
       subscription_id: newSub?.id ?? null,
       expires_at: periodEnd.toISOString(),
     });
+
+    // Look up referrer + referee for notifications
+    const [referrerRow, refereeRow] = await Promise.all([
+      supabase.from("parents").select("email, name").eq("id", row.referrer_id).maybeSingle(),
+      supabase.from("parents").select("name").eq("id", row.referred_id).maybeSingle(),
+    ]);
+
+    const referrerEmail = referrerRow.data?.email;
+    const referrerName  = referrerRow.data?.name ?? null;
+    const refereeName   = refereeRow.data?.name ?? null;
+
+    if (referrerEmail) {
+      void sendReferralRewardGranted({
+        to: referrerEmail,
+        referrerName: referrerName ?? "there",
+        refereeName,
+        freeMonthEnd: periodEnd.toISOString(),
+      }).catch(() => {});
+    }
 
     void sendPushToParent(supabase, row.referrer_id, {
       title: "🎁 You earned 1 free month!",

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, MotionConfig } from "framer-motion";
 import { User, Mail, Lock, Eye, EyeOff, UserPlus, Star, Gift, ChevronDown } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
+import { PENDING_REF_KEY, REFERRAL_CODE_LENGTH } from "@/lib/referralConstants";
 import AuthBackground from "@/components/auth/AuthBackground";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -32,39 +33,58 @@ function SignupInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralCode, setReferralCode]   = useState<string | null>(null);
+  const [referrerName, setReferrerName]   = useState<string | null>(null);
   const [codeInput, setCodeInput]         = useState("");
   const [codeOpen, setCodeOpen]           = useState(false);
   const [codeError, setCodeError]         = useState("");
+  const [validating, setValidating]       = useState(false);
+  const [linkChecking, setLinkChecking]   = useState(false);
+  const [linkInvalid, setLinkInvalid]     = useState(false);
 
-  // Persist referral code through page refreshes and email-verification flows
-  const PENDING_REF_KEY = "nimipiko_pending_ref";
 
+
+  // Single effect: handle ?ref= link OR restore sessionStorage.
+  // Code is ONLY committed to state/sessionStorage after validation passes.
   useEffect(() => {
     const ref = searchParams?.get("ref");
+
     if (ref) {
-      const clean = ref.toUpperCase().slice(0, 10);
-      sessionStorage.setItem(PENDING_REF_KEY, clean);
-      setReferralCode(clean);
-      setCodeInput(clean);
+      const clean = ref.toUpperCase().slice(0, REFERRAL_CODE_LENGTH);
+      setLinkChecking(true);
+      fetch(`/api/referral/validate?code=${encodeURIComponent(clean)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then((j: { referrerName?: string } | null) => {
+          if (j?.referrerName !== undefined) {
+            setReferralCode(clean);
+            setReferrerName(j.referrerName ?? null);
+            sessionStorage.setItem(PENDING_REF_KEY, clean);
+          } else {
+            setLinkInvalid(true);
+          }
+        })
+        .catch(() => setLinkInvalid(true))
+        .finally(() => setLinkChecking(false));
       return;
     }
-    // Restore from sessionStorage if user refreshed or came back from email link
-    const stored = sessionStorage.getItem(PENDING_REF_KEY);
-    if (stored) { setReferralCode(stored); setCodeInput(stored); }
-  }, [searchParams]);
 
-  const [validating, setValidating]   = useState(false);
-  const [referrerName, setReferrerName] = useState<string | null>(null);
+    // No URL param — restore a previously validated code from sessionStorage
+    const stored = sessionStorage.getItem(PENDING_REF_KEY);
+    if (stored) {
+      setReferralCode(stored);
+      setCodeInput(stored);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyCode = async () => {
     const clean = codeInput.trim().toUpperCase();
     if (!clean) { setCodeError("Please enter a code."); return; }
-    if (clean.length < 6) { setCodeError("Code too short — check and try again."); return; }
+    if (clean.length !== REFERRAL_CODE_LENGTH) { setCodeError(`Codes are ${REFERRAL_CODE_LENGTH} characters — check and try again.`); return; }
     setValidating(true);
     try {
       const res  = await fetch(`/api/referral/validate?code=${encodeURIComponent(clean)}`);
-      if (!res.ok) { setCodeError("That code doesn't exist. Check it and try again."); return; }
+      if (!res.ok) { setCodeError("That code doesn't exist. Double-check it and try again."); return; }
       const json = await res.json() as { valid: boolean; referrerName?: string };
       setReferrerName(json.referrerName ?? null);
     } catch {
@@ -76,17 +96,6 @@ function SignupInner() {
     setCodeError("");
     setCodeOpen(false);
   };
-
-  // Also validate link-based code on mount
-  useEffect(() => {
-    const ref = searchParams?.get("ref");
-    if (!ref) return;
-    const clean = ref.toUpperCase().slice(0, 10);
-    void fetch(`/api/referral/validate?code=${encodeURIComponent(clean)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then((j: { referrerName?: string } | null) => { if (j?.referrerName) setReferrerName(j.referrerName); })
-      .catch(() => {});
-  }, [searchParams]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(true);
@@ -220,8 +229,23 @@ function SignupInner() {
             </div>
           )}
 
-          {/* Referral code — applied or manual entry */}
-          {referralCode ? (
+          {/* Referral code — link checking / applied / invalid / manual entry */}
+          {linkChecking ? (
+            <div className="bg-gray-50 border border-ds-border rounded-xl px-4 py-3 flex items-center gap-3">
+              <span className="w-4 h-4 border-2 border-gray-300 border-t-emerald-500 rounded-full animate-spin shrink-0" />
+              <p className="font-nunito text-gray-500 text-[13px]">Checking your invite link…</p>
+            </div>
+          ) : linkInvalid ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-3">
+              <span className="text-xl shrink-0">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-baloo font-black text-red-700 text-[13px]">This invite link is invalid or has expired.</p>
+                <p className="font-nunito text-red-500/80 text-[11px]">Ask your friend to share their code directly, or enter it below.</p>
+              </div>
+              <button onClick={() => { setLinkInvalid(false); setCodeOpen(true); }}
+                className="text-[11px] text-red-500 hover:text-red-700 font-bold shrink-0">Enter code</button>
+            </div>
+          ) : referralCode ? (
             <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-3">
               <span className="text-2xl shrink-0">🎁</span>
               <div className="flex-1 min-w-0">
@@ -250,8 +274,8 @@ function SignupInner() {
                     value={codeInput}
                     onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeError(""); }}
                     onKeyDown={e => e.key === "Enter" && applyCode()}
-                    placeholder="Enter code e.g. ABC12345"
-                    maxLength={10}
+                    placeholder="e.g. ABC12345"
+                    maxLength={REFERRAL_CODE_LENGTH}
                     className="flex-1 border border-ds-border bg-ds-input rounded-xl px-3 py-2 text-[13px] font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] uppercase"
                   />
                   <button onClick={applyCode} disabled={validating}

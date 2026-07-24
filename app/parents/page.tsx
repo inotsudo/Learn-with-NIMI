@@ -1681,7 +1681,7 @@ export default function ParentsZonePage() {
                         </div>
                         <button
                           onClick={async () => {
-                            const text = `Try NIMIPIKO for kids — use my code ${referralCode} and we both get 1 free month! nimipiko.com`;
+                            const text = `Try NIMIPIKO for kids — my invite link: nimipiko.com/invite/${referralCode} 🌿 We both get 1 free month!`;
                             try {
                               if (navigator.share) await navigator.share({ text });
                               else { await navigator.clipboard.writeText(text); setShareToast(true); setTimeout(() => setShareToast(false), 2500); }

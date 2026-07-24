@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, CheckCircle2, Sparkles, Star } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import { createChild } from "@/lib/queries";
+import { PENDING_REF_KEY } from "@/lib/referralConstants";
 import type { Child } from "@/lib/queries";
 import { SPRING } from "@/lib/design-system/motion";
 import AvatarBuilder from "@/components/avatar/AvatarBuilder";
@@ -55,7 +56,7 @@ export default function OnboardingPage() {
       if (kids && kids.length > 0) { router.replace("/home"); return; }
 
       // Apply pending referral code from signup (handles email-verification flow)
-      const pendingRef = sessionStorage.getItem("nimipiko_pending_ref");
+      const pendingRef = sessionStorage.getItem(PENDING_REF_KEY);
       if (pendingRef) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token) {
@@ -64,7 +65,7 @@ export default function OnboardingPage() {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
             body: JSON.stringify({ code: pendingRef }),
           });
-          sessionStorage.removeItem("nimipiko_pending_ref");
+          sessionStorage.removeItem(PENDING_REF_KEY);
         }
       }
     })();

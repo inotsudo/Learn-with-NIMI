@@ -135,7 +135,10 @@ export async function middleware(req: NextRequest) {
   // 1. Rate-limit sensitive API routes.
   // Mutations (POST/PUT/DELETE/PATCH) are rate-limited broadly.
   // A small set of GET routes that are enumeration-sensitive are also limited.
-  const GET_RATE_LIMITED = new Set(["/api/referral/validate"]);
+  // GET routes that need rate-limiting despite being reads:
+  // - /api/referral/validate: public code lookup — enumeration risk
+  // - /api/referral: authenticated code generation — prevent bulk code farming
+  const GET_RATE_LIMITED = new Set(["/api/referral/validate", "/api/referral"]);
   const shouldLimit = (req.method !== "GET" && req.method !== "HEAD") || GET_RATE_LIMITED.has(pathname);
   if (shouldLimit) {
     for (const [prefix, max] of LIMITS) {

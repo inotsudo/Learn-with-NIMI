@@ -30,8 +30,8 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
   const [retrying, setRetrying] = useState(false);
 
   const origin    = typeof window !== "undefined" ? window.location.origin : "https://nimipiko.com";
-  const shareUrl  = `${origin}/signup?ref=${code ?? ""}`;
-  const shareText = `Join me on NIMIPIKO — the kids' language learning app! Use my code ${code ?? ""} and we both get 1 free month. 🌿`;
+  const shareUrl  = `${origin}/invite/${code ?? ""}`;
+  const shareText = `Join me on NIMIPIKO — the kids' language learning app! My friend invited me and we both get 1 free month. 🌿`;
 
   const copy = async (text: string, key: CopiedKey) => {
     await navigator.clipboard.writeText(text);
@@ -119,7 +119,9 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
           {/* Invite link row */}
           <div className="flex items-center gap-2 bg-white/70 border border-emerald-100 rounded-xl px-3 py-2">
             <Link className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <p className="flex-1 min-w-0 text-[11px] text-emerald-700 font-mono truncate">{shareUrl}</p>
+            <p className="flex-1 min-w-0 text-[11px] text-emerald-700 font-mono truncate">
+              {typeof window !== "undefined" ? window.location.hostname : "nimipiko.com"}/invite/{code ?? ""}
+            </p>
             <button onClick={() => copy(shareUrl, "link")}
               className={`text-[11px] font-black shrink-0 transition ${copied === "link" ? "text-emerald-600" : "text-emerald-500 hover:text-emerald-700"}`}>
               {copied === "link" ? "Copied ✓" : "Copy"}

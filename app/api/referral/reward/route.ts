@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendPushToParent } from "@/lib/push";
+import { sendReferralRewardGranted } from "@/lib/email";
 
 // Called internally (from confirm-payment and mtn-momo) after a Club sub is created.
 // Grants the referrer 1 free month if their referred user just subscribed.
@@ -91,7 +92,27 @@ export async function POST(req: Request) {
     expires_at: periodEnd.toISOString(),
   });
 
-  // Push to referrer — they earned a free month (best-effort)
+  // Look up referrer + referee names/emails for notifications
+  const [referrerRow, refereeRow] = await Promise.all([
+    supabase.from("parents").select("email, name").eq("id", redemption.referrer_id).maybeSingle(),
+    supabase.from("parents").select("name").eq("id", referred_id).maybeSingle(),
+  ]);
+
+  const referrerEmail = referrerRow.data?.email;
+  const referrerName  = referrerRow.data?.name ?? null;
+  const refereeName   = refereeRow.data?.name ?? null;
+
+  // Email referrer — free month earned
+  if (referrerEmail) {
+    void sendReferralRewardGranted({
+      to: referrerEmail,
+      referrerName: referrerName ?? "there",
+      refereeName,
+      freeMonthEnd: periodEnd.toISOString(),
+    }).catch(() => {});
+  }
+
+  // Push to referrer (complements the email)
   void sendPushToParent(supabase, redemption.referrer_id, {
     title: "🎁 You earned 1 free month!",
     body: "Your referral friend just subscribed to NIMIPIKO Club. Enjoy a free month on us!",
