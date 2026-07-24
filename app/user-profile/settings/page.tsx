@@ -5,8 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Edit } from "lucide-react";
 import {
-  getChildren, getCurrentLevel, getCurriculumMissions, getCompletedMissionIds,
-  getTotalStars, getChildAchievements, getTodayMissions,
+  getChildren, getCurrentLevel, getCurriculumMissions,
+  getTotalStars, getChildBadges, getTodayMissions,
 } from "@/lib/queries";
 import type { Child } from "@/lib/queries";
 import { ACTIVITIES, type ActivityCategory } from "@/app/_activityData";
@@ -56,12 +56,10 @@ export default function MyProfilePage() {
     const child = list.find(c => c.id === savedId) ?? list[0];
     setActiveChild(child);
 
-    // All independent queries fire in parallel — previously 5 sequential round-trips.
-    const [level, completedIds, stars, achievements, curriculumMissions, todayMissions] = await Promise.all([
+    const [level, stars, badges, curriculumMissions, todayMissions] = await Promise.all([
       getCurrentLevel(child.id, child.language),
-      getCompletedMissionIds(child.id, child.language),
       getTotalStars(child.id, child.language),
-      getChildAchievements(child.id),
+      getChildBadges(child.id, child.language),
       getCurriculumMissions(child.id),
       getTodayMissions(child.id, child.language),
     ]);
@@ -69,7 +67,7 @@ export default function MyProfilePage() {
     setLevel(level);
     setActivitiesCompleted(todayMissions.length);
     setStarsCollected(stars);
-    setBadgesEarned(achievements.filter(a => a.type === "badge" && a.language === child.language).length);
+    setBadgesEarned(badges.length);
     setCompletedInLevel(new Set(curriculumMissions.filter(m => m.completed).map(m => m.category)));
     setLoading(false);
   };

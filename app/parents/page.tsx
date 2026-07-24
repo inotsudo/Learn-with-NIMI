@@ -37,6 +37,64 @@ function nameToColor(name: string): string {
   return NAME_COLORS[Math.abs(h) % NAME_COLORS.length];
 }
 
+// All known badge slugs → { label, emoji, desc }
+const KNOWN_BADGES: Record<string, { label: string; emoji: string; desc: string }> = {
+  // Milestone badges (auto-awarded)
+  "story-explorer":   { label: "Story Explorer",   emoji: "🧭", desc: "Completed first story" },
+  "story-adventurer": { label: "Story Adventurer", emoji: "🚀", desc: "Completed 3 stories"   },
+  "story-champion":   { label: "Story Champion",   emoji: "🏆", desc: "Completed 5 stories"   },
+  "star-collector":   { label: "Star Collector",   emoji: "⭐", desc: "Earned 50 stars"        },
+  "super-star":       { label: "Super Star",       emoji: "🌟", desc: "Earned 100 stars"       },
+  // Admin-awarded badges
+  "star-of-the-week": { label: "Star of the Week", emoji: "⭐", desc: "Outstanding effort this week" },
+  "most-improved":    { label: "Most Improved",    emoji: "📈", desc: "Great recent progress"        },
+  "helper-award":     { label: "Helper Award",     emoji: "🤝", desc: "Kind and helpful"            },
+  "super-effort":     { label: "Super Effort",     emoji: "💪", desc: "Tried hard on every activity" },
+  "creative-spark":   { label: "Creative Spark",   emoji: "✨", desc: "Amazing creativity"           },
+  "perfect-week":     { label: "Perfect Week",     emoji: "🏆", desc: "Active every day this week"   },
+  // Streak shield
+  "streak-shield":    { label: "Streak Shield",    emoji: "🛡️", desc: "Protected streak"            },
+};
+
+function resolveBadgeMeta(slug: string): { label: string; emoji: string; desc: string } {
+  if (KNOWN_BADGES[slug]) return KNOWN_BADGES[slug];
+  // streak-shield-used-YYYY-MM-DD
+  if (slug.startsWith("streak-shield-used")) {
+    const datePart = slug.replace("streak-shield-used-", "").replace(/-/g, " ").trim();
+    const d = new Date(slug.slice(-10));
+    const formatted = isNaN(d.getTime()) ? datePart : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return { label: "Streak Shield Used", emoji: "🛡️", desc: formatted };
+  }
+  // story-<anything>-complete or story-<id>-complete
+  if (slug.startsWith("story-") && slug.endsWith("-complete")) {
+    return { label: "Story Complete", emoji: "📖", desc: "Finished a story" };
+  }
+  // story-new-story-<id>-complete
+  if (slug.startsWith("story-new-story-")) {
+    return { label: "Story Complete", emoji: "📖", desc: "Finished a story" };
+  }
+  // generic clean-up: replace dashes, capitalise
+  const clean = slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  return { label: clean, emoji: "🎖️", desc: "" };
+}
+
+function getTimeGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getWeeklyInsight(data: ChildData | undefined, hasActivity: boolean): string {
+  if (!data) return "Welcome to your Family Hub 🏡";
+  const activeDays = data.weekActivity.filter(Boolean).length;
+  const name = data.child.name;
+  if (!hasActivity) return `${name} hasn't started today yet — let's go! 🚀`;
+  if (activeDays >= 5) return `Amazing week! ${name} has been active ${activeDays} days 🔥`;
+  if (activeDays >= 3) return `${name} is on a roll — ${activeDays} active days this week 📚`;
+  return `${name} studied today — keep the streak going! ⭐`;
+}
+
 interface ChildData {
   child: Child;
   stories: StoryLibraryItem[];
@@ -46,6 +104,7 @@ interface ChildData {
   totalStars: number;
   weekActivity: number[];
   cosmetics: ChildCosmetics;
+  activityDates: Set<string>;
 }
 
 export default function ParentsZonePage() {
@@ -68,6 +127,7 @@ export default function ParentsZonePage() {
   const [cancellingSubscription, setCancellingSubscription] = useState(false);
   const [cancelSubError, setCancelSubError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [showSwitchMenu, setShowSwitchMenu] = useState(false);
   const [feelings, setFeelings] = useState<{ story_id: string; title: string; feeling: string; felt_at: string }[]>([]);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
@@ -160,6 +220,7 @@ export default function ParentsZonePage() {
           totalStars: stars,
           weekActivity,
           cosmetics: cos,
+          activityDates: dates,
         });
       }
       setChildrenData(results);
@@ -299,6 +360,26 @@ export default function ParentsZonePage() {
         <HeroBanner zone="familyHub" className="shadow-ds-card">
           <div className="absolute -top-6 -right-6 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
           <div className="absolute -bottom-10 -left-10 w-52 h-52 rounded-full bg-white/8 pointer-events-none" />
+          {/* Floating particles */}
+          {[
+            { top: "10%", left:  "8%",  emoji: "📚", size: 14, delay: 0    },
+            { top: "65%", left:  "5%",  emoji: "⭐", size: 12, delay: 0.8  },
+            { top: "15%", right: "6%",  emoji: "🏆", size: 16, delay: 0.35 },
+            { top: "60%", right: "8%",  emoji: "🌟", size: 11, delay: 1.1  },
+            { top: "38%", left:  "2%",  emoji: "💡", size: 12, delay: 0.55 },
+            { top: "35%", right: "3%",  emoji: "🎯", size: 13, delay: 0.9  },
+          ].map((d, i) => (
+            <motion.span
+              key={i}
+              className="absolute pointer-events-none select-none"
+              style={{ top: d.top, left: (d as { left?: string }).left, right: (d as { right?: string }).right, fontSize: d.size }}
+              animate={{ opacity: [0.25, 0.9, 0.25], y: [0, -6, 0], scale: [0.8, 1.15, 0.8] }}
+              transition={{ duration: 2.6, repeat: Infinity, delay: d.delay }}
+              aria-hidden
+            >
+              {d.emoji}
+            </motion.span>
+          ))}
           <div className="relative z-10 px-5 py-5 sm:px-8 sm:py-6 flex items-center gap-4">
 
             {/* Parent avatar */}
@@ -340,7 +421,9 @@ export default function ParentsZonePage() {
 
             {/* Name + subtitle */}
             <div className="flex-1 min-w-0">
-              <p className="text-white/55 text-[10px] font-nunito font-bold uppercase tracking-[0.14em] mb-0.5">Family Hub</p>
+              <p className="text-white/60 text-[10px] font-nunito font-bold uppercase tracking-[0.14em] mb-0.5">
+                {getTimeGreeting()} 👋
+              </p>
               {editingName ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -374,8 +457,11 @@ export default function ParentsZonePage() {
                   </svg>
                 </button>
               )}
-              <p className="text-white/70 text-[13px] font-nunito mt-0.5">
-                {childrenData.length} {childrenData.length === 1 ? "learner" : "learners"} · Parents Zone
+              <p className="text-white/75 text-[12px] font-nunito mt-1 leading-snug">
+                {getWeeklyInsight(childrenData.find(d => d.child.id === selectedChild) ?? childrenData[0], (todayActivity.length > 0))}
+              </p>
+              <p className="text-white/45 text-[10px] font-nunito mt-1">
+                {childrenData.length} {childrenData.length === 1 ? "learner" : "learners"} · Family Hub
               </p>
             </div>
 
@@ -775,14 +861,35 @@ export default function ParentsZonePage() {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 mt-1.5">
-                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full bg-[var(--nimi-green)] transition-all duration-500"
                                   style={{ width: `${total > 0 ? (done / total) * 100 : 0}%` }}
                                 />
                               </div>
                               <span className="text-[10px] font-bold text-ds-muted shrink-0">{done}/{total}</span>
+                            </div>
+                            {/* Today's sessions + streak */}
+                            <div className="flex items-center gap-2 mt-1">
+                              {(() => {
+                                const todayIdx = (new Date().getDay() + 6) % 7;
+                                const todaySessions = d.weekActivity[todayIdx] ?? 0;
+                                return (
+                                  <>
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none ${
+                                      todaySessions > 0
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                        : "bg-gray-50 text-gray-400 border border-gray-200"
+                                    }`}>
+                                      {todaySessions > 0 ? `${todaySessions} today` : "0 today"}
+                                    </span>
+                                    {d.streak > 0 && (
+                                      <span className="text-[9px] font-black text-orange-600">🔥 {d.streak}</span>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         </motion.button>
@@ -839,16 +946,16 @@ export default function ParentsZonePage() {
               {/* ═══ TAB NAV ═══ */}
               <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide">
                 {([
-                  { id: "overview",      emoji: "📊", label: t("tabOverview")  },
-                  { id: "stories",       emoji: "📚", label: t("tabStories")   },
-                  { id: "achievements",  emoji: "🏆", label: t("tabWins")      },
-                  { id: "learning",      emoji: "🧠", label: "Learning"        },
-                  { id: "settings",      emoji: "⚙️", label: t("tabSettings")  },
-                ] as { id: typeof parentTab; emoji: string; label: string }[]).map(tab => (
+                  { id: "overview",     emoji: "📊", label: t("tabOverview"), badge: null },
+                  { id: "stories",      emoji: "📚", label: t("tabStories"),  badge: totalStories > 0 ? `${storiesComplete}/${totalStories}` : null },
+                  { id: "achievements", emoji: "🏆", label: t("tabWins"),     badge: (badges.length + certs.length) > 0 ? String(badges.length + certs.length) : null },
+                  { id: "learning",     emoji: "🧠", label: "Learning",       badge: null },
+                  { id: "settings",     emoji: "⚙️", label: t("tabSettings"), badge: null },
+                ] as { id: typeof parentTab; emoji: string; label: string; badge: string | null }[]).map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setParentTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-baloo font-black transition-all shrink-0 ${
+                    className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-baloo font-black transition-all shrink-0 ${
                       parentTab === tab.id
                         ? "bg-ds-action text-white shadow-sm"
                         : "bg-white border border-ds-border text-gray-500 hover:text-ds-text hover:bg-gray-50"
@@ -856,6 +963,13 @@ export default function ParentsZonePage() {
                   >
                     <span>{tab.emoji}</span>
                     {tab.label}
+                    {tab.badge && (
+                      <span className={`ml-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none ${
+                        parentTab === tab.id ? "bg-white/25 text-white" : "bg-[var(--ds-brand-primary)] text-white"
+                      }`}>
+                        {tab.badge}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -870,24 +984,217 @@ export default function ParentsZonePage() {
                     transition={{ duration: 0.2 }}
                     className="space-y-5"
                   >
-                    {/* Compact stat strip (4 pills in a row) */}
-                    <div className="flex gap-2 flex-wrap">
+                    {/* Quick actions row */}
+                    <div className="flex flex-wrap gap-2">
                       {[
-                        { emoji: "⭐", label: "Stars", value: active.totalStars },
-                        { emoji: "🏆", label: "Badges", value: badges.length },
-                        { emoji: "🎓", label: "Certs", value: certs.length },
-                        { emoji: "🔥", label: "Streak", value: `${active.streak}d` },
-                      ].map((s, i) => (
-                        <motion.div key={s.label}
+                        { emoji: "📖", label: "Go to Stories", href: "/stories", color: "bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100" },
+                        { emoji: "🤖", label: "Talk to Nimi", href: "/talk-to-nimi", color: "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100" },
+                        { emoji: "🎯", label: "Challenges", href: "/treasure", color: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100" },
+                      ].map((a, i) => (
+                        <motion.a
+                          key={a.label} href={a.href}
                           initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.06 }}
-                          className="flex items-center gap-2 bg-white border border-ds-border px-3.5 py-2 shadow-sm" style={{ borderRadius: 'var(--leaf-r)' }}>
-                          <span className="text-base">{s.emoji}</span>
-                          <span className="font-black text-ds-text text-[15px]">{s.value}</span>
-                          <span className="text-ds-muted text-[11px] font-semibold">{s.label}</span>
+                          className={`flex items-center gap-2 px-4 py-2.5 border font-baloo font-black text-[12px] shrink-0 transition ${a.color}`}
+                          style={{ borderRadius: "var(--leaf-r)" }}
+                        >
+                          <span className="text-[16px]">{a.emoji}</span>
+                          {a.label}
+                        </motion.a>
+                      ))}
+                      {childrenData.length > 1 && (
+                        <div className="relative shrink-0">
+                          <motion.button
+                            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.18 }}
+                            onClick={() => setShowSwitchMenu(v => !v)}
+                            className="flex items-center gap-2 px-4 py-2.5 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-baloo font-black text-[12px] transition"
+                            style={{ borderRadius: "var(--leaf-r)" }}
+                          >
+                            <span className="text-[16px]">🔄</span>
+                            Switch Child
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${showSwitchMenu ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6"/></svg>
+                          </motion.button>
+
+                          <AnimatePresence>
+                            {showSwitchMenu && (
+                              <>
+                                {/* Backdrop */}
+                                <div className="fixed inset-0 z-40" onClick={() => setShowSwitchMenu(false)} />
+                                <motion.div
+                                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="absolute top-full left-0 mt-1.5 z-50 bg-white border border-ds-border shadow-xl rounded-2xl overflow-hidden min-w-[200px]"
+                                >
+                                  <p className="px-3 pt-2.5 pb-1 text-[9px] font-black text-ds-muted uppercase tracking-widest">Switch playing to</p>
+                                  {childrenData
+                                    .filter(d => d.child.id !== playingChildId)
+                                    .map(d => (
+                                      <button
+                                        key={d.child.id}
+                                        onClick={() => { switchPlaying(d.child.id); setShowSwitchMenu(false); }}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 transition text-left"
+                                      >
+                                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-gray-100 flex items-center justify-center">
+                                          <ChildAvatar avatarUrl={d.child.avatar_url} name={d.child.name} size={32} />
+                                        </div>
+                                        <div className="min-w-0">
+                                          <p className="font-black text-ds-text text-[13px] leading-tight truncate">{d.child.name}</p>
+                                          <p className="text-ds-muted text-[10px] font-semibold">{d.stories.filter(s => s.complete).length}/{d.stories.length} stories · {d.streak}🔥</p>
+                                        </div>
+                                      </button>
+                                    ))
+                                  }
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Family Children Snapshot — only when 2+ children */}
+                    {childrenData.length > 1 && (
+                      <div>
+                        <p className="text-[10px] font-black text-ds-muted uppercase tracking-widest mb-2">All Learners</p>
+                        <div className="flex gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                          {childrenData.map((d, i) => {
+                            const isPlaying = d.child.id === playingChildId;
+                            const isViewing = d.child.id === selectedChild;
+                            const done = d.stories.filter(s => s.complete).length;
+                            const total = d.stories.length;
+                            const pct = total > 0 ? done / total : 0;
+                            return (
+                              <motion.button
+                                key={d.child.id}
+                                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.06 }}
+                                onClick={() => { setSelectedChild(d.child.id); setParentTab("overview"); }}
+                                className={`shrink-0 flex flex-col items-center gap-2 p-3 border-2 transition w-[110px] ${
+                                  isViewing
+                                    ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-border-brand)]/50"
+                                    : "bg-white border-ds-border hover:border-[var(--ds-border-brand)]/40 hover:bg-gray-50"
+                                }`}
+                                style={{ borderRadius: "var(--leaf-r-lg)" }}
+                              >
+                                <div className="relative">
+                                  <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-offset-1 ring-[var(--ds-brand-primary)]/30">
+                                    <ChildAvatar avatarUrl={d.child.avatar_url} name={d.child.name} size={48} />
+                                  </div>
+                                  {isPlaying && (
+                                    <span className="absolute -bottom-0.5 -right-0.5 text-[11px] leading-none bg-white rounded-full p-0.5 shadow-sm">🎮</span>
+                                  )}
+                                </div>
+                                <p className="font-baloo font-black text-[12px] text-ds-text truncate w-full text-center leading-tight">{d.child.name}</p>
+                                <div className="w-full">
+                                  <div className="flex justify-between text-[9px] font-bold text-ds-muted mb-1">
+                                    <span>⭐ {d.totalStars}</span>
+                                    <span>🔥 {d.streak}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full bg-[var(--nimi-green)] transition-all" style={{ width: `${pct * 100}%` }} />
+                                  </div>
+                                  <p className="text-[9px] text-ds-muted font-semibold mt-0.5 text-center">{done}/{total} stories</p>
+                                </div>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stat grid — 2×2 */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { emoji: "⭐", label: "Stars Earned", value: active.totalStars, sub: "all time", color: "from-amber-400/15 to-yellow-400/10", border: "border-amber-200/60", text: "text-amber-700" },
+                        { emoji: "🔥", label: "Day Streak",   value: active.streak,      sub: "days in a row", color: "from-orange-400/15 to-red-400/10", border: "border-orange-200/60", text: "text-orange-700" },
+                        { emoji: "📚", label: "Stories",      value: `${storiesComplete}/${totalStories}`, sub: "completed", color: "from-sky-400/15 to-blue-400/10", border: "border-sky-200/60", text: "text-sky-700" },
+                        { emoji: "🏆", label: "Achievements", value: badges.length + certs.length, sub: `${badges.length} badges · ${certs.length} certs`, color: "from-violet-400/15 to-purple-400/10", border: "border-violet-200/60", text: "text-violet-700" },
+                      ].map((s, i) => (
+                        <motion.div key={s.label}
+                          initial={{ opacity: 0, y: 8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ delay: i * 0.07, type: "spring", stiffness: 300, damping: 24 }}
+                          className={`bg-gradient-to-br ${s.color} border ${s.border} p-4 shadow-sm`}
+                          style={{ borderRadius: "var(--leaf-r-lg)" }}
+                        >
+                          <span className="text-[24px] leading-none block mb-2">{s.emoji}</span>
+                          <p className={`font-baloo font-black text-[28px] leading-none ${s.text}`}>{s.value}</p>
+                          <p className="font-baloo font-black text-ds-text text-[11px] mt-1">{s.label}</p>
+                          <p className="text-ds-muted text-[9px] font-semibold mt-0.5">{s.sub}</p>
                         </motion.div>
                       ))}
                     </div>
+
+                    {/* Weekly Performance Summary */}
+                    {(() => {
+                      const totalSessions = active.weekActivity.reduce((a, b) => a + b, 0);
+                      const activeDays = active.weekActivity.filter(Boolean).length;
+                      const estMinutes = totalSessions * 5;
+                      const estDisplay = estMinutes >= 60
+                        ? `${Math.floor(estMinutes / 60)}h ${estMinutes % 60}m`
+                        : `${estMinutes}m`;
+                      const perfStars = activeDays >= 5 ? 3 : activeDays >= 3 ? 2 : activeDays >= 1 ? 1 : 0;
+                      const perfLabel = ["Not started 😴", "Getting going 🌱", "On track 📈", "On fire! 🔥"][perfStars];
+                      const perfColor = ["text-gray-400", "text-blue-600", "text-amber-600", "text-orange-600"][perfStars];
+                      const perfBg = ["bg-gray-50", "bg-blue-50", "bg-amber-50", "bg-orange-50"][perfStars];
+                      const perfBorder = ["border-gray-200", "border-blue-200", "border-amber-200", "border-orange-200"][perfStars];
+                      return (
+                        <div className={`${perfBg} border ${perfBorder} p-4 shadow-sm`} style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="font-baloo font-black text-ds-text text-[15px]">📅 This Week&apos;s Report</p>
+                            <div className="flex items-center gap-2">
+                              <span className={`font-black text-[12px] ${perfColor}`}>{perfLabel}</span>
+                              <button
+                                onClick={async () => {
+                                  const name = active.child.name;
+                                  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+                                  const dayLines = active.weekActivity.map((c, i) => c > 0 ? `  ${days[i]}: ${c} session${c !== 1 ? "s" : ""}` : null).filter(Boolean).join("\n");
+                                  const text = [
+                                    `📊 ${name}'s Weekly Learning Report — NIMIPIKO`,
+                                    ``,
+                                    `⏱️  ~${estDisplay} of quality learning`,
+                                    `📆  ${activeDays}/7 days active`,
+                                    `🎯  ${totalSessions} total sessions`,
+                                    `🔥  ${active.streak} day streak`,
+                                    `⭐  ${active.totalStars} stars earned`,
+                                    dayLines ? `\nBreakdown:\n${dayLines}` : "",
+                                    ``,
+                                    `nimipiko.com`,
+                                  ].filter(l => l !== undefined).join("\n");
+                                  try {
+                                    if (navigator.share) await navigator.share({ title: `${name}'s Weekly Report`, text });
+                                    else { await navigator.clipboard.writeText(text); setShareToast(true); setTimeout(() => setShareToast(false), 2500); }
+                                  } catch { /* cancelled */ }
+                                }}
+                                className="flex items-center gap-1 text-[11px] font-black text-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/30 px-2.5 py-1 rounded-full hover:opacity-80 transition"
+                              >
+                                {shareToast ? "✅ Copied!" : "📤 Share"}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                              { label: "Sessions",  value: totalSessions, icon: "🎯" },
+                              { label: "Learning",  value: estDisplay,    icon: "⏱️" },
+                              { label: "Days active", value: `${activeDays}/7`,  icon: "📆" },
+                            ].map(s => (
+                              <div key={s.label} className="text-center">
+                                <p className="text-[20px] leading-none">{s.icon}</p>
+                                <p className="font-baloo font-black text-ds-text text-[18px] mt-1 leading-none">{s.value}</p>
+                                <p className="text-ds-muted text-[9px] font-semibold mt-0.5">{s.label}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {totalSessions === 0 && (
+                            <p className="mt-3 text-center text-ds-muted text-[11px] font-semibold">
+                              No sessions logged yet — open NIMIPIKO together to begin! 🚀
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Today's Activity — daily digest card */}
                     {(() => {
@@ -995,33 +1302,55 @@ export default function ParentsZonePage() {
                       const todaySessions = active.weekActivity[todayIdx] ?? 0;
                       const goalPrefs = (() => { try { return JSON.parse(localStorage.getItem("nimipiko-parent-prefs") ?? "{}"); } catch { return {}; } })();
                       const dailyGoal = (goalPrefs.dailyGoal as number) || 2;
-                      const pct = Math.min(100, (todaySessions / dailyGoal) * 100);
+                      const pct = Math.min(1, todaySessions / dailyGoal);
                       const done = todaySessions >= dailyGoal;
+                      const C = 2 * Math.PI * 28; // r=28
                       return (
-                        <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-sm shrink-0 ${done ? "bg-[var(--nimi-green)]" : "bg-gradient-to-br from-blue-500 to-indigo-600"}`}>
-                              {done ? "✅" : "🎯"}
+                        <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                          <div className="flex items-center gap-4">
+                            {/* Circular ring */}
+                            <div className="relative shrink-0 w-[72px] h-[72px] flex items-center justify-center">
+                              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 72 72" style={{ transform: "rotate(-90deg)" }}>
+                                <circle cx="36" cy="36" r="28" fill="none" stroke="#e5e7eb" strokeWidth="6" />
+                                <motion.circle
+                                  cx="36" cy="36" r="28"
+                                  fill="none"
+                                  stroke={done ? "var(--nimi-green)" : "#6366f1"}
+                                  strokeWidth="6"
+                                  strokeLinecap="round"
+                                  strokeDasharray={`${C} ${C}`}
+                                  initial={{ strokeDashoffset: C }}
+                                  animate={{ strokeDashoffset: C * (1 - pct) }}
+                                  transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                                />
+                              </svg>
+                              <div className="text-center z-10">
+                                <p className={`font-baloo font-black text-[18px] leading-none ${done ? "text-[var(--nimi-green)]" : "text-indigo-600"}`}>
+                                  {todaySessions}
+                                </p>
+                                <p className="text-ds-muted text-[9px] font-bold leading-none">/{dailyGoal}</p>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <p className="font-black text-ds-text text-[16px] leading-tight">Today&apos;s Goal</p>
-                              <p className="text-ds-muted text-[12px] font-semibold">
-                                {done
-                                  ? `${active.child.name} hit the goal today! 🎉`
-                                  : `${todaySessions} of ${dailyGoal} sessions done`}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-baloo font-black text-ds-text text-[16px] leading-tight">
+                                {done ? "🎉 Goal Complete!" : "🎯 Today's Goal"}
                               </p>
+                              <p className="text-ds-muted text-[12px] font-semibold mt-0.5">
+                                {done
+                                  ? `${active.child.name} hit ${dailyGoal} sessions — great day!`
+                                  : `${Math.max(0, dailyGoal - todaySessions)} more ${dailyGoal - todaySessions === 1 ? "session" : "sessions"} to reach the daily target`}
+                              </p>
+                              {!done && (
+                                <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden w-full">
+                                  <motion.div
+                                    className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${pct * 100}%` }}
+                                    transition={{ duration: 0.7, ease: "easeOut" }}
+                                  />
+                                </div>
+                              )}
                             </div>
-                            <span className={`font-baloo font-black text-[22px] shrink-0 ${done ? "text-[var(--nimi-green)]" : "text-ds-text"}`}>
-                              {todaySessions}/{dailyGoal}
-                            </span>
-                          </div>
-                          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <motion.div
-                              className={`h-full rounded-full ${done ? "bg-[var(--nimi-green)]" : "bg-gradient-to-r from-blue-400 to-indigo-500"}`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${pct}%` }}
-                              transition={{ duration: 0.7, ease: "easeOut" }}
-                            />
                           </div>
                         </div>
                       );
@@ -1070,12 +1399,198 @@ export default function ParentsZonePage() {
                           );
                         })}
                       </div>
-                      {active.weekActivity.every(c => c === 0) && (
-                        <p className="text-center text-gray-400 text-[12px] mt-3 font-nunito">
-                          No activity yet this week — encourage {active.child.name} to start a story! 🚀
-                        </p>
-                      )}
+                      {/* Summary callout */}
+                      {(() => {
+                        const activeDays = active.weekActivity.filter(Boolean).length;
+                        const totalSessions = active.weekActivity.reduce((a, b) => a + b, 0);
+                        if (activeDays === 0) return (
+                          <div className="mt-3 flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-xl">
+                            <span className="text-xl">🌅</span>
+                            <p className="text-orange-700 text-[12px] font-semibold">No activity yet this week — encourage {active.child.name} to start a story! 🚀</p>
+                          </div>
+                        );
+                        if (activeDays >= 5) return (
+                          <div className="mt-3 flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                            <span className="text-xl">🏆</span>
+                            <p className="text-emerald-700 text-[12px] font-semibold">{activeDays}/7 days active · {totalSessions} total sessions — incredible week!</p>
+                          </div>
+                        );
+                        return (
+                          <div className="mt-3 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                            <span className="text-xl">📊</span>
+                            <p className="text-blue-700 text-[12px] font-semibold">{activeDays}/7 days active this week · {totalSessions} sessions completed</p>
+                          </div>
+                        );
+                      })()}
                     </div>
+
+                    {/* Monthly Activity Calendar */}
+                    {(() => {
+                      const dates = active.activityDates;
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const toStr = (d: Date) =>
+                        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                      // Build 10 weeks × 7 days grid (70 days back)
+                      const WEEKS = 10;
+                      const todayDow = (today.getDay() + 6) % 7; // Mon=0
+                      const gridStart = new Date(today);
+                      gridStart.setDate(today.getDate() - todayDow - (WEEKS - 1) * 7);
+                      const weeks: { str: string; active: boolean; future: boolean; today: boolean }[][] = [];
+                      for (let w = 0; w < WEEKS; w++) {
+                        const week: { str: string; active: boolean; future: boolean; today: boolean }[] = [];
+                        for (let d = 0; d < 7; d++) {
+                          const day = new Date(gridStart);
+                          day.setDate(gridStart.getDate() + w * 7 + d);
+                          const str = toStr(day);
+                          week.push({ str, active: dates.has(str), future: day > today, today: str === toStr(today) });
+                        }
+                        weeks.push(week);
+                      }
+                      const totalActive = Array.from({ length: WEEKS * 7 }, (_, i) => {
+                        const d = new Date(gridStart); d.setDate(gridStart.getDate() + i); return toStr(d);
+                      }).filter(s => dates.has(s)).length;
+                      const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+                      return (
+                        <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">🗓️</span>
+                              <h2 className="font-black text-ds-text text-[18px]">Activity Calendar</h2>
+                            </div>
+                            <span className="text-[11px] font-black text-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] px-2.5 py-1 rounded-full border border-[var(--ds-border-brand)]/30">
+                              {totalActive} days active
+                            </span>
+                          </div>
+                          {/* Grid */}
+                          <div className="flex gap-1.5 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+                            {/* Day labels column */}
+                            <div className="flex flex-col gap-1 shrink-0 pt-5">
+                              {DAY_LABELS.map((l, i) => (
+                                <div key={i} className="h-5 flex items-center">
+                                  <span className="text-[9px] font-bold text-ds-muted w-3">{i % 2 === 0 ? l : ""}</span>
+                                </div>
+                              ))}
+                            </div>
+                            {weeks.map((week, wi) => {
+                              const weekStart = week[0];
+                              const showMonth = wi === 0 || new Date(weekStart.str).getDate() <= 7;
+                              return (
+                                <div key={wi} className="flex flex-col gap-1 shrink-0">
+                                  <div className="h-4 flex items-end justify-center">
+                                    <span className="text-[8px] font-bold text-ds-muted leading-none">
+                                      {showMonth ? new Date(weekStart.str).toLocaleString("default", { month: "short" }) : ""}
+                                    </span>
+                                  </div>
+                                  {week.map((day, di) => (
+                                    <motion.div
+                                      key={di}
+                                      title={day.str}
+                                      initial={{ scale: 0.7, opacity: 0 }}
+                                      animate={{ scale: 1, opacity: 1 }}
+                                      transition={{ delay: (wi * 7 + di) * 0.003 }}
+                                      className={`w-5 h-5 rounded-sm transition-all ${
+                                        day.future
+                                          ? "bg-gray-50 border border-dashed border-gray-200"
+                                          : day.active
+                                            ? "bg-[var(--ds-brand-primary)] shadow-[0_2px_6px_var(--ds-brand-primary)/40]"
+                                            : "bg-gray-100"
+                                      } ${day.today ? "ring-2 ring-[var(--ds-brand-primary)] ring-offset-1" : ""}`}
+                                    />
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {/* Legend */}
+                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-ds-border">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3.5 h-3.5 rounded-sm bg-[var(--ds-brand-primary)]" />
+                              <span className="text-[10px] text-ds-muted font-semibold">Active day</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3.5 h-3.5 rounded-sm bg-gray-100" />
+                              <span className="text-[10px] text-ds-muted font-semibold">No activity</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3.5 h-3.5 rounded-sm ring-2 ring-[var(--ds-brand-primary)] ring-offset-1" />
+                              <span className="text-[10px] text-ds-muted font-semibold">Today</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* How They Felt — overview card (most recent 4) */}
+                    {feelings.length > 0 && (
+                      <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xl">💭</span>
+                          <h2 className="font-black text-ds-text text-[18px]">Emotional Snapshots</h2>
+                          <span className="ml-auto text-[11px] text-ds-muted font-semibold">After stories</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {feelings.slice(0, 4).map((f, i) => (
+                            <motion.div key={i}
+                              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: i * 0.06 }}
+                              className="flex items-center gap-3 bg-pink-50 border border-pink-100 px-3 py-2.5"
+                              style={{ borderRadius: "var(--leaf-r)" }}
+                            >
+                              <span className="text-[26px] shrink-0 leading-none">{f.feeling}</span>
+                              <div className="min-w-0">
+                                <p className="font-black text-ds-text text-[12px] truncate leading-tight">{f.title}</p>
+                                <p className="text-pink-400 text-[10px] font-semibold mt-0.5">
+                                  {new Date(f.felt_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                </p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                        {feelings.length > 4 && (
+                          <button
+                            onClick={() => setParentTab("achievements")}
+                            className="mt-2.5 w-full text-[11px] font-black text-[var(--ds-brand-primary)] hover:underline"
+                          >
+                            See all {feelings.length} reactions →
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Smart Coaching Tip */}
+                    {(() => {
+                      const todayIdx = (new Date().getDay() + 6) % 7;
+                      const todaySessions = active.weekActivity[todayIdx] ?? 0;
+                      const goalPrefs = (() => { try { return JSON.parse(localStorage.getItem("nimipiko-parent-prefs") ?? "{}"); } catch { return {}; } })();
+                      const dailyGoal = (goalPrefs.dailyGoal as number) || 2;
+                      let tip: { emoji: string; title: string; desc: string; cta: string; href: string; bg: string; border: string; text: string };
+                      if (todaySessions >= dailyGoal) {
+                        tip = { emoji: "🎉", title: "Daily goal reached!", desc: `${active.child.name} completed all ${dailyGoal} sessions today. Celebrate this win!`, cta: "See achievements →", href: "#", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" };
+                      } else if (todaySessions === 0) {
+                        tip = { emoji: "⏰", title: "Start today's learning", desc: `${active.child.name} hasn't practiced yet. Even 10 minutes makes a big difference.`, cta: "Open Stories →", href: "/stories", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700" };
+                      } else if (active.streak === 0) {
+                        tip = { emoji: "🔥", title: "Build a streak today!", desc: `Complete one more activity to start a learning streak — kids love seeing that flame grow.`, cta: "Continue learning →", href: "/stories", bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700" };
+                      } else if (active.streak >= 7) {
+                        tip = { emoji: "🌟", title: `${active.streak}-day streak — incredible!`, desc: `${active.child.name} has been consistent all week. Keep going — streaks build lifelong habits.`, cta: "Keep the streak →", href: "/stories", bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700" };
+                      } else {
+                        tip = { emoji: "💡", title: `${active.child.name} is making progress!`, desc: `${storiesComplete} ${storiesComplete === 1 ? "story" : "stories"} completed · ${active.totalStars} stars earned. Keep encouraging daily reading.`, cta: "View stories →", href: "/stories", bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700" };
+                      }
+                      return (
+                        <div className={`${tip.bg} border ${tip.border} p-4 flex items-start gap-3`} style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                          <span className="text-[28px] leading-none shrink-0 mt-0.5">{tip.emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-baloo font-black text-[15px] ${tip.text}`}>{tip.title}</p>
+                            <p className="text-ds-muted text-[12px] font-semibold mt-0.5 leading-snug">{tip.desc}</p>
+                            {tip.href !== "#" && (
+                              <Link href={tip.href} className={`inline-block mt-2 text-[11px] font-black ${tip.text} hover:underline`}>
+                                {tip.cta}
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Current Story */}
                     <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
@@ -1141,6 +1656,34 @@ export default function ParentsZonePage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Referral teaser — only if parent has never referred anyone */}
+                    {referralCode && referralCount === 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 p-4 flex items-center gap-4"
+                        style={{ borderRadius: "var(--leaf-r-lg)" }}
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl shadow-md shrink-0">🎁</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-baloo font-black text-ds-text text-[15px]">Know another parent?</p>
+                          <p className="text-ds-muted text-[12px] font-semibold mt-0.5">Share your code <strong className="text-indigo-600">{referralCode}</strong> — they get a free week, you get a free month!</p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const text = `Try NIMIPIKO for kids — use my code ${referralCode} for a free week! nimipiko.com`;
+                            try {
+                              if (navigator.share) await navigator.share({ text });
+                              else { await navigator.clipboard.writeText(text); setShareToast(true); setTimeout(() => setShareToast(false), 2500); }
+                            } catch { /* cancelled */ }
+                          }}
+                          className="shrink-0 px-3 py-2 bg-indigo-600 text-white font-black text-[11px] rounded-xl hover:bg-indigo-700 transition"
+                        >
+                          {shareToast ? "✅ Copied!" : "Invite"}
+                        </button>
+                      </motion.div>
+                    )}
                   </motion.div>
                 )}
 
@@ -1150,55 +1693,146 @@ export default function ParentsZonePage() {
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="text-xl">📚</span>
-                        <h2 className="font-black text-ds-text text-[18px]">{t("allStories")}</h2>
-                        <span className="ml-auto text-[12px] font-bold text-ds-muted">{storiesComplete}/{totalStories} done</span>
-                      </div>
-                      {/* Progress bar */}
-                      <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden mb-4">
-                        <motion.div
-                          className="bg-cta-gradient h-full rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${totalStories > 0 ? (storiesComplete / totalStories) * 100 : 0}%` }}
-                          transition={{ duration: 0.8, ease: "easeOut" }}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        {active.stories.map((story, i) => (
-                          <motion.div key={story.sid}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            className={`flex items-center gap-3 p-3 border-2 ${
-                              story.complete ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-border-brand)]/30"
-                                : story.unlocked ? "bg-yellow-50 border-yellow-200"
-                                : "bg-gray-100 border-ds-border opacity-60"
-                            }`}
-                            style={{ borderRadius: 'var(--leaf-r)' }}>
-                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-[18px] font-black shadow-md shrink-0 ${
-                              story.complete ? "bg-[var(--nimi-green)] text-white" : story.unlocked ? "bg-yellow-500 text-white" : "bg-gray-200 text-gray-400"
-                            }`}>
-                              {story.sort_order}
+                    {/* Curriculum Progress Ring */}
+                    {(() => {
+                      const pct = totalStories > 0 ? storiesComplete / totalStories : 0;
+                      const C = 2 * Math.PI * 36;
+                      const langLabel = active.child.language === "fr" ? "French" : active.child.language === "rw" ? "Kinyarwanda" : "English";
+                      const milestones = [
+                        { at: 0.25, label: "Explorer",  emoji: "🧭" },
+                        { at: 0.5,  label: "Halfway",   emoji: "⭐" },
+                        { at: 0.75, label: "Champion",  emoji: "🏆" },
+                        { at: 1,    label: "Legend",    emoji: "👑" },
+                      ];
+                      const nextMilestone = milestones.find(m => pct < m.at);
+                      return (
+                        <div className="bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200 p-5 flex items-center gap-5 shadow-sm" style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                          {/* Ring */}
+                          <div className="relative shrink-0 w-[88px] h-[88px] flex items-center justify-center">
+                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 88 88" style={{ transform: "rotate(-90deg)" }}>
+                              <circle cx="44" cy="44" r="36" fill="none" stroke="#e0f2fe" strokeWidth="7" />
+                              <motion.circle
+                                cx="44" cy="44" r="36"
+                                fill="none" stroke="#0ea5e9" strokeWidth="7" strokeLinecap="round"
+                                strokeDasharray={`${C} ${C}`}
+                                initial={{ strokeDashoffset: C }}
+                                animate={{ strokeDashoffset: C * (1 - pct) }}
+                                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+                              />
+                            </svg>
+                            <div className="text-center z-10">
+                              <p className="font-baloo font-black text-sky-700 text-[20px] leading-none">{Math.round(pct * 100)}%</p>
+                              <p className="text-sky-500 text-[9px] font-bold leading-none mt-0.5">done</p>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`font-black text-[14px] truncate ${story.unlocked ? "text-ds-text" : "text-gray-400"}`}>
-                                {story.theme_emoji} {story.title}
-                              </p>
-                              {story.unlocked && !story.complete && (
-                                <div className="mt-1 bg-gray-100 rounded-full h-2 overflow-hidden w-32">
+                          </div>
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-baloo font-black text-ds-text text-[16px] leading-tight">
+                              {active.child.name}&apos;s {langLabel} Journey
+                            </p>
+                            <p className="text-sky-600 font-bold text-[12px] mt-0.5">
+                              {storiesComplete} of {totalStories} stories complete
+                            </p>
+                            {nextMilestone && pct < 1 && (
+                              <div className="mt-2 flex items-center gap-1.5">
+                                <div className="flex-1 h-1.5 bg-sky-100 rounded-full overflow-hidden">
+                                  <motion.div
+                                    className="h-full rounded-full bg-sky-400"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${(pct / nextMilestone.at) * 100}%` }}
+                                    transition={{ duration: 0.9, ease: "easeOut", delay: 0.4 }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-black text-sky-600 shrink-0">
+                                  {nextMilestone.emoji} {nextMilestone.label}
+                                </span>
+                              </div>
+                            )}
+                            {pct >= 1 && (
+                              <p className="mt-1 text-[12px] font-black text-emerald-600">👑 Curriculum complete!</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {(() => {
+                      const completed   = active.stories.filter(s => s.complete);
+                      const inProgress  = active.stories.filter(s => s.unlocked && !s.complete);
+                      const upcoming    = active.stories.filter(s => !s.unlocked);
+
+                      const StoryRow = ({ story, i }: { story: typeof active.stories[0]; i: number }) => (
+                        <motion.div key={story.sid}
+                          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.04 }}
+                          className={`flex items-center gap-3 p-3 border-2 ${
+                            story.complete
+                              ? "bg-[var(--ds-brand-subtle)] border-[var(--ds-border-brand)]/30"
+                              : story.unlocked
+                                ? "bg-yellow-50 border-yellow-200"
+                                : "bg-gray-50 border-ds-border opacity-70"
+                          }`}
+                          style={{ borderRadius: "var(--leaf-r)" }}
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[16px] font-black shadow-sm shrink-0 ${
+                            story.complete ? "bg-[var(--nimi-green)] text-white" : story.unlocked ? "bg-yellow-500 text-white" : "bg-gray-200 text-gray-400"
+                          }`}>
+                            {story.sort_order}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-black text-[13px] truncate ${story.unlocked ? "text-ds-text" : "text-gray-400"}`}>
+                              {story.theme_emoji} {story.title}
+                            </p>
+                            {story.unlocked && !story.complete && (
+                              <div className="mt-1.5 flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                   <div className="bg-yellow-400 h-full rounded-full" style={{ width: `${story.progress * 100}%` }} />
                                 </div>
-                              )}
+                                <span className="text-[10px] font-black text-yellow-600">{Math.round(story.progress * 100)}%</span>
+                              </div>
+                            )}
+                          </div>
+                          {story.complete && <span className="text-emerald-600 text-[11px] font-black shrink-0">✅ Done</span>}
+                          {!story.unlocked && <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
+                        </motion.div>
+                      );
+
+                      const Section = ({ label, emoji, color, children }: { label: string; emoji: string; color: string; children: React.ReactNode }) => (
+                        <div className="bg-white border border-ds-border p-5 shadow-ds-card space-y-2" style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                          <p className={`font-baloo font-black text-[13px] uppercase tracking-wide flex items-center gap-1.5 mb-3 ${color}`}>
+                            <span>{emoji}</span>{label}
+                          </p>
+                          {children}
+                        </div>
+                      );
+
+                      return (
+                        <div className="space-y-4">
+                          {inProgress.length > 0 && (
+                            <Section label={`In Progress · ${inProgress.length}`} emoji="📖" color="text-yellow-700">
+                              {inProgress.map((s, i) => <StoryRow key={s.sid} story={s} i={i} />)}
+                            </Section>
+                          )}
+                          {completed.length > 0 && (
+                            <Section label={`Completed · ${completed.length}`} emoji="✅" color="text-emerald-700">
+                              {completed.map((s, i) => <StoryRow key={s.sid} story={s} i={i} />)}
+                            </Section>
+                          )}
+                          {upcoming.length > 0 && (
+                            <Section label={`Coming Up · ${upcoming.length}`} emoji="🔒" color="text-gray-500">
+                              {upcoming.map((s, i) => <StoryRow key={s.sid} story={s} i={i} />)}
+                            </Section>
+                          )}
+                          {active.stories.length === 0 && (
+                            <div className="bg-white border border-ds-border p-8 text-center shadow-ds-card" style={{ borderRadius: "var(--leaf-r-lg)" }}>
+                              <p className="text-4xl mb-3">📚</p>
+                              <p className="font-black text-ds-text text-[15px]">No stories yet</p>
+                              <p className="text-ds-muted text-[12px] mt-1">Stories will appear as {active.child.name} starts learning.</p>
                             </div>
-                            {story.complete && <span className="text-[var(--ds-brand-primary)] text-[12px] font-black shrink-0">✅ Done</span>}
-                            {story.unlocked && !story.complete && <span className="text-yellow-600 text-[11px] font-black shrink-0">{Math.round(story.progress * 100)}%</span>}
-                            {!story.unlocked && <Lock className="w-4 h-4 text-gray-400 shrink-0" />}
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </motion.div>
                 )}
 
@@ -1230,27 +1864,32 @@ export default function ParentsZonePage() {
                             />
                           </div>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-                            {badges.map((b, i) => (
-                              <motion.div key={b.slug}
+                            {badges.map((b, i) => {
+                              const meta = resolveBadgeMeta(b.slug);
+                              return (
+                              <motion.div key={b.slug + i}
                                 initial={{ opacity: 0, scale: 0.7 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 18 }}
                                 className="flex flex-col items-center gap-2 text-center"
                               >
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-b from-amber-300 to-yellow-500 ring-[3px] ring-amber-400 shadow-[0_6px_20px_rgba(251,191,36,0.45)] relative">
-                                  <span className="text-3xl leading-none select-none">🏅</span>
-                                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
+                                <motion.div
+                                  animate={{ y: [0, -3, 0] }}
+                                  transition={{ duration: 2.8, repeat: Infinity, delay: i * 0.2 }}
+                                  className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-b from-amber-300 to-yellow-500 ring-[3px] ring-amber-400 shadow-[0_6px_20px_rgba(251,191,36,0.45)] relative"
+                                >
+                                  <span className="text-3xl leading-none select-none">{meta.emoji}</span>
+                                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
                                     <span className="text-[8px] text-white font-black">✓</span>
                                   </div>
-                                </div>
-                                <p className="font-nunito font-bold text-[11px] text-ds-text leading-tight capitalize">
-                                  {b.slug.replace(/-/g, " ")}
-                                </p>
+                                </motion.div>
+                                <p className="font-nunito font-bold text-[11px] text-ds-text leading-tight max-w-[72px]">{meta.label}</p>
                                 <p className="text-[9px] text-ds-muted">
                                   {new Date(b.earned_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                                 </p>
                               </motion.div>
-                            ))}
+                              );
+                            })}
                             {/* "Next" placeholder */}
                             <motion.div
                               initial={{ opacity: 0, scale: 0.7 }}
@@ -1291,20 +1930,32 @@ export default function ParentsZonePage() {
                           <span className="ml-auto text-[12px] font-bold text-ds-muted">{certs.length} earned</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {certs.map((c, i) => (
+                          {certs.map((c, i) => {
+                            const withoutLang = c.slug.replace(/-(?:en|fr|rw)$/, "");
+                            const withoutCert = withoutLang.replace(/-certificate$/, "");
+                            const withoutStory = withoutCert.replace(/^story-/, "");
+                            const certLabel = withoutStory.replace(/-/g, " ").replace(/\b\w/g, ch => ch.toUpperCase());
+                            return (
                             <motion.div key={c.slug}
                               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-                              className="flex items-center gap-3 p-4 bg-gradient-to-r from-[var(--ds-brand-subtle)] to-emerald-50 border border-[var(--ds-border-brand)]/30"
-                              style={{ borderRadius: 'var(--leaf-r)' }}
+                              className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200/60"
+                              style={{ borderRadius: "var(--leaf-r)" }}
                             >
-                              <div className="w-12 h-12 bg-[var(--nimi-green)] rounded-2xl flex items-center justify-center text-2xl shadow-md shrink-0">🎓</div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-ds-text text-[14px] font-black capitalize leading-tight">{c.slug.replace(/-/g, " ")}</p>
-                                <p className="text-ds-muted text-[11px] mt-0.5">{new Date(c.earned_at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</p>
+                              {/* Mini cert thumbnail */}
+                              <div className="w-11 h-14 rounded-lg bg-gradient-to-b from-amber-300 to-amber-500 flex flex-col items-center justify-center gap-0.5 shrink-0 shadow-sm border border-amber-400/40">
+                                <span className="text-white text-[20px] leading-none">🎓</span>
+                                <div className="w-7 h-px bg-white/60" />
+                                <div className="w-5 h-px bg-white/40" />
                               </div>
-                              <CheckCircle2 className="w-5 h-5 text-[var(--ds-brand-primary)] shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-ds-text text-[13px] font-black leading-tight truncate">{certLabel}</p>
+                                <p className="text-amber-600 text-[10px] font-semibold mt-0.5 uppercase">{c.language}</p>
+                                <p className="text-ds-muted text-[10px] mt-0.5">{new Date(c.earned_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>
+                              </div>
+                              <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
                             </motion.div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -1472,6 +2123,7 @@ export default function ParentsZonePage() {
                 totalStars: stars,
                 weekActivity,
                 cosmetics: { nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null },
+              activityDates: new Set<string>(),
               }]);
               setSelectedChild(child.id);
             }}

@@ -25,7 +25,7 @@ export default function ChildAvatar({ avatarUrl, name, size = 40, className = ""
     return <AvatarSvg config={config} size={size} className={className} />;
   }
 
-  if (avatarUrl?.startsWith("http")) {
+  if (avatarUrl?.startsWith("http") || avatarUrl?.startsWith("blob:")) {
     return (
       <img
         src={avatarUrl}

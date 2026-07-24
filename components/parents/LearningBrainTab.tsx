@@ -19,7 +19,7 @@ import supabase from "@/lib/supabaseClient";
 import { authedFetch } from "@/lib/authedFetch";
 import { getLearningProfile, type LearningProfile, type ReadingLevel } from "@/lib/learningProfile";
 import { getVocabProgress, type VocabProgress } from "@/lib/vocabularyProgress";
-import { getActiveGoals, type LearningGoal, type GoalType } from "@/lib/learningGoals";
+import { getActiveGoals, generateGoals, type LearningGoal, type GoalType } from "@/lib/learningGoals";
 import { Bone } from "@/components/ui/Bone";
 import InsightsPanel from "@/components/parents/InsightsPanel";
 import RecommendationsPanel from "@/components/parents/RecommendationsPanel";
@@ -71,10 +71,21 @@ const GOAL_TYPE_EMOJI: Record<GoalType, string> = {
 };
 
 const QUESTION_TYPE_LABEL: Record<string, string> = {
-  comprehension: "Comprehension",
-  vocabulary:    "Vocabulary",
-  recall:        "Recall",
+  comprehension:   "Comprehension",
+  vocabulary:      "Vocabulary",
+  recall:          "Recall",
+  phonics:         "Phonics",
+  reading:         "Reading",
+  grammar:         "Grammar",
+  listening:       "Listening",
+  sequencing:      "Sequencing",
+  inference:       "Inference",
+  main_idea:       "Main Idea",
 };
+
+function qtLabel(type: string): string {
+  return QUESTION_TYPE_LABEL[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -93,16 +104,34 @@ export default function LearningBrainTab({ childId, language, childName }: Props
 
   useEffect(() => {
     setLoading(true);
-    void Promise.all([
-      getLearningProfile(supabase, childId),
-      getVocabProgress(supabase, childId, language),
-      getActiveGoals(supabase, childId, language),
-    ]).then(([p, v, g]) => {
+    async function load() {
+      const [p, v] = await Promise.all([
+        getLearningProfile(supabase, childId).catch(() => null),
+        getVocabProgress(supabase, childId, language).catch(() => null),
+      ]);
       setProfile(p);
       setVocab(v);
-      setGoals(g);
+
+      // Goals: fetch existing first; if empty, trigger generation then re-fetch.
+      // We separate the generate (write) from the read so JSON parsing issues
+      // with the generate RPC's jsonb return don't cause a false empty result.
+      try {
+        let g = await getActiveGoals(supabase, childId, language);
+        if (g.length === 0) {
+          // Trigger generation (idempotent RPC — safe to call repeatedly)
+          await generateGoals(supabase, childId, language);
+          // Re-fetch now that the rows are committed
+          g = await getActiveGoals(supabase, childId, language);
+        }
+        setGoals(g);
+      } catch (err) {
+        console.error("[LearningBrainTab] goals:", err);
+        setGoals([]);
+      }
+
       setLoading(false);
-    });
+    }
+    void load();
   }, [childId, language]);
 
   // ── AI data (insights + recommendations — single fetch) ───────────────────
@@ -285,27 +314,18 @@ export default function LearningBrainTab({ childId, language, childName }: Props
         </div>
       </div>
 
-      {/* ── Vocabulary Growth ────────────────────────────────────────────────── */}
+      {/* ── Vocabulary Growth — only shown when child has vocab data ─────────── */}
+      {hasVocab && (
       <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: "var(--leaf-r-lg)" }}>
         <div className="flex items-center gap-2 mb-5">
           <span className="text-xl">📝</span>
           <h2 className="font-black text-ds-text text-[18px]">Vocabulary Growth</h2>
-          {hasVocab && (
-            <span className="ml-auto text-[12px] font-black text-ds-muted">
-              {vocab!.masteryPct}% mastered
-            </span>
-          )}
+          <span className="ml-auto text-[12px] font-black text-ds-muted">
+            {vocab!.masteryPct}% mastered
+          </span>
         </div>
 
-        {!hasVocab ? (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <span className="text-4xl">📖</span>
-            <p className="font-black text-ds-text text-[15px]">No vocabulary data yet</p>
-            <p className="text-gray-400 text-[12px] font-nunito">
-              Words {childName} encounters in stories will appear here as they learn.
-            </p>
-          </div>
-        ) : (
+        {true ? (
           <>
             {/* Three stat chips */}
             <div className="grid grid-cols-3 gap-3 mb-5">
@@ -396,8 +416,9 @@ export default function LearningBrainTab({ childId, language, childName }: Props
               </div>
             )}
           </>
-        )}
+        ) : null}
       </div>
+      )}
 
       {/* ── Learning Goals ──────────────────────────────────────────────────── */}
       <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: "var(--leaf-r-lg)" }}>
@@ -407,13 +428,9 @@ export default function LearningBrainTab({ childId, language, childName }: Props
         </div>
 
         {!hasGoals ? (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <span className="text-4xl">💤</span>
-            <p className="font-black text-ds-text text-[15px]">No goals generated yet</p>
-            <p className="text-gray-400 text-[12px] font-nunito">
-              Goals appear here once {childName} opens the app and chats with Nimi.
-            </p>
-          </div>
+          <p className="text-ds-muted text-[13px] font-semibold py-4 text-center">
+            Goals are being set up for {childName}…
+          </p>
         ) : (
           <div className="space-y-5">
             {dailyGoals.length > 0 && (
@@ -440,103 +457,89 @@ export default function LearningBrainTab({ childId, language, childName }: Props
         )}
       </div>
 
-      {/* ── Quiz Performance ────────────────────────────────────────────────── */}
+      {/* ── Quiz Performance — only shown when child has quiz data ──────────── */}
+      {hasQuizData && (
       <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: "var(--leaf-r-lg)" }}>
         <div className="flex items-center gap-2 mb-5">
           <span className="text-xl">🧠</span>
           <h2 className="font-black text-ds-text text-[18px]">Quiz Performance</h2>
         </div>
 
-        {!hasQuizData ? (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <span className="text-4xl">🎮</span>
-            <p className="font-black text-ds-text text-[15px]">No quiz data yet</p>
-            <p className="text-gray-400 text-[12px] font-nunito">
-              {childName}&apos;s quiz answers with Nimi will appear here over time.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Accuracy row */}
-            <div className="flex items-center gap-4">
-              {/* Circular accuracy display */}
-              <div className="relative w-20 h-20 shrink-0">
-                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="32" fill="none" stroke="#f3f4f6" strokeWidth="8" />
-                  <motion.circle
-                    cx="40" cy="40" r="32" fill="none"
-                    stroke={
-                      (profile?.quiz.accuracyPct ?? 0) >= 70 ? "#10b981"
-                      : (profile?.quiz.accuracyPct ?? 0) >= 50 ? "#f59e0b"
-                      : "#ef4444"
-                    }
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 32}`}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 32 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 32 * (1 - (profile?.quiz.accuracyPct ?? 0) / 100) }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-black text-ds-text text-[18px] leading-none">{profile?.quiz.accuracyPct ?? 0}%</span>
-                  <span className="text-[8px] text-ds-muted font-bold">accuracy</span>
-                </div>
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <p className="font-black text-ds-text text-[15px]">
-                  {(profile?.quiz.accuracyPct ?? 0) >= 80 ? "Excellent! 🌟" : (profile?.quiz.accuracyPct ?? 0) >= 60 ? "Good progress 👍" : "Keep practicing! 💪"}
-                </p>
-                <p className="text-ds-muted text-[12px] font-semibold mt-0.5">
-                  {profile?.quiz.totalQuestions ?? 0} quiz question{(profile?.quiz.totalQuestions ?? 0) !== 1 ? "s" : ""} answered
-                </p>
-                <p className="text-ds-muted text-[12px] font-semibold">
-                  {profile?.quiz.correct ?? 0} correct answers
-                </p>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 shrink-0">
+              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="32" fill="none" stroke="#f3f4f6" strokeWidth="8" />
+                <motion.circle
+                  cx="40" cy="40" r="32" fill="none"
+                  stroke={
+                    (profile?.quiz.accuracyPct ?? 0) >= 70 ? "#10b981"
+                    : (profile?.quiz.accuracyPct ?? 0) >= 50 ? "#f59e0b"
+                    : "#ef4444"
+                  }
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 32}`}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 32 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 32 * (1 - (profile?.quiz.accuracyPct ?? 0) / 100) }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-black text-ds-text text-[18px] leading-none">{profile?.quiz.accuracyPct ?? 0}%</span>
+                <span className="text-[8px] text-ds-muted font-bold">accuracy</span>
               </div>
             </div>
-
-            {/* Strengths */}
-            {(profile?.strengths?.length ?? 0) > 0 && (
-              <div>
-                <p className="text-[11px] font-black text-ds-muted uppercase tracking-widest mb-2">Strengths</p>
-                <div className="flex flex-wrap gap-2">
-                  {profile!.strengths.map(s => (
-                    <span key={s} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold rounded-full">
-                      ✅ {QUESTION_TYPE_LABEL[s] ?? s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Weaknesses */}
-            {(profile?.weaknesses?.length ?? 0) > 0 && (
-              <div>
-                <p className="text-[11px] font-black text-ds-muted uppercase tracking-widest mb-2">Needs Practice</p>
-                <div className="flex flex-wrap gap-2">
-                  {profile!.weaknesses.map(w => (
-                    <span key={w} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold rounded-full">
-                      🎯 {QUESTION_TYPE_LABEL[w] ?? w}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-gray-400 text-[11px] mt-2 font-nunito">
-                  Nimi automatically spends more time on these question types to build the skill.
-                </p>
-              </div>
-            )}
-
-            {/* Neither strengths nor weaknesses yet (few data points) */}
-            {(profile?.strengths?.length ?? 0) === 0 && (profile?.weaknesses?.length ?? 0) === 0 && hasQuizData && (
-              <p className="text-gray-400 text-[12px] font-nunito">
-                Strengths and weaknesses will appear once {childName} has answered at least 3 questions per type.
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-ds-text text-[15px]">
+                {(profile?.quiz.accuracyPct ?? 0) >= 80 ? "Excellent! 🌟" : (profile?.quiz.accuracyPct ?? 0) >= 60 ? "Good progress 👍" : "Keep practicing! 💪"}
               </p>
-            )}
+              <p className="text-ds-muted text-[12px] font-semibold mt-0.5">
+                {profile?.quiz.totalQuestions ?? 0} question{(profile?.quiz.totalQuestions ?? 0) !== 1 ? "s" : ""} answered
+              </p>
+              <p className="text-ds-muted text-[12px] font-semibold">
+                {profile?.quiz.correct ?? 0} correct
+              </p>
+            </div>
           </div>
-        )}
+
+          {(profile?.strengths?.length ?? 0) > 0 && (
+            <div>
+              <p className="text-[11px] font-black text-ds-muted uppercase tracking-widest mb-2">Strengths</p>
+              <div className="flex flex-wrap gap-2">
+                {profile!.strengths.map(s => (
+                  <span key={s} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold rounded-full">
+                    ✅ {qtLabel(s)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(profile?.weaknesses?.length ?? 0) > 0 && (
+            <div>
+              <p className="text-[11px] font-black text-ds-muted uppercase tracking-widest mb-2">Needs Practice</p>
+              <div className="flex flex-wrap gap-2">
+                {profile!.weaknesses.map(w => (
+                  <span key={w} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold rounded-full">
+                    🎯 {qtLabel(w)}
+                  </span>
+                ))}
+              </div>
+              <p className="text-gray-400 text-[11px] mt-2 font-nunito">
+                Nimi automatically focuses more on these question types to build the skill.
+              </p>
+            </div>
+          )}
+
+          {(profile?.strengths?.length ?? 0) === 0 && (profile?.weaknesses?.length ?? 0) === 0 && (
+            <p className="text-gray-400 text-[12px] font-nunito">
+              Strengths and weaknesses appear once {childName} has answered at least 3 questions per type.
+            </p>
+          )}
+        </div>
       </div>
+      )}
 
       {/* ── Screen Time ────────────────────────────────────────────────────── */}
       <ScreenTimePanel childId={childId} childName={childName} ageYears={profile?.age ?? null} />
@@ -567,9 +570,9 @@ function GoalRow({ goal, index }: { goal: LearningGoal; index: number }) {
         <span className="text-xl shrink-0">{GOAL_TYPE_EMOJI[goal.goalType]}</span>
         <div className="flex-1 min-w-0">
           <p className={`font-black text-[13px] leading-tight ${done ? "text-emerald-700" : "text-ds-text"}`}>
-            {goal.title}
+            {goal.title || GOAL_TYPE_LABEL[goal.goalType] || goal.goalType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
           </p>
-          <p className="text-[10px] text-ds-muted font-semibold">{GOAL_TYPE_LABEL[goal.goalType]}</p>
+          <p className="text-[10px] text-ds-muted font-semibold">{GOAL_TYPE_LABEL[goal.goalType] ?? goal.goalType}</p>
         </div>
         <div className="shrink-0 flex items-center gap-1.5">
           {done ? (

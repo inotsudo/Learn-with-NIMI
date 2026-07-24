@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { X, LogOut, Crown } from "lucide-react";
+import { X, LogOut, Crown, ChevronRight } from "lucide-react";
+import ChildAvatar from "@/components/avatar/ChildAvatar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -39,15 +40,23 @@ export default function Sidebar({ activeChild, isOpen, onClose, onLogoutClick }:
   const pathname = usePathname();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);
-  const [isClub, setIsClub] = useState<boolean | null>(null);
+  const [isClub, setIsClub]         = useState<boolean | null>(null);
+  const [parentName, setParentName] = useState<string>("");
+  const [parentAvatar, setParentAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setIsClub(false); return; }
-      const sub = await getActiveSubscription(user.id);
+      const [sub, row] = await Promise.all([
+        getActiveSubscription(user.id),
+        supabase.from("parents").select("name").eq("id", user.id).maybeSingle(),
+      ]);
       setIsClub(sub !== null);
+      setParentName(row.data?.name ?? user.email?.split("@")[0] ?? "Parent");
     })();
+    const stored = typeof window !== "undefined" ? localStorage.getItem("nimipiko-parent-avatar") : null;
+    setParentAvatar(stored);
   }, []);
 
   const content = (
@@ -146,10 +155,37 @@ export default function Sidebar({ activeChild, isOpen, onClose, onLogoutClick }:
         </div>
       )}
 
+      {/* Parent account chip */}
+      <Link
+        href="/parents"
+        onClick={onClose}
+        className="mt-3 flex items-center gap-2 px-3 py-2.5 leaf border border-ds-border bg-white/80 hover:bg-gray-50 transition-all duration-200 group"
+      >
+        <div className="relative shrink-0">
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-[var(--ds-brand-subtle)] border-2 border-[var(--ds-brand-primary)]/30 flex items-center justify-center">
+            {parentAvatar ? (
+              <ChildAvatar avatarUrl={parentAvatar} size={32} />
+            ) : (
+              <span className="text-[13px] font-black text-[var(--ds-brand-primary)]">
+                {parentName.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 border border-white flex items-center justify-center text-[8px]">
+            👑
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-baloo font-black text-ds-text text-[12px] truncate leading-tight">{parentName}</p>
+          <p className="text-[9px] text-ds-muted font-semibold leading-none mt-0.5">Parent Account</p>
+        </div>
+        <ChevronRight className="w-3.5 h-3.5 text-ds-muted shrink-0 group-hover:text-ds-text transition-colors" />
+      </Link>
+
       {/* Logout */}
       <button
         onClick={() => { onClose(); onLogoutClick(); }}
-        className="mt-3 flex items-center gap-2 px-3 py-2 leaf font-nunito font-bold text-[12px] bg-red-50 text-red-500 hover:bg-red-100 transition-all duration-200 hover:shadow-sm"
+        className="mt-1.5 flex items-center gap-2 px-3 py-2 leaf font-nunito font-bold text-[12px] bg-red-50 text-red-500 hover:bg-red-100 transition-all duration-200 hover:shadow-sm"
       >
         <LogOut className="w-4 h-4 shrink-0" />
         <span>{t("authLogout")}</span>

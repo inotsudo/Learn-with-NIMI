@@ -210,6 +210,20 @@ export default function AppShell({ children }: AppShellProps) {
     return () => window.removeEventListener("app:childSwitch", handler as EventListener);
   }, []);
 
+  // Reflects profile edits (name / avatar) saved from any page
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { childId, name, avatarUrl } = (e as CustomEvent<{ childId: string; name: string; avatarUrl: string }>).detail ?? {};
+      const current = activeChildRef.current;
+      if (!current || current.id !== childId) return;
+      const updated = { ...current, name, avatar_url: avatarUrl };
+      activeChildRef.current = updated;
+      setActiveChild(updated);
+    };
+    window.addEventListener("app:profileUpdate", handler as EventListener);
+    return () => window.removeEventListener("app:profileUpdate", handler as EventListener);
+  }, []);
+
   // Reflects journey-language switches fired from anywhere in the app
   // (this header picker, /settings, the homepage language badges) into the
   // sidebar's own per-language streak.
@@ -525,7 +539,10 @@ export default function AppShell({ children }: AppShellProps) {
                       <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={32} />
                     </div>
                     <div className="hidden md:block text-left leading-none">
-                      <p className="font-baloo font-black text-gray-800 text-[13px] leading-none">Hi, {activeChild.name}!</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-baloo font-black text-gray-800 text-[13px] leading-none">{activeChild.name}</p>
+                        <span className="text-[8px] font-black px-1 py-0.5 rounded-full bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] border border-[var(--ds-brand-primary)]/20 leading-none">🧒 Child</span>
+                      </div>
                       {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] ? (
                         <span className={`inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-full mt-0.5 ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-gray-100 text-gray-600"}`}>
                           {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}

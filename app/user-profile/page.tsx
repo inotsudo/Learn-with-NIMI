@@ -23,44 +23,30 @@ import StatsRow from "@/components/profile/StatsRow";
 import WeeklyActivityChart from "@/components/profile/WeeklyActivityChart";
 import StreaksTab from "@/components/profile/StreaksTab";
 import { PageSurface } from "@/components/layout/primitives";
-import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
 import supabase from "@/lib/supabaseClient";
 import { getActiveSubscription } from "@/lib/payments/products";
 import { Crown, Download, Loader2 } from "lucide-react";
+import NextMilestoneCard from "@/components/profile/NextMilestoneCard";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
-// ── Child switcher ─────────────────────────────────────────────────────
-function ChildSwitcher({
-  children,
-  activeId,
-  onSwitch,
-}: { children: Child[]; activeId: string; onSwitch: (id: string) => void }) {
-  if (children.length < 2) return null;
-  return (
-    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-      {children.map(child => {
-        const active = child.id === activeId;
-        return (
-          <button
-            key={child.id}
-            onClick={() => onSwitch(child.id)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-full text-[12px] font-black whitespace-nowrap transition-all border ${
-              active
-                ? "bg-[var(--nimi-green)] text-white border-transparent shadow-md"
-                : "bg-ds-card border-ds-border text-ds-muted hover:text-ds-text"
-            }`}
-          >
-            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0">
-              <ChildAvatar avatarUrl={child.avatar_url} name={child.name} size={20} />
-            </div>
-            {child.name}
-          </button>
-        );
-      })}
-    </div>
-  );
+function starsToLevel(stars: number): number {
+  if (stars >= 500) return 5;
+  if (stars >= 300) return 4;
+  if (stars >= 150) return 3;
+  if (stars >= 50)  return 2;
+  return 1;
+}
+
+function computeLastActiveDaysAgo(dates: Set<string>): number | null {
+  if (dates.size === 0) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sorted = Array.from(dates).sort((a, b) => b.localeCompare(a));
+  const latest = new Date(sorted[0]);
+  latest.setHours(0, 0, 0, 0);
+  return Math.round((today.getTime() - latest.getTime()) / 86_400_000);
 }
 
 // ── Badge image: Supabase Storage URL → emoji fallback ───────────────
@@ -114,6 +100,7 @@ function EarnedAchievementsCard({
   const { t } = useLanguage();
   const router = useRouter();
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const hasAny = earnedSlugs.length > 0 || certificates.length > 0;
 
   const downloadCert = async (cert: ChildAchievement) => {
@@ -122,6 +109,7 @@ function EarnedAchievementsCard({
       return;
     }
     setDownloading(cert.id);
+    setDownloadError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) return;
@@ -135,7 +123,10 @@ function EarnedAchievementsCard({
       const res = await fetch(`/api/certificate?${params}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setDownloadError("Download failed — please try again.");
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -151,17 +142,40 @@ function EarnedAchievementsCard({
   return (
     <div className="bg-ds-card border border-ds-border shadow-ds-card p-5" style={{ borderRadius: "var(--leaf-r)" }}>
       <h2 className="font-baloo font-black text-ds-text text-[17px] mb-4">
-        🏅 {t("myBadgesTitle")}
+        🏆 {t("myAchievementsTitle")}
       </h2>
 
       {!hasAny && (
-        <motion.p
-          initial={{ opacity: 0, y: 4 }}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-ds-muted text-[12px] font-semibold text-center py-4"
+          className="py-5 flex flex-col items-center gap-3 text-center"
         >
-          🚀 {t("badgesHintMsg")}
-        </motion.p>
+          {/* Ghost badge row */}
+          <div className="flex gap-3 opacity-30 pointer-events-none select-none">
+            {["⭐", "🏅", "🎖️"].map((e, i) => (
+              <motion.div
+                key={i}
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+                className="w-12 h-12 rounded-full bg-ds-border/70 flex items-center justify-center text-2xl"
+              >
+                {e}
+              </motion.div>
+            ))}
+          </div>
+          <p className="font-baloo font-black text-ds-text text-[14px]">No achievements yet</p>
+          <p className="text-ds-muted text-[11px] font-semibold max-w-[200px] leading-snug">
+            Complete stories to earn badges and certificates!
+          </p>
+          <Link
+            href="/stories"
+            className="mt-1 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-white font-baloo font-black text-[12px] transition hover:-translate-y-0.5"
+            style={{ background: "var(--ds-brand-primary)" }}
+          >
+            📖 Read a Story →
+          </Link>
+        </motion.div>
       )}
 
       {earnedSlugs.length > 0 && (
@@ -194,6 +208,10 @@ function EarnedAchievementsCard({
         </div>
       )}
 
+      {downloadError && (
+        <p className="text-red-500 text-[11px] font-semibold text-center mt-2 mb-1">{downloadError}</p>
+      )}
+
       {certificates.length > 0 && (
         <div>
           {earnedSlugs.length > 0 && <div className="border-t border-ds-border my-3" />}
@@ -211,13 +229,20 @@ function EarnedAchievementsCard({
                   transition={{ delay: i * 0.07 }}
                   className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 px-3 py-2.5 rounded-xl"
                 >
-                  <span className="text-2xl leading-none">🎓</span>
+                  {/* Certificate mini-thumbnail */}
+                  <div className="w-10 h-12 rounded-lg bg-gradient-to-b from-amber-300 to-amber-500 flex flex-col items-center justify-center gap-0.5 shrink-0 shadow-sm overflow-hidden border border-amber-400/40">
+                    <span className="text-white text-[18px] leading-none">🎓</span>
+                    <div className="w-6 h-px bg-white/60" />
+                    <div className="w-5 h-px bg-white/40" />
+                    <div className="w-4 h-px bg-white/30" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-nunito font-black text-ds-text text-[13px] leading-tight truncate">
                       {certLabelFromSlug(cert.slug)}
                     </p>
                     <p className="text-ds-muted text-[10px] font-medium mt-0.5">
                       {cert.earned_at ? new Date(cert.earned_at).toLocaleDateString() : ""}
+                      {cert.language && <span className="ml-1.5 uppercase">{cert.language}</span>}
                     </p>
                   </div>
 
@@ -255,7 +280,6 @@ export default function UserProfilePage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [hasChildren, setHasChildren] = useState(true);
-  const [allChildren, setAllChildren] = useState<Child[]>([]);
   const [activeTab, setActiveTab] = useState<ProgressTab>("overview");
   const [childName, setChildName] = useState("");
   const [activeChild, setActiveChild] = useState<Child | null>(null);
@@ -293,7 +317,9 @@ export default function UserProfilePage() {
     // Fire milestone-badge check in parallel with display data — don't block render.
     const milestonePromise = awardMilestoneBadges(child.id, child.language);
 
-    const [wStreak, wCounts, stars, dates, badges, streak, stories, imageMap, certs, authData] = await Promise.all([
+    // Resolve user first so subscription check can join the parallel batch.
+    const authData = await supabase.auth.getUser();
+    const [wStreak, wCounts, stars, dates, badges, streak, stories, imageMap, certs, sub] = await Promise.all([
       getWeekStreak(child.id, child.language),
       getWeekActivityCounts(child.id, child.language),
       getTotalStars(child.id, child.language),
@@ -303,16 +329,12 @@ export default function UserProfilePage() {
       getCompletedStoriesCount(child.id, child.language),
       getBadgeImages(),
       getChildCertificates(child.id, child.language),
-      supabase.auth.getUser(),
+      authData.data.user ? getActiveSubscription(authData.data.user.id) : Promise.resolve(null),
     ]);
-    if (authData.data.user) {
-      const sub = await getActiveSubscription(authData.data.user.id);
-      setHasSubscription(!!sub);
-    }
+    setHasSubscription(!!sub);
 
     if (silent && gen !== switchGenRef.current) return;
 
-    setAllChildren(list);
     setChildName(child.name);
     setActiveChild(child);
     activeChildRef.current = child;
@@ -341,7 +363,10 @@ export default function UserProfilePage() {
   const handleSaveProfile = async (newName: string, newAvatarUrl: string) => {
     if (!activeChild) return;
     await updateChild(activeChild.id, { name: newName, avatar_url: newAvatarUrl });
-    await loadProgress(activeChild.id);
+    window.dispatchEvent(new CustomEvent("app:profileUpdate", {
+      detail: { childId: activeChild.id, name: newName, avatarUrl: newAvatarUrl },
+    }));
+    await loadProgress(activeChild.id, true);
   };
 
   useEffect(() => {
@@ -371,10 +396,6 @@ export default function UserProfilePage() {
       if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, [loadProgress]);
-
-  const handleChildSwitch = (childId: string) => {
-    void loadProgress(childId);
-  };
 
   if (loading) {
     return (
@@ -454,18 +475,10 @@ export default function UserProfilePage() {
             childName={childName}
             avatarUrl={activeChild?.avatar_url}
             onEditProfile={() => setEditOpen(true)}
+            level={starsToLevel(totalStars)}
+            totalStars={totalStars}
+            lastActiveDaysAgo={computeLastActiveDaysAgo(activityDates)}
           />
-
-          {/* Child switcher — shown below tabs when family has multiple children */}
-          {allChildren.length >= 2 && (
-            <div className="mt-4">
-              <ChildSwitcher
-                children={allChildren}
-                activeId={activeChild?.id ?? ""}
-                onSwitch={handleChildSwitch}
-              />
-            </div>
-          )}
 
           <AnimatePresence mode="wait">
             {activeTab === "overview" && (
@@ -484,6 +497,12 @@ export default function UserProfilePage() {
                   currentStreak={currentStreak}
                 />
                 <WeeklyActivityChart weekCounts={weekCounts} />
+                <NextMilestoneCard
+                  earnedSlugs={earnedBadgeSlugs}
+                  storiesCompleted={storiesCompleted}
+                  totalStars={totalStars}
+                  imageMap={badgeImageMap}
+                />
                 <EarnedAchievementsCard earnedSlugs={earnedBadgeSlugs} imageMap={badgeImageMap} certificates={certificates} hasSubscription={hasSubscription} childName={childName} />
               </motion.div>
             )}
@@ -507,6 +526,7 @@ export default function UserProfilePage() {
         onSave={handleSaveProfile}
         initialName={childName}
         initialAvatarUrl={activeChild?.avatar_url}
+        childId={activeChild?.id ?? ""}
       />
     </AppShell>
   );
