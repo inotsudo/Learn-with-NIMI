@@ -130,6 +130,24 @@ async function searchBrave(
   }));
 }
 
+// ── Child-safe content filter (#9) ────────────────────────────────────────────
+// Applied when the requester is a child (role = 'child'). Strips any result
+// whose title or snippet contains signals of adult or harmful content before
+// the result reaches the LLM prompt.
+
+const ADULT_SIGNALS = [
+  /\b(sex|porn|adult.content|gambling|casino|betting|violence|gore|weapon|drug|narcotic|alcohol|cigarette|vaping|suicide|self.harm|extremist|terrorist|hack|exploit|malware)\b/i,
+];
+
+function isSafeForChildren(title: string, snippet: string): boolean {
+  const text = `${title} ${snippet}`;
+  return !ADULT_SIGNALS.some(re => re.test(text));
+}
+
+export function filterForChildren(sources: KnowledgeSource[]): KnowledgeSource[] {
+  return sources.filter(s => isSafeForChildren(s.title, s.snippet));
+}
+
 // ── Query enhancement per intent ──────────────────────────────────────────────
 
 function enhanceQuery(query: string, intent: KnowledgeIntent, language: string): string {

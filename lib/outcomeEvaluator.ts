@@ -293,7 +293,8 @@ export async function evaluateOutcomesAfterStory(
           p_beat_prediction:          beatPrediction,
         });
 
-        console.log(`[OutcomeEvaluator] ${childId} / ${pred.recommendation_id}: score=${score}, accuracy=${Math.round(predAccuracy * 100)}%`);
+        // Debug: uncomment locally to trace outcome scoring
+        // console.log(`[OutcomeEvaluator] ${childId} / ${pred.recommendation_id}: score=${score}, accuracy=${Math.round(predAccuracy * 100)}%`);
       } catch (innerErr) {
         console.error(`[OutcomeEvaluator] inner error for prediction ${pred.prediction_id}:`, innerErr);
       }

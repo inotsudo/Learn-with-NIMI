@@ -35,7 +35,8 @@ export async function PATCH(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as { action?: string };
+  let body: { action?: string };
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request body" }, { status: 400 }); }
   const action = body.action;
   if (action !== "cancel" && action !== "reactivate") {
     return NextResponse.json({ error: "action must be 'cancel' or 'reactivate'" }, { status: 400 });

@@ -123,13 +123,17 @@ export async function GET(req: NextRequest) {
     const now = new Date();
     const results = { renewed: 0, failed: 0, expired: 0, momo_pending: 0, no_token: 0 };
 
-    // 1. Find subscriptions due for renewal (period ended, still active)
+    // 1. Find subscriptions due for renewal (period ended, still active).
+    // LIMIT 50 prevents a single cron run from exceeding the serverless timeout
+    // when many subscriptions expire simultaneously. The next run picks up the rest.
     const { data: dueSubs } = await supabase
       .from("nimipiko_subscriptions")
       .select("*, payment_methods(*)")
       .eq("status", "active")
       .eq("cancel_at_period_end", false)
-      .lte("current_period_end", now.toISOString());
+      .lte("current_period_end", now.toISOString())
+      .order("current_period_end", { ascending: true })
+      .limit(50);
 
     for (const sub of dueSubs ?? []) {
       const pm = sub.payment_methods;
@@ -147,6 +151,24 @@ export async function GET(req: NextRequest) {
       if ((sub.renewal_attempts ?? 0) >= MAX_ATTEMPTS) {
         await supabase.from("nimipiko_subscriptions").update({ status: "past_due" }).eq("id", sub.id);
         results.failed++;
+        continue;
+      }
+
+      // CAS claim-before-charge: atomically increment renewal_attempts before
+      // calling any payment API. If another cron run already incremented the
+      // counter this loop iteration we see 0 rows and skip — preventing
+      // double-charges even when two cron instances fire concurrently.
+      const { data: claimed } = await supabase
+        .from("nimipiko_subscriptions")
+        .update({ renewal_attempts: (sub.renewal_attempts ?? 0) + 1 })
+        .eq("id", sub.id)
+        .eq("renewal_attempts", sub.renewal_attempts ?? 0) // only matches if count hasn't changed
+        .select("id")
+        .maybeSingle();
+
+      if (!claimed) {
+        // Another cron instance is already processing this subscription.
+        results.momo_pending++;
         continue;
       }
 
@@ -204,7 +226,7 @@ export async function GET(req: NextRequest) {
       });
 
       if (chargeResult.ok && pm.provider === "cybersource") {
-        // Card charged — extend period
+        // Card charged — extend period. Reset renewal_attempts since charge succeeded.
         const newEnd = new Date(sub.current_period_end);
         if (sub.billing_interval === "year") {
           newEnd.setFullYear(newEnd.getFullYear() + 1);
@@ -215,7 +237,7 @@ export async function GET(req: NextRequest) {
         await supabase.from("nimipiko_subscriptions").update({
           current_period_start: sub.current_period_end,
           current_period_end: newEnd.toISOString(),
-          renewal_attempts: 0,
+          renewal_attempts: 0, // reset after success
         }).eq("id", sub.id);
 
         // Send renewal confirmation email (best-effort)
@@ -231,15 +253,11 @@ export async function GET(req: NextRequest) {
         }
         results.renewed++;
       } else if (pm.provider === "mtn_momo" && chargeResult.ok) {
-        // MoMo request sent — user needs to approve. Mark pending.
-        await supabase.from("nimipiko_subscriptions").update({
-          renewal_attempts: (sub.renewal_attempts ?? 0) + 1,
-        }).eq("id", sub.id);
+        // MoMo request sent — user needs to approve on their phone. Already
+        // incremented renewal_attempts above via the CAS claim.
         results.momo_pending++;
       } else {
-        await supabase.from("nimipiko_subscriptions").update({
-          renewal_attempts: (sub.renewal_attempts ?? 0) + 1,
-        }).eq("id", sub.id);
+        // Charge failed — renewal_attempts already incremented via CAS claim above.
 
         // Notify parent so they can update payment details before grace period ends
         const { data: failedParent } = await supabase

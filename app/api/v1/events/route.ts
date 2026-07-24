@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     .from('children')
     .select('id')
     .eq('id', childId)
-    .eq('user_id', ctx.userId)
+    .eq('parent_id', ctx.userId)
     .single();
   if (!child) return apiError('Child not found or access denied', 403);
 

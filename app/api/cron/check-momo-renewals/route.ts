@@ -55,6 +55,22 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
 
     if (data.status === "SUCCESSFUL") {
+      // Atomic CAS claim on the renewal record: only one concurrent run can
+      // mark a renewal 'completed'. If 0 rows returned, another run got there
+      // first — skip to avoid extending the subscription period twice.
+      const { data: claimedRenewal } = await supabase
+        .from("subscription_renewals")
+        .update({ status: "completed" })
+        .eq("id", renewal.id)
+        .eq("status", "pending") // guard: only claim from 'pending' state
+        .select("id")
+        .maybeSingle();
+
+      if (!claimedRenewal) {
+        confirmed++; // already processed by another run
+        continue;
+      }
+
       // Extend subscription period
       const sub = renewal.nimipiko_subscriptions;
       let newPeriodEnd: Date | null = null;
@@ -69,10 +85,6 @@ export async function GET(req: NextRequest) {
           status: "active",
         }).eq("id", sub.id);
       }
-
-      await supabase.from("subscription_renewals").update({
-        status: "completed",
-      }).eq("id", renewal.id);
 
       // Send renewal receipt email (best-effort)
       if (sub && newPeriodEnd) {

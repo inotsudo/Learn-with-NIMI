@@ -147,6 +147,7 @@ export async function POST(req: NextRequest) {
       });
       if (provisionErr) {
         console.error("[/api/orders] free subscription provision failed:", provisionErr.message);
+        return NextResponse.json({ error: "Failed to activate subscription. Please contact support." }, { status: 500 });
       }
     } else {
       const { error: accessErr } = await supabase.from("content_access").insert({

@@ -121,12 +121,20 @@ export async function POST(req: NextRequest) {
   const accessType = product?.tier === "club" ? "club"
     : product?.tier === "personalized" ? "personalized" : "story";
 
-  await serviceSupabase.from("content_access").insert({
+  const { error: accessErr } = await serviceSupabase.from("content_access").insert({
     parent_id: user.id,
     access_type: accessType,
     order_id: gift.order_id,
     subscription_id: sub.id,
   });
+  if (accessErr) {
+    console.error("[gift/redeem] content_access insert failed:", accessErr.message);
+    // Roll back: un-redeem the gift so the user can try again
+    await serviceSupabase.from("gifts")
+      .update({ redeemed_at: null, redeemed_by: null })
+      .eq("id", gift.id);
+    return NextResponse.json({ error: "Failed to grant access. Please try again." }, { status: 500 });
+  }
 
   // Notify the giver (best-effort, non-blocking)
   const giver = gift.parents as unknown as GiftGiver | null;

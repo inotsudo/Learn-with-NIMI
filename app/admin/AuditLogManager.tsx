@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import {
   Menu, ClipboardList, Search, RefreshCw, ChevronDown, ChevronRight,
@@ -78,25 +78,78 @@ const accent = ACCENT.violet
 
 export default function AuditLogManager({ onOpenSidebar }: Props) {
   const [rows, setRows] = useState<AuditRow[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [entityFilter, setEntityFilter] = useState<EntityFilter>('all')
   const [dateFilter, setDateFilter] = useState<DateFilter>('all')
   const [page, setPage] = useState(1)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [stats, setStats] = useState({ total: 0, today: 0, week: 0, admins: 0 })
 
-  const load = useCallback(async () => {
+  // Debounce the search to avoid a fetch on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(t)
+  }, [search])
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1) }, [debouncedSearch, entityFilter, dateFilter])
+
+  const load = useCallback(async (
+    currentPage: number,
+    currentSearch: string,
+    currentEntity: EntityFilter,
+    currentDate: DateFilter,
+  ) => {
     setLoading(true)
     setError('')
     try {
-      const { data, error: fetchErr } = await supabase
+      const offset = (currentPage - 1) * PAGE_SIZE
+      let q = supabase
         .from('admin_audit_log')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(2000)
+        .range(offset, offset + PAGE_SIZE - 1)
+
+      // Server-side date filter
+      if (currentDate !== 'all') {
+        const cutoff = new Date()
+        if (currentDate === 'today') cutoff.setHours(0, 0, 0, 0)
+        else if (currentDate === '7d')  cutoff.setDate(cutoff.getDate() - 7)
+        else if (currentDate === '30d') cutoff.setDate(cutoff.getDate() - 30)
+        q = q.gte('created_at', cutoff.toISOString())
+      }
+
+      // Server-side entity filter
+      if (currentEntity !== 'all') q = q.eq('entity_type', currentEntity)
+
+      // Server-side search (admin email, action, or entity label)
+      if (currentSearch.trim()) {
+        q = q.or(
+          `admin_email.ilike.%${currentSearch}%,action.ilike.%${currentSearch}%,entity_label.ilike.%${currentSearch}%`
+        )
+      }
+
+      const { data, error: fetchErr, count } = await q
       if (fetchErr) throw fetchErr
-      setRows((data ?? []) as AuditRow[])
+
+      const loaded = (data ?? []) as AuditRow[]
+      setRows(loaded)
+      setTotal(count ?? 0)
+
+      // Stats: lightweight count-only queries (no row data returned)
+      const todayISO = new Date(); todayISO.setHours(0, 0, 0, 0)
+      const weekISO  = new Date(); weekISO.setDate(weekISO.getDate() - 7)
+      const [{ count: todayCnt }, { count: weekCnt }, { data: adminRows }] = await Promise.all([
+        supabase.from('admin_audit_log').select('*', { count: 'exact', head: true }).gte('created_at', todayISO.toISOString()),
+        supabase.from('admin_audit_log').select('*', { count: 'exact', head: true }).gte('created_at', weekISO.toISOString()),
+        supabase.from('admin_audit_log').select('admin_email'),
+      ])
+      const uniqueAdmins = new Set((adminRows ?? []).map((r: { admin_email: string }) => r.admin_email)).size
+      setStats({ total: count ?? 0, today: todayCnt ?? 0, week: weekCnt ?? 0, admins: uniqueAdmins })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load audit log.')
     } finally {
@@ -104,57 +157,13 @@ export default function AuditLogManager({ onOpenSidebar }: Props) {
     }
   }, [])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load(page, debouncedSearch, entityFilter, dateFilter)
+  }, [load, page, debouncedSearch, entityFilter, dateFilter])
 
-  // --- Stats ---
-  const now = Date.now()
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-  const stats = useMemo(() => {
-    const today = rows.filter(r => new Date(r.created_at) >= todayStart).length
-    const week  = rows.filter(r => now - new Date(r.created_at).getTime() < 7 * 86400000).length
-    const admins = new Set(rows.map(r => r.admin_email)).size
-    return { total: rows.length, today, week, admins }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows])
-
-  // --- Filters ---
-  const filtered = useMemo(() => {
-    let result = rows
-
-    // Date filter
-    if (dateFilter === 'today') {
-      result = result.filter(r => new Date(r.created_at) >= todayStart)
-    } else if (dateFilter === '7d') {
-      result = result.filter(r => now - new Date(r.created_at).getTime() < 7 * 86400000)
-    } else if (dateFilter === '30d') {
-      result = result.filter(r => now - new Date(r.created_at).getTime() < 30 * 86400000)
-    }
-
-    // Entity type filter
-    if (entityFilter !== 'all') {
-      result = result.filter(r => r.entity_type === entityFilter)
-    }
-
-    // Search
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      result = result.filter(r =>
-        r.admin_email.toLowerCase().includes(q) ||
-        (r.entity_label ?? '').toLowerCase().includes(q) ||
-        r.action.toLowerCase().includes(q),
-      )
-    }
-
-    return result
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, dateFilter, entityFilter, search])
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const safePage   = Math.min(page, totalPages)
-  const pageRows   = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
-
-  // Reset to page 1 on filter change
-  useEffect(() => { setPage(1) }, [search, entityFilter, dateFilter])
+  const pageRows   = rows    // already the correct page from the server
 
   const ENTITY_OPTIONS: { value: EntityFilter; label: string }[] = [
     { value: 'all',          label: 'All types' },
@@ -199,7 +208,7 @@ export default function AuditLogManager({ onOpenSidebar }: Props) {
             </p>
           </div>
           <button
-            onClick={() => void load()}
+            onClick={() => void load(page, debouncedSearch, entityFilter, dateFilter)}
             disabled={loading}
             aria-label="Refresh audit log"
             className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-ds-border bg-white text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition disabled:opacity-40"
@@ -279,7 +288,7 @@ export default function AuditLogManager({ onOpenSidebar }: Props) {
             <p className="text-sm font-bold text-gray-700">Failed to load audit log</p>
             <p className="text-xs text-gray-400 max-w-xs">{error}</p>
             <button
-              onClick={() => void load()}
+              onClick={() => void load(page, debouncedSearch, entityFilter, dateFilter)}
               className={`inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full text-white transition ${accent.button}`}
             >
               <RefreshCw className="w-3 h-3" /> Try again
@@ -296,7 +305,7 @@ export default function AuditLogManager({ onOpenSidebar }: Props) {
                 <ClipboardList className="w-10 h-10 opacity-30" />
                 <p className="font-bold text-[15px]">No events found</p>
                 <p className="text-[13px]">
-                  {search || entityFilter !== 'all' || dateFilter !== 'all'
+                  {debouncedSearch || entityFilter !== 'all' || dateFilter !== 'all'
                     ? 'Try broadening your filters.'
                     : 'Admin actions will appear here as they happen.'}
                 </p>
@@ -376,11 +385,11 @@ export default function AuditLogManager({ onOpenSidebar }: Props) {
             )}
 
             {/* Pagination */}
-            {!loading && filtered.length > PAGE_SIZE && (
+            {!loading && total > PAGE_SIZE && (
               <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-50 bg-gray-50/50">
                 <span className="text-[12px] text-gray-400 tabular-nums">
-                  {filtered.length > 0
-                    ? `Showing ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filtered.length)} of ${filtered.length}`
+                  {total > 0
+                    ? `Showing ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, total)} of ${total}`
                     : '0 events'}
                 </span>
                 <div className="flex items-center gap-1.5">

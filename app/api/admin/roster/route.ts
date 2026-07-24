@@ -54,15 +54,29 @@ export async function GET(req: NextRequest) {
   const status = url.searchParams.get('status') ?? 'pending';
   const type   = url.searchParams.get('type')   ?? 'student';
 
-  const { data, error } = await svc
+  const pageSize = Math.min(Math.max(1, Number(url.searchParams.get('page_size')) || 50), 100);
+  const cursor   = url.searchParams.get('cursor'); // created_at ISO string of the last row
+
+  let query = svc
     .from('roster_staged_users')
     .select('id, provider, provider_id, record_type, data, school_id, status, linked_child_id, linked_user_id, archived, created_at, updated_at, schools(name)')
     .eq('record_type', type)
     .eq('status', status)
     .order('created_at', { ascending: false })
-    .limit(200);
+    .limit(pageSize + 1); // fetch one extra to detect whether there's a next page
+
+  if (cursor) {
+    query = query.lt('created_at', cursor);
+  }
+
+  const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const rows = data ?? [];
+  const hasMore = rows.length > pageSize;
+  const page    = hasMore ? rows.slice(0, pageSize) : rows;
+  const nextCursor = hasMore ? page[page.length - 1]?.created_at ?? null : null;
 
   // Fetch counts by status for the badge display
   const { data: counts } = await svc
@@ -75,7 +89,7 @@ export async function GET(req: NextRequest) {
     countMap[row.status as string] = (countMap[row.status as string] ?? 0) + 1;
   }
 
-  return NextResponse.json({ rows: data ?? [], counts: countMap });
+  return NextResponse.json({ rows: page, counts: countMap, nextCursor, hasMore });
 }
 
 // ── PATCH — link a staged entry to an existing child/user or update status ───

@@ -147,14 +147,28 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
 
     if (data.status === "SUCCESSFUL") {
-      const { data: fullOrder } = await supabase.from("orders").select("*, products(tier, story_id, billing_interval)").eq("id", orderId).single();
-      if (fullOrder && fullOrder.payment_status !== "completed") {
-        const order = fullOrder;
-        await supabase.from("orders").update({
+      // Atomic CAS claim: only the first concurrent request succeeds.
+      // Subsequent polls see no row returned (payment_status already 'completed')
+      // and return the idempotent success response immediately.
+      const { data: claimedOrder } = await supabase
+        .from("orders")
+        .update({
           payment_status: "completed",
           provider_transaction_id: data.financialTransactionId ?? referenceId,
           completed_at: new Date().toISOString(),
-        }).eq("id", orderId);
+        })
+        .eq("id", orderId)
+        .eq("payment_status", "processing") // guard: only claim from 'processing' state
+        .select("*, products(tier, story_id, billing_interval, name)")
+        .maybeSingle();
+
+      if (!claimedOrder) {
+        // Another request already completed this order — return idempotent success.
+        return NextResponse.json({ status: "completed" });
+      }
+
+      {
+        const order = claimedOrder;
 
         const product = order.products as OrderProduct | null;
         if (product) {

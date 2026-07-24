@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
   // Send welcome email if Resend key present (best-effort, fire-and-forget)
   const key = process.env.RESEND_API_KEY;
   if (key) {
-    const unsubUrl = `https://nimipiko.com/unsubscribe?token=${inserted.unsubscribe_token}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nimipiko.com";
+    const unsubUrl = `${siteUrl}/unsubscribe?token=${inserted.unsubscribe_token}`;
     void fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
@@ -60,13 +61,13 @@ export async function POST(req: NextRequest) {
                 In the meantime, explore what your kids can do on NIMIPIKO:
               </p>
               <div style="text-align:center;margin:24px 0">
-                <a href="https://nimipiko.com/signuppage"
+                <a href="${siteUrl}/signuppage"
                   style="display:inline-block;background:#15803d;color:#fff;font-weight:700;border-radius:12px;padding:12px 28px;text-decoration:none;font-size:15px">
                   Start for Free →
                 </a>
               </div>
               <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:20px">
-                NIMIPIKO · <a href="https://nimipiko.com/privacy" style="color:#9ca3af">Privacy Policy</a> ·
+                NIMIPIKO · <a href="${siteUrl}/privacy" style="color:#9ca3af">Privacy Policy</a> ·
                 <a href="${unsubUrl}" style="color:#9ca3af">Unsubscribe</a>
               </p>
             </div>

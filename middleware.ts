@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
@@ -127,6 +128,38 @@ function rateLimitKey(req: NextRequest, prefix: string): string {
   return `${ip(req)}:${prefix}`;
 }
 
+// ── Session refresh helper ───────────────────────────────────────────────────
+// Refreshes the Supabase cookie-based session on every matched request.
+// This keeps JWTs valid without requiring the client to manually call
+// refreshSession(), and allows middleware to read the current user if needed.
+//
+// IMPORTANT: this never does auth-based redirects for /admin routes.
+// The admin check lives in client-side code (app/admin/page.tsx → checkAdmin).
+// Adding middleware redirects for admin caused an infinite loop previously
+// because localStorage sessions were invisible to middleware — now that we use
+// cookie auth that root cause is fixed, but we still keep the check out of
+// middleware to preserve the existing admin auth flow.
+async function refreshSession(req: NextRequest, res: NextResponse): Promise<NextResponse> {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return req.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            req.cookies.set(name, value);
+            res.cookies.set(name, value, options);
+          });
+        },
+      },
+    },
+  );
+  // getUser() triggers a token refresh if the access token is about to expire.
+  await supabase.auth.getUser();
+  return res;
+}
+
 // ── Proxy ────────────────────────────────────────────────────────────────────
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
@@ -150,16 +183,20 @@ export async function middleware(req: NextRequest) {
   }
 
   // Admin auth is handled client-side in app/admin/page.tsx (checkAdmin).
-  // Middleware cannot read the session because the app uses localStorage-based
-  // auth (supabase-js), not cookies — a middleware session check would always
-  // see no session and create an infinite redirect loop.
+  // We intentionally do NOT add middleware-level admin redirects here — see
+  // the comment in refreshSession() above.
 
-  return res;
+  // 2. Refresh the Supabase session cookie so the JWT stays valid across page
+  //    navigations without the client needing to call refreshSession() manually.
+  return refreshSession(req, res);
 }
 
 export const config = {
   matcher: [
-    // Sensitive API prefixes
+    // Session refresh: all page navigations except static assets, favicon, and
+    // Next.js internal routes. This keeps JWT cookies valid between navigations.
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Sensitive API prefixes (rate-limiting)
     "/api/newsletter",
     "/api/referral/validate",
     "/api/referral/:path*",

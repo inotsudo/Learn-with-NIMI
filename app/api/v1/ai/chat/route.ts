@@ -1,13 +1,12 @@
-// app/api/v1/ai/chat/route.ts
-// POST /api/v1/ai/chat — Nimi AI chat via public API key
+// app/api/v1/ai/chat/route.ts — Public API AI endpoint (API key auth)
+// POST { childId?, message, language?, system? }
 // Requires scope: ai:chat
-// Body: { childId?, message, language?, context? }
+// Returns { reply, model, language, usage }
 
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateApiKeyRequest, apiOk, apiError } from '@/lib/api/apiKeyAuth';
-import { callAI, buildSystemPrompt } from '@/lib/ai/aiService';
-import { contextManager } from '@/lib/ai/contextManager';
+import { runAICall, classifyAIError } from '@/lib/ai/chatHandler';
 
 export const runtime = 'edge';
 
@@ -26,6 +25,7 @@ export async function POST(req: NextRequest) {
   catch { return apiError('Invalid JSON', 400); }
 
   const { childId, message, language = 'en', system } = body;
+
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
     return apiError('message is required', 400);
   }
@@ -37,39 +37,26 @@ export async function POST(req: NextRequest) {
     { auth: { persistSession: false } },
   );
 
-  // Verify child ownership if childId provided
   if (childId) {
     const { data: child } = await db
       .from('children')
       .select('id')
       .eq('id', childId)
-      .eq('user_id', ctx.userId)
+      .eq('parent_id', ctx.userId)
       .single();
     if (!child) return apiError('Child not found or access denied', 403);
-  }
-
-  // Build personalised system prompt if child context available
-  let systemPrompt = system;
-  if (!systemPrompt && childId) {
-    try {
-      const learnerCtx = await contextManager.build(db, childId);
-      systemPrompt = buildSystemPrompt('nimi_chat', learnerCtx);
-    } catch {
-      systemPrompt = buildSystemPrompt('nimi_chat');
-    }
-  } else if (!systemPrompt) {
-    systemPrompt = buildSystemPrompt('nimi_chat');
   }
 
   const controller = new AbortController();
   const timeout    = setTimeout(() => controller.abort(), 20_000);
 
   try {
-    const result = await callAI({
-      type:    'nimi_chat',
-      prompt:  message.trim(),
-      system:  systemPrompt,
-      signal:  controller.signal,
+    const result = await runAICall(db, {
+      type:   'nimi_chat',
+      prompt: message.trim(),
+      childId,
+      system,
+      signal: controller.signal,
     });
 
     return apiOk({
@@ -82,7 +69,8 @@ export async function POST(req: NextRequest) {
       },
     }, ctx);
   } catch (e) {
-    return apiError(e instanceof Error ? e.message : 'AI call failed', 502);
+    const { message: msg, code, retryable, status } = classifyAIError(e);
+    return apiError(`${msg} [${code}]${retryable ? ' (retryable)' : ''}`, status);
   } finally {
     clearTimeout(timeout);
   }

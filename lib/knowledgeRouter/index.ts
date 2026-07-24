@@ -29,7 +29,7 @@ import type { RouterRequest, RouterResult, KnowledgeSource } from './types';
 import { INTERNAL_ONLY_INTENTS, ALWAYS_FRESH_INTENTS } from './types';
 import { classifyIntent }                    from './intentClassifier';
 import { retrieveInternal }                  from './internalRetriever';
-import { searchWeb }                         from './webSearchRetriever';
+import { searchWeb, filterForChildren }       from './webSearchRetriever';
 import { getCached, setCached, normalizeQuery, shouldGenerateArticle } from './knowledgeCache';
 import { buildAdaptationBlock, adaptKnowledgeForPrompt } from './learnerAdapter';
 
@@ -211,7 +211,10 @@ export async function routeKnowledge(
 
   if (shouldSearch) {
     const targetAge = learner.age ?? 8;
-    webSources = await searchWeb(question, intent, language, targetAge, maxSources);
+    let rawSources = await searchWeb(question, intent, language, targetAge, maxSources);
+    // Strip any potentially unsafe results before injecting into children's context (#9)
+    if (role === 'child') rawSources = filterForChildren(rawSources);
+    webSources = rawSources;
     usedWebSearch = webSources.length > 0;
 
     // Cache result (non-blocking)

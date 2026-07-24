@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
@@ -40,6 +40,10 @@ const QUEST_STARS  = 10;
 
 
 export default function TalkToNimiPage() {
+  return <Suspense><TalkToNimiInner /></Suspense>;
+}
+
+function TalkToNimiInner() {
   const { t } = useLanguage();
   const { themeId } = useAppTheme();
   const assets = getThemeAssets(themeId);

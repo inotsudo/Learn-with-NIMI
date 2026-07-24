@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
   if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 });
 
-  const env  = plan === 'enterprise' ? 'live' : 'live';
+  const env  = plan === 'enterprise' ? 'live' : 'test';
   const raw  = generateApiKey(env as 'live' | 'test');
   const hash = await hashApiKey(raw);
   const pfx  = keyPrefix(raw);

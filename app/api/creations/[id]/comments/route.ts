@@ -50,11 +50,17 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     return NextResponse.json({ error: "Comment too long (max 500 chars)." }, { status: 400 });
   }
 
-  const author = typeof body.author === "string" && body.author.trim() ? body.author.trim() : "Friend";
+  // Author is always the authenticated user's name — never trust body.author
+  const { data: parentRow } = await supabase
+    .from("parents")
+    .select("name")
+    .eq("id", user.id)
+    .maybeSingle();
+  const author = parentRow?.name?.trim() || "Friend";
 
   const { data, error } = await supabase
     .from("creation_comments")
-    .insert({ creation_id: id, author, content })
+    .insert({ creation_id: id, author, content, parent_id: user.id })
     .select("id, author, content, created_at")
     .single();
 

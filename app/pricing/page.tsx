@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Crown, Sparkles, Shield, CreditCard, Phone, Star, CheckCircle2, Tag } from "lucide-react";
@@ -52,6 +52,10 @@ function formatAmount(amount: number, currency: Currency): string {
 }
 
 export default function PricingPage() {
+  return <Suspense><PricingInner /></Suspense>;
+}
+
+function PricingInner() {
   const m = useThemeMotion();
   const searchParams = useSearchParams();
   const addChildReason = searchParams.get("reason") === "add-child";

@@ -45,23 +45,17 @@ export async function POST(req: NextRequest) {
   }
 
   const payload = { title, body, url: url || undefined };
-  let recipientParents = 0;
-  let recipientDevices = 0;
 
+  // Count recipients before sending so the audit row exists before any push fires
+  let parentIds: string[] = [];
   if (target_parent_id) {
-    const result = await sendPushToParent(sb, target_parent_id, payload);
-    recipientParents = 1;
-    recipientDevices = result.sent;
+    parentIds = [target_parent_id];
   } else {
     const { data: subs } = await sb.from("push_subscriptions").select("parent_id");
-    const parentIds = Array.from(new Set((subs ?? []).map((s) => s.parent_id as string)));
-    recipientParents = parentIds.length;
-    for (const parentId of parentIds) {
-      const result = await sendPushToParent(sb, parentId, payload);
-      recipientDevices += result.sent;
-    }
+    parentIds = Array.from(new Set((subs ?? []).map((s) => s.parent_id as string)));
   }
 
+  // Write audit record FIRST — if push fails mid-loop, at least we have a record of intent
   const { data: broadcast, error } = await sb
     .from("push_broadcasts")
     .insert({
@@ -70,8 +64,8 @@ export async function POST(req: NextRequest) {
       body,
       url: url || null,
       target_parent_id: target_parent_id || null,
-      recipient_parents: recipientParents,
-      recipient_devices: recipientDevices,
+      recipient_parents: parentIds.length,
+      recipient_devices: 0, // updated below
     })
     .select("*, parents(name, email)")
     .single();
@@ -81,5 +75,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: _emsg }, { status: 500 });
   }
 
-  return NextResponse.json(broadcast);
+  // Send pushes and update device count
+  let recipientDevices = 0;
+  for (const parentId of parentIds) {
+    const result = await sendPushToParent(sb, parentId, payload);
+    recipientDevices += result.sent;
+  }
+
+  // Best-effort update with actual device count
+  void sb.from("push_broadcasts")
+    .update({ recipient_devices: recipientDevices })
+    .eq("id", broadcast.id)
+    .then(() => {}, () => {});
+
+  return NextResponse.json({ ...broadcast, recipient_devices: recipientDevices });
 }
