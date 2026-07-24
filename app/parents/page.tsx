@@ -132,6 +132,7 @@ export default function ParentsZonePage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
   const [referralRewards, setReferralRewards] = useState(0);
+  const [parentUserId, setParentUserId] = useState<string | null>(null);
   const [parentTab, setParentTab] = useState<"overview" | "stories" | "achievements" | "learning" | "settings">("overview");
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -186,6 +187,7 @@ export default function ParentsZonePage() {
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setParentUserId(user.id);
       const { data: parentRow } = await supabase.from("parents").select("name").eq("id", user.id).maybeSingle();
       if (parentRow?.name) setParentName(parentRow.name);
 
@@ -2031,7 +2033,19 @@ export default function ParentsZonePage() {
                     className="space-y-5"
                   >
                     {/* Controls */}
-                    <ParentControls childName={active.child.name} childLanguage={active.child.language} />
+                    <ParentControls
+                      childId={active.child.id}
+                      parentId={parentUserId ?? ""}
+                      childName={active.child.name}
+                      childLanguage={active.child.language as "en" | "fr" | "rw"}
+                      onLanguageChange={(lang) => {
+                        setChildrenData(prev => prev.map(d =>
+                          d.child.id === active.child.id
+                            ? { ...d, child: { ...d.child, language: lang } }
+                            : d
+                        ));
+                      }}
+                    />
 
                     {/* Learning Reminders */}
                     <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
