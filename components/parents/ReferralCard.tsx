@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Copy, Share2, Check, Mail, MessageCircle, Link, RefreshCw } from "lucide-react";
+import { Copy, Check, Mail, MessageCircle, Link, RefreshCw } from "lucide-react";
 
 interface Props {
   code: string | null;
@@ -41,15 +41,12 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
     } catch { /* clipboard denied — fail silently */ }
   };
 
-  const nativeShare = async () => {
-    if (!navigator.share) { await copy(shareUrl, "link"); return; }
-    try { await navigator.share({ title: "Join NIMIPIKO!", text: shareText, url: shareUrl }); }
-    catch { /* cancelled */ }
-  };
-
   const whatsappShare = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
-    window.open(url, "_blank", "noopener");
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`,
+      "_blank",
+      "noopener",
+    );
   };
 
   const emailShare = () => {
@@ -123,29 +120,24 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
             <p className="flex-1 min-w-0 text-[11px] text-emerald-700 font-mono truncate">
               {typeof window !== "undefined" ? window.location.hostname : "nimipiko.com"}/invite/{code ?? ""}
             </p>
-            <button onClick={() => copy(shareUrl, "link")}
-              className={`text-[11px] font-black shrink-0 transition ${copied === "link" ? "text-emerald-600" : "text-emerald-500 hover:text-emerald-700"}`}>
+            <button onClick={() => copy(shareUrl, "link")} disabled={!code}
+              className={`text-[11px] font-black shrink-0 transition disabled:opacity-40 disabled:cursor-not-allowed ${copied === "link" ? "text-emerald-600" : "text-emerald-500 hover:text-emerald-700"}`}>
               {copied === "link" ? "Copied ✓" : "Copy"}
             </button>
           </div>
         </div>
 
-        {/* Share buttons */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* Share buttons — 2 cols */}
+        <div className="grid grid-cols-2 gap-3">
           <button onClick={whatsappShare} disabled={!code}
-            className="flex flex-col items-center gap-1.5 py-3 bg-green-50 border border-green-200 rounded-2xl hover:bg-green-100 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
-            <MessageCircle className="w-5 h-5 text-green-600" />
-            <span className="text-[11px] font-black text-green-700">WhatsApp</span>
+            className="flex items-center justify-center gap-2 py-3.5 bg-green-50 border border-green-200 rounded-2xl hover:bg-green-100 active:scale-[0.97] transition disabled:opacity-40 disabled:cursor-not-allowed">
+            <MessageCircle className="w-[18px] h-[18px] text-green-600 shrink-0" />
+            <span className="text-[13px] font-black text-green-700">WhatsApp</span>
           </button>
           <button onClick={emailShare} disabled={!code}
-            className="flex flex-col items-center gap-1.5 py-3 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
-            <Mail className="w-5 h-5 text-blue-600" />
-            <span className="text-[11px] font-black text-blue-700">Email</span>
-          </button>
-          <button onClick={nativeShare} disabled={!code}
-            className="flex flex-col items-center gap-1.5 py-3 bg-gray-50 border border-ds-border rounded-2xl hover:bg-gray-100 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
-            <Share2 className="w-5 h-5 text-gray-500" />
-            <span className="text-[11px] font-black text-gray-600">Share</span>
+            className="flex items-center justify-center gap-2 py-3.5 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 active:scale-[0.97] transition disabled:opacity-40 disabled:cursor-not-allowed">
+            <Mail className="w-[18px] h-[18px] text-blue-600 shrink-0" />
+            <span className="text-[13px] font-black text-blue-700">Email</span>
           </button>
         </div>
 
