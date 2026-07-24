@@ -1,32 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/daily-reminder",
-      "schedule": "0 17 * * *"
-    },
-    {
-      "path": "/api/cron/renew-subscriptions",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/check-momo-renewals",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-digest",
-      "schedule": "0 8 * * 1"
-    },
-    {
-      "path": "/api/cron/send-gift-emails",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/enterprise/xapi?flush=1",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/process-referral-rewards",
-      "schedule": "0 7 * * *"
+      "path": "/api/cron/daily",
+      "schedule": "0 0 * * *"
     }
   ]
 }

@@ -1,18 +1,12 @@
 // app/api/creations/[id]/comments/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
-
-// Service-role client — bypasses RLS so comments are always readable
-// even before the migration's RLS policy propagates.
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
 
+  const supabase = getServiceClient();
   const { data, error } = await supabase
     .from("creation_comments")
     .select("id, author, content, created_at")
@@ -50,6 +44,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     return NextResponse.json({ error: "Comment too long (max 500 chars)." }, { status: 400 });
   }
 
+  const supabase = getServiceClient();
   // Author is always the authenticated user's name — never trust body.author
   const { data: parentRow } = await supabase
     .from("parents")

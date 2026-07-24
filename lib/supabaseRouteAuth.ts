@@ -12,15 +12,20 @@
 //
 // Both paths return the same User object so every calling route is unchanged.
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
 import { createRouteClient } from "@/lib/supabase/server";
 
-// Lightweight client for Bearer-token validation — no cookie storage needed.
-const _bearerClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
+let _bearerClient: SupabaseClient | null = null;
+function getBearerClient(): SupabaseClient {
+  if (!_bearerClient) {
+    _bearerClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+  }
+  return _bearerClient;
+}
 
 export async function getAuthUser(req: NextRequest) {
   // 1. Try cookie-based session first (the new default after migration to
@@ -34,7 +39,7 @@ export async function getAuthUser(req: NextRequest) {
   //    admin routes that pass the token explicitly).
   const auth = req.headers.get("authorization");
   if (auth?.startsWith("Bearer ")) {
-    const { data: { user } } = await _bearerClient.auth.getUser(auth.slice(7));
+    const { data: { user } } = await getBearerClient().auth.getUser(auth.slice(7));
     return user ?? null;
   }
 
