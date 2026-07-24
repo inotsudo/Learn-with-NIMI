@@ -850,27 +850,34 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
 
   const submitReport = async (reason: string) => {
     if (!reportingId) return;
-    await supabase.from("creations").update({ status:"reported" }).eq("id", reportingId);
-    setCreations(prev => prev.filter(c => c.id !== reportingId));
+    const id = reportingId;
     setReportingId(null);
+    const { error } = await supabase
+      .from("creations")
+      .update({ status: "reported", report_reason: reason })
+      .eq("id", id);
+    if (!error) {
+      setCreations(prev => prev.filter(c => c.id !== id));
+      showToast(t("communityReportConfirm"));
+    }
   };
 
   const handleDelete = async (id: string) => {
+    const snapshot = creations;
     setCreations(prev => prev.filter(c => c.id !== id));
-    await supabase.from("creations").delete().eq("id", id).eq("parent_id", userId);
+    const { error } = await supabase.from("creations").delete().eq("id", id).eq("parent_id", userId);
+    if (error) setCreations(snapshot);
   };
 
   const openPicker = async () => {
     setPickerOpen(true);
     setPickerLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       // Fetch already-shared story keys for this parent (reliable dedup via story_key column)
       const { data: existing } = await supabase
         .from("creations")
         .select("story_key")
-        .eq("parent_id", user?.id ?? "")
+        .eq("parent_id", userId)
         .not("story_key", "is", null);
 
       const alreadyShared = new Set((existing ?? []).map((r: { story_key: string }) => r.story_key));
@@ -938,11 +945,9 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
   };
 
   const sharePickerItem = async () => {
-    if (!captionItem || sharingKey) return;
+    if (!captionItem || sharingKey || !userId) return;
     const item = captionItem;
     setSharingKey(item.key);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSharingKey(null); return; }
 
     const shareType = item.complete ? "certificate" : "story_progress";
 
@@ -957,7 +962,7 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
     }
 
     const { error } = await supabase.from("creations").insert({
-      parent_id:        user.id,
+      parent_id:        userId,
       child_id:         item.childId,
       child_name:       item.childName,
       child_avatar_url: item.childAvatar ?? null,

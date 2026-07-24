@@ -21,6 +21,7 @@ interface PostRow {
   is_public: boolean
   status: string | null
   likes: number
+  report_reason: string | null
   created_at: string
 }
 
@@ -89,6 +90,25 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
     }
   }
 
+  const handleReapprove = async (id: string) => {
+    const ok = await confirm({
+      title: 'Re-approve this post?',
+      message: 'The post will be made public again and visible to the community.',
+      confirmLabel: 'Re-approve',
+      danger: false,
+    })
+    if (!ok) return
+    try {
+      const { error } = await supabase.from('creations').update({ status: 'approved', is_public: true, report_reason: null }).eq('id', id)
+      if (error) throw error
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'approved', is_public: true, report_reason: null } : p))
+      toastOk('Post re-approved.')
+      void logAdminAction({ action: 'reapprove_post', entityType: 'post', entityId: id, entityLabel: 'community post' })
+    } catch (err) {
+      toastErr('Failed to re-approve post.')
+    }
+  }
+
   const handleDelete = async (id: string, child_name: string) => {
     const ok = await confirm({
       title: `Delete post by ${child_name}?`,
@@ -121,6 +141,7 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
   }, [posts, search, tab])
 
   const pendingCount = posts.filter(p => p.status === 'pending' || !p.status).length
+  const reportedCount = posts.filter(p => p.status === 'reported').length
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageClamped = Math.min(page, totalPages)
   const pageRows = filtered.slice((pageClamped - 1) * PAGE_SIZE, pageClamped * PAGE_SIZE)
@@ -129,12 +150,13 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
     { key: 'all', label: 'All Posts' },
     { key: 'pending', label: 'Pending Review', count: pendingCount },
     { key: 'approved', label: 'Approved' },
-    { key: 'reported', label: 'Reported' },
+    { key: 'reported', label: 'Flagged / Rejected', count: reportedCount },
   ]
 
   const statusBadge = (s: string | null) => {
     if (s === 'approved') return { label: 'Approved', cls: 'bg-emerald-100 text-emerald-700' }
-    if (s === 'rejected' || s === 'reported') return { label: 'Reported', cls: 'bg-red-100 text-red-600' }
+    if (s === 'reported') return { label: 'Flagged by user', cls: 'bg-orange-100 text-orange-600' }
+    if (s === 'rejected') return { label: 'Rejected', cls: 'bg-red-100 text-red-600' }
     return { label: 'Pending Review', cls: 'bg-amber-100 text-amber-600' }
   }
 
@@ -184,14 +206,14 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
-                  {['Post', 'Author', 'Status', 'Likes', 'Posted On', 'Actions'].map(h => (
+                  {['Post', 'Author', 'Status', 'Likes', 'Posted On', 'Flag Reason', 'Actions'].map(h => (
                     <th key={h} className="px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {pageRows.length === 0 ? (
-                  <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-[13px]">No posts found.</td></tr>
+                  <tr><td colSpan={7} className="px-5 py-10 text-center text-gray-400 text-[13px]">No posts found.</td></tr>
                 ) : pageRows.map(p => {
                   const badge = statusBadge(p.status)
                   return (
@@ -219,6 +241,9 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
                       <td className="px-5 py-3.5 text-[12px] text-gray-400">
                         {new Date(p.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
+                      <td className="px-5 py-3.5 text-[12px] text-orange-600 max-w-[140px] truncate" title={p.report_reason ?? ''}>
+                        {p.report_reason ?? <span className="text-gray-300">—</span>}
+                      </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-1">
                           {(!p.status || p.status === 'pending') && (
@@ -232,6 +257,12 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
                                 <XCircle size={14} />
                               </button>
                             </>
+                          )}
+                          {(p.status === 'rejected' || p.status === 'reported') && (
+                            <button onClick={() => handleReapprove(p.id)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-emerald-50 text-gray-400 hover:text-emerald-600" title="Re-approve post">
+                              <CheckCircle2 size={14} />
+                            </button>
                           )}
                           <button onClick={() => handleDelete(p.id, p.child_name)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-red-50 text-gray-400 hover:text-red-500" title="Delete post">
@@ -252,10 +283,18 @@ export default function CommunityManager({ onNavigate, onOpenSidebar }: Props) {
           <div className="flex items-center gap-1">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={pageClamped <= 1}
               className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 transition"><ChevronLeft size={14} /></button>
-            {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
-              <button key={i + 1} onClick={() => setPage(i + 1)}
-                className={`w-8 h-8 rounded-lg text-[12px] font-bold transition ${i + 1 === pageClamped ? 'bg-green-600 text-white' : 'border border-ds-border text-gray-500 hover:bg-gray-50'}`}>{i + 1}</button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(n => n === 1 || n === totalPages || Math.abs(n - pageClamped) <= 1)
+              .reduce<(number | '…')[]>((acc, n, idx, arr) => {
+                if (idx > 0 && n - (arr[idx - 1] as number) > 1) acc.push('…');
+                acc.push(n);
+                return acc;
+              }, [])
+              .map((n, i) => n === '…'
+                ? <span key={`ellipsis-${i}`} className="px-1 text-gray-400 text-[12px]">…</span>
+                : <button key={n} onClick={() => setPage(n as number)}
+                    className={`w-8 h-8 rounded-lg text-[12px] font-bold transition ${n === pageClamped ? 'bg-green-600 text-white' : 'border border-ds-border text-gray-500 hover:bg-gray-50'}`}>{n}</button>
+              )}
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={pageClamped >= totalPages}
               className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 transition"><ChevronRight size={14} /></button>
           </div>
