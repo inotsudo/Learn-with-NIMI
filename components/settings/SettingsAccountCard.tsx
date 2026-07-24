@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { KeyRound, Trash2, ChevronRight, Crown, CheckCircle2, XCircle } from "lucide-react";
+import { KeyRound, Trash2, ChevronRight, Crown, CheckCircle2, XCircle, Pencil, Check, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getParent } from "@/lib/queries";
 import { getActiveSubscription } from "@/lib/payments/products";
@@ -18,6 +18,12 @@ function formatDate(iso: string) {
 export default function SettingsAccountCard() {
   const { t } = useLanguage();
   const [email, setEmail] = useState<string | null>(null);
+  const [parentName, setParentName] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -32,12 +38,42 @@ export default function SettingsAccountCard() {
         supabase.auth.getUser(),
       ]);
       setEmail(parent?.email ?? null);
+      setParentName(parent?.name ?? null);
       if (user?.id) {
         const sub = await getActiveSubscription(user.id);
         setSubscription(sub);
       }
     })();
   }, []);
+
+  function startEditName() {
+    setNameInput(parentName ?? "");
+    setNameError(null);
+    setEditingName(true);
+    setTimeout(() => nameInputRef.current?.focus(), 0);
+  }
+
+  function cancelEditName() {
+    setEditingName(false);
+    setNameError(null);
+  }
+
+  async function saveName() {
+    const trimmed = nameInput.trim();
+    if (!trimmed) { setNameError("Name cannot be empty."); return; }
+    if (trimmed === parentName) { setEditingName(false); return; }
+    setSavingName(true);
+    setNameError(null);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSavingName(false); return; }
+    const { error } = await supabase
+      .from("parents")
+      .upsert({ id: user.id, name: trimmed }, { onConflict: "id" });
+    setSavingName(false);
+    if (error) { setNameError("Could not save. Please try again."); return; }
+    setParentName(trimmed);
+    setEditingName(false);
+  }
 
   async function handleCancelSubscription() {
     setCancelling(true);
@@ -122,6 +158,46 @@ export default function SettingsAccountCard() {
             </div>
             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-yellow-500 transition-colors" />
           </Link>
+        )}
+      </div>
+
+      {/* Display name */}
+      <div className="flex items-center gap-3 py-3 border-b border-ds-border px-1 -mx-1">
+        <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+          <Pencil className="w-4 h-4 text-emerald-600" />
+        </div>
+        {editingName ? (
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <input
+              ref={nameInputRef}
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") void saveName(); if (e.key === "Escape") cancelEditName(); }}
+              placeholder="Your name"
+              maxLength={80}
+              className="flex-1 min-w-0 border border-emerald-300 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ds-text focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200"
+            />
+            <button onClick={() => void saveName()} disabled={savingName}
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition disabled:opacity-60 shrink-0">
+              <Check className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={cancelEditName} disabled={savingName}
+              className="w-7 h-7 flex items-center justify-center rounded-lg border border-ds-border hover:bg-gray-50 text-gray-500 transition disabled:opacity-60 shrink-0">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 min-w-0">
+              <span className="font-bold text-sm text-ds-text block">Display name</span>
+              {nameError && <span className="text-[11px] text-red-500 font-medium">{nameError}</span>}
+              {!nameError && <span className="text-[11px] text-gray-400">{parentName ?? "Not set"}</span>}
+            </div>
+            <button onClick={startEditName}
+              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-emerald-600 transition shrink-0">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          </>
         )}
       </div>
 

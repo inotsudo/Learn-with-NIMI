@@ -18,8 +18,9 @@ interface Announcement {
   created_at: string;
 }
 
-export async function generateMetadata({ params }: { params: { code: string } }): Promise<Metadata> {
-  const { data } = await getAnonClient().rpc("get_class_by_code", { p_code: params.code.toUpperCase() });
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
+  const { code } = await params;
+  const { data } = await getAnonClient().rpc("get_class_by_code", { p_code: code.toUpperCase() });
   const cls = data?.[0] as ClassInfo | undefined;
   if (!cls) return { title: "Class not found – NIMIPIKO" };
   return {
@@ -34,8 +35,9 @@ function fmt(ts: string) {
   });
 }
 
-export default async function JoinPage({ params }: { params: { code: string } }) {
-  const { data: classRows } = await getAnonClient().rpc("get_class_by_code", { p_code: params.code.toUpperCase() });
+export default async function JoinPage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params;
+  const { data: classRows } = await getAnonClient().rpc("get_class_by_code", { p_code: code.toUpperCase() });
   const cls = classRows?.[0] as ClassInfo | undefined;
   if (!cls) notFound();
 

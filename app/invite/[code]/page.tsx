@@ -19,8 +19,9 @@ async function getReferrer(code: string): Promise<{ name: string; parentId: stri
   return { name, parentId: data.parent_id };
 }
 
-export async function generateMetadata({ params }: { params: { code: string } }): Promise<Metadata> {
-  const referrer = await getReferrer(params.code);
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
+  const { code } = await params;
+  const referrer = await getReferrer(code);
   if (!referrer) {
     return {
       title: "Join NIMIPIKO — Multilingual Learning for Kids",
@@ -45,8 +46,9 @@ const BENEFITS = [
   { emoji: "👨‍👩‍👧", title: "Parent dashboard", desc: "Track progress, set goals, get weekly reports" },
 ];
 
-export default async function InvitePage({ params }: { params: { code: string } }) {
-  const code = params.code.toUpperCase().slice(0, REFERRAL_CODE_LENGTH);
+export default async function InvitePage({ params }: { params: Promise<{ code: string }> }) {
+  const { code: rawCode } = await params;
+  const code = rawCode.toUpperCase().slice(0, REFERRAL_CODE_LENGTH);
   const referrer = await getReferrer(code);
 
   // Invalid code — show a generic landing with CTA to sign up anyway
