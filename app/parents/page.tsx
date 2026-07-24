@@ -9,8 +9,8 @@ import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { DURATION, EASE } from "@/lib/design-system/motion";
 import { Star, CheckCircle2, Lock, ChevronRight, Plus, Loader2, AlertTriangle } from "lucide-react";
+import dynamic from "next/dynamic";
 import ParentControls from "@/components/parents/ParentControls";
-import ReferralCard from "@/components/parents/ReferralCard";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import CreateChildModal from "@/components/home/CreateChildModal";
@@ -28,8 +28,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
-import LearningBrainTab from "@/components/parents/LearningBrainTab";
-import PushNotificationsCard from "@/components/parents/PushNotificationsCard";
+
+// Lazy-loaded tab panels — only downloaded when the user opens that tab
+const LearningBrainTab    = dynamic(() => import("@/components/parents/LearningBrainTab"),    { ssr: false });
+const ReferralCard        = dynamic(() => import("@/components/parents/ReferralCard"),         { ssr: false });
+const PushNotificationsCard = dynamic(() => import("@/components/parents/PushNotificationsCard"), { ssr: false });
 
 const NAME_COLORS = ["#6366f1","#8b5cf6","#ec4899","#f97316","#10b981","#3b82f6","#ef4444","#f59e0b"];
 function nameToColor(name: string): string {

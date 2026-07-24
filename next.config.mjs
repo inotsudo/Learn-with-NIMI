@@ -100,6 +100,8 @@ const nextConfig = {
   reactStrictMode: true,
 
   experimental: {
+    // Tree-shake icon and animation libraries — only bundle the symbols actually imported
+    optimizePackageImports: ["lucide-react", "framer-motion", "@radix-ui/react-accordion"],
     serverActions: {
       allowedOrigins: ["nimipiko.com", "localhost:3000"],
     },

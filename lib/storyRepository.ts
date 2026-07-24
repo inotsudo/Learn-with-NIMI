@@ -20,6 +20,8 @@ export function getStoryLibrary(
   childId: string,
   language: string
 ): Promise<StoryLibraryItem[]> {
+  // TTL_LONG (5 min) is safe because qinvalidate("storyLibrary:${childId}") is called
+  // in storyProgressRepository and offlineSlotQueue after every slot completion.
   return qcached(`storyLibrary:${childId}:${language}`, async () => {
     // Fetch RPC and category map in parallel — categories are not in the RPC result set.
     const [{ data, error }, { data: cats }] = await Promise.all([
@@ -39,7 +41,7 @@ export function getStoryLibrary(
       for (const item of items) item.category = catMap.get(item.sid) ?? null;
     }
     return items;
-  });
+  }, TTL_LONG);
 }
 
 export function getCurrentStoryId(
