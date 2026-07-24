@@ -69,12 +69,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: _emsg }, { status: 500 });
   }
 
-  // Send pushes and update device count
-  let recipientDevices = 0;
-  for (const parentId of parentIds) {
-    const result = await sendPushToParent(sb, parentId, payload);
-    recipientDevices += result.sent;
-  }
+  // Send all pushes in parallel
+  const results = await Promise.allSettled(
+    parentIds.map(parentId => sendPushToParent(sb, parentId, payload))
+  );
+  const recipientDevices = results.reduce((sum, r) =>
+    sum + (r.status === "fulfilled" ? r.value.sent : 0), 0
+  );
 
   // Best-effort update with actual device count
   void sb.from("push_broadcasts")

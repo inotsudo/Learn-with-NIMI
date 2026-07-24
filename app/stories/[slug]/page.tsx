@@ -449,31 +449,29 @@ export default function StoryDetailPage() {
     if (phase !== "certificate" || !childId || badgeAwardedRef.current) return;
     badgeAwardedRef.current = true;
     void (async () => {
-      // 1. Award this story's specific badge (e.g. "emotion-detective-en")
       const storyBadgeSlug = `${slug}-${language}`;
-      await awardBadge(childId, language, storyBadgeSlug);
 
-      // 2. Award any newly qualifying milestone badges
-      const newMilestoneSlugs = await awardMilestoneBadges(childId, language);
+      // Award story badge, milestone badges, and fetch images in parallel
+      const [newMilestoneSlugs, imageMap] = await Promise.all([
+        awardBadge(childId, language, storyBadgeSlug)
+          .then(() => awardMilestoneBadges(childId, language)),
+        getBadgeImages(),
+      ]);
 
-      // 3. Resolve image URLs from DB for all badge slugs
-      const imageMap = await getBadgeImages();
-
-      // 4. Show the story badge (it has a custom image per language)
       setEarnedBadgeSlug(storyBadgeSlug);
       setEarnedBadgeImageUrl(imageMap[storyBadgeSlug] ?? null);
 
-      // 5. Notify parent for newly earned milestone badges
+      // Notify parent for each milestone in parallel
       if (newMilestoneSlugs.length > 0 && parentId) {
-        for (const mSlug of newMilestoneSlugs) {
+        await Promise.all(newMilestoneSlugs.map(mSlug => {
           const meta = getMilestoneBadgeMeta(mSlug);
-          await createNotification(parentId, {
+          return createNotification(parentId, {
             title: `${meta?.emoji ?? "🏅"} Badge Earned!`,
             body: meta ? `${childName} earned "${meta.label}" — ${meta.desc}` : `${childName} earned a new badge!`,
             type: "achievement",
             url: "/user-profile",
           });
-        }
+        }));
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps

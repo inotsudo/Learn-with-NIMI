@@ -283,13 +283,15 @@ export async function GET(req: NextRequest) {
       .eq("status", "past_due")
       .lte("grace_ends_at", now.toISOString());
 
-    for (const sub of expiredSubs ?? []) {
-      await supabase.from("nimipiko_subscriptions").update({ status: "expired" }).eq("id", sub.id);
-      // Revoke content access
-      await supabase.from("content_access").update({ is_active: false })
-        .eq("subscription_id", sub.id);
-      results.expired++;
-    }
+    await Promise.allSettled(
+      (expiredSubs ?? []).map(sub =>
+        Promise.all([
+          supabase.from("nimipiko_subscriptions").update({ status: "expired" }).eq("id", sub.id),
+          supabase.from("content_access").update({ is_active: false }).eq("subscription_id", sub.id),
+        ])
+      )
+    );
+    results.expired += (expiredSubs ?? []).length;
 
     // Alert admin if any subscriptions couldn't renew due to missing CyberSource token
     if (results.no_token > 0) {

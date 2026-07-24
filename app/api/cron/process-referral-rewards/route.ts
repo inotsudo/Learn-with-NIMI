@@ -7,8 +7,6 @@ import { getServiceClient } from "@/lib/supabase/serviceClient";
 // active paid subscription but the reward was never granted (e.g. the real-time
 // call from confirm-payment failed). Runs once daily.
 
-
-
 export async function GET(req: Request) {
   const supabase = getServiceClient();
   const secret = req.headers.get("authorization");
@@ -16,27 +14,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Find all unrewarded redemptions
-  const { data: pending } = await supabase
-    .from("referral_redemptions")
-    .select("id, referrer_id, referred_id")
-    .is("reward_granted_at", null);
-
-  if (!pending || pending.length === 0) {
-    return NextResponse.json({ processed: 0 });
-  }
-
-  const { data: product } = await supabase
-    .from("products")
-    .select("id")
-    .eq("slug", "nimipiko-club")
-    .maybeSingle();
+  const [{ data: pending }, { data: product }] = await Promise.all([
+    supabase
+      .from("referral_redemptions")
+      .select("id, referrer_id, referred_id")
+      .is("reward_granted_at", null),
+    supabase.from("products").select("id").eq("slug", "nimipiko-club").maybeSingle(),
+  ]);
 
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 500 });
+  if (!pending || pending.length === 0) return NextResponse.json({ processed: 0 });
 
-  let processed = 0;
-
-  for (const row of pending) {
+  async function processRow(row: { id: string; referrer_id: string; referred_id: string }) {
     // Check if referred user has an active paid subscription
     const { data: sub } = await supabase
       .from("nimipiko_subscriptions")
@@ -46,7 +35,7 @@ export async function GET(req: Request) {
       .not("payment_provider", "eq", "admin_grant")
       .maybeSingle();
 
-    if (!sub) continue;
+    if (!sub) return false;
 
     // Atomically claim the reward slot
     const { data: claimed } = await supabase
@@ -57,37 +46,46 @@ export async function GET(req: Request) {
       .select("id")
       .maybeSingle();
 
-    if (!claimed) continue;
+    if (!claimed) return false;
 
     const periodEnd = new Date();
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-    const { data: newSub } = await supabase.from("nimipiko_subscriptions").insert({
-      parent_id: row.referrer_id,
-      product_id: product.id,
-      status: "active",
-      currency: "USD",
-      amount: 0,
-      billing_interval: "month",
-      current_period_start: new Date().toISOString(),
-      current_period_end: periodEnd.toISOString(),
-      payment_provider: "admin_grant",
-      cancel_at_period_end: true,
-    }).select("id").single();
-
-    await supabase.from("content_access").insert({
-      parent_id: row.referrer_id,
-      access_type: "club",
-      order_id: null,
-      subscription_id: newSub?.id ?? null,
-      expires_at: periodEnd.toISOString(),
-    });
-
-    // Look up referrer + referee for notifications
-    const [referrerRow, refereeRow] = await Promise.all([
-      supabase.from("parents").select("email, name").eq("id", row.referrer_id).maybeSingle(),
-      supabase.from("parents").select("name").eq("id", row.referred_id).maybeSingle(),
+    // Insert subscription + content_access in parallel
+    const [{ data: newSub }, , [referrerRow, refereeRow]] = await Promise.all([
+      supabase.from("nimipiko_subscriptions").insert({
+        parent_id: row.referrer_id,
+        product_id: product!.id,
+        status: "active",
+        currency: "USD",
+        amount: 0,
+        billing_interval: "month",
+        current_period_start: new Date().toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        payment_provider: "admin_grant",
+        cancel_at_period_end: true,
+      }).select("id").single(),
+      supabase.from("content_access").insert({
+        parent_id: row.referrer_id,
+        access_type: "club",
+        order_id: null,
+        subscription_id: null,
+        expires_at: periodEnd.toISOString(),
+      }),
+      Promise.all([
+        supabase.from("parents").select("email, name").eq("id", row.referrer_id).maybeSingle(),
+        supabase.from("parents").select("name").eq("id", row.referred_id).maybeSingle(),
+      ]),
     ]);
+
+    // Update content_access with the new subscription id (best-effort)
+    if (newSub?.id) {
+      void supabase.from("content_access")
+        .update({ subscription_id: newSub.id })
+        .eq("parent_id", row.referrer_id)
+        .is("subscription_id", null)
+        .then(() => {}, () => {});
+    }
 
     const referrerEmail = referrerRow.data?.email;
     const referrerName  = referrerRow.data?.name ?? null;
@@ -108,8 +106,12 @@ export async function GET(req: Request) {
       url: "/parents?tab=settings",
     }).catch(() => {});
 
-    processed++;
+    return true;
   }
+
+  // Process all pending rows in parallel
+  const outcomes = await Promise.allSettled(pending.map(row => processRow(row)));
+  const processed = outcomes.filter(r => r.status === "fulfilled" && r.value).length;
 
   return NextResponse.json({ processed });
 }

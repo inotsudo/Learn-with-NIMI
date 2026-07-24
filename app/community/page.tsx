@@ -753,13 +753,13 @@ export default function CommunityPage() {
 
   useEffect(() => {
     void (async () => {
-      const [{ data: { user } }, { data }] = await Promise.all([
-        supabase.auth.getUser(),
+      const { data: { user } } = await supabase.auth.getUser();
+      const [{ data }, sub] = await Promise.all([
         supabase.from("children").select("name, avatar_url").order("created_at"),
+        user ? getActiveSubscription(user.id) : Promise.resolve(null),
       ]);
       if (user) {
         setUserId(user.id);
-        const sub = await getActiveSubscription(user.id);
         setHasSubscription(!!sub);
       }
       if (data) setFriends(data.map((c: { name: string | null; avatar_url: string | null }) => ({ name: c.name ?? "Friend", avatar: c.avatar_url || "🌟" })));
@@ -866,10 +866,17 @@ export default function CommunityPage() {
         .from("children")
         .select("id, name, avatar_url, language");
 
+      // Load all children's story libraries in parallel
+      const kidList = (kids ?? []) as { id: string; name: string | null; avatar_url: string | null; language: string | null }[];
+      const libs = await Promise.all(
+        kidList.map(kid => getStoryLibrary(kid.id, (kid.language ?? "en") as Language))
+      );
+
       const all: PickerItem[] = [];
-      for (const kid of (kids ?? []) as { id: string; name: string | null; avatar_url: string | null; language: string | null }[]) {
+      for (let i = 0; i < kidList.length; i++) {
+        const kid  = kidList[i];
         const lang = (kid.language ?? "en") as Language;
-        const lib = await getStoryLibrary(kid.id, lang);
+        const lib  = libs[i];
         const started = lib.filter(s => {
           if (!s.complete && s.progress <= 0) return false;
           return !alreadyShared.has(`${kid.id}-${s.sid}`);

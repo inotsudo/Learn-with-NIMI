@@ -87,11 +87,12 @@ export default function StoryLibraryPage() {
   useEffect(() => {
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const sub = await getActiveSubscription(user.id);
-        setHasSubscription(!!sub);
-      }
-      const list = await getChildren();
+      // Fetch subscription + children in parallel — both only need user.id
+      const [sub, list] = await Promise.all([
+        user ? getActiveSubscription(user.id) : Promise.resolve(null),
+        getChildren(),
+      ]);
+      if (sub) setHasSubscription(true);
       const savedId = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_CHILD_KEY) : null;
       const child = list.find(c => c.id === savedId) ?? list[0];
       if (!child) { setLoading(false); return; }

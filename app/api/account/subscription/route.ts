@@ -65,10 +65,12 @@ export async function PATCH(req: NextRequest) {
 
   // Send confirmation emails (fire-and-forget)
   if (sub.current_period_end) {
-    const { data: authUser } = await supabase.auth.admin.getUserById(user.id);
+    const [{ data: authUser }, { data: parent }] = await Promise.all([
+      supabase.auth.admin.getUserById(user.id),
+      supabase.from("parents").select("name").eq("id", user.id).maybeSingle(),
+    ]);
     const email = authUser?.user?.email;
     if (email) {
-      const { data: parent } = await supabase.from("parents").select("name").eq("id", user.id).maybeSingle();
       const parentName = (parent?.name as string | null) ?? "there";
       if (action === "cancel") {
         void sendCancellationConfirmation({ to: email, parentName, accessUntil: sub.current_period_end as string });

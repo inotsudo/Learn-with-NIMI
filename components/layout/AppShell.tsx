@@ -142,10 +142,9 @@ export default function AppShell({ children }: AppShellProps) {
       }
 
       // Trial banner logic — non-blocking, runs after children load
+      // `user` is already in scope from the outer effect guard (line 105)
       void (async () => {
-        const { data: { user: u } } = await supabase.auth.getUser();
-        if (!u) return;
-        const sub = await getActiveSubscription(u.id);
+        const sub = await getActiveSubscription(user.id);
         if (sub?.payment_provider === "trial" && sub.current_period_end) {
           // Grace period: status is 'expired' but within 24h — show specific copy
           if ((sub as { status?: string }).status === "expired") {
@@ -159,7 +158,7 @@ export default function AppShell({ children }: AppShellProps) {
           const { data: expired } = await supabase
             .from("nimipiko_subscriptions")
             .select("id")
-            .eq("parent_id", u.id)
+            .eq("parent_id", user.id)
             .eq("payment_provider", "trial")
             .eq("status", "expired")
             .gte("updated_at", new Date(Date.now() - 7 * 86_400_000).toISOString())
