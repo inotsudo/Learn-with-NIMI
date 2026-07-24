@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { sendPushToParent } from "@/lib/push";
 import { sendReferralRewardGranted } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 // Called internally (from confirm-payment and mtn-momo) after a Club sub is created.
 // Grants the referrer 1 free month if their referred user just subscribed.
 // Authorization: CRON_SECRET header (same pattern as the renewal cron).
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+
 
 export async function POST(req: Request) {
+  const supabase = getServiceClient();
   const secret = req.headers.get("x-cron-secret");
   if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

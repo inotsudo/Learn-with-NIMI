@@ -2,18 +2,15 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import * as crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { sendRenewalConfirmation, sendRenewalFailed, sendAdminAlert } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 type CyberSourceResult = { ok: boolean; transactionId: string | null; error: string | null };
 type MoMoResult        = { ok: boolean; referenceId: string | null;   error: string | null };
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 const GRACE_DAYS = 3;
 const MAX_ATTEMPTS = 3;
@@ -113,6 +110,7 @@ async function chargeMoMo(phone: string, amount: number, subId: string) {
 
 // ── Main cron handler ──────────────────────────────────────
 export async function GET(req: NextRequest) {
+  const supabase = getServiceClient();
   // Verify cron secret — use template-literal comparison so undefined secret never matches
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret || req.headers.get("authorization") !== `Bearer ${cronSecret}`) {

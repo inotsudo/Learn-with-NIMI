@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { sendPushToParent } from "@/lib/push";
 import { sendReferralRewardGranted } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 // Cron fallback: finds referral redemptions where the referred user now has an
 // active paid subscription but the reward was never granted (e.g. the real-time
 // call from confirm-payment failed). Runs once daily.
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+
 
 export async function GET(req: Request) {
+  const supabase = getServiceClient();
   const secret = req.headers.get("authorization");
   if (!secret || secret !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

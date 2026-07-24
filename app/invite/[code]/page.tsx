@@ -1,19 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { REFERRAL_CODE_LENGTH } from "@/lib/referralConstants";
-
-const supa = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 async function getReferrer(code: string): Promise<{ name: string; parentId: string } | null> {
   const clean = code.toUpperCase().slice(0, REFERRAL_CODE_LENGTH);
   if (clean.length !== REFERRAL_CODE_LENGTH) return null;
 
-  const { data } = await supa
+  const { data } = await getServiceClient()
     .from("referral_codes")
     .select("parent_id, parents(name)")
     .eq("code", clean)

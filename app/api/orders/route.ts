@@ -8,15 +8,12 @@ export const runtime = "nodejs";
 // passed directly to createOrder which wrote it verbatim to the DB).
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import type { Currency } from "@/lib/payments/types";
 import { rwfToUsd } from "@/lib/payments/rwfConvert";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 // Returns the charge amount and the currency CyberSource / MoMo will actually see.
 // Rwanda card payments: convert price_rwf → USD so both methods cost the same locally.
@@ -43,6 +40,7 @@ function applyDiscount(amount: number, type: "percent" | "fixed", value: number)
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getServiceClient();
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

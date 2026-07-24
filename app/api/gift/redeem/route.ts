@@ -5,16 +5,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 type GiftProduct = { name: string | null; tier: string | null; billing_interval: string | null };
 type GiftGiver = { name: string | null; email?: string | null };
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+
 import { sendGiftRedeemed } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 export async function POST(req: NextRequest) {
+  const serviceSupabase = getServiceClient();
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -158,6 +156,7 @@ export async function POST(req: NextRequest) {
 
 // GET /api/gift/redeem?code=XXX — preview a gift before signing in
 export async function GET(req: NextRequest) {
+  const serviceSupabase = getServiceClient();
   const code = req.nextUrl.searchParams.get("code")?.toUpperCase().trim() ?? "";
   if (!code) return NextResponse.json({ error: "Code required" }, { status: 422 });
 

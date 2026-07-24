@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 type OrderProduct = { tier: string | null; story_id: string | null; billing_interval: string | null; product_type: string | null; name: string | null };
 type PersonalizationData = { discount_code_id?: string; gift?: boolean };
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { verifyCybersourceTransaction } from "@/lib/cybersource/verify";
 import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation, sendWelcomeToClub } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 // Shared helper used by confirm-payment (immediate) and the send-gift-emails cron (scheduled).
 // Checks send_at: if null or in the past, fires email + marks email_sent_at.
@@ -55,12 +56,10 @@ export async function dispatchGiftEmail(
     .eq("id", gift.id);
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 export async function POST(req: NextRequest) {
+  const supabase = getServiceClient();
   try {
     // Auth check — caller must be the parent who owns the order
     const user = await getAuthUser(req);

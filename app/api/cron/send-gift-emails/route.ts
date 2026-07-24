@@ -6,15 +6,13 @@
 // RETURNING id) before the email is sent, so concurrent cron runs never double-send.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { dispatchGiftEmail } from "@/app/api/confirm-payment/route";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 export async function GET(req: NextRequest) {
+  const supabase = getServiceClient();
   const secret = req.headers.get("x-cron-secret");
   if (secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

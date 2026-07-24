@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 // POST — increment share_count on the creation
 export async function POST(req: NextRequest, ctx: RouteContext) {
+  const supabase = getServiceClient();
   try {
     const { id } = await ctx.params;
 
@@ -38,6 +36,7 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
 
 // GET — return current share count
 export async function GET(_req: NextRequest, ctx: RouteContext) {
+  const supabase = getServiceClient();
   try {
     const { id } = await ctx.params;
 

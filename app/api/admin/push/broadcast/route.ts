@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendPushToParent } from "@/lib/push";
-
-// Service-role client used exclusively for the admins-table lookup so the
-// check does not depend on RLS being correctly configured.
-const adminCheck = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 interface BroadcastBody {
   title: string;
@@ -18,6 +11,7 @@ interface BroadcastBody {
 }
 
 export async function POST(req: NextRequest) {
+  const adminCheck = getServiceClient();
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Missing authorization" }, { status: 401 });

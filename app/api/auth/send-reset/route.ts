@@ -1,15 +1,13 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { sendAuthResetPassword } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 export async function POST(req: NextRequest) {
+  const sb = getServiceClient();
   const body = await req.json().catch(() => ({})) as { email?: string };
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

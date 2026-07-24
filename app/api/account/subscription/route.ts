@@ -1,17 +1,15 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { sendCancellationConfirmation, sendReactivationConfirmation } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 // GET — return the caller's active subscription (or 404)
 export async function GET(req: NextRequest) {
+  const supabase = getServiceClient();
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -32,6 +30,7 @@ export async function GET(req: NextRequest) {
 // PATCH — cancel (at period end) or reactivate
 // Body: { action: "cancel" | "reactivate" }
 export async function PATCH(req: NextRequest) {
+  const supabase = getServiceClient();
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

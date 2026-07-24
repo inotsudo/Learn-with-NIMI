@@ -1,12 +1,9 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 // PATCH /api/orders/:id — supports { action: "cancel" } to cancel a pending order
 // Called when a CyberSource modal is closed before payment is submitted.
@@ -14,6 +11,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const serviceSupabase = getServiceClient();
   try {
     const { id } = await params;
     const user = await getAuthUser(req);

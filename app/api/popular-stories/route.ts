@@ -1,12 +1,9 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 // Returns up to 6 published stories ordered by how many learners have
 // completed them (badge slug: story-{slug}-complete-{lang}).
@@ -16,6 +13,7 @@ const CACHE_HEADERS = {
 };
 
 export async function GET() {
+  const supabase = getServiceClient();
   try {
     // Run both queries in parallel instead of sequentially.
     const [{ data: achData, error: achErr }, { data: stories, error: stErr }] = await Promise.all([

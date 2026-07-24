@@ -1,12 +1,9 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 // Public marketing teaser endpoint — the `stories` table's RLS policy requires
 // a logged-in session (supabase/migrations/001_initial_schema.sql:200), so an
@@ -14,6 +11,7 @@ const supabase = createClient(
 // with the service-role key server-side and returns only published-story
 // fields, without changing the table's RLS policy.
 export async function GET(req: NextRequest) {
+  const supabase = getServiceClient();
   const limit = Math.min(Math.max(1, Number(req.nextUrl.searchParams.get("limit")) || 6), 20);
   const { data, error } = await supabase
     .from("stories")

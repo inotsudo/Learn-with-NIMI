@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ALLOWED_HOST = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://invalid").hostname;
+const ALLOWED_HOST = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "https://invalid").hostname;
 
 export async function GET(req: NextRequest) {
   const raw = req.nextUrl.searchParams.get("url");

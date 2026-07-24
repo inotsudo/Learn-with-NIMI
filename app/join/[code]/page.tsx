@@ -1,13 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import JoinClassSection from "./JoinClassSection";
-
-const supa = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { getAnonClient } from "@/lib/supabase/serviceClient";
 
 interface ClassInfo {
   teacher_id: string;
@@ -24,7 +19,7 @@ interface Announcement {
 }
 
 export async function generateMetadata({ params }: { params: { code: string } }): Promise<Metadata> {
-  const { data } = await supa.rpc("get_class_by_code", { p_code: params.code.toUpperCase() });
+  const { data } = await getAnonClient().rpc("get_class_by_code", { p_code: params.code.toUpperCase() });
   const cls = data?.[0] as ClassInfo | undefined;
   if (!cls) return { title: "Class not found – NIMIPIKO" };
   return {
@@ -40,11 +35,11 @@ function fmt(ts: string) {
 }
 
 export default async function JoinPage({ params }: { params: { code: string } }) {
-  const { data: classRows } = await supa.rpc("get_class_by_code", { p_code: params.code.toUpperCase() });
+  const { data: classRows } = await getAnonClient().rpc("get_class_by_code", { p_code: params.code.toUpperCase() });
   const cls = classRows?.[0] as ClassInfo | undefined;
   if (!cls) notFound();
 
-  const { data: ann } = await supa
+  const { data: ann } = await getAnonClient()
     .from("class_announcements")
     .select("id,title,body,created_at")
     .eq("teacher_id", cls.teacher_id)

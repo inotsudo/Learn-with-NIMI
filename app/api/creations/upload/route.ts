@@ -1,8 +1,8 @@
 // app/api/creations/upload/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { v4 as uuidv4 } from "uuid";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
 const MIME_TO_EXT: Record<string, string> = {
@@ -16,12 +16,10 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const STORAGE_BUCKET = "creations";
 
 // Service-role client — bypasses RLS for storage write
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 export async function POST(req: NextRequest) {
+  const adminClient = getServiceClient();
   try {
     // 1. Auth — validate Bearer token from Authorization header
     const user = await getAuthUser(req);

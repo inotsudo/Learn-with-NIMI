@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 function esc(s: unknown): string {
   return String(s ?? "")
@@ -16,6 +13,7 @@ function esc(s: unknown): string {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getServiceClient();
   try {
     const body = await req.json();
     const { name, school, email, country, size, message } = body;

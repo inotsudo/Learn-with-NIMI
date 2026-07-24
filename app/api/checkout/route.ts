@@ -1,15 +1,13 @@
 export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import * as crypto from "crypto";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 export async function POST(request: NextRequest) {
+  const supabase = getServiceClient();
   try {
     // Auth check — caller must be logged in and own the order
     const user = await getAuthUser(request);

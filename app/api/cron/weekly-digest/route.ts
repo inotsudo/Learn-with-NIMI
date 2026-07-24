@@ -2,13 +2,10 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { sendWeeklyDigest, type WeeklyDigestChild } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 function weekLabel(): string {
   const now = new Date();
@@ -20,6 +17,7 @@ function weekLabel(): string {
 }
 
 export async function GET(req: NextRequest) {
+  const sb = getServiceClient();
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret || req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

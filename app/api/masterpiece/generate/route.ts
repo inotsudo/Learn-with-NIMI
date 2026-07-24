@@ -2,20 +2,17 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { PDFDocument, rgb } from "pdf-lib";
 import sharp from "sharp";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
 interface StoryPageVersion { image_url?: string; language?: string; text?: string }
 interface StoryPage { page_number?: number; text?: string; story_page_versions?: StoryPageVersion[] }
 interface Story { title?: string; personalization_config?: Record<string, unknown>; story_pages?: StoryPage[] }
 interface PageCfg { x: number; y: number; size: number }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 async function fetchImage(url: string): Promise<Buffer> {
   const res = await fetch(url);
@@ -35,6 +32,7 @@ async function makeCircularPhoto(photoBuffer: Buffer, size: number): Promise<Buf
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getServiceClient();
   try {
     const user = await getAuthUser(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

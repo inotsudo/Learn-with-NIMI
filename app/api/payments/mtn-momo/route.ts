@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { v4 as uuidv4 } from "uuid";
 
 type OrderProduct = { tier: string | null; story_id: string | null; billing_interval: string | null; product_type: string | null; name: string | null };
 type PersonalizationData = { discount_code_id?: string; gift?: boolean; phone?: string };
 import { sendPaymentReceipt, sendGiftNotification, sendGiftConfirmation, sendWelcomeToClub } from "@/lib/email";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 const MOMO_TOKEN_URL = process.env.MTN_REQUEST_TOKEN_ENDPOINT!;
 const MOMO_REQUEST_TO_PAY_URL = process.env.MTN_REQUEST_TO_PAY_ENDPOINT!;
@@ -36,6 +33,7 @@ async function getAccessToken(): Promise<string> {
 
 // POST — initiate payment request
 export async function POST(req: NextRequest) {
+  const supabase = getServiceClient();
   try {
     const user = await getAuthUser(req);
     if (!user) {
@@ -108,6 +106,7 @@ export async function POST(req: NextRequest) {
 
 // GET — check payment status
 export async function GET(req: NextRequest) {
+  const supabase = getServiceClient();
   try {
     const user = await getAuthUser(req);
     if (!user) {

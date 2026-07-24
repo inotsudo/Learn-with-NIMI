@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
 import { sendPushToParent } from "@/lib/push";
 import { sendReferralCodeUsed, sendReferralAppliedToReferee } from "@/lib/email";
 import { REFERRAL_CODE_LENGTH } from "@/lib/referralConstants";
 import crypto from "crypto";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
 
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+
 
 function makeCode(): string {
   // Cryptographically random 8-char code from unambiguous alphabet
@@ -20,6 +17,7 @@ function makeCode(): string {
 
 // GET: Return (or create) the caller's referral code
 export async function GET(req: NextRequest) {
+  const serviceSupabase = getServiceClient();
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -53,6 +51,7 @@ export async function GET(req: NextRequest) {
 
 // POST: Apply a referral code at signup — body: { code }
 export async function POST(req: NextRequest) {
+  const serviceSupabase = getServiceClient();
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
