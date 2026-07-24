@@ -190,11 +190,18 @@ export default function ParentsZonePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setParentUserId(user.id);
-      const { data: parentRow } = await supabase.from("parents").select("name").eq("id", user.id).maybeSingle();
-      if (parentRow?.name) setParentName(parentRow.name);
 
-      // Subscription status
-      const sub = await getActiveSubscription(user.id);
+      // Fan out all independent top-level queries in parallel
+      const [parentRow, sub, children, codeRes, redemptionsRes] = await Promise.all([
+        supabase.from("parents").select("name").eq("id", user.id).maybeSingle(),
+        getActiveSubscription(user.id),
+        getChildren(),
+        authedFetch("/api/referral").then(r => r.json()).catch(() => ({ _error: true })),
+        supabase.from("referral_redemptions").select("id, reward_granted_at").eq("referrer_id", user.id),
+      ]);
+
+      if (parentRow.data?.name) setParentName(parentRow.data.name);
+
       setHasSubscription(!!sub);
       setSubscription(sub);
       if (sub?.payment_provider === "trial" && sub.current_period_end) {
@@ -203,63 +210,6 @@ export default function ParentsZonePage() {
         setTrialDaysLeft(Math.max(0, Math.ceil(msLeft / 86_400_000)));
       }
 
-      const children = await getChildren();
-      if (children.length === 0) { setLoading(false); return; }
-
-      const results: ChildData[] = [];
-      for (const child of children) {
-        const [stories, achievements, dates, stars, weekActivity, cos] = await Promise.all([
-          getStoryLibrary(child.id, child.language),
-          getChildAchievements(child.id),
-          getActivityDates(child.id, child.language),
-          getTotalStars(child.id, child.language),
-          getWeekActivityCounts(child.id, child.language),
-          getChildCosmetics(child.id),
-        ]);
-        const current = stories.find(s => s.unlocked && !s.complete) ?? stories[stories.length - 1];
-        const slots = current ? await getStorySlots(child.id, current.sid, child.language) : [];
-        results.push({
-          child, stories, currentSlots: slots, achievements,
-          streak: computeStreaks(dates).current,
-          totalStars: stars,
-          weekActivity,
-          cosmetics: cos,
-          activityDates: dates,
-        });
-      }
-      setChildrenData(results);
-      const activeId = typeof window !== "undefined" ? localStorage.getItem("nimipiko_active_child") : null;
-      const pid = results.find(r => r.child.id === activeId)?.child.id ?? results[0]?.child.id ?? null;
-      setPlayingChildId(pid);
-      setSelectedChild(pid ?? results[0]?.child.id ?? null);
-
-      // Fetch recent story feelings across all children
-      if (results.length > 0) {
-        const childIds = results.map(r => r.child.id);
-        const { data: feelingRows } = await supabase
-          .from("story_feelings")
-          .select("story_id, feeling, felt_at, stories(title)")
-          .in("child_id", childIds)
-          .order("felt_at", { ascending: false })
-          .limit(10);
-        if (feelingRows) {
-          setFeelings(feelingRows.map(r => ({
-            story_id: ((r as Record<string, unknown>).story_id as string | null) ?? "",
-            title: ((r as Record<string, unknown>).stories as Record<string,unknown> | null)?.title as string ?? "Story",
-            feeling: r.feeling as string,
-            felt_at: r.felt_at as string,
-          })));
-        }
-      }
-
-      // Referral code + stats
-      const [codeRes, redemptionsRes] = await Promise.all([
-        authedFetch("/api/referral").then(r => r.json()).catch(() => ({ _error: true })),
-        supabase
-          .from("referral_redemptions")
-          .select("id, reward_granted_at")
-          .eq("referrer_id", user.id),
-      ]);
       if (codeRes.code) {
         setReferralCode(codeRes.code);
         setReferralCodeError(false);
@@ -269,6 +219,56 @@ export default function ParentsZonePage() {
       const redemptions = redemptionsRes.data ?? [];
       setReferralCount(redemptions.length);
       setReferralRewards(redemptions.filter(r => r.reward_granted_at).length);
+
+      if (children.length === 0) { setLoading(false); return; }
+
+      // Load all children in parallel, and within each child load story slots
+      // in the same Promise.all as the rest of the child's data
+      const results = await Promise.all(
+        children.map(async (child) => {
+          const [stories, achievements, dates, stars, weekActivity, cos] = await Promise.all([
+            getStoryLibrary(child.id, child.language),
+            getChildAchievements(child.id),
+            getActivityDates(child.id, child.language),
+            getTotalStars(child.id, child.language),
+            getWeekActivityCounts(child.id, child.language),
+            getChildCosmetics(child.id),
+          ]);
+          const current = stories.find(s => s.unlocked && !s.complete) ?? stories[stories.length - 1];
+          const slots = current ? await getStorySlots(child.id, current.sid, child.language) : [];
+          return {
+            child, stories, currentSlots: slots, achievements,
+            streak: computeStreaks(dates).current,
+            totalStars: stars,
+            weekActivity,
+            cosmetics: cos,
+            activityDates: dates,
+          } satisfies ChildData;
+        })
+      );
+
+      setChildrenData(results);
+      const activeId = typeof window !== "undefined" ? localStorage.getItem("nimipiko_active_child") : null;
+      const pid = results.find(r => r.child.id === activeId)?.child.id ?? results[0]?.child.id ?? null;
+      setPlayingChildId(pid);
+      setSelectedChild(pid ?? results[0]?.child.id ?? null);
+
+      // Fetch recent story feelings — can run after children are known
+      const childIds = results.map(r => r.child.id);
+      const { data: feelingRows } = await supabase
+        .from("story_feelings")
+        .select("story_id, feeling, felt_at, stories(title)")
+        .in("child_id", childIds)
+        .order("felt_at", { ascending: false })
+        .limit(10);
+      if (feelingRows) {
+        setFeelings(feelingRows.map(r => ({
+          story_id: ((r as Record<string, unknown>).story_id as string | null) ?? "",
+          title: ((r as Record<string, unknown>).stories as Record<string,unknown> | null)?.title as string ?? "Story",
+          feeling: r.feeling as string,
+          felt_at: r.felt_at as string,
+        })));
+      }
 
       setLoading(false);
     })();
