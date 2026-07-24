@@ -52,7 +52,21 @@ export default function OnboardingPage() {
       const { data: p } = await supabase.from("parents").select("name").eq("id", user.id).maybeSingle();
       if (p?.name) setParentName(p.name.split(" ")[0]);
       const { data: kids } = await supabase.from("children").select("id").eq("parent_id", user.id).limit(1);
-      if (kids && kids.length > 0) { router.replace("/home"); }
+      if (kids && kids.length > 0) { router.replace("/home"); return; }
+
+      // Apply pending referral code from signup (handles email-verification flow)
+      const pendingRef = sessionStorage.getItem("nimipiko_pending_ref");
+      if (pendingRef) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          void fetch("/api/referral", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ code: pendingRef }),
+          });
+          sessionStorage.removeItem("nimipiko_pending_ref");
+        }
+      }
     })();
   }, [router]);
 

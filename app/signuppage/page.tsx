@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, MotionConfig } from "framer-motion";
-import { User, Mail, Lock, Eye, EyeOff, UserPlus, Star } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, UserPlus, Star, Gift, ChevronDown } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import AuthBackground from "@/components/auth/AuthBackground";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
@@ -33,10 +33,59 @@ function SignupInner() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [codeInput, setCodeInput]         = useState("");
+  const [codeOpen, setCodeOpen]           = useState(false);
+  const [codeError, setCodeError]         = useState("");
+
+  // Persist referral code through page refreshes and email-verification flows
+  const PENDING_REF_KEY = "nimipiko_pending_ref";
 
   useEffect(() => {
     const ref = searchParams?.get("ref");
-    if (ref) setReferralCode(ref.toUpperCase().slice(0, 10));
+    if (ref) {
+      const clean = ref.toUpperCase().slice(0, 10);
+      sessionStorage.setItem(PENDING_REF_KEY, clean);
+      setReferralCode(clean);
+      setCodeInput(clean);
+      return;
+    }
+    // Restore from sessionStorage if user refreshed or came back from email link
+    const stored = sessionStorage.getItem(PENDING_REF_KEY);
+    if (stored) { setReferralCode(stored); setCodeInput(stored); }
+  }, [searchParams]);
+
+  const [validating, setValidating]   = useState(false);
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+
+  const applyCode = async () => {
+    const clean = codeInput.trim().toUpperCase();
+    if (!clean) { setCodeError("Please enter a code."); return; }
+    if (clean.length < 6) { setCodeError("Code too short — check and try again."); return; }
+    setValidating(true);
+    try {
+      const res  = await fetch(`/api/referral/validate?code=${encodeURIComponent(clean)}`);
+      if (!res.ok) { setCodeError("That code doesn't exist. Check it and try again."); return; }
+      const json = await res.json() as { valid: boolean; referrerName?: string };
+      setReferrerName(json.referrerName ?? null);
+    } catch {
+      setCodeError("Couldn't verify the code. Check your connection and try again.");
+      return;
+    } finally { setValidating(false); }
+    sessionStorage.setItem(PENDING_REF_KEY, clean);
+    setReferralCode(clean);
+    setCodeError("");
+    setCodeOpen(false);
+  };
+
+  // Also validate link-based code on mount
+  useEffect(() => {
+    const ref = searchParams?.get("ref");
+    if (!ref) return;
+    const clean = ref.toUpperCase().slice(0, 10);
+    void fetch(`/api/referral/validate?code=${encodeURIComponent(clean)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((j: { referrerName?: string } | null) => { if (j?.referrerName) setReferrerName(j.referrerName); })
+      .catch(() => {});
   }, [searchParams]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -78,9 +127,11 @@ function SignupInner() {
         { id: data.user.id, email: data.user.email ?? email, name },
         { onConflict: "id" }
       );
-      // Send welcome email + apply referral code (best-effort, non-blocking)
+
       const { data: { session } } = await supabase.auth.getSession();
+
       if (session?.access_token) {
+        // Session available immediately (email verification disabled) — apply now
         void fetch("/api/account/welcome-email", {
           method: "POST",
           headers: { Authorization: `Bearer ${session.access_token}` },
@@ -91,9 +142,14 @@ function SignupInner() {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
             body: JSON.stringify({ code: referralCode }),
           });
+          sessionStorage.removeItem(PENDING_REF_KEY);
         }
+        router.replace("/onboarding");
+      } else {
+        // Email verification required — code stays in sessionStorage.
+        // The onboarding page will pick it up and apply it once the session is live.
+        router.replace("/onboarding?verify=1");
       }
-      router.replace("/onboarding");
     } else {
       setError(t("signupErrNoUser"));
     }
@@ -164,13 +220,48 @@ function SignupInner() {
             </div>
           )}
 
-          {/* Referral notice */}
-          {referralCode && (
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-center">
-              <p className="font-baloo font-black text-green-700 text-[13px]">🎁 Referral code applied!</p>
-              <p className="font-nunito text-green-600/80 text-[11px] mt-0.5">
-                You and your friend both get 1 free month when you subscribe.
-              </p>
+          {/* Referral code — applied or manual entry */}
+          {referralCode ? (
+            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-3">
+              <span className="text-2xl shrink-0">🎁</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-baloo font-black text-green-700 text-[13px]">
+                  {referrerName ? `${referrerName} invited you!` : "Referral code applied!"}
+                </p>
+                <p className="font-nunito text-green-600/80 text-[11px]">
+                  Code <strong>{referralCode}</strong> · You both get 1 free month when you subscribe.
+                </p>
+              </div>
+              <button onClick={() => { setReferralCode(null); setReferrerName(null); setCodeInput(""); setCodeOpen(true); sessionStorage.removeItem(PENDING_REF_KEY); }}
+                className="text-[11px] text-green-500 hover:text-green-700 font-bold shrink-0">Change</button>
+            </div>
+          ) : (
+            <div>
+              <button onClick={() => setCodeOpen(o => !o)}
+                className="flex items-center gap-1.5 text-[12px] font-bold text-gray-400 hover:text-gray-600 transition w-full">
+                <Gift className="w-3.5 h-3.5" />
+                Have a referral code?
+                <ChevronDown className={`w-3.5 h-3.5 ml-auto transition-transform ${codeOpen ? "rotate-180" : ""}`} />
+              </button>
+              {codeOpen && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={codeInput}
+                    onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeError(""); }}
+                    onKeyDown={e => e.key === "Enter" && applyCode()}
+                    placeholder="Enter code e.g. ABC12345"
+                    maxLength={10}
+                    className="flex-1 border border-ds-border bg-ds-input rounded-xl px-3 py-2 text-[13px] font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] uppercase"
+                  />
+                  <button onClick={applyCode} disabled={validating}
+                    className="px-4 py-2 bg-[var(--nimi-green)] text-white font-black text-[12px] rounded-xl hover:opacity-90 active:scale-95 transition disabled:opacity-60 flex items-center gap-1.5">
+                    {validating && <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+                    {validating ? "Checking…" : "Apply"}
+                  </button>
+                </div>
+              )}
+              {codeError && <p className="text-red-500 text-[11px] mt-1 font-nunito">{codeError}</p>}
             </div>
           )}
 

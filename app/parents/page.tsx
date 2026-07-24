@@ -29,6 +29,7 @@ import { PageSurface, HeroBanner } from "@/components/layout/primitives";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
 import LearningBrainTab from "@/components/parents/LearningBrainTab";
+import PushNotificationsCard from "@/components/parents/PushNotificationsCard";
 
 const NAME_COLORS = ["#6366f1","#8b5cf6","#ec4899","#f97316","#10b981","#3b82f6","#ef4444","#f59e0b"];
 function nameToColor(name: string): string {
@@ -2048,39 +2049,7 @@ export default function ParentsZonePage() {
                     />
 
                     {/* Learning Reminders */}
-                    <div className="bg-white border border-ds-border p-5 shadow-ds-card" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="text-xl">🔔</span>
-                        <h2 className="font-black text-ds-text text-[18px]">Learning Reminders</h2>
-                        <span className="ml-auto text-[11px] text-gray-400 font-semibold">5 PM daily</span>
-                      </div>
-                      {!push.supported ? (
-                        <p className="text-gray-500 text-[13px] font-nunito">Push notifications are not supported in this browser. Try opening the app from your phone's home screen.</p>
-                      ) : (
-                        <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-100" style={{ borderRadius: 'var(--leaf-r)' }}>
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-2xl shadow-md shrink-0">
-                            🔔
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-black text-ds-text text-[14px]">
-                              {push.isSubscribed ? "Reminders are on" : "Daily learning reminders"}
-                            </p>
-                            <p className="text-gray-500 text-[11px] mt-0.5 font-nunito">
-                              {push.isSubscribed
-                                ? `We'll nudge ${active?.child.name ?? "your child"} to practice at 5 PM every day`
-                                : "Get a daily nudge at 5 PM to keep the learning streak going"}
-                            </p>
-                            {push.error && <p className="text-red-500 text-[11px] mt-1 font-nunito">{push.error}</p>}
-                          </div>
-                          <button
-                            onClick={push.isSubscribed ? push.unsubscribe : push.subscribe}
-                            disabled={push.loading}
-                            className={`w-12 h-7 rounded-full flex items-center px-0.5 transition-colors disabled:opacity-50 ${push.isSubscribed ? "bg-[var(--nimi-green)]" : "bg-gray-300"}`}>
-                            <div className={`w-6 h-6 bg-white rounded-full shadow transition-transform ${push.isSubscribed ? "translate-x-5" : ""}`} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <PushNotificationsCard push={push} childName={active.child.name} />
 
                     {/* Referral */}
                     <ReferralCard
