@@ -315,7 +315,8 @@ export async function GET(req: NextRequest) {
         .eq("id", storyId)
         .single();
 
-      const config = story?.certificate_config as any;
+      type CertConfig = Record<string, { image_url?: string; nameX?: number; nameY?: number; fontSize?: number; nameSize?: number; color?: string; nameColor?: string } | undefined>;
+      const config = story?.certificate_config as CertConfig | null;
       const langConfig = config?.[lang] || config?.en;
 
       if (langConfig?.image_url) {

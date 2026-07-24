@@ -73,7 +73,7 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
         const slug = m.category_slug as string
         if (!grouped[slug]) grouped[slug] = { total: 0, published: { en: 0, fr: 0, rw: 0 } }
         grouped[slug].total += 1
-        const versions = (m.mission_versions ?? []) as any[]
+        const versions = (m.mission_versions ?? []) as { language: string; published: boolean; status: string }[]
         for (const lang of LANGUAGES) {
           if (versions.some(v => v.language === lang && v.published)) grouped[slug].published[lang] += 1
           const status = (versions.find(v => v.language === lang)?.status ?? 'draft') as ContentStatus
@@ -88,13 +88,13 @@ export default function LanguagesManager({ onNavigate, onOpenSidebar }: Language
       )
 
       setStoryRows(
-        (stories ?? []).map((s: any) => {
+        (stories ?? []).map((s: { id: string; title: string; theme_emoji: string; story_pages: { story_page_versions: { language: string; published: boolean; text: string | null; audio_url: string | null }[] }[] | null }) => {
           const pages = s.story_pages ?? []
           const covered: Record<Lang, number> = { en: 0, fr: 0, rw: 0 }
           for (const p of pages) {
             const versions = p.story_page_versions ?? []
             for (const lang of LANGUAGES) {
-              const v = versions.find((v: any) => v.language === lang)
+              const v = versions.find(v => v.language === lang)
               if (v?.published && (v.text || v.audio_url)) covered[lang] += 1
             }
           }

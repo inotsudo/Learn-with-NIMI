@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { Menu, Save, Loader2, RefreshCw } from 'lucide-react'
 import { useToast } from './Toast'
@@ -24,6 +24,16 @@ interface AuditRow {
 }
 
 type Config = Record<string, string | boolean>
+
+// Defined outside component so React doesn't see a new type each render
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!on)}
+      className={`w-11 h-6 rounded-full flex items-center px-0.5 transition ${on ? 'bg-emerald-500' : 'bg-gray-200'}`}>
+      <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
+    </button>
+  )
+}
 
 const DEFAULTS: Config = {
   platformName: 'NimiPiko',
@@ -55,27 +65,27 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
   const AUDIT_PAGE_SIZE = 25
   const { success: toastOk, error: toastErr } = useToast()
 
-  const loadAudit = async (page = 0) => {
+  const loadAudit = useCallback(async (page = 0) => {
     setAuditLoading(true)
     try {
       const from = page * AUDIT_PAGE_SIZE
-      // fetch one extra to detect if there's a next page
+      // Fetch one extra row to detect whether a next page exists
       const { data, error } = await supabase
         .from('admin_audit_log')
         .select('id, created_at, admin_email, action, entity_type, entity_label, metadata')
         .order('created_at', { ascending: false })
-        .range(from, from + AUDIT_PAGE_SIZE) // AUDIT_PAGE_SIZE is the extra row
+        .range(from, from + AUDIT_PAGE_SIZE)
       if (error) throw error
       const rows = data ?? []
       setAuditHasMore(rows.length > AUDIT_PAGE_SIZE)
       setAuditRows(rows.slice(0, AUDIT_PAGE_SIZE))
       setAuditPage(page)
     } catch {
-      // leave empty
+      // leave empty — table shows existing rows
     } finally {
       setAuditLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     void (async () => {
@@ -98,8 +108,8 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
     })()
   }, [])
 
-  const set = (key: string, value: string | boolean) =>
-    setSettings(prev => ({ ...prev, [key]: value }))
+  const set = useCallback((key: string, value: string | boolean) =>
+    setSettings(prev => ({ ...prev, [key]: value })), [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -107,8 +117,7 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
       const { data: { user } } = await supabase.auth.getUser()
       const { error } = await supabase
         .from('admin_settings')
-        .update({ config: settings, updated_at: new Date().toISOString(), updated_by: user?.email })
-        .eq('id', 1)
+        .upsert({ id: 1, config: settings, updated_at: new Date().toISOString(), updated_by: user?.email })
       if (error) throw error
       void logAdminAction({ action: 'update_settings', entityType: 'settings', entityId: '1', entityLabel: 'Platform Settings' })
       toastOk('Settings saved')
@@ -121,7 +130,7 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
 
   useEffect(() => {
     if (tab === 'audit' && auditRows.length === 0) void loadAudit(0)
-  }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, loadAudit])
 
   const TABS: { key: SettingsTab; label: string }[] = [
     { key: 'general',       label: 'General' },
@@ -130,16 +139,6 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
     { key: 'security',      label: 'Security' },
     { key: 'audit',         label: 'Audit Log' },
   ]
-
-  const Toggle = ({ settingKey }: { settingKey: string }) => {
-    const on = !!settings[settingKey]
-    return (
-      <button onClick={() => set(settingKey, !on)}
-        className={`w-11 h-6 rounded-full flex items-center px-0.5 transition ${on ? 'bg-emerald-500' : 'bg-gray-200'}`}>
-        <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
-      </button>
-    )
-  }
 
   if (loading) {
     return (
@@ -223,7 +222,7 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
                       <p className="text-[11px] text-gray-400">{s.desc}</p>
                     </div>
                     {s.type === 'toggle' ? (
-                      <Toggle settingKey={s.key} />
+                      <Toggle on={!!settings[s.key]} onChange={v => set(s.key, v)} />
                     ) : (
                       <input type="text" value={String(settings[s.key] ?? '')} onChange={e => set(s.key, e.target.value)}
                         className="w-16 text-center bg-ds-input border border-ds-border rounded-lg px-2 py-1.5 text-[13px] font-bold text-ds-text focus:outline-none focus:ring-2 focus:ring-green-500" />
@@ -253,7 +252,7 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
                       <p className="text-[13px] font-bold text-gray-700">{n.label}</p>
                       <p className="text-[11px] text-gray-400">{n.desc}</p>
                     </div>
-                    <Toggle settingKey={n.key} />
+                    <Toggle on={!!settings[n.key]} onChange={v => set(n.key, v)} />
                   </div>
                 ))}
                 <div className="flex justify-end pt-4">
@@ -349,7 +348,7 @@ export default function SettingsManager({ onOpenSidebar }: Props) {
                       <p className="text-[13px] font-bold text-gray-700">{s.label}</p>
                       <p className="text-[11px] text-gray-400">{s.desc}</p>
                     </div>
-                    <Toggle settingKey={s.key} />
+                    <Toggle on={!!settings[s.key]} onChange={v => set(s.key, v)} />
                   </div>
                 ))}
                 <div className="flex justify-end pt-4">

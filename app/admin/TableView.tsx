@@ -55,7 +55,7 @@ export default function TableView({ table }: TableViewProps) {
 
         if (error) throw error;
         setRows(data || []);
-      } catch (err: any) {
+      } catch {
         toastErr(`Failed to load table "${tableName}".`);
         setRows([]);
       } finally {

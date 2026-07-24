@@ -31,6 +31,17 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as NotifyBody;
     const { child_id, category, stars_earned, new_badges, new_certificate } = body;
 
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!child_id || !UUID_RE.test(child_id)) {
+      return NextResponse.json({ error: "Invalid child_id" }, { status: 400 });
+    }
+    if (typeof category !== "string" || !category.trim()) {
+      return NextResponse.json({ error: "category is required" }, { status: 400 });
+    }
+    if (typeof stars_earned !== "number" || !Number.isFinite(stars_earned) || stars_earned < 0) {
+      return NextResponse.json({ error: "stars_earned must be a non-negative number" }, { status: 400 });
+    }
+
     const { data: child } = await sb
       .from("children")
       .select("name")

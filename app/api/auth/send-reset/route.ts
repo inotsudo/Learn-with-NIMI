@@ -12,7 +12,10 @@ const sb = createClient(
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({})) as { email?: string };
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-  if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !EMAIL_RE.test(email)) {
+    return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+  }
 
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nimipiko.com";
 

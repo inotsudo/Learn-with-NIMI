@@ -96,7 +96,7 @@ export function getClaimedChallenges(childId: string, language: "en" | "fr" | "r
       .select("challenge_slug")
       .eq("child_id", childId)
       .eq("language", language);
-    return new Set((data ?? []).map((r: any) => r.challenge_slug));
+    return new Set((data ?? []).map((r: { challenge_slug: string }) => r.challenge_slug));
   });
 }
 

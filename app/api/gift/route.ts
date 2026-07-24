@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     .eq("slug", "nimipiko-club")
     .eq("is_active", true)
     .maybeSingle();
-  const minimum: number = (monthlyPlan as any)?.[priceField] ?? FALLBACK_MINIMUMS[currency] ?? 14.99;
+  const minimum: number = (monthlyPlan as Record<string, number> | null)?.[priceField] ?? FALLBACK_MINIMUMS[currency] ?? 14.99;
 
   if (body.amount < minimum) {
     const minFmt = currency === "RWF"

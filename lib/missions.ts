@@ -37,7 +37,7 @@ export const MissionService = {
     description?: string
     date: Date
     scheduled_at?: string
-    [key: string]: any
+    [key: string]: string | number | boolean | null | Date | undefined
   }) {
     const { data: newMission, error } = await supabase
       .from('missions')

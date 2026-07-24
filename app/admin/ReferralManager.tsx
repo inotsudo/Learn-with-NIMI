@@ -39,7 +39,7 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
             .limit(200),
           supabase.from('referral_codes').select('*', { count: 'exact', head: true }),
         ])
-        setRows((redemptions as any[]) ?? [])
+        setRows((redemptions as Redemption[]) ?? [])
         setCodes(count ?? 0)
       } catch (err) {
         toastErr('Failed to load referral data.')
@@ -92,8 +92,8 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(r => {
-        const referrer = r.referrer as any
-        const referred = r.referred as any
+        const referrer = r.referrer
+        const referred = r.referred
         return (
           (referrer?.name ?? '').toLowerCase().includes(q) ||
           (referrer?.email ?? '').toLowerCase().includes(q) ||
@@ -178,8 +178,8 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
               </thead>
               <tbody>
                 {filteredRows.map((r, i) => {
-                  const referrer = r.referrer as any
-                  const referred = r.referred as any
+                  const referrer = r.referrer
+                  const referred = r.referred
                   return (
                     <tr key={r.id} className={`border-b border-gray-50 ${i % 2 === 0 ? '' : 'bg-gray-50/40'}`}>
                       <td className="px-4 py-3 text-gray-700">{referrer?.name ?? referrer?.email ?? '—'}</td>

@@ -35,7 +35,7 @@ export function getStoryLibrary(
     }
     const items = (data ?? []) as StoryLibraryItem[];
     if (cats) {
-      const catMap = new Map(cats.map((c: any) => [c.id, c.category]));
+      const catMap = new Map(cats.map((c: { id: string; category: string | null }) => [c.id, c.category]));
       for (const item of items) item.category = catMap.get(item.sid) ?? null;
     }
     return items;

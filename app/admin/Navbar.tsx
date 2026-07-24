@@ -123,13 +123,13 @@ export default function Navbar({ tables, currentTable, setCurrentTable, onOpenSi
         ])
         if (cancelled) return
         const all: SearchResult[] = [
-          ...(missionsRes.data ?? []).map((m: any) => {
+          ...(missionsRes.data ?? []).map((m: { mission_id: string; title: string; missions: { category_slug: string } | { category_slug: string }[] | null }) => {
             const rel = m.missions; const cs = Array.isArray(rel) ? rel[0]?.category_slug : rel?.category_slug
             return cs ? { kind: 'mission' as const, id: m.mission_id, title: m.title, categorySlug: cs } : null
           }).filter(Boolean) as SearchResult[],
-          ...(childrenRes.data ?? []).map((c: any) => ({ kind: 'child' as const, id: c.id, name: c.name })),
-          ...(parentsRes.data ?? []).map((p: any) => ({ kind: 'parent' as const, id: p.id, name: p.name || p.email || 'Parent', email: p.email ?? null })),
-          ...(storiesRes.data ?? []).map((s: any) => ({ kind: 'story' as const, id: s.id, title: s.title })),
+          ...(childrenRes.data ?? []).map((c: { id: string; name: string }) => ({ kind: 'child' as const, id: c.id, name: c.name })),
+          ...(parentsRes.data ?? []).map((p: { id: string; name: string | null; email: string | null }) => ({ kind: 'parent' as const, id: p.id, name: p.name || p.email || 'Parent', email: p.email ?? null })),
+          ...(storiesRes.data ?? []).map((s: { id: string; title: string }) => ({ kind: 'story' as const, id: s.id, title: s.title })),
           ...tables.filter(t => t.toLowerCase().includes(q.toLowerCase())).slice(0, 3).map(t => ({
             kind: 'page' as const, table: t, label: t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
           })),

@@ -127,10 +127,10 @@ export function getAllChildProgress(childId: string): Promise<ProgressRow[]> {
       console.error("[getAllChildProgress]", error.message);
       return [];
     }
-    return (data ?? []).map((row: any) => ({
+    return (data ?? []).map((row: { mission_id: string; language: string; stars_earned: number; completed_at: string; missions: { category_slug: string }[] | { category_slug: string } | null }) => ({
       mission_id: row.mission_id,
       language: row.language,
-      category: row.missions?.category_slug,
+      category: Array.isArray(row.missions) ? row.missions[0]?.category_slug : row.missions?.category_slug,
       stars_earned: row.stars_earned,
       completed_at: row.completed_at,
     })) as ProgressRow[];
@@ -198,7 +198,8 @@ export function getStoryProgressStars(childId: string, language: "en" | "fr" | "
       .eq("language", language);
     const perStory: Record<string, number> = {};
     for (const row of data ?? []) {
-      const m = (row as any).missions as { stars?: number; story_slots?: { story_id?: string } | { story_id?: string }[] } | null;
+      type MissionShape = { stars?: number; story_slots?: { story_id?: string } | { story_id?: string }[] } | null;
+      const m = (row as { missions: MissionShape }).missions;
       const storyId = Array.isArray(m?.story_slots) ? m.story_slots[0]?.story_id : m?.story_slots?.story_id;
       if (storyId) perStory[storyId] = (perStory[storyId] ?? 0) + (m?.stars ?? 0);
     }

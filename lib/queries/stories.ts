@@ -38,7 +38,7 @@ export function getStoryPages(
       .eq("story_id", storyId)
       .order("page_number");
 
-    return (data ?? []).map((page: any) => {
+    return (data ?? []).map((page: { id: string; story_id: string; page_number: number; image_url: string | null; story_page_versions: unknown[] | null }) => {
       const versions = (page.story_page_versions ?? []) as
         { language: string; text: string | null; audio_url: string | null; image_url: string | null; published: boolean }[];
       const version = versions.find(v => v.language === language && v.published)

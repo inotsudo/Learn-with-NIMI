@@ -131,6 +131,7 @@ export default function LevelEditor() {
   }
 
   const handleCellChange = async (levelNumber: number, categorySlug: string, missionId: string) => {
+    if (!missionId) return
     setBusy(true)
     try {
       const { error } = await supabase
@@ -179,6 +180,7 @@ export default function LevelEditor() {
       .from('child_achievements')
       .select('*', { count: 'exact', head: true })
       .like('slug', `level-${maxLevel}-complete-%`)
+      .then(r => ({ count: r.count ?? 0 }))
     const ok = await confirm({
       title: `Delete Level ${maxLevel}?`,
       message: count

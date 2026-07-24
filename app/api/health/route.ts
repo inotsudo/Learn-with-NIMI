@@ -43,7 +43,7 @@ export async function GET() {
     );
   } catch (err: unknown) {
     // Unexpected exception — return a generic error message.
-    const message = err && typeof err === 'object' && 'message' in err ? (err as any).message : String(err);
+    const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ status: 'error', message }, { status: 500 });
   }
 }

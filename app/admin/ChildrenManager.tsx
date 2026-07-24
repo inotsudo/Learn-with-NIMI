@@ -51,7 +51,8 @@ export default function ChildrenManager({ onNavigate, onOpenSidebar }: Props) {
         const totalStories = (stories ?? []).length
 
         const rows: ChildRow[] = (kids ?? []).map(k => {
-          const parentData = k.parents as any
+          const pd = k.parents as { name: string | null } | { name: string | null }[] | null
+          const parentData = Array.isArray(pd) ? pd[0] : pd
           const childProgress = (progress ?? []).filter(p => p.child_id === k.id)
           const lastActive = childProgress[0]?.completed_at ?? null
           return {

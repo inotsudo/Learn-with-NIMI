@@ -18,7 +18,19 @@ interface Props {
 
 interface StoryData {
   id: string; title: string; slug: string; status: string; cover_url: string | null;
-  story_versions: any[]; story_slots: any[];
+  story_versions: {
+    language: string;
+    published: boolean;
+    intro_video_url?: string | null;
+    theme_song_url?: string | null;
+    meet_characters_url?: string | null;
+    story_intro_url?: string | null;
+  }[];
+  story_slots: {
+    story_id: string;
+    slot_key: string;
+    mission_id: string | null;
+  }[];
 }
 
 export default function StoryPublishingManager({ onNavigate, onOpenSidebar }: Props) {
