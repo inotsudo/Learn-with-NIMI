@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendPushToParent } from "@/lib/push";
 
 // Called internally (from confirm-payment and mtn-momo) after a Club sub is created.
 // Grants the referrer 1 free month if their referred user just subscribed.
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
   const periodEnd = new Date();
   periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-  await supabase.from("nimipiko_subscriptions").insert({
+  const { data: newSub } = await supabase.from("nimipiko_subscriptions").insert({
     parent_id: redemption.referrer_id,
     product_id: product.id,
     status: "active",
@@ -80,13 +81,22 @@ export async function POST(req: Request) {
     current_period_end: periodEnd.toISOString(),
     payment_provider: "admin_grant",
     cancel_at_period_end: true,
-  });
+  }).select("id").single();
 
   await supabase.from("content_access").insert({
     parent_id: redemption.referrer_id,
     access_type: "club",
     order_id: null,
+    subscription_id: newSub?.id ?? null,
+    expires_at: periodEnd.toISOString(),
   });
+
+  // Push to referrer — they earned a free month (best-effort)
+  void sendPushToParent(supabase, redemption.referrer_id, {
+    title: "🎁 You earned 1 free month!",
+    body: "Your referral friend just subscribed to NIMIPIKO Club. Enjoy a free month on us!",
+    url: "/parents?tab=settings",
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true });
   } catch (err: unknown) {

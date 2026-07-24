@@ -89,6 +89,15 @@ export default function OnboardingPage() {
     if (typeof window !== "undefined") {
       localStorage.setItem("nimipiko_active_child", child.id);
     }
+
+    // Pre-generate referral code so ReferralCard loads instantly on first visit
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      void fetch("/api/referral", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }).catch(() => {});
+    }
+
     setDone(true);
     setTimeout(() => router.replace("/stories"), 2000);
   }, [childName, ageGroup, language, avatarCfg, router]);

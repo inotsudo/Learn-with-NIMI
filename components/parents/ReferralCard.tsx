@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Share2, Check, Mail, MessageCircle, Link } from "lucide-react";
+import { motion } from "framer-motion";
+import { Copy, Share2, Check, Mail, MessageCircle, Link, RefreshCw } from "lucide-react";
 
 interface Props {
   code: string | null;
   referralCount: number;
   rewardsEarned: number;
+  codeError?: boolean;
+  onRetry?: () => void;
 }
 
 const MILESTONES = [
@@ -23,11 +25,13 @@ function getNextMilestone(count: number) {
 
 type CopiedKey = "link" | "code" | null;
 
-export default function ReferralCard({ code, referralCount, rewardsEarned }: Props) {
+export default function ReferralCard({ code, referralCount, rewardsEarned, codeError, onRetry }: Props) {
   const [copied, setCopied] = useState<CopiedKey>(null);
+  const [retrying, setRetrying] = useState(false);
 
-  const shareUrl  = `https://nimipiko.com/signup?ref=${code ?? ""}`;
-  const shareText = `Join me on NIMIPIKO — the kids' language learning app! Use my code ${code ?? ""} and we both get a free month. 🌿`;
+  const origin    = typeof window !== "undefined" ? window.location.origin : "https://nimipiko.com";
+  const shareUrl  = `${origin}/signup?ref=${code ?? ""}`;
+  const shareText = `Join me on NIMIPIKO — the kids' language learning app! Use my code ${code ?? ""} and we both get 1 free month. 🌿`;
 
   const copy = async (text: string, key: CopiedKey) => {
     await navigator.clipboard.writeText(text);
@@ -42,7 +46,8 @@ export default function ReferralCard({ code, referralCount, rewardsEarned }: Pro
   };
 
   const whatsappShare = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`;
+    // Pass url separately — WhatsApp appends it after the text, avoiding duplication
+    const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
     window.open(url, "_blank", "noopener");
   };
 
@@ -75,6 +80,25 @@ export default function ReferralCard({ code, referralCount, rewardsEarned }: Pro
         <p className="font-nunito text-ds-muted text-[13px]">
           Share your link with a friend. When they subscribe to NIMIPIKO Club, you both get <strong>1 free month</strong> added automatically.
         </p>
+
+        {/* Error state */}
+        {codeError && !code && (
+          <div className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+            <p className="font-nunito text-red-600 text-[13px]">Could not load your referral code.</p>
+            <button
+              onClick={async () => {
+                if (!onRetry) return;
+                setRetrying(true);
+                await onRetry();
+                setRetrying(false);
+              }}
+              disabled={retrying}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 rounded-lg text-red-600 font-black text-[12px] hover:bg-red-50 transition disabled:opacity-50">
+              <RefreshCw className={`w-3.5 h-3.5 ${retrying ? "animate-spin" : ""}`} />
+              {retrying ? "Retrying…" : "Retry"}
+            </button>
+          </div>
+        )}
 
         {/* Referral code + link */}
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 px-4 py-3 space-y-2.5" style={{ borderRadius: "var(--leaf-r)" }}>

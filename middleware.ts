@@ -77,6 +77,7 @@ const LIMITS: [string, number][] = [
   ["/api/auth/send-reset",       5],  // password reset — limit to protect Resend quota and prevent spam
   ["/api/schools/inquiry",       5],  // lead form
   ["/api/newsletter",            5],  // newsletter sign-up
+  ["/api/referral/validate",     10], // public code-check — tighter to block enumeration
   ["/api/referral",              20], // referral code ops
   ["/api/gift",                  10], // gift creation + redemption
   ["/api/discount",              20], // discount code validation (brute-force guard)
@@ -131,8 +132,12 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const { pathname } = req.nextUrl;
 
-  // 1. Rate-limit sensitive API routes (mutations only)
-  if (req.method !== "GET" && req.method !== "HEAD") {
+  // 1. Rate-limit sensitive API routes.
+  // Mutations (POST/PUT/DELETE/PATCH) are rate-limited broadly.
+  // A small set of GET routes that are enumeration-sensitive are also limited.
+  const GET_RATE_LIMITED = new Set(["/api/referral/validate"]);
+  const shouldLimit = (req.method !== "GET" && req.method !== "HEAD") || GET_RATE_LIMITED.has(pathname);
+  if (shouldLimit) {
     for (const [prefix, max] of LIMITS) {
       if (pathname.startsWith(prefix)) {
         if (await rateLimited(rateLimitKey(req, prefix), max)) return tooManyRequests();
@@ -153,6 +158,7 @@ export const config = {
   matcher: [
     // Sensitive API prefixes
     "/api/newsletter",
+    "/api/referral/validate",
     "/api/referral/:path*",
     "/api/referral",
     "/api/schools/:path*",

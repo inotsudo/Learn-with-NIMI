@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabaseRouteAuth";
+import { sendPushToParent } from "@/lib/push";
 import crypto from "crypto";
 
 const serviceSupabase = createClient(
@@ -84,6 +85,13 @@ export async function POST(req: NextRequest) {
     referred_id: user.id,
     code,
   });
+
+  // Notify referrer — someone used their code (best-effort)
+  void sendPushToParent(serviceSupabase, referralRow.parent_id, {
+    title: "🎉 Someone used your code!",
+    body: "A friend just signed up with your NIMIPIKO referral code. They'll get 1 free month when they subscribe — and so will you!",
+    url: "/parents?tab=settings",
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

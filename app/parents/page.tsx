@@ -133,6 +133,7 @@ export default function ParentsZonePage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
   const [referralRewards, setReferralRewards] = useState(0);
+  const [referralCodeError, setReferralCodeError] = useState(false);
   const [parentUserId, setParentUserId] = useState<string | null>(null);
   const [parentTab, setParentTab] = useState<"overview" | "stories" | "achievements" | "learning" | "settings">("overview");
   const [editingName, setEditingName] = useState(false);
@@ -253,13 +254,18 @@ export default function ParentsZonePage() {
 
       // Referral code + stats
       const [codeRes, redemptionsRes] = await Promise.all([
-        authedFetch("/api/referral").then(r => r.json()).catch(() => ({})),
+        authedFetch("/api/referral").then(r => r.json()).catch(() => ({ _error: true })),
         supabase
           .from("referral_redemptions")
           .select("id, reward_granted_at")
           .eq("referrer_id", user.id),
       ]);
-      if (codeRes.code) setReferralCode(codeRes.code);
+      if (codeRes.code) {
+        setReferralCode(codeRes.code);
+        setReferralCodeError(false);
+      } else if (codeRes._error || !codeRes.code) {
+        setReferralCodeError(true);
+      }
       const redemptions = redemptionsRes.data ?? [];
       setReferralCount(redemptions.length);
       setReferralRewards(redemptions.filter(r => r.reward_granted_at).length);
@@ -1671,11 +1677,11 @@ export default function ParentsZonePage() {
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl shadow-md shrink-0">🎁</div>
                         <div className="flex-1 min-w-0">
                           <p className="font-baloo font-black text-ds-text text-[15px]">Know another parent?</p>
-                          <p className="text-ds-muted text-[12px] font-semibold mt-0.5">Share your code <strong className="text-indigo-600">{referralCode}</strong> — they get a free week, you get a free month!</p>
+                          <p className="text-ds-muted text-[12px] font-semibold mt-0.5">Share your code <strong className="text-indigo-600">{referralCode}</strong> — you both get 1 free month when they subscribe!</p>
                         </div>
                         <button
                           onClick={async () => {
-                            const text = `Try NIMIPIKO for kids — use my code ${referralCode} for a free week! nimipiko.com`;
+                            const text = `Try NIMIPIKO for kids — use my code ${referralCode} and we both get 1 free month! nimipiko.com`;
                             try {
                               if (navigator.share) await navigator.share({ text });
                               else { await navigator.clipboard.writeText(text); setShareToast(true); setTimeout(() => setShareToast(false), 2500); }
@@ -2056,6 +2062,20 @@ export default function ParentsZonePage() {
                       code={referralCode}
                       referralCount={referralCount}
                       rewardsEarned={referralRewards}
+                      codeError={referralCodeError}
+                      onRetry={async () => {
+                        setReferralCodeError(false);
+                        try {
+                          const { data: { session } } = await supabase.auth.getSession();
+                          if (!session?.access_token) return;
+                          const res = await fetch("/api/referral", {
+                            headers: { Authorization: `Bearer ${session.access_token}` },
+                          });
+                          const json = await res.json();
+                          if (json.code) { setReferralCode(json.code); setReferralCodeError(false); }
+                          else setReferralCodeError(true);
+                        } catch { setReferralCodeError(true); }
+                      }}
                     />
                   </motion.div>
                 )}
