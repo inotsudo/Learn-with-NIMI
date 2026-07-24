@@ -9,6 +9,8 @@ import { logAdminAction } from '@/lib/adminAuditLog'
 interface Redemption {
   id: string
   code: string
+  referrer_id: string
+  referred_id: string
   redeemed_at: string
   reward_granted_at: string | null
   referrer: { name: string | null; email: string | null } | null
@@ -53,16 +55,53 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
 
   async function handleGrantReward(id: string) {
     try {
-      const { error } = await supabase
-        .from('referral_redemptions')
-        .update({ reward_granted_at: new Date().toISOString() })
-        .eq('id', id)
-      if (error) throw error
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { toastErr('Not authenticated.'); return }
+      const res = await fetch('/api/admin/referral/grant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ redemption_id: id }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(j.error ?? res.statusText)
+      }
       setRows(prev => prev.map(r => r.id === id ? { ...r, reward_granted_at: new Date().toISOString() } : r))
-      toastOk('Reward granted.')
+      toastOk('Reward granted — subscription + content access created.')
       void logAdminAction({ action: 'grant_referral_reward', entityType: 'referral', entityId: id, entityLabel: id })
     } catch (err) {
-      toastErr('Failed to grant reward.')
+      toastErr(err instanceof Error ? err.message : 'Failed to grant reward.')
+    }
+  }
+
+  async function handleReapplyReward(id: string) {
+    const ok = await confirm({
+      title: 'Re-apply subscription?',
+      message: 'This will create a new 1-month subscription and content_access row for the referrer, even though reward_granted_at is already set. Use this to fix rows where the reward stamp was set manually but no subscription was ever created.',
+    })
+    if (!ok) return
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { toastErr('Not authenticated.'); return }
+      const res = await fetch('/api/admin/referral/grant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ redemption_id: id, force: true }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(j.error ?? res.statusText)
+      }
+      toastOk('Subscription re-applied successfully.')
+      void logAdminAction({ action: 'reapply_referral_reward', entityType: 'referral', entityId: id, entityLabel: id })
+    } catch (err) {
+      toastErr(err instanceof Error ? err.message : 'Failed to re-apply reward.')
     }
   }
 
@@ -199,11 +238,19 @@ export default function ReferralManager({ onOpenSidebar }: Props) {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
-                          {!r.reward_granted_at && (
+                          {!r.reward_granted_at ? (
                             <button
                               onClick={() => handleGrantReward(r.id)}
                               className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-gray-100 text-gray-400 hover:text-gray-700"
-                              title="Grant reward"
+                              title="Grant reward (creates subscription + content access)"
+                            >
+                              <Gift size={14} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleReapplyReward(r.id)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition hover:bg-amber-50 text-gray-300 hover:text-amber-500"
+                              title="Re-apply subscription (use if reward was stamped but subscription was never created)"
                             >
                               <Gift size={14} />
                             </button>
