@@ -34,9 +34,11 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
   const shareText = `Join me on NIMIPIKO — the kids' language learning app! My friend invited me and we both get 1 free month. 🌿`;
 
   const copy = async (text: string, key: CopiedKey) => {
-    await navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2200);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2200);
+    } catch { /* clipboard denied — fail silently */ }
   };
 
   const nativeShare = async () => {
@@ -46,8 +48,7 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
   };
 
   const whatsappShare = () => {
-    // Pass url separately — WhatsApp appends it after the text, avoiding duplication
-    const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
     window.open(url, "_blank", "noopener");
   };
 
@@ -109,8 +110,8 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
                 {code ?? "———"}
               </p>
             </div>
-            <button onClick={() => copy(code ?? "", "code")}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-nunito font-black text-[12px] transition shrink-0 ${copied === "code" ? "bg-emerald-500 text-white" : "bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`}>
+            <button onClick={() => copy(code ?? "", "code")} disabled={!code}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-nunito font-black text-[12px] transition shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${copied === "code" ? "bg-emerald-500 text-white" : "bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`}>
               {copied === "code" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               {copied === "code" ? "Copied!" : "Copy code"}
             </button>
@@ -131,18 +132,18 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
 
         {/* Share buttons */}
         <div className="grid grid-cols-3 gap-2">
-          <button onClick={whatsappShare}
-            className="flex flex-col items-center gap-1.5 py-3 bg-green-50 border border-green-200 rounded-2xl hover:bg-green-100 active:scale-95 transition">
+          <button onClick={whatsappShare} disabled={!code}
+            className="flex flex-col items-center gap-1.5 py-3 bg-green-50 border border-green-200 rounded-2xl hover:bg-green-100 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
             <MessageCircle className="w-5 h-5 text-green-600" />
             <span className="text-[11px] font-black text-green-700">WhatsApp</span>
           </button>
-          <button onClick={emailShare}
-            className="flex flex-col items-center gap-1.5 py-3 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 active:scale-95 transition">
+          <button onClick={emailShare} disabled={!code}
+            className="flex flex-col items-center gap-1.5 py-3 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
             <Mail className="w-5 h-5 text-blue-600" />
             <span className="text-[11px] font-black text-blue-700">Email</span>
           </button>
-          <button onClick={nativeShare}
-            className="flex flex-col items-center gap-1.5 py-3 bg-gray-50 border border-ds-border rounded-2xl hover:bg-gray-100 active:scale-95 transition">
+          <button onClick={nativeShare} disabled={!code}
+            className="flex flex-col items-center gap-1.5 py-3 bg-gray-50 border border-ds-border rounded-2xl hover:bg-gray-100 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
             <Share2 className="w-5 h-5 text-gray-500" />
             <span className="text-[11px] font-black text-gray-600">Share</span>
           </button>
@@ -178,8 +179,14 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
             <p className="font-nunito text-ds-muted text-[11px] mt-0.5">{referralCount === 1 ? "Friend joined" : "Friends joined"}</p>
           </div>
           <div className="bg-emerald-50 border border-emerald-200 px-4 py-3 text-center" style={{ borderRadius: "var(--leaf-r)" }}>
-            <p className="font-baloo font-black text-emerald-700 text-[24px] leading-none">{rewardsEarned}</p>
-            <p className="font-nunito text-emerald-500 text-[11px] mt-0.5">Free {rewardsEarned === 1 ? "month" : "months"} earned</p>
+            {rewardsEarned > 0 ? (
+              <>
+                <p className="font-baloo font-black text-emerald-700 text-[24px] leading-none">{rewardsEarned}</p>
+                <p className="font-nunito text-emerald-500 text-[11px] mt-0.5">Free {rewardsEarned === 1 ? "month" : "months"} earned</p>
+              </>
+            ) : (
+              <p className="font-nunito text-emerald-400 text-[12px] leading-snug">No rewards<br />yet</p>
+            )}
           </div>
         </div>
 
