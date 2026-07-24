@@ -55,7 +55,7 @@ export default function ReferralCard({ code, referralCount, rewardsEarned, codeE
   const emailShare = () => {
     const subject = encodeURIComponent("Join me on NIMIPIKO 🌿");
     const body    = encodeURIComponent(`${shareText}\n\n${shareUrl}`);
-    window.open(`mailto:?subject=${subject}&body=${body}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   const nextMilestone = getNextMilestone(referralCount);
