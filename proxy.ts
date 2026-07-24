@@ -161,7 +161,7 @@ async function refreshSession(req: NextRequest, res: NextResponse): Promise<Next
 }
 
 // ── Proxy ────────────────────────────────────────────────────────────────────
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const res = NextResponse.next();
   const { pathname } = req.nextUrl;
 
