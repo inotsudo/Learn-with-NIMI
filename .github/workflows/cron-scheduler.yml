@@ -1,0 +1,65 @@
+name: Schedule cron routes
+
+on:
+  schedule:
+    - cron: '0 17 * * *'    # daily-reminder at 17:00 UTC
+    - cron: '0 6 * * *'     # renew-subscriptions at 06:00 UTC
+    - cron: '0 12 * * *'    # check-momo-renewals at 12:00 UTC
+    - cron: '0 8 * * 1'     # weekly-digest at 08:00 UTC on Mondays
+    - cron: '0 8 * * *'     # send-gift-emails at 08:00 UTC
+    - cron: '*/15 * * * *'  # xapi flush every 15 minutes
+
+jobs:
+  daily-reminder:
+    if: github.event.schedule == '0 17 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call daily reminder cron
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/cron/daily-reminder"
+
+  renew-subscriptions:
+    if: github.event.schedule == '0 6 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call renew subscriptions cron
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/cron/renew-subscriptions"
+
+  check-momo-renewals:
+    if: github.event.schedule == '0 12 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call check momo renewals cron
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/cron/check-momo-renewals"
+
+  weekly-digest:
+    if: github.event.schedule == '0 8 * * 1'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call weekly digest cron
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/cron/weekly-digest"
+
+  send-gift-emails:
+    if: github.event.schedule == '0 8 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call send gift emails cron
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/cron/send-gift-emails"
+
+  xapi-flush:
+    if: github.event.schedule == '*/15 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call xapi flush cron
+        run: |
+          set -euo pipefail
+          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/enterprise/xapi?flush=1"
