@@ -388,8 +388,37 @@ export default function ChallengesPage() {
 
         <main className="max-w-2xl mx-auto px-4 sm:px-5 py-4 sm:py-6 pb-28 flex-1 w-full">
           {loading ? (
-            <div className="space-y-3 py-2">
-              {Array.from({ length: 4 }).map((_, i) => <Bone key={i} className="h-28 leaf-lg" />)}
+            <div className="space-y-6 py-2">
+              {/* Stats strip */}
+              <div className="grid grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="leaf border border-ds-border p-4 space-y-2 text-center">
+                    <Bone className="w-10 h-10 rounded-xl mx-auto" />
+                    <Bone className="h-5 w-16 mx-auto" />
+                    <Bone className="h-3 w-12 mx-auto" />
+                  </div>
+                ))}
+              </div>
+              {/* Badge grid */}
+              <div className="leaf-lg border border-ds-border p-5 space-y-4">
+                <Bone className="h-6 w-36" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="leaf border border-ds-border p-4 flex flex-col items-center gap-2">
+                      <Bone className="w-16 h-16 rounded-2xl" />
+                      <Bone className="h-4 w-3/4" />
+                      <Bone className="h-3 w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Streak row */}
+              <div className="leaf-lg border border-ds-border p-5 space-y-4">
+                <Bone className="h-6 w-28" />
+                <div className="flex items-center justify-between">
+                  {Array.from({ length: 7 }).map((_, i) => <Bone key={i} className="w-10 h-10 rounded-2xl" />)}
+                </div>
+              </div>
             </div>
           ) : (
             <motion.div

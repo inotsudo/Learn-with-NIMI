@@ -1079,8 +1079,20 @@ export default function CommunityPage() {
 
         {/* ── FEED ──────────────────────────────────────────────── */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 py-2">
-            {Array.from({ length: 4 }).map((_, i) => <Bone key={i} className="h-[520px] rounded-2xl" />)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="leaf-lg overflow-hidden border border-ds-border">
+                <Bone className="w-full h-44 rounded-none" />
+                <div className="p-4 space-y-2">
+                  <Bone className="h-4 w-3/4" />
+                  <Bone className="h-3 w-1/2" />
+                  <div className="flex items-center gap-3 pt-1">
+                    <Bone className="h-7 w-16 rounded-full" />
+                    <Bone className="h-7 w-16 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : visible.length === 0 ? (
           <motion.div
