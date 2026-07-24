@@ -126,7 +126,7 @@ function rateLimitKey(req: NextRequest, prefix: string): string {
   return `${ip(req)}:${prefix}`;
 }
 
-// ── Middleware ───────────────────────────────────────────────────────────────
+// ── Proxy ────────────────────────────────────────────────────────────────────
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const { pathname } = req.nextUrl;
