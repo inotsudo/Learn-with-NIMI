@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, Bell, Crown, Flame, Heart, LogOut, Search, Settings, Trophy, User, X } from "lucide-react";
+import { ArrowLeft, Bell, Search, X } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useUser } from "@/contexts/UserContext";
 import { getChildren, getWeekStreak, getTotalStars, getActivityDates, getChildBadges, getCurrentLevel, updateChildLanguage, getChildCosmetics, getCurriculumMissions, getActiveStories, getStreakShieldsPurchased, getUsedShieldDates } from "@/lib/queries";
@@ -169,7 +169,7 @@ export default function AppShell({ children }: AppShellProps) {
             .eq("parent_id", user.id)
             .eq("payment_provider", "trial")
             .eq("status", "expired")
-            .gte("updated_at", new Date(Date.now() - 7 * 86_400_000).toISOString())
+            .gte("created_at", new Date(Date.now() - 7 * 86_400_000).toISOString())
             .limit(1)
             .maybeSingle();
           if (active && expired) setTrialExpiredBanner(true);
@@ -274,47 +274,46 @@ export default function AppShell({ children }: AppShellProps) {
   };
 
   if (authLoading || !user) return (
-    <div className="flex items-center justify-center min-h-screen bg-[var(--ds-surface-page,#f9fafb)]">
-      <div className="animate-spin w-10 h-10 rounded-full border-4 border-[var(--ds-brand-primary,#16a34a)] border-t-transparent" />
+    <div className="flex items-center justify-center min-h-screen" style={{ background: "var(--airways-navy, #06101F)" }}>
+      <div className="text-center">
+        <div className="animate-spin w-10 h-10 rounded-full border-4 border-t-transparent mx-auto" style={{ borderColor: "var(--airways-gold, #C9A84C)", borderTopColor: "transparent" }} />
+        <p className="mt-3 font-baloo font-bold text-sm" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>✈️ Boarding…</p>
+      </div>
     </div>
   );
 
   return (
     <MotionConfig reducedMotion="user">
     <div className="relative min-h-screen overflow-x-hidden">
-      {/* ── Global shell: sky-blue ambient background ── */}
+      {/* ── AIRWAYS: Deep navy gradient background ── */}
       <div
-        className="absolute inset-0 -z-10"
+        className="fixed inset-0 -z-10"
         style={{
-          backgroundImage: `linear-gradient(160deg, rgba(255,255,255,0.88) 0%, rgba(220,242,255,0.60) 50%, rgba(219,250,229,0.55) 100%), url('${assets.backgrounds.app}')`,
+          background: "linear-gradient(160deg, #030C17 0%, #06101F 40%, #0A1828 75%, #0D1E3A 100%)",
+        }}
+      />
+      {/* Airways: Subtle gold bloom top-right */}
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 h-96 -z-10"
+        style={{
+          background: "radial-gradient(ellipse 70% 50% at 85% -10%, rgba(201,168,76,0.10) 0%, transparent 60%)",
+        }}
+      />
+      {/* Airways: Sky blue horizon glow */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 h-64 -z-10"
+        style={{
+          background: "radial-gradient(ellipse 100% 60% at 50% 100%, rgba(30,80,160,0.18) 0%, transparent 70%)",
+        }}
+      />
+      {/* Airways: Floating cloud texture — very subtle */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
+        style={{
+          backgroundImage: `url('${assets.backgrounds.app}')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundAttachment: "fixed",
-        }}
-      />
-      {/* Soft sky-blue radial bloom from top-right — gives the "open sky" feel */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-72 -z-10"
-        style={{
-          background: "radial-gradient(ellipse 80% 60% at 70% 0%, rgba(186,230,253,0.38) 0%, rgba(167,243,208,0.18) 55%, transparent 80%)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-48 -z-10 opacity-30"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0), rgba(240,249,255,0.95)), url('${assets.backgrounds.page}')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: "saturate(1.05)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute right-4 top-24 hidden md:block w-28 h-28 -z-10 opacity-70"
-        style={{
-          backgroundImage: `url('${assets.decorations.floating2}')`,
-          backgroundSize: "contain",
-          backgroundRepeat: "no-repeat",
-          transform: "translateY(0)",
+          filter: "invert(1)",
         }}
       />
       <Sidebar
@@ -327,7 +326,8 @@ export default function AppShell({ children }: AppShellProps) {
         onLogoutClick={() => setShowLogout(true)}
       />
 
-      <div className="relative lg:pl-[200px] flex flex-col min-h-screen">
+      <div className="relative flex min-h-screen min-w-0 flex-col" style={{ paddingLeft: "0" }} data-airways-main>
+      <style>{`@media (min-width:1024px){[data-airways-main]{margin-left:var(--airways-sidebar-w,220px);width:calc(100% - var(--airways-sidebar-w,220px));}}`}</style>
 
         {!isOnline && (
           <div className="bg-ds-warn-surface text-ds-warn text-xs font-semibold text-center py-1.5 px-3 border-b border-ds-warn">
@@ -380,38 +380,25 @@ export default function AppShell({ children }: AppShellProps) {
           </div>
         )}
 
-        {/* ── Top bar ─────────────────────────────────────────────────────── */}
+        {/* ── AIRWAYS Top bar ──────────────────────────────────────────────── */}
         {activeChild && (
-          <div className="sticky top-0 z-20">
-            {/* Background layer */}
-            <div
-              className={`absolute inset-0 overflow-hidden ${variants.navigationStyle.background} border-b border-[var(--ds-border-primary)]/60 shadow-[0_10px_32px_rgba(15,23,42,0.06)]`}
-              style={{
-                backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.97), rgba(240,249,255,0.93)), url('${assets.navigation.topbar}')`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_100%_0%,rgba(186,230,253,0.28),transparent_60%)]" />
-              <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white/20 to-transparent" />
-              <div
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-20 h-20 opacity-50"
-                style={{
-                  backgroundImage: `url('${assets.navigation.ornaments}')`,
-                  backgroundSize: "contain",
-                  backgroundRepeat: "no-repeat",
-                }}
-              />
-            </div>
+          <div
+            className={pathname === "/home"
+              ? "relative z-20 lg:absolute lg:top-3 lg:right-6 lg:w-fit"
+              : "relative z-20"}
+          >
+            {/* No header bar — the reference has no distinct top strip at all; the streak/
+                stars/bell/language row sits directly on the page background, same as the
+                hero below it, with no separating background/border/shadow. */}
 
             {/* Content layer — overflow-visible so dropdowns escape */}
-            <div className="relative flex items-center h-16 px-4 lg:px-6 max-w-[1800px] mx-auto gap-3">
+            <div className="relative flex items-center h-12 px-3 lg:px-0 max-w-[1800px] mx-auto gap-2.5">
 
               {/* Mobile: hamburger */}
               <button
                 onClick={() => setDrawerOpen(true)}
-                className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl border border-[var(--ds-border-primary)]/60 bg-white/80 text-[var(--ds-text-secondary)] shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--ds-brand-soft)] hover:text-[var(--ds-brand-primary)] active:scale-95 shrink-0"
+                className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:-translate-y-0.5 active:scale-95 shrink-0"
+                style={{ background: "rgba(20,35,59,0.05)", border: "1px solid rgba(177,120,34,0.20)", color: "#14233B" }}
                 aria-label="Open menu"
               >
                 <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
@@ -419,79 +406,82 @@ export default function AppShell({ children }: AppShellProps) {
                 </svg>
               </button>
 
-              {/* Mobile: search icon — opens overlay */}
+              {/* Search — mobile only. The reference's desktop top bar has no search icon at
+                  all (search lives on /stories), so desktop stays exactly as clean as the
+                  reference; mobile keeps a compact entry point since there's no room for a
+                  persistent search affordance elsewhere at that width. */}
               <button
                 onClick={() => setSearchOpen(true)}
-                className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl border border-[var(--ds-border-primary)]/60 bg-white/80 text-[var(--ds-text-secondary)] shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--ds-brand-soft)] hover:text-[var(--ds-brand-primary)] active:scale-95 shrink-0"
+                className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:-translate-y-0.5 active:scale-95 shrink-0"
+                style={{ background: "rgba(20,35,59,0.05)", border: "1px solid rgba(177,120,34,0.20)", color: "rgba(20,35,59,0.55)" }}
                 aria-label="Search"
               >
                 <Search className="w-4.5 h-4.5" />
               </button>
 
-              {/* Desktop: search bar */}
-              <form
-                onSubmit={e => {
-                  e.preventDefault();
-                  const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value.trim();
-                  if (q) void (window.location.href = `/stories?q=${encodeURIComponent(q)}`);
-                }}
-                className="hidden md:block flex-1 max-w-[400px]"
+              <div className="flex-1" />
+
+              {/* Right cluster — frosted pill so chips are legible over hero */}
+              <div
+                className="ml-auto flex items-center gap-2 shrink-0 rounded-[28px] px-2 py-1.5 lg:backdrop-blur-sm"
+                style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.28)" }}
               >
-                <div className="relative group">
-                  <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ds-text-tertiary)] transition group-focus-within:text-[var(--ds-brand-primary)]" />
-                  <input
-                    name="q"
-                    type="text"
-                    placeholder="Search stories, activities…"
-                    className="w-full h-[38px] bg-white/80 border border-[var(--ds-border-primary)]/70 rounded-2xl pl-9 pr-4 text-sml font-nunito text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-tertiary)] shadow-sm backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[var(--ds-brand-primary)]/30 focus:border-[var(--ds-brand-primary)]/60 transition"
-                  />
-                </div>
-              </form>
 
-              {/* Right cluster */}
-              <div className="ml-auto flex items-center gap-2 shrink-0">
-
-                {/* ── Streak chip — desktop only ── */}
+                {/* ── Streak chip ── */}
                 <div
-                  className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border transition-all ${
-                    streakCount > 0
-                      ? "bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200/80 shadow-sm"
-                      : "bg-white/70 border-[var(--ds-border-primary)]/60"
-                  }`}
-                  title={streakCount > 0 ? `${streakCount}-day streak!` : "No streak yet — start learning!"}
+                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-2xl transition-all"
+                  title={streakCount > 0 ? `${streakCount}-day streak!` : "No streak yet"}
+                  style={{
+                    background: streakCount > 0
+                      ? "linear-gradient(135deg,#FF8C00,#F55F00)"
+                      : "rgba(20,35,59,0.06)",
+                    boxShadow: streakCount > 0
+                      ? "0 3px 0 rgba(180,60,0,0.30), 0 6px 16px rgba(245,95,0,0.22)"
+                      : "none",
+                    border: streakCount > 0 ? "none" : "1.5px solid rgba(20,35,59,0.10)",
+                  }}
                 >
-                  <span className={`text-xl leading-none ${streakCount === 0 ? "grayscale opacity-40" : ""}`}>🔥</span>
+                  <span className={`text-[20px] leading-none ${streakCount === 0 ? "grayscale opacity-35" : ""}`}>🔥</span>
                   <div className="leading-none">
-                    <p className={`font-baloo font-black text-mbase leading-none ${streakCount > 0 ? "text-orange-600" : "text-[var(--ds-text-tertiary)]"}`}>
+                    <p className="font-baloo font-black text-[15px] leading-none"
+                       style={{ color: streakCount > 0 ? "#fff" : "rgba(20,35,59,0.30)" }}>
                       {streakCount}
                     </p>
-                    <p className="font-nunito text-3xs mt-0.5 text-orange-400/80">streak</p>
+                    <p className="font-baloo text-[9px] mt-0.5 uppercase tracking-wide"
+                       style={{ color: streakCount > 0 ? "rgba(255,255,255,0.75)" : "rgba(20,35,59,0.28)" }}>
+                      streak
+                    </p>
                   </div>
                 </div>
 
-                {/* ── Stars chip — desktop only ── */}
+                {/* ── Stars chip ── */}
                 <div
-                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200/80 shadow-sm"
+                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-2xl"
                   title={`${totalStars} stars earned`}
+                  style={{
+                    background: "linear-gradient(135deg,#F9C932,#E8A820)",
+                    boxShadow: "0 3px 0 rgba(180,120,0,0.28), 0 6px 16px rgba(232,168,32,0.28)",
+                  }}
                 >
-                  <span className="text-xl leading-none">⭐</span>
+                  <span className="text-[20px] leading-none">⭐</span>
                   <div className="leading-none">
-                    <p className="font-baloo font-black text-amber-600 text-mbase leading-none">{totalStars}</p>
-                    <p className="font-nunito text-amber-400/80 text-3xs mt-0.5">stars</p>
+                    <p className="font-baloo font-black text-[15px] leading-none" style={{ color: "#06101F" }}>{totalStars}</p>
+                    <p className="font-baloo text-[9px] mt-0.5 uppercase tracking-wide" style={{ color: "rgba(6,16,31,0.55)" }}>stars</p>
                   </div>
                 </div>
 
-                {/* Divider — desktop only */}
-                <div className="hidden md:block w-px h-6 bg-[var(--ds-border-primary)]/60 rounded-full" />
+                {/* Divider */}
+                <div className="hidden md:block w-px h-6 rounded-full" style={{ background: "rgba(177,120,34,0.22)" }} />
 
                 {/* ── Bell / Notifications ── */}
                 <div className="relative">
                   <button
                     onClick={() => { setShowNotifications(p => !p); setShowLangPicker(false); setShowProfileMenu(false); }}
-                    className="relative w-9 h-9 flex items-center justify-center rounded-xl border border-[var(--ds-border-primary)]/70 bg-white/80 shadow-sm transition-all hover:shadow-md hover:border-amber-300 hover:bg-amber-50 hover:-translate-y-0.5 active:scale-95"
+                    className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:-translate-y-0.5 active:scale-95"
+                    style={{ background: "rgba(20,35,59,0.05)", border: "1px solid rgba(177,120,34,0.20)" }}
                     aria-label="Notifications"
                   >
-                    <Bell className="w-[17px] h-[17px] text-[var(--ds-text-secondary)]" strokeWidth={1.8} />
+                    <Bell className="w-[17px] h-[17px]" strokeWidth={1.8} style={{ color: "rgba(20,35,59,0.55)" }} />
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center text-5xs font-black text-white border-2 border-white px-0.5">
                         {unreadCount}
@@ -546,142 +536,10 @@ export default function AppShell({ children }: AppShellProps) {
                   )}
                 </div>
 
-                {/* ── Profile chip ── */}
-                <div className="relative">
-                  <button
-                    onClick={() => { setShowProfileMenu(p => !p); setShowLangPicker(false); setShowNotifications(false); }}
-                    className="flex items-center gap-2 rounded-2xl border border-[var(--ds-border-primary)]/70 bg-white/85 pl-1 pr-3 py-1 shadow-sm transition-all hover:shadow-md hover:border-[var(--ds-brand-primary)]/40 hover:-translate-y-0.5 active:scale-95"
-                    style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(240,253,244,0.85))" }}
-                  >
-                    {/* Avatar */}
-                    <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border-2" style={{ borderColor: "var(--ds-brand-primary)" }}>
-                      <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={32} />
-                    </div>
-                    {/* Name + badge — desktop only */}
-                    <div className="hidden md:block text-left leading-none">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <p className="font-baloo font-black text-[var(--ds-text-primary)] text-sml leading-none">{activeChild.name}</p>
-                        <span className="text-5xs font-black px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200/70 leading-none whitespace-nowrap">
-                          🧒 Child
-                        </span>
-                      </div>
-                      {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] ? (
-                        <span className={`inline-flex items-center gap-1 text-4xs font-black px-1.5 py-0.5 rounded-full ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-[var(--ds-surface-card-active)] text-[var(--ds-text-secondary)]"}`}>
-                          {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-4xs font-black px-1.5 py-0.5 rounded-full bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] border border-[var(--ds-brand-primary)]/20">
-                          ✨ {getLevelLabel(level)} {level}
-                        </span>
-                      )}
-                    </div>
-                    <svg className="hidden md:block w-3.5 h-3.5 text-[var(--ds-text-tertiary)] shrink-0 ml-0.5" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-
-                  {/* ── Profile dropdown ── */}
-                  {showProfileMenu && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-[var(--ds-border-primary)]/80 rounded-2xl shadow-xl z-50 overflow-hidden">
-                        {/* Child card header */}
-                        <div
-                          className="px-4 py-3 border-b border-[var(--ds-border-primary)]/60"
-                          style={{ background: "linear-gradient(135deg, #F0FDF4, #DBEAFE)" }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0 border-2 border-white shadow-sm">
-                              <ChildAvatar avatarUrl={activeChild.avatar_url} name={activeChild.name} size={44} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-baloo font-black text-[var(--ds-text-primary)] text-mbase truncate">{activeChild.name}</p>
-                              {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] ? (
-                                <span className={`inline-flex items-center gap-1 text-3xs font-black px-2 py-0.5 rounded-full mt-0.5 ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-white/80 text-[var(--ds-text-secondary)]"}`}>
-                                  {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 mt-0.5 text-3xs font-black px-2 py-0.5 rounded-full bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] border border-[var(--ds-brand-primary)]/20">
-                                  ✨ {getLevelLabel(level)} · Level {level}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {/* Mini stats row */}
-                          <div className="flex items-center gap-3 mt-2.5">
-                            <div className="flex items-center gap-1">
-                              <span className={`text-base ${streakCount === 0 ? "grayscale opacity-40" : ""}`}>🔥</span>
-                              <span className="font-baloo font-black text-orange-600 text-sml">{streakCount}</span>
-                              <span className="font-nunito text-3xs text-[var(--ds-text-tertiary)]">streak</span>
-                            </div>
-                            <div className="w-px h-4 bg-[var(--ds-border-primary)]/60 rounded-full" />
-                            <div className="flex items-center gap-1">
-                              <span className="text-base">⭐</span>
-                              <span className="font-baloo font-black text-amber-600 text-sml">{totalStars}</span>
-                              <span className="font-nunito text-3xs text-[var(--ds-text-tertiary)]">stars</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Nav items */}
-                        <div className="py-1.5">
-                          {([
-                            { Icon: User,     label: "My Profile",    href: "/user-profile",          iconBg: "bg-blue-100",   iconColor: "text-blue-600"   },
-                            { Icon: Trophy,   label: "My Treasure",   href: "/treasure",              iconBg: "bg-amber-100",  iconColor: "text-amber-600"  },
-                            { Icon: Crown,    label: "Masterpiece",   href: "/masterpiece",           iconBg: "bg-yellow-100", iconColor: "text-yellow-600" },
-                            { Icon: Settings, label: "Settings",      href: "/user-profile/settings", iconBg: "bg-gray-100",   iconColor: "text-gray-500"   },
-                          ] as { Icon: React.ElementType; label: string; href: string; iconBg: string; iconColor: string }[]).map(item => (
-                            <a
-                              key={item.href}
-                              href={item.href}
-                              onClick={() => setShowProfileMenu(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--ds-surface-card-hover)] transition group"
-                            >
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${item.iconBg} transition group-hover:scale-105`}>
-                                <item.Icon className={`w-3.5 h-3.5 ${item.iconColor}`} strokeWidth={2} />
-                              </div>
-                              <span className="font-nunito text-[var(--ds-text-primary)] text-sml font-bold">{item.label}</span>
-                            </a>
-                          ))}
-                        </div>
-
-                        {/* Language selector */}
-                        <div className="border-t border-[var(--ds-border-primary)]/60 px-4 py-2.5">
-                          <p className="text-3xs font-black text-[var(--ds-text-tertiary)] uppercase tracking-wide mb-1.5">Language</p>
-                          <div className="flex gap-1.5">
-                            {LANGS.map(l => (
-                              <button
-                                key={l.code}
-                                onClick={() => { setShowProfileMenu(false); setPendingLanguage(l.code); }}
-                                className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ds-brand-primary)] focus-visible:ring-offset-1 ${
-                                  l.code === language
-                                    ? "border-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)]"
-                                    : "border-[var(--ds-border-primary)] hover:bg-[var(--ds-surface-card-hover)]"
-                                }`}
-                              >
-                                <Flag lang={l.code} className="w-6 h-4 rounded-sm" />
-                                <span className={`text-4xs font-black uppercase tracking-wide ${l.code === language ? "text-[var(--ds-brand-primary)]" : "text-[var(--ds-text-secondary)]"}`}>{l.code}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Logout */}
-                        <div className="border-t border-[var(--ds-border-primary)]/60">
-                          <button
-                            onClick={() => { setShowProfileMenu(false); setShowLogout(true); }}
-                            className="flex items-center gap-3 px-4 py-2.5 w-full hover:bg-red-50 transition group"
-                          >
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-red-50 group-hover:bg-red-100 transition">
-                              <LogOut className="w-3.5 h-3.5 text-red-400" strokeWidth={2} />
-                            </div>
-                            <span className="font-nunito text-red-500 text-sml font-bold">Log out</span>
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                {/* Learner identity lives in the sidebar only, matching the reference exactly —
+                    no avatar/profile chip in the top bar. Masterpiece and Settings, which used
+                    to live in this dropdown, are now sidebar nav items instead (see Sidebar.tsx)
+                    so they stay reachable. */}
 
               </div>{/* end right cluster */}
             </div>
@@ -728,7 +586,12 @@ export default function AppShell({ children }: AppShellProps) {
           </div>
         )}
 
-        <div id="main-content" className="flex-1 flex flex-col w-full max-w-[1800px] mx-auto px-4 py-4 pb-[88px] sm:px-5 sm:py-5 lg:px-6 lg:py-6 lg:pb-8">
+        <div
+          id="main-content"
+          className={pathname === "/home"
+            ? "flex-1 flex flex-col w-full max-w-[1800px] mx-auto px-0 py-0 pb-[88px] sm:px-0 sm:py-0 lg:px-0 lg:py-0 lg:pb-0"
+            : "flex-1 flex flex-col w-full max-w-[1800px] mx-auto px-4 py-4 pb-[88px] sm:px-5 sm:py-5 lg:px-6 lg:py-6 lg:pb-8"}
+        >
           {children}
         </div>
       </div>
@@ -742,9 +605,11 @@ export default function AppShell({ children }: AppShellProps) {
       <LogoutModal isOpen={showLogout} onClose={() => setShowLogout(false)} />
 
       {/* Copyright footer — desktop only, stays below content */}
-      <div className="hidden lg:block text-center py-2 border-t border-ds-border bg-ds-card/50">
-        <p className="font-nunito text-3xs text-[var(--ds-text-tertiary)]">© 2026 Nimipiko Studio LTD. All rights reserved.</p>
-      </div>
+      {pathname !== "/home" && (
+        <div className="hidden lg:block text-center py-2 border-t border-ds-border bg-ds-card/50">
+          <p className="font-nunito text-3xs text-[var(--ds-text-tertiary)]">© 2026 Nimipiko Studio LTD. All rights reserved.</p>
+        </div>
+      )}
 
       <LanguageSwitchDialog
         pendingLanguage={pendingLanguage}

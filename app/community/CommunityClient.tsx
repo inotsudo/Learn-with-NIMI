@@ -142,7 +142,7 @@ function CreationCard({
 
   const AVATAR_GRADIENTS = [
     "from-violet-500 to-purple-600", "from-pink-500 to-rose-600",
-    "from-blue-500 to-indigo-600",   "from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)]",
+    "from-blue-500 to-indigo-600",   "from-[#C9A84C] to-[#F5C842]",
     "from-amber-500 to-orange-600",  "from-teal-500 to-cyan-600",
   ];
   const avatarGrad = AVATAR_GRADIENTS[(creation.childName?.charCodeAt(0) ?? 0) % AVATAR_GRADIENTS.length];
@@ -207,7 +207,7 @@ function CreationCard({
       <div className="relative w-full overflow-hidden bg-ds-border" style={{ aspectRatio:"4/3" }}>
         {isProgress ? (
           /* Story-progress: horizontal layout for 4:3 landscape frame */
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)] flex items-center justify-center gap-6 px-6">
+          <div className="absolute inset-0 flex items-center justify-center gap-6 px-6" style={{ background: "linear-gradient(135deg, #06101F 0%, #0D1E3A 50%, #1A3558 100%)" }}>
             {/* Cover thumbnail */}
             <div className="shrink-0">
               {hasImg ? (
@@ -289,10 +289,12 @@ function CreationCard({
             onClick={handleCheer}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sml font-black transition-all duration-200 ${
               creation.likedByUser
-                ? "text-[var(--ds-nav-bg)] shadow-md shadow-[var(--ds-brand-primary)]/20"
-                : "bg-ds-page border border-ds-border text-ds-muted hover:border-[var(--ds-border-brand)] hover:text-[var(--ds-text-brand)]"
+                ? "shadow-md"
+                : "bg-ds-page border border-ds-border text-ds-muted"
             }`}
-            style={creation.likedByUser ? { background:"var(--ds-brand-primary)" } : {}}
+            style={creation.likedByUser
+              ? { background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", boxShadow: "0 4px 16px rgba(201,168,76,0.30)" }
+              : {}}
           >
             <motion.span
               className="text-mbase leading-none"
@@ -309,8 +311,8 @@ function CreationCard({
                 animate={{ scale:1, opacity:1 }}
                 className="text-2xs font-black min-w-[20px] text-center px-1.5 py-0.5 rounded-full"
                 style={creation.likedByUser
-                  ? { background:"rgba(255,255,255,0.22)", color:"white" }
-                  : { background:"var(--ds-border-primary)", color:"var(--ds-text-muted)" }
+                  ? { background:"rgba(255,255,255,0.22)", color:"#07111F" }
+                  : { background:"rgba(255,255,255,0.15)", color:"rgba(240,232,212,0.70)" }
                 }
               >
                 {creation.likes}
@@ -525,7 +527,7 @@ function SharePickerSheet({
                       >
                         <div className="flex items-center gap-3 px-3 py-2.5">
                           {/* Cover */}
-                          <div className={`w-11 h-11 rounded-xl overflow-hidden shrink-0 flex items-center justify-center text-xl shadow-sm bg-gradient-to-br ${done ? "from-[var(--ds-brand-soft)] to-[var(--ds-brand-primary)]" : "from-amber-200 to-yellow-300"}`}>
+                          <div className={`w-11 h-11 rounded-xl overflow-hidden shrink-0 flex items-center justify-center text-xl shadow-sm bg-gradient-to-br ${done ? "from-[#C9A84C] to-[#F5C842]" : "from-amber-200 to-yellow-300"}`}>
                             {coverSrc
                               ? <img src={coverSrc} alt={item.storyTitle} className="w-full h-full object-cover" />
                               : <span>{item.themeEmoji ?? "📖"}</span>
@@ -540,13 +542,14 @@ function SharePickerSheet({
                                 <ChildAvatar avatarUrl={item.childAvatar} name={item.childName} size={16} className="w-full h-full" />
                               </div>
                               <span className="text-ds-muted text-2xs font-semibold truncate">{item.childName}</span>
-                              <span className={`text-3xs font-black px-1.5 py-0.5 rounded-full ${done ? "bg-amber-50 text-amber-600" : "bg-[var(--ds-brand-subtle)] text-[var(--ds-text-brand)]"}`}>
+                              <span className={`text-3xs font-black px-1.5 py-0.5 rounded-full ${done ? "bg-amber-50 text-amber-600" : ""}`}
+                                style={!done ? { background: "rgba(201,168,76,0.15)", color: "#C9A84C" } : {}}>
                                 {done ? "🏆" : `${pct}%`}
                               </span>
                             </div>
                             {!done && (
                               <div className="mt-1 h-1 bg-ds-border rounded-full overflow-hidden">
-                                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--ds-brand-primary)" }} />
+                                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(to right,#F5C842,#C9A84C)" }} />
                               </div>
                             )}
                           </div>
@@ -633,7 +636,7 @@ function CaptionSheet({
 
             {/* Story preview */}
             <div className="mx-5 mb-4 rounded-2xl overflow-hidden border border-ds-border flex" style={{ background: "var(--ds-surface-card)" }}>
-              <div className={`w-20 h-24 shrink-0 relative overflow-hidden flex items-center justify-center text-3xl bg-gradient-to-br ${item.complete ? "from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)]" : "from-amber-400 to-orange-500"}`}>
+              <div className={`w-20 h-24 shrink-0 relative overflow-hidden flex items-center justify-center text-3xl bg-gradient-to-br ${item.complete ? "from-[#0D1E3A] to-[#1A3558]" : "from-amber-400 to-orange-500"}`}>
                 {coverSrc
                   ? <img src={coverSrc} alt={item.storyTitle} className="w-full h-full object-cover" />
                   : <span className="drop-shadow">{item.themeEmoji ?? "📖"}</span>
@@ -644,7 +647,8 @@ function CaptionSheet({
                   <p className="font-black text-ds-text text-sm leading-snug truncate">{item.storyTitle}</p>
                   <p className="text-ds-muted text-xs font-medium mt-0.5">{item.childName}</p>
                 </div>
-                <span className={`self-start inline-flex items-center gap-1 text-3xs font-black px-2.5 py-1 rounded-full ${item.complete ? "bg-amber-100 text-amber-700" : "bg-[var(--ds-brand-subtle)] text-[var(--ds-text-brand)]"}`}>
+                <span className={`self-start inline-flex items-center gap-1 text-3xs font-black px-2.5 py-1 rounded-full ${item.complete ? "bg-amber-100 text-amber-700" : ""}`}
+                  style={!item.complete ? { background: "rgba(201,168,76,0.15)", color: "#C9A84C" } : {}}>
                   {item.complete ? t("communityCompleted") : `📖 ${Math.round(item.progress * 100)}${t("communityThrough")}`}
                 </span>
               </div>
@@ -671,11 +675,11 @@ function CaptionSheet({
                 type="checkbox"
                 checked={consentChecked}
                 onChange={e => setConsentChecked(e.target.checked)}
-                className="mt-0.5 w-4 h-4 shrink-0 accent-[var(--ds-brand-primary)] cursor-pointer"
+                className="mt-0.5 w-4 h-4 shrink-0 accent-[#C9A84C] cursor-pointer"
               />
               <label htmlFor="community-consent" className="text-ds-muted text-xs leading-relaxed cursor-pointer select-none">
                 I agree to the{" "}
-                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-[var(--ds-text-brand)]">
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#C9A84C" }}>
                   Terms of Use
                 </a>{" "}
                 and confirm I have the right to share this content on Nimipiko.
@@ -1167,11 +1171,10 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
             </div>
             <button
               onClick={() => { setMyPostsOnly(p => !p); setSearch(""); setTypeFilter("all"); }}
-              className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-black border transition-all ${
-                myPostsOnly
-                  ? "bg-[var(--ds-brand-primary)] text-[var(--ds-nav-bg)] border-[var(--ds-border-brand)]"
-                  : "bg-ds-card border-ds-border text-ds-muted hover:border-[var(--ds-border-brand)] hover:text-[var(--ds-text-brand)]"
-              }`}
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-black border transition-all"
+              style={myPostsOnly
+                ? { background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", borderColor: "rgba(201,168,76,0.50)" }
+                : undefined}
             >
               <span className="text-sml">👤</span> My Posts
             </button>
@@ -1191,11 +1194,10 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
               <button
                 key={f.key}
                 onClick={() => setTypeFilter(f.key)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-black border transition-all whitespace-nowrap ${
-                  typeFilter === f.key
-                    ? "bg-[var(--ds-brand-primary)] text-[var(--ds-nav-bg)] border-[var(--ds-border-brand)]"
-                    : "bg-ds-card border-ds-border text-ds-muted hover:border-[var(--ds-border-brand)]"
-                }`}
+                className="shrink-0 px-3 py-1.5 rounded-full text-2xs font-black border transition-all whitespace-nowrap"
+                style={typeFilter === f.key
+                  ? { background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", borderColor: "rgba(201,168,76,0.50)" }
+                  : undefined}
               >{f.label}</button>
             ))}
           </div>
@@ -1247,7 +1249,7 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
                 whileTap={{ scale:0.95 }}
                 onClick={openPicker}
                 className="inline-flex items-center gap-2 font-baloo font-black text-white text-sml px-5 py-2.5 rounded-2xl shadow-md"
-                style={{ background:"var(--ds-brand-primary)" }}
+                style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
               >
                 <Plus className="w-4 h-4" strokeWidth={3} /> Share your first post ⭐
               </motion.button>
@@ -1265,7 +1267,7 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
                   whileTap={{ scale:0.95 }}
                   onClick={() => router.push("/stories")}
                   className="inline-flex items-center gap-2 font-baloo font-black text-white text-sml px-5 py-2.5 rounded-2xl shadow-md"
-                  style={{ background:"var(--ds-brand-primary)" }}
+                  style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
                 >
                   {t("communityStartStory")} <span className="text-mbase">📖</span>
                 </motion.button>
@@ -1387,8 +1389,8 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
             animate={{ opacity: 1, y: 0,  scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 380, damping: 28 }}
-            className="fixed bottom-[140px] left-1/2 -translate-x-1/2 z-popover flex items-center gap-2.5 px-5 py-3 rounded-2xl text-[var(--ds-nav-bg)] text-sml font-black shadow-ds-cta whitespace-nowrap"
-            style={{ background: "var(--ds-brand-primary)" }}
+            className="fixed bottom-[140px] left-1/2 -translate-x-1/2 z-popover flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sml font-black whitespace-nowrap"
+            style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", boxShadow: "0 8px 24px rgba(201,168,76,0.40)" }}
           >
             {toast}
           </motion.div>

@@ -412,7 +412,7 @@ export default function ParentsClient({ initialChildren, initialUserId }: Props 
         <PageSurface className="items-center justify-center gap-4 px-4">
           <span className="text-5xl" aria-hidden="true">👶</span>
           <p className="text-ds-text font-bold text-center text-base">No learner profiles yet</p>
-          <Link href="/home" className="text-[var(--ds-nav-bg)] font-black px-6 py-3 shadow-lg text-sm" style={{ backgroundColor: 'var(--ds-brand-primary)', borderRadius: 'var(--leaf-r-sm)' }}>
+          <Link href="/home" className="font-black px-6 py-3 shadow-lg text-sm" style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", borderRadius: 'var(--leaf-r-sm)' }}>
             Create a Profile
           </Link>
         </PageSurface>

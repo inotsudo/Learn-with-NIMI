@@ -172,7 +172,7 @@ function EarnedAchievementsCard({
           <Link
             href="/stories"
             className="mt-1 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[var(--ds-nav-bg)] font-baloo font-black text-xs transition hover:-translate-y-0.5"
-            style={{ background: "var(--ds-brand-primary)" }}
+            style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
           >
             📖 Read a Story →
           </Link>
@@ -482,7 +482,7 @@ export default function UserProfileClient({ initialChildren, initialHasSubscript
       <AppShell>
         <PageSurface className="relative overflow-hidden items-center justify-center gap-4 text-center px-4">
           <p className="relative z-10 text-ds-text font-semibold">{t("noChildrenYet")}</p>
-          <Link href="/home" className="relative z-10 text-white font-black px-6 py-2.5 shadow transition" style={{ backgroundColor: 'var(--ds-brand-primary)', color: 'var(--ds-nav-bg)', borderRadius: 'var(--leaf-r-sm)' }}>
+          <Link href="/home" className="relative z-10 font-black px-6 py-2.5 shadow transition" style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", borderRadius: 'var(--leaf-r-sm)' }}>
             {t("goHomeBtn")}
           </Link>
         </PageSurface>

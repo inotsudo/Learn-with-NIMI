@@ -50,8 +50,8 @@ function MobilePageViewer({ pages, direction, onPrev, onNext }: {
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl leaf-lg border border-amber-100 shadow-[0_8px_28px_rgba(15,23,42,0.10)]"
-      style={{ aspectRatio: "3/4" }}
+      className="relative w-full overflow-hidden rounded-2xl"
+      style={{ aspectRatio: "3/4", border: "1px solid rgba(201,168,76,0.30)", boxShadow: "0 8px 28px rgba(10,28,48,0.18)" }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -136,8 +136,8 @@ function BookInner({ story, onComplete, completed, onExit }: {
       ) : (
         <div className="flex items-center justify-center px-2 sm:px-4">
           <div
-            className="w-full max-w-4xl leaf-lg border border-[var(--ds-border-brand)] bg-[var(--ds-brand-subtle)]/50 p-2 shadow-card-2xl"
-            style={{ aspectRatio: "16/10" }}
+            className="w-full max-w-4xl rounded-3xl p-2"
+            style={{ aspectRatio: "16/10", background: "linear-gradient(160deg,#0D1E3A,#0A1828)", border: "1px solid rgba(201,168,76,0.30)", boxShadow: "0 12px 32px rgba(10,28,48,0.22)" }}
           >
             {/* @ts-ignore react-pageflip types */}
             <HTMLFlipBook

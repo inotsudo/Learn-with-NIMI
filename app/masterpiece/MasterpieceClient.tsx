@@ -76,19 +76,22 @@ function StepBar({ step }: { step: number }) {
                 animate={current ? { scale:[1,1.12,1] } : {}}
                 transition={{ duration:1.4, repeat:Infinity }}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sml font-black border-2 transition-all ${
-                  done    ? "bg-[var(--ds-brand-primary)] border-[var(--ds-brand-primary)] text-white" :
+                  done    ? "text-[#07111F]" :
                   current ? "bg-amber-400 border-amber-400 text-white shadow-lg shadow-amber-200" :
                             "bg-ds-surface border-ds-border text-ds-muted"
                 }`}
+                style={done ? { background: "linear-gradient(135deg,#F5C842,#C9A84C)", borderColor: "#C9A84C" } : undefined}
               >
                 {done ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
               </motion.div>
-              <p className={`text-3xs font-bold hidden sm:block ${current ? "text-amber-600" : done ? "text-[var(--ds-text-brand)]" : "text-ds-muted"}`}>
+              <p className={`text-3xs font-bold hidden sm:block ${current ? "text-amber-600" : "text-ds-muted"}`}
+                style={done ? { color: "#C9A84C" } : undefined}>
                 {label}
               </p>
             </div>
             {i < STEP_LABELS.length - 1 && (
-              <div className={`w-10 sm:w-16 h-0.5 mx-1 mb-4 transition-colors ${i < step ? "bg-[var(--ds-brand-primary)]" : "bg-ds-border"}`} />
+              <div className={`w-10 sm:w-16 h-0.5 mx-1 mb-4 transition-colors ${i < step ? "" : "bg-ds-border"}`}
+                style={i < step ? { background: "linear-gradient(to right,#F5C842,#C9A84C)" } : undefined} />
             )}
           </div>
         );
@@ -432,7 +435,7 @@ export default function MasterpieceClient({ initialChildren }: Props = {}) {
                                 if (data.downloadUrl) window.open(data.downloadUrl, "_blank");
                               }}
                               className="flex items-center gap-1.5 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-sm"
-                              style={{ backgroundColor:"var(--ds-brand-primary)" }}>
+                              style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}>
                               <Download className="w-3.5 h-3.5" /> Download
                             </motion.button>
                           )}
@@ -512,11 +515,12 @@ export default function MasterpieceClient({ initialChildren }: Props = {}) {
 
                 {/* COPPA consent */}
                 <label className={`flex items-start gap-3 cursor-pointer p-4 leaf border-2 transition ${
-                  consentChecked ? "border-[var(--ds-border-brand)] bg-[var(--ds-brand-subtle)]" : "border-amber-200 bg-amber-50/60"
-                }`}>
+                  consentChecked ? "" : "border-amber-200 bg-amber-50/60"
+                }`}
+                style={consentChecked ? { borderColor: "rgba(201,168,76,0.45)", background: "rgba(201,168,76,0.08)" } : undefined}>
                   <input type="checkbox" checked={consentChecked}
                     onChange={e => setConsentChecked(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 accent-green-600 shrink-0 cursor-pointer" />
+                    className="mt-0.5 w-4 h-4 accent-[#C9A84C] shrink-0 cursor-pointer" />
                   <span className="font-nunito text-xs text-[var(--ds-text-primary)] leading-relaxed">
                     I agree to the{" "}
                     <a href="/terms" target="_blank" rel="noopener noreferrer"

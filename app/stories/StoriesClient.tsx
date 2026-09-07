@@ -133,7 +133,8 @@ function BookBody({ story, isCurrent, hasCover, spineColor, dimmed = false, lock
         {story.complete && (
           <motion.div
             initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ...SPRING.bounce, delay: 0.1 }}
-            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-green-500 border-2 border-white shadow-lg flex items-center justify-center"
+            className="absolute top-2 right-2 w-7 h-7 rounded-full border-2 border-white shadow-lg flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)" }}
             title="Completed!">
             <CheckCircle2 className="w-4 h-4 text-white" strokeWidth={2.5} />
           </motion.div>
@@ -325,64 +326,60 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
       <div className={`w-full xl:flex xl:gap-8 xl:items-start pb-28 content-enter transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}>
       <main className="flex-1 min-w-0">
 
-        {/* ═══ HERO BANNER ═══ */}
+        {/* ═══ AIRWAYS: PICK YOUR ADVENTURE ═══ */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative leaf-lg overflow-hidden mb-4"
+          className="relative rounded-3xl overflow-hidden mb-4"
           style={{
             minHeight: 150,
-            background: "linear-gradient(135deg, #1F5C38 0%, #2D7A4F 30%, #3D8A62 60%, #6DBF88 85%, #81C784 100%)",
+            background: "linear-gradient(135deg, #030C17 0%, #0D2548 50%, #1A3558 100%)",
+            border: "1px solid rgba(201,168,76,0.25)",
           }}>
 
-          {/* Soft left-side scrim for text legibility */}
+          {/* Gold horizon shimmer */}
           <div className="absolute inset-0 pointer-events-none"
-            style={{ background: "linear-gradient(105deg, rgba(10,40,20,0.35) 0%, rgba(10,40,20,0.10) 45%, transparent 68%)" }} />
-
-          {/* Floating decorative elements */}
+            style={{ background: "radial-gradient(ellipse 60% 80% at 90% 50%, rgba(201,168,76,0.10) 0%, transparent 65%)" }} />
+          {/* Star field */}
           <div aria-hidden="true" className="absolute inset-0 pointer-events-none select-none z-10">
-          {([
-            { top: "10%", left: "40%",  size: 20, delay: 0,   glyph: "⭐" },
-            { top: "65%", left: "32%",  size: 14, delay: 1.1, glyph: "✨" },
-            { top: "15%", left: "58%",  size: 13, delay: 0.7, glyph: "💫" },
-            { top: "75%", right: "14%", size: 16, delay: 0.4, glyph: "⭐" },
-            { top: "20%", right: "20%", size: 11, delay: 1.5, glyph: "✨" },
-          ] as Array<{top:string;size:number;delay:number;glyph:string;left?:string;right?:string}>).map((s, i) => (
-            <motion.span key={i} className="absolute pointer-events-none select-none"
-              style={{ top: s.top, left: s.left, right: s.right, fontSize: s.size }}
-              animate={{ opacity: [0.5, 1, 0.5], scale: [0.8, 1.25, 0.8], y: [0, -5, 0] }}
-              transition={{ duration: 3 + i * 0.4, repeat: Infinity, delay: s.delay }}>{s.glyph}</motion.span>
-          ))}
+            {([
+              [10,15],[22,8],[38,20],[55,5],[68,18],[82,10],[92,25],
+              [15,40],[45,35],[73,42],[88,30],[5,55],[30,48],[60,52],
+            ] as [number,number][]).map(([x,y],i) => (
+              <motion.div key={i} className="absolute w-0.5 h-0.5 rounded-full bg-white"
+                style={{ left: `${x}%`, top: `${y}%` }}
+                animate={{ opacity: [0.15,0.7,0.15] }}
+                transition={{ duration: 2+i*0.3, repeat: Infinity, delay: i*0.2 }} />
+            ))}
           </div>
+          {/* Flying plane */}
+          <motion.div className="absolute top-[12%] text-2xl leading-none opacity-50 z-10"
+            animate={{ x: ["-5%","105%"] }} transition={{ duration: 12, repeat: Infinity, ease: "linear" }}>✈️</motion.div>
 
           <div className="relative z-20 flex items-stretch min-h-[150px]">
-
             {/* Left — greeting + CTA */}
             <div className="flex-1 flex flex-col justify-center px-5 py-4 sm:px-6">
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.45 }}>
-                <p className="font-nunito font-bold text-white/75 text-xs mb-0.5">Welcome back,</p>
-                <h1 className="font-baloo font-black text-white leading-tight drop-shadow-md mb-1"
-                  style={{ fontSize: "clamp(1.35rem, 3.5vw, 2rem)" }}>
-                  {childName ? `${childName}! 👋` : "Explorer! 👋"}
+                <p className="font-nunito font-bold text-[10px] tracking-[0.15em] uppercase mb-0.5" style={{ color: "rgba(240,232,212,0.45)" }}>
+                  ✈️ PICK YOUR ADVENTURE
+                </p>
+                <h1 className="font-baloo font-black leading-tight drop-shadow-md mb-1" style={{ fontSize: "clamp(1.35rem,3.5vw,2rem)", color: "var(--airways-text-primary, #F0E8D4)" }}>
+                  {childName ? `Where to, ${childName}?` : "Where shall we fly? ✈️"}
                 </h1>
-                <p className="font-nunito font-semibold text-white/80 text-xs mb-2.5 leading-snug">
-                  Pick a story and start your adventure with Nimi!
+                <p className="font-nunito font-semibold text-xs mb-2.5 leading-snug" style={{ color: "rgba(240,232,212,0.55)" }}>
+                  Choose a destination and start your journey with Nimi!
                 </p>
               </motion.div>
               <motion.button
                 onClick={() => document.getElementById("story-shelf")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.28, ...SPRING.bounce }}
-                whileHover={{ scale: 1.05, boxShadow: "0 6px 24px rgba(0,0,0,0.22)" }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="inline-flex items-center gap-2 font-baloo font-black text-sm px-5 py-2 rounded-full cursor-pointer self-start"
-                style={{
-                  background: "linear-gradient(135deg, #F5C842, #F59E0B)",
-                  color: "#07111F",
-                  boxShadow: "0 4px 18px rgba(245,156,11,0.4)",
-                }}>
-                {"Let's Explore!"} <span>🚀</span>
+                style={{ background: "linear-gradient(135deg, #C9A84C, #F5C842)", color: "#07111F", boxShadow: "0 4px 18px rgba(201,168,76,0.45)" }}>
+                Board Now ✈️
               </motion.button>
             </div>
 
@@ -391,26 +388,26 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
               <motion.div
                 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.35, duration: 0.4 }}
-                className="flex items-center gap-2 bg-white/90 rounded-xl px-3 py-2 shadow-md"
-                style={{ minWidth: 135 }}>
-                <span className="text-base">📗</span>
+                className="flex items-center gap-2 rounded-xl px-3 py-2"
+                style={{ background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.25)", minWidth: 135 }}>
+                <span className="text-base">🗺️</span>
                 <div>
-                  <p className="font-baloo font-black text-gray-800 text-xs leading-none">{inProgress}</p>
-                  <p className="font-nunito text-gray-500 text-3xs leading-none mt-0.5">
-                    {inProgress === 1 ? "Book in progress" : "Books in progress"}
+                  <p className="font-baloo font-black text-xs leading-none" style={{ color: "var(--airways-gold-text,#E8BC56)" }}>{inProgress}</p>
+                  <p className="font-nunito text-3xs leading-none mt-0.5" style={{ color: "rgba(240,232,212,0.40)" }}>
+                    {inProgress === 1 ? "Journey in progress" : "Journeys in progress"}
                   </p>
                 </div>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.45, duration: 0.4 }}
-                className="flex items-center gap-2 bg-white/90 rounded-xl px-3 py-2 shadow-md"
-                style={{ minWidth: 135 }}>
-                <span className="text-base">⭐</span>
+                className="flex items-center gap-2 rounded-xl px-3 py-2"
+                style={{ background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.25)", minWidth: 135 }}>
+                <span className="text-base">🏅</span>
                 <div>
-                  <p className="font-baloo font-black text-gray-800 text-xs leading-none">{completedCount}</p>
-                  <p className="font-nunito text-gray-500 text-3xs leading-none mt-0.5">
-                    {completedCount === 1 ? "Story finished" : "Stories finished"}
+                  <p className="font-baloo font-black text-xs leading-none" style={{ color: "var(--airways-gold-text,#E8BC56)" }}>{completedCount}</p>
+                  <p className="font-nunito text-3xs leading-none mt-0.5" style={{ color: "rgba(240,232,212,0.40)" }}>
+                    {completedCount === 1 ? "Destination reached" : "Destinations reached"}
                   </p>
                 </div>
               </motion.div>

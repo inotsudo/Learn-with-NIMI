@@ -1,13 +1,19 @@
-import { getServiceClient, getAnonClient } from "@/lib/supabase/serviceClient";
+import { getServiceClient } from "@/lib/supabase/serviceClient";
+import supabaseBrowserClient from "@/lib/supabaseClient";
 import { qcached, lscached, TTL_LONG } from "@/lib/queryCache";
 import type { Product, Order, Subscription, Currency } from "./types";
 
 // Server: service-role client (no session needed, full access).
-// Browser: anon client (uses the logged-in user's session via RLS).
+// Browser: the app's shared cookie-based client (uses the logged-in user's
+// session via RLS). This must be the same client instance used everywhere
+// else in the app — getAnonClient() creates a second, independent
+// localStorage-based GoTrueClient that does not share the cookie session at
+// all, which both triggers Supabase's "Multiple GoTrueClient instances"
+// warning and means queries through it run unauthenticated.
 // SUPABASE_SERVICE_ROLE_KEY is not available in the browser bundle.
 function getDb() {
   if (typeof window === "undefined") return getServiceClient();
-  return getAnonClient();
+  return supabaseBrowserClient;
 }
 
 const LS_PRODUCTS_TTL = 60 * 60_000; // 1 hour — survives page reloads so pricing shows instantly

@@ -28,14 +28,16 @@ import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import AppShell              from "@/components/layout/AppShell";
 import { Bone }             from "@/components/ui/Bone";
 import { RefreshingBadge }  from "@/components/layout/RefreshingBadge";
-import HomeAdventureSection  from "@/components/home/HomeAdventureSection";
-import HomeStoryLibrarySection from "@/components/home/HomeStoryLibrarySection";
-import HomeStoryJourneyPanel from "@/components/home/HomeStoryJourneyPanel";
-import HomeWeekStreakPanel   from "@/components/home/HomeWeekStreakPanel";
-import HomeMotivationCard    from "@/components/home/HomeMotivationCard";
-import NotificationOptInPrompt from "@/components/home/NotificationOptInPrompt";
-import WelcomeBackOverlay      from "@/components/home/WelcomeBackOverlay";
-import NimiProactiveBanner     from "@/components/home/NimiProactiveBanner";
+import HomeAdventureSection       from "@/components/home/HomeAdventureSection";
+import HomeQuickActions           from "@/components/home/HomeQuickActions";
+import HomeContinueAdventureCard  from "@/components/home/HomeContinueAdventureCard";
+import HomePassportCard           from "@/components/home/HomePassportCard";
+import HomeTodayStarsCard         from "@/components/home/HomeTodayStarsCard";
+import HomeJourneyMapPanel        from "@/components/home/HomeJourneyMapPanel";
+import HomeAirwaysDashboard       from "@/components/home/HomeAirwaysDashboard";
+import NotificationOptInPrompt    from "@/components/home/NotificationOptInPrompt";
+import WelcomeBackOverlay         from "@/components/home/WelcomeBackOverlay";
+import NimiProactiveBanner        from "@/components/home/NimiProactiveBanner";
 import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
@@ -552,6 +554,41 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
   // 0 = Mon … 6 = Sun, matching the weekStreak array order
   const todayIdx  = (new Date().getDay() + 6) % 7;
 
+  // The desktop dashboard is deliberately composed as one travel-desk grid:
+  // content and live data stay here; visual layout lives in the focused view.
+  if (!loading) {
+    return (
+      <AppShell>
+        <RefreshingBadge show={refreshing} />
+        <HomeAirwaysDashboard
+          childName={activeChild?.name ?? "Explorer"}
+          themeId={themeId}
+          greeting={greeting}
+          stories={stories}
+          curStory={curStory}
+          slots={slots}
+          doneSlots={doneSlots}
+          totalSlots={totalSlots}
+          progress={pct}
+          totalStars={totalStars}
+          streak={consecutiveStreak}
+          stampsCollected={achievements.filter((achievement) => achievement.type === "badge").length}
+          hasSubscription={hasSubscription}
+          nextPremiumStory={nextPremiumStory}
+        />
+        {welcomeBack.show && activeChild && (
+          <WelcomeBackOverlay childName={activeChild.name} daysAway={welcomeBack.daysAway} onDismiss={() => setWelcomeBack({ show: false, daysAway: 0 })} />
+        )}
+        {activeChild && <NotificationOptInPrompt childId={activeChild.id} childName={activeChild.name} />}
+        <AnimatePresence>
+          {langToast && (
+            <InlineToast key={`lang-toast-${langToastKey.current}`} message={langToast} onDone={() => setLangToast(null)} />
+          )}
+        </AnimatePresence>
+      </AppShell>
+    );
+  }
+
   /* ═══════════════════════════════════════════════════════════════════════ */
   return (
     <AppShell>
@@ -576,7 +613,7 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
           </div>
         </>
       ) : (
-        <div className={`min-h-screen content-enter transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`} style={{ background: "linear-gradient(180deg, #f5f4f0 0%, #f2f0ec 50%, #eeede8 100%)" }}>
+        <div className={`min-h-screen content-enter transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`} style={{ background: "#F5F0E6" }}>
 
           {/* ════════════════════════════════ HERO ══════════════════════════ */}
           <motion.div
@@ -584,150 +621,48 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
             className="relative">
 
             {/* ═══════════════════════ HERO: WORLD STAGE ═══════════════════════ */}
-            <div className="relative overflow-hidden" style={{ minHeight: 460 }}>
+            <div className="relative overflow-hidden" style={{ minHeight: 520 }}>
 
-              {/* ── Decorative scene layer — all purely visual, screen-reader hidden ── */}
+              {/* ── AIRWAYS: Airport scene — real image ── */}
               <div aria-hidden="true" className="absolute inset-0 pointer-events-none select-none">
-
-                {/* Layer 1: Hero background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${theme.gradients.hero}`} />
-                {/* Soft radial glow from top */}
-                <div className="absolute inset-x-0 top-0 h-[45%]"
-                  style={{ background: "radial-gradient(ellipse 60% 55% at 50% 0%, rgba(255,255,255,0.15) 0%, transparent 70%)" }} />
-
-                {/* Clouds */}
-                <motion.div className="absolute top-[5%] left-[8%] text-5xl leading-none opacity-85"
-                  animate={{ x: [0, 20, 0], y: [0, -5, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}>☁️</motion.div>
-                <motion.div className="absolute top-[2%] left-[46%] text-4xl leading-none opacity-70"
-                  animate={{ x: [0, -16, 0], y: [0, -3, 0] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}>☁️</motion.div>
-                <motion.div className="absolute top-[7%] right-[10%] text-4xl leading-none opacity-80"
-                  animate={{ x: [0, 14, 0], y: [0, -6, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}>⛅</motion.div>
-                {/* Sparkles */}
-                <motion.div className="absolute top-[5%] left-[30%] text-2xl leading-none"
-                  animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}>✨</motion.div>
-                <motion.div className="absolute top-[3%] right-[26%] text-xl leading-none"
-                  animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}>✨</motion.div>
-                <motion.div className="absolute top-[12%] left-[44%] text-lg leading-none"
-                  animate={{ scale: [1, 1.6, 1], opacity: [0.4, 0.9, 0.4] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}>⭐</motion.div>
-                {/* Butterflies */}
-                <motion.div className="absolute top-[18%] left-[7%] text-4xl leading-none"
-                  animate={{ x: [0, 28, 10, 35, 0], y: [0, -16, 6, -12, 0], rotate: [0, 15, -10, 8, 0] }}
-                  transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>🦋</motion.div>
-                <motion.div className="absolute top-[22%] right-[7%] text-3xl leading-none"
-                  animate={{ x: [0, -22, -8, -30, 0], y: [0, -12, 8, -8, 0], rotate: [0, -12, 8, -5, 0] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1.8 }}>🦋</motion.div>
-                <motion.div className="absolute top-[9%] left-[63%] text-2xl leading-none"
-                  animate={{ x: [0, 14, -8, 18, 0], y: [0, -14, 5, -8, 0] }}
-                  transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3.5 }}>🦋</motion.div>
-                {/* Flower cluster — left */}
-                <motion.div className="absolute bottom-[24%] left-[0.5%] text-5xl leading-none"
-                  animate={{ rotate: [0, 8, -6, 0], scale: [1, 1.07, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>🌸</motion.div>
-                <motion.div className="absolute bottom-[19%] left-[5%] text-4xl leading-none"
-                  animate={{ rotate: [0, -6, 8, 0], scale: [1, 1.09, 1] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>🌺</motion.div>
-                <motion.div className="absolute bottom-[25%] left-[10%] text-3xl leading-none"
-                  animate={{ rotate: [0, 10, -7, 0], scale: [1, 1.06, 1] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.9 }}>🌼</motion.div>
-                <motion.div className="absolute bottom-[20%] left-[15%] text-2xl leading-none"
-                  animate={{ rotate: [0, -8, 6, 0], scale: [1, 1.08, 1] }} transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}>🌷</motion.div>
-                {/* Flower cluster — right */}
-                <motion.div className="absolute bottom-[23%] right-[0.5%] text-5xl leading-none"
-                  animate={{ rotate: [0, -8, 6, 0], scale: [1, 1.07, 1] }} transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}>🌼</motion.div>
-                <motion.div className="absolute bottom-[18%] right-[5%] text-4xl leading-none"
-                  animate={{ rotate: [0, 6, -8, 0], scale: [1, 1.09, 1] }} transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}>🌷</motion.div>
-                <motion.div className="absolute bottom-[24%] right-[10%] text-3xl leading-none"
-                  animate={{ rotate: [0, -6, 8, 0], scale: [1, 1.07, 1] }} transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut", delay: 1.3 }}>🌸</motion.div>
-                <motion.div className="absolute bottom-[19%] right-[15%] text-2xl leading-none"
-                  animate={{ rotate: [0, 8, -6, 0], scale: [1, 1.06, 1] }} transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut", delay: 1.9 }}>🌺</motion.div>
-
-                {/* Layer 2: Ground glow */}
-                <div className="absolute bottom-0 inset-x-0 h-[25%]"
-                  style={{ background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.12) 100%)" }} />
-
-              </div>{/* end decorative layer */}
+                {/* Photo background — covers full hero */}
+                <img
+                  src="/airport-hero.png"
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ objectPosition: "center bottom" }}
+                />
+                {/* Very light vignette left — just enough to keep boarding pass readable */}
+                <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(6,16,31,0.28) 0%, rgba(6,16,31,0.06) 38%, transparent 58%)" }} />
+                {/* Bottom fade to page cream */}
+                <div className="absolute inset-x-0 bottom-0" style={{ height: 80, background: "linear-gradient(to top, #F5F0E6, transparent)" }} />
+              </div>{/* end airport scene */}
 
 
 
               {/* ══════════════════════════════════════════════════════════════
                    Layer 3 — CONTENT: greeting left, characters right
               ══════════════════════════════════════════════════════════════ */}
-              <div className="relative z-10 flex flex-col md:flex-row md:items-end px-4 sm:px-6 pb-10 sm:pb-14 pt-6 sm:pt-8 max-w-[980px] mx-auto min-h-[440px] gap-4 md:gap-8 justify-center md:justify-between">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-end px-6 sm:px-10 lg:px-14 pb-10 pt-8 max-w-[1400px] mx-auto min-h-[420px] gap-3 justify-between">
 
-                {/* ── LEFT / TOP: Greeting + Progress card ─────────────── */}
-                <motion.div variants={up} className="w-full md:flex-1 md:max-w-[400px] flex flex-col justify-end mx-auto md:mx-0">
-                  {/* Glass card */}
-                  <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/70"
-                    style={{ background: "rgba(255,255,255,0.94)", backdropFilter: "blur(24px)" }}>
-
-                    {/* Rainbow accent bar */}
-                    <div className="h-1.5 w-full"
-                      style={{ background: "linear-gradient(90deg,#22c55e,#38bdf8,#a78bfa,#f59e0b)" }} />
-
-                    <div className="px-5 pt-4 pb-4">
-                      {/* Time greeting */}
-                      <p className="font-nunito font-extrabold text-[var(--ds-text-brand)] text-2xs tracking-widest uppercase mb-1.5">
-                        {greeting} ✨
-                      </p>
-
-                      {/* Child name — big and bold */}
-                      <h1 className="font-baloo font-black text-[var(--ds-text-primary)]"
-                        style={{ fontSize: "clamp(1.8rem,5vw,2.4rem)", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
-                        {activeChild?.name ?? "Explorer"}!
-                      </h1>
-
-                      {/* Title badge or level pill */}
-                      <div className="mt-2">
-                        {cosmetics.title_badge && SHOP_ITEM_MAP[cosmetics.title_badge] ? (
-                          <span className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full shadow-sm ${SHOP_ITEM_MAP[cosmetics.title_badge].titleColor ?? "bg-[var(--ds-surface-card-active)] text-[var(--ds-text-secondary)]"}`}>
-                            {SHOP_ITEM_MAP[cosmetics.title_badge].emoji} {t(SHOP_ITEM_MAP[cosmetics.title_badge].nameKey)}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)] border border-[var(--ds-brand-primary)]/20">
-                            {levelInfo?.icon} {levelInfo ? t(levelInfo.labelKey) : "Explorer"} · Lv.{xpLevel}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* XP bar */}
-                      <div className="mt-3.5">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-nunito font-bold text-[var(--ds-text-tertiary)] text-2xs">
-                            {levelInfo?.icon} Lv.{xpLevel} · {levelInfo ? t(levelInfo.labelKey) : ""}
-                          </span>
-                          <span className="font-baloo font-black text-[var(--ds-text-brand)] text-2xs">{xpIn}/{xpNeeded} ⭐</span>
-                        </div>
-                        <div className="h-3 bg-[var(--ds-surface-card-active)] rounded-full overflow-hidden shadow-inner">
-                          <motion.div key={`xp-${activeChild?.id}`} className="h-full rounded-full"
-                            style={{ background: "linear-gradient(90deg,var(--ds-brand-primary),var(--ds-brand-hover))" }}
-                            initial={{ width: 0 }} animate={{ width: `${xpPct}%` }}
-                            transition={{ duration: 1.4, ease: "easeOut", delay: 0.5 }} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stats footer — 3 colorful emoji cells */}
-                    <div className="flex items-stretch divide-x divide-[var(--ds-border-primary)] bg-[var(--ds-surface-card-hover)]/60 border-t border-[var(--ds-border-primary)]">
-                      <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3">
-                        <span className={`text-xl leading-none ${consecutiveStreak === 0 ? "grayscale opacity-40" : ""}`}>🔥</span>
-                        <span className={`font-baloo font-black text-base leading-none mt-0.5 ${consecutiveStreak > 0 ? "text-orange-500" : "text-[var(--ds-text-tertiary)]"}`}>
-                          {consecutiveStreak > 0 ? consecutiveStreak : "–"}
-                        </span>
-                        <span className="font-nunito text-[var(--ds-text-tertiary)] text-4xs leading-none mt-0.5">{t("homeStatStreak")}</span>
-                      </div>
-                      <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3">
-                        <span className="text-xl leading-none">⭐</span>
-                        <span className="font-baloo font-black text-amber-500 text-base leading-none mt-0.5">{totalStars}</span>
-                        <span className="font-nunito text-[var(--ds-text-tertiary)] text-4xs leading-none mt-0.5">{t("homeStatStars")}</span>
-                      </div>
-                      <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3">
-                        <span className="text-xl leading-none">❤️</span>
-                        <span className="font-baloo font-black text-rose-500 text-base leading-none mt-0.5">{level}</span>
-                        <span className="font-nunito text-[var(--ds-text-tertiary)] text-4xs leading-none mt-0.5">{t("homeStatLevel")}</span>
-                      </div>
-                    </div>
-                  </div>
+                {/* ── LEFT: Greeting text ────────────────────────────────── */}
+                <motion.div variants={up} className="flex flex-col justify-end pb-2 max-w-[380px]">
+                  {/* Sparkle + time-of-day */}
+                  <p className="font-baloo font-bold text-base drop-shadow" style={{ color: "white", textShadow: "0 1px 6px rgba(0,0,0,0.45)" }}>
+                    {greeting},
+                  </p>
+                  {/* Name */}
+                  <h1 className="font-baloo font-black leading-none drop-shadow" style={{ fontSize: "clamp(2.4rem,5.5vw,3.5rem)", color: "#14233B", textShadow: "0 2px 12px rgba(255,255,255,0.70)" }}>
+                    {activeChild?.name ?? "Explorer"}! <span className="inline-block animate-bounce" style={{ animationDuration: "2s" }}>⭐</span>
+                  </h1>
+                  {/* Subtitle */}
+                  <p className="font-baloo font-bold text-lg mt-1 drop-shadow" style={{ color: "#14233B", textShadow: "0 1px 8px rgba(255,255,255,0.60)" }}>
+                    Where shall we fly today?
+                  </p>
                 </motion.div>
 
-                {/* ── RIGHT / BOTTOM: Characters on world stage ─────────── */}
-                <motion.div variants={up} className="relative flex items-end justify-center md:justify-end shrink-0">
+                {/* ── RIGHT: Characters on world stage ──────────────────── */}
+                <motion.div variants={up} className="relative flex flex-1 items-end justify-end self-stretch shrink-0">
                   {/* Stage spotlight — gold runway glow rising from ground */}
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[340px] sm:w-[440px] h-[110px] pointer-events-none"
                     style={{ background: "radial-gradient(ellipse 70% 60% at 50% 100%, rgba(201,168,76,0.35) 0%, rgba(201,168,76,0.08) 50%, transparent 75%)" }} />
@@ -735,7 +670,7 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
                   {/* NIMI with outfit badge */}
                   <div className="relative">
                     <motion.img src={`/themes/${themeId}/characters/nimi.png`} alt="Nimi"
-                      className="h-[185px] sm:h-[225px] lg:h-[265px] w-auto object-contain drop-shadow-2xl select-none"
+                    className="h-[170px] sm:h-[205px] lg:h-[235px] w-auto object-contain drop-shadow-2xl select-none"
                       animate={{ y: [0, -9, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
                       onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     {cosmetics.nimi_outfit && SHOP_ITEM_MAP[cosmetics.nimi_outfit] && (
@@ -752,7 +687,7 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
                   {/* PIKO with outfit badge */}
                   <div className="relative mx-2">
                     <motion.img src={`/themes/${themeId}/characters/piko.png`} alt="Piko"
-                      className="h-[165px] sm:h-[200px] lg:h-[235px] w-auto object-contain drop-shadow-2xl select-none"
+                    className="h-[155px] sm:h-[185px] lg:h-[215px] w-auto object-contain drop-shadow-2xl select-none"
                       animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                       onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     {cosmetics.piko_outfit && SHOP_ITEM_MAP[cosmetics.piko_outfit] && (
@@ -768,83 +703,36 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
 
                   {/* ZILO */}
                   <motion.img src={`/themes/${themeId}/characters/zilo.png`} alt="Zilo"
-                    className="h-[175px] sm:h-[215px] lg:h-[250px] w-auto object-contain drop-shadow-2xl select-none"
+                    className="h-[160px] sm:h-[195px] lg:h-[225px] w-auto object-contain drop-shadow-2xl select-none"
                     animate={{ y: [0, -8, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                     onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </motion.div>
 
               </div>{/* end content */}
 
-              {/* ── Wave bottom transition ─────────────────────────────────── */}
+              {/* ── Transition: tarmac → cream page ─────────────────────── */}
               <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none" style={{ lineHeight: 0 }}>
-                <svg viewBox="0 0 1440 110" xmlns="http://www.w3.org/2000/svg"
-                  className="w-full block" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="waveGradA" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f0f4f8" stopOpacity="0" />
-                      <stop offset="100%" stopColor="#f0f4f8" stopOpacity="0.6" />
-                    </linearGradient>
-                  </defs>
-                  {/* Wave 1 — deep back, faint */}
-                  <path
-                    d="M0,38 C240,76 480,8 720,42 C960,78 1200,12 1440,46 L1440,110 L0,110 Z"
-                    fill="rgba(255,255,255,0.15)" />
-                  {/* Wave 2 — mid layer, gradient */}
-                  <path
-                    d="M0,57 C180,92 360,22 540,58 C720,94 900,20 1080,55 C1260,90 1380,34 1440,58 L1440,110 L0,110 Z"
-                    fill="url(#waveGradA)" />
-                  {/* Wave 3 — front, solid light */}
-                  <path
-                    d="M0,76 C200,46 400,104 600,74 C800,44 1000,100 1200,72 C1320,56 1400,82 1440,76 L1440,110 L0,110 Z"
-                    fill="#f0f4f8" />
+                <svg viewBox="0 0 1440 56" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
+                  <path d="M0,20 C360,44 720,4 1080,28 C1260,40 1380,14 1440,22 L1440,56 L0,56 Z" fill="rgba(205,198,188,0.45)" />
+                  <path d="M0,34 C240,52 540,16 840,36 C1080,52 1320,22 1440,38 L1440,56 L0,56 Z" fill="rgba(220,213,202,0.72)" />
+                  <path d="M0,46 C300,28 600,56 900,40 C1100,30 1280,52 1440,44 L1440,56 L0,56 Z" fill="#F5F0E6" />
                 </svg>
               </div>
 
             </div>{/* end hero card */}
           </motion.div>
 
-          {/* ── Campus Welcome Strip ──────────────────────────────────────── */}
-          <div className="relative z-30 -mt-3 px-4 sm:px-6 pb-2 max-w-[1400px] mx-auto">
-            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[var(--ds-surface-card)]/95 backdrop-blur-sm rounded-2xl shadow-sm border border-[var(--ds-border-brand)]/40 w-fit">
-              <motion.img
-                src={assets.nimiCircle}
-                alt="Nimi"
-                className="w-6 h-6 rounded-full object-cover shrink-0 border border-[var(--ds-border-brand)]/50"
-                animate={{ y: [0, -3, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-              <span className="font-baloo font-black text-[var(--ds-text-brand)] text-xs sm:text-sml">{t("homeCampusOpen")}</span>
-              <span className="font-nunito text-[var(--ds-text-secondary)] text-2xs hidden sm:inline">
-                · {new Date().toLocaleDateString(dateLocale, { weekday: "long", month: "long", day: "numeric" })}
-              </span>
-            </div>
+          {/* ── Quick Actions row ────────────────────────────────────────── */}
+          <div className="relative z-30 px-5 sm:px-8 lg:px-10 pt-4 pb-2 max-w-[1400px] mx-auto">
+            <HomeQuickActions curStorySlug={curStory?.slug} />
           </div>
 
+          {/* ════════════════ BELOW HERO ════════════════ */}
+          <div className="px-5 sm:px-8 lg:px-10 pb-6 pt-2 max-w-[1400px] mx-auto flex flex-col gap-4">
 
-          {/* ════════════════════════════ BELOW HERO ════════════════════════ */}
-          <div className="relative">
-
-            {/* ── Campus walkway — subtle dashed thread through all zones ── */}
-            <div
-              className="absolute inset-y-0 pointer-events-none select-none hidden xl:block"
-              aria-hidden
-              style={{
-                left: 22,
-                width: 2,
-                background: "repeating-linear-gradient(to bottom, var(--ds-brand-primary) 0px, var(--ds-brand-primary) 5px, transparent 5px, transparent 17px)",
-                opacity: 0.18,
-              }}
-            />
-
-
-            {/* ── Trial-expired one-shot banner ────────────────────────── */}
+            {/* Trial-expired banner */}
             {trialJustExpired && (
-              <motion.div
-                initial={{ opacity: 0, y: -12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative z-20 mx-4 lg:mx-6 mt-4 max-w-[1400px] xl:mx-auto"
-              >
+              <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl px-4 py-3.5 shadow-sm">
                   <span className="text-2xl shrink-0">⏳</span>
                   <div className="flex-1 min-w-0">
@@ -866,111 +754,94 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
               </motion.div>
             )}
 
-            {/* ── Main flex grid ──────────────────────────────────────────── */}
-            <div className="relative z-10 flex flex-col xl:flex-row xl:items-start gap-6 px-4 lg:px-6 py-6 max-w-[1400px] mx-auto">
+            {/* 3-column cards row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <HomeContinueAdventureCard
+                curStory={curStory}
+                slots={slots}
+                doneSlots={doneSlots}
+                totalSlots={totalSlots}
+                pct={pct}
+                storyNumber={(stories.findIndex((s) => s.sid === curStory?.sid) + 1) || 1}
+                hasSubscription={hasSubscription}
+              />
+              <HomePassportCard
+                stampsCollected={achievements.filter((a) => a.type === "badge").length}
+                totalStamps={42}
+                destinationsVisited={stories.filter((s) => s.complete).length}
+              />
+              <HomeTodayStarsCard
+                totalStars={totalStars}
+                consecutiveStreak={consecutiveStreak}
+              />
+            </div>
 
-              {/* ══ MAIN COLUMN ══════════════════════════════════════════════ */}
-              <main className="flex-1 min-w-0">
+            {/* Proactive Nimi Banner */}
+            {activeChild && (
+              <NimiProactiveBanner childId={activeChild.id} language={activeChild.language} />
+            )}
 
-                {/* ── YOUR ADVENTURE + STORY LIBRARY — side by side ──────── */}
-                <div className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-5 items-stretch">
-                  <HomeAdventureSection
-                    curStory={curStory}
-                    doneSlots={doneSlots}
-                    totalSlots={totalSlots}
-                    pct={pct}
-                    slots={slots}
-                    up={up}
-                    stagger={stagger}
-                    hasSubscription={hasSubscription}
-                    nextPremiumStory={nextPremiumStory}
-                  />
+            {/* "Caught up" banner — shown when no more stories unlocked */}
+            {stories.length > 0 && stories.every((s) => s.complete || !s.unlocked) && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="relative rounded-3xl overflow-hidden"
+                style={{ background: "linear-gradient(135deg, #E8F4FF 0%, #D6EAFF 50%, #EBF5FF 100%)", border: "1px solid rgba(59,130,246,0.18)", minHeight: 140 }}
+              >
+                {/* Floating islands illustration — colourful sky background */}
+                <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #87CEEB 0%, #98D8F0 40%, #B0E4FF 70%, #C8EDFF 100%)" }} />
+                {/* Clouds */}
+                {[[8,12,70,28],[22,35,50,22],[55,8,60,24],[70,28,45,18]].map(([l,t,w,h],i) => (
+                  <div key={i} className="absolute rounded-full" style={{ left:`${l}%`, top:`${t}%`, width:w, height:h, background:"rgba(255,255,255,0.80)" }} />
+                ))}
+                {/* Green islands */}
+                <div className="absolute bottom-0 left-[8%] w-24 h-16 rounded-t-full" style={{ background: "linear-gradient(to top, #5BA85A, #7EC87D)" }} />
+                <div className="absolute bottom-0 left-[18%] w-16 h-10 rounded-t-full" style={{ background: "linear-gradient(to top, #4A9649, #6DB86C)" }} />
+                <div className="absolute bottom-0 right-[5%] w-32 h-20 rounded-t-full" style={{ background: "linear-gradient(to top, #5BA85A, #7EC87D)" }} />
+                {/* Flying plane */}
+                <motion.span className="absolute text-2xl" style={{ top: "15%", left: "60%" }}
+                  animate={{ x: [0, 30, 0], y: [0, -6, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}>✈️</motion.span>
 
-                  <HomeStoryLibrarySection
-                    stories={stories}
-                    curStory={curStory}
-                    hasSubscription={hasSubscription}
-                    up={up}
-                    stagger={stagger}
-                    pop={pop}
-                    onPrefetch={activeChild ? (storyId) => {
-                      void getStoryDetails(storyId, activeChild.language);
-                      void getStorySlots(activeChild.id, storyId, activeChild.language);
-                    } : undefined}
-                  />
+                {/* Text content */}
+                <div className="relative z-10 flex items-center justify-between px-8 py-6">
+                  <div>
+                    <p className="font-baloo font-black text-xl md:text-2xl" style={{ color: "#0D2D6B" }}>
+                      🎉 You&apos;re all caught up, {activeChild?.name ?? "Explorer"}!
+                    </p>
+                    <p className="font-nunito text-sm mt-1" style={{ color: "rgba(13,45,107,0.65)" }}>
+                      You&apos;ve explored every destination in the library so far — more adventures are on the way!
+                    </p>
+                  </div>
                 </div>
+              </motion.div>
+            )}
 
-              </main>
-
-              {/* ══ RIGHT COMPANION PANEL — sticky below h-16 (64px) header ══ */}
-              <aside className="w-full xl:w-[284px] xl:shrink-0 xl:self-start xl:sticky xl:top-[68px]">
-                <div
-                  className="flex flex-col gap-4 xl:max-h-[calc(100vh-76px)] xl:overflow-y-auto xl:pb-6 xl:pr-0.5"
-                  style={{ scrollbarWidth: "thin", scrollbarColor: "#d1d5db transparent" } as React.CSSProperties}
+            {/* Trial countdown */}
+            {isTrial && (
+              <Link href="/pricing">
+                <div className="flex items-center gap-3 rounded-2xl p-4 cursor-pointer transition-all"
+                  style={{
+                    background: trialDaysLeft <= 2 ? "linear-gradient(135deg,rgba(239,68,68,0.10),rgba(220,38,38,0.06))" : "linear-gradient(135deg,rgba(201,168,76,0.10),rgba(201,168,76,0.05))",
+                    border: trialDaysLeft <= 2 ? "1px solid rgba(239,68,68,0.22)" : "1px solid rgba(201,168,76,0.22)",
+                  }}
                 >
-
-                  {/* ── Trial Countdown ─────────────────────────────────────── */}
-                  {isTrial && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 260, damping: 24 }}
-                    >
-                      <Link href="/pricing">
-                        <div className={`rounded-2xl p-4 cursor-pointer group transition-all border ${
-                          trialDaysLeft <= 2
-                            ? "bg-gradient-to-br from-red-50 to-orange-50 border-red-200 hover:border-red-300"
-                            : "bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 hover:border-amber-300"
-                        }`}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                              trialDaysLeft <= 2 ? "bg-red-100" : "bg-amber-100"
-                            }`}>
-                              <span className="text-xl">{trialDaysLeft <= 2 ? "⚡" : "⏳"}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`font-baloo font-black text-sml leading-tight ${
-                                trialDaysLeft <= 2 ? "text-red-800" : "text-amber-800"
-                              }`}>
-                                {trialDaysLeft === 0 ? "Trial ending today!" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left on trial`}
-                              </p>
-                              <p className={`text-2xs mt-0.5 ${trialDaysLeft <= 2 ? "text-red-600" : "text-amber-600"}`}>
-                                {trialDaysLeft <= 2 ? "Subscribe now to keep full access" : "Enjoying Club? Subscribe to keep it →"}
-                              </p>
-                            </div>
-                            <Crown className={`w-4 h-4 shrink-0 group-hover:scale-110 transition-transform ${
-                              trialDaysLeft <= 2 ? "text-red-400" : "text-amber-400"
-                            }`} />
-                          </div>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  )}
-
-                  {/* ── Proactive Nimi Banner ────────────────────────────────── */}
-                  {activeChild && (
-                    <NimiProactiveBanner childId={activeChild.id} language={activeChild.language} />
-                  )}
-
-                  {/* 1. TODAY'S MISSION — most actionable, always first ──────── */}
-                  <HomeStoryJourneyPanel curStory={curStory} slots={slots} pct={pct} hasSubscription={hasSubscription} nextPremiumStory={nextPremiumStory} />
-
-                  {/* 2. DAILY STREAK ─────────────────────────────────────────── */}
-                  <HomeWeekStreakPanel weekStreak={weekStreak} consecutiveStreak={consecutiveStreak} totalStars={totalStars} streakBroke={streakBroke} />
-
-                  {/* 3. ENCOURAGEMENT — dynamic based on streak ─────────────── */}
-                  <HomeMotivationCard
-                    consecutiveStreak={consecutiveStreak}
-                    isComplete={!!curStory?.complete}
-                  />
-
-                  {/* Achievements, Community, Masterpiece → accessible from nav */}
-
+                  <span className="text-xl shrink-0">{trialDaysLeft <= 2 ? "⚡" : "⏳"}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-baloo font-black text-sm" style={{ color: "#14233B" }}>
+                      {trialDaysLeft === 0 ? "Trial ending today!" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left on trial`}
+                    </p>
+                    <p className="font-nunito text-xs mt-0.5" style={{ color: "rgba(20,35,59,0.52)" }}>
+                      {trialDaysLeft <= 2 ? "Subscribe now to keep full access" : "Subscribe to continue flying →"}
+                    </p>
+                  </div>
+                  <Crown className="w-4 h-4 shrink-0" style={{ color: trialDaysLeft <= 2 ? "#F87171" : "#C9A84C" }} />
                 </div>
-              </aside>
+              </Link>
+            )}
 
-            </div>{/* end main flex */}
-          </div>{/* end relative wrapper */}
+          </div>{/* end below hero */}
 
         </div>
       )}

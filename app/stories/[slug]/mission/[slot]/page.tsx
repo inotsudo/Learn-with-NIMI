@@ -56,19 +56,6 @@ const SLOT_T_KEYS: Record<string, string> = {
   destination_video: "destinationVideoLabel",
 };
 
-const SLOT_EMOJI: Record<string, string> = {
-  flipflop_audio:    "📚",
-  story_pdf:         "📖",
-  coloring:          "🎨",
-  move_explore:      "🤸",
-  sing_along:        "🎵",
-  bonus_video:       "🎬",
-  challenge_1:       "🏅",
-  challenge_2:       "🏅",
-  challenge_3:       "🏅",
-  destination_video: "🌍",
-};
-
 const MISSION_STYLES: Record<string, {
   headerBg: string;
   headerBorder: string;
@@ -81,46 +68,46 @@ const MISSION_STYLES: Record<string, {
   resultBg: string;
 }> = {
   story: {
-    headerBg: "bg-gradient-to-r from-amber-50/80 via-yellow-50/50 to-amber-50/80",
-    headerBorder: "border-amber-200/60",
-    badgeBg: "bg-amber-50", badgeText: "text-amber-700", badgeBorder: "border-amber-200",
+    headerBg: "bg-gradient-to-r from-[rgba(6,16,31,0.08)] via-[rgba(13,30,58,0.06)] to-[rgba(6,16,31,0.08)]",
+    headerBorder: "border-[rgba(201,168,76,0.35)]",
+    badgeBg: "bg-[rgba(201,168,76,0.12)]", badgeText: "text-[#A96113]", badgeBorder: "border-[rgba(201,168,76,0.4)]",
     emoji: "🎧", label: "Listen", friendlyLabel: "Let's Listen!",
-    resultBg: "bg-gradient-to-br from-white via-amber-50/70 to-yellow-50/60",
+    resultBg: "bg-gradient-to-br from-white via-[rgba(201,168,76,0.06)] to-[rgba(6,16,31,0.04)]",
   },
   read: {
-    headerBg: "bg-gradient-to-r from-amber-50/80 via-[#fdfaf4]/60 to-orange-50/60",
-    headerBorder: "border-amber-200/60",
-    badgeBg: "bg-amber-50", badgeText: "text-amber-700", badgeBorder: "border-amber-200",
+    headerBg: "bg-gradient-to-r from-[rgba(6,16,31,0.08)] via-[rgba(13,30,58,0.06)] to-[rgba(6,16,31,0.08)]",
+    headerBorder: "border-[rgba(201,168,76,0.35)]",
+    badgeBg: "bg-[rgba(201,168,76,0.12)]", badgeText: "text-[#A96113]", badgeBorder: "border-[rgba(201,168,76,0.4)]",
     emoji: "📖", label: "Read", friendlyLabel: "Let's Read!",
-    resultBg: "bg-gradient-to-br from-white via-amber-50/60 to-orange-50/40",
+    resultBg: "bg-gradient-to-br from-white via-[rgba(201,168,76,0.06)] to-[rgba(6,16,31,0.04)]",
   },
   color: {
-    headerBg: "bg-gradient-to-r from-orange-50/80 via-pink-50/40 to-purple-50/50",
-    headerBorder: "border-orange-200/60",
-    badgeBg: "bg-orange-50", badgeText: "text-orange-700", badgeBorder: "border-orange-200",
+    headerBg: "bg-gradient-to-r from-[rgba(6,16,31,0.08)] via-[rgba(13,30,58,0.06)] to-[rgba(6,16,31,0.08)]",
+    headerBorder: "border-[rgba(201,168,76,0.35)]",
+    badgeBg: "bg-[rgba(201,168,76,0.12)]", badgeText: "text-[#A96113]", badgeBorder: "border-[rgba(201,168,76,0.4)]",
     emoji: "🎨", label: "Create", friendlyLabel: "Let's Create!",
-    resultBg: "bg-gradient-to-br from-white via-orange-50/70 to-pink-50/60",
+    resultBg: "bg-gradient-to-br from-white via-[rgba(201,168,76,0.06)] to-[rgba(6,16,31,0.04)]",
   },
   move: {
-    headerBg: "bg-gradient-to-r from-pink-50/80 via-rose-50/40 to-orange-50/50",
-    headerBorder: "border-pink-200/60",
-    badgeBg: "bg-pink-50", badgeText: "text-pink-700", badgeBorder: "border-pink-200",
+    headerBg: "bg-gradient-to-r from-[rgba(6,16,31,0.08)] via-[rgba(13,30,58,0.06)] to-[rgba(6,16,31,0.08)]",
+    headerBorder: "border-[rgba(201,168,76,0.35)]",
+    badgeBg: "bg-[rgba(201,168,76,0.12)]", badgeText: "text-[#A96113]", badgeBorder: "border-[rgba(201,168,76,0.4)]",
     emoji: "🤸", label: "Move", friendlyLabel: "Let's Move!",
-    resultBg: "bg-gradient-to-br from-white via-pink-50/70 to-orange-50/60",
+    resultBg: "bg-gradient-to-br from-white via-[rgba(201,168,76,0.06)] to-[rgba(6,16,31,0.04)]",
   },
   sing: {
-    headerBg: "bg-gradient-to-r from-purple-50/80 via-violet-50/40 to-indigo-50/50",
-    headerBorder: "border-purple-200/60",
-    badgeBg: "bg-purple-50", badgeText: "text-purple-700", badgeBorder: "border-purple-200",
+    headerBg: "bg-gradient-to-r from-[rgba(6,16,31,0.08)] via-[rgba(13,30,58,0.06)] to-[rgba(6,16,31,0.08)]",
+    headerBorder: "border-[rgba(201,168,76,0.35)]",
+    badgeBg: "bg-[rgba(201,168,76,0.12)]", badgeText: "text-[#A96113]", badgeBorder: "border-[rgba(201,168,76,0.4)]",
     emoji: "🎵", label: "Sing", friendlyLabel: "Let's Sing!",
-    resultBg: "bg-gradient-to-br from-white via-purple-50/70 to-violet-50/60",
+    resultBg: "bg-gradient-to-br from-white via-[rgba(201,168,76,0.06)] to-[rgba(6,16,31,0.04)]",
   },
   watch: {
-    headerBg: "bg-gradient-to-r from-indigo-50/80 via-blue-50/40 to-slate-50/50",
-    headerBorder: "border-indigo-200/60",
-    badgeBg: "bg-indigo-50", badgeText: "text-indigo-700", badgeBorder: "border-indigo-200",
+    headerBg: "bg-gradient-to-r from-[rgba(6,16,31,0.08)] via-[rgba(13,30,58,0.06)] to-[rgba(6,16,31,0.08)]",
+    headerBorder: "border-[rgba(201,168,76,0.35)]",
+    badgeBg: "bg-[rgba(201,168,76,0.12)]", badgeText: "text-[#A96113]", badgeBorder: "border-[rgba(201,168,76,0.4)]",
     emoji: "🎬", label: "Watch", friendlyLabel: "Let's Watch!",
-    resultBg: "bg-gradient-to-br from-white via-indigo-50/70 to-blue-50/60",
+    resultBg: "bg-gradient-to-br from-white via-[rgba(201,168,76,0.06)] to-[rgba(6,16,31,0.04)]",
   },
   destination: {
     headerBg: "bg-gradient-to-r from-[#06101F]/10 via-[#0d1e3a]/8 to-[#06101F]/10",
@@ -288,18 +275,13 @@ export default function StoryMissionPage() {
   const effectiveType = isDestinationVideo ? "destination" : mission?.type ?? "";
 
   const missionStyle = MISSION_STYLES[effectiveType] ?? {
-    headerBg: "bg-[var(--ds-brand-subtle)]",
-    headerBorder: "border-[var(--ds-border-brand)]",
-    badgeBg: "bg-[var(--ds-brand-subtle)]", badgeText: "text-[var(--ds-text-brand)]", badgeBorder: "border-[var(--ds-border-brand)]",
-    emoji: "⭐", label: "Tiny Mission", friendlyLabel: "Let's Go!",
-    resultBg: "bg-[var(--ds-brand-subtle)]",
+    headerBg: "bg-gradient-to-r from-[rgba(6,16,31,0.08)] via-[rgba(13,30,58,0.06)] to-[rgba(6,16,31,0.08)]",
+    headerBorder: "border-[rgba(201,168,76,0.35)]",
+    badgeBg: "bg-[rgba(201,168,76,0.12)]", badgeText: "text-[#A96113]", badgeBorder: "border-[rgba(201,168,76,0.4)]",
+    emoji: "✈️", label: "Flight Stop", friendlyLabel: "Ready for takeoff!",
+    resultBg: "bg-gradient-to-br from-white via-[rgba(201,168,76,0.06)] to-[rgba(6,16,31,0.04)]",
   };
 
-  // Airways progress — airplane position derived from current slot index in the sorted list
-  const currentIdx = allSlots.findIndex(s => s.slot_key === slotKey);
-  const progressPercent = allSlots.length > 1 && currentIdx >= 0
-    ? 5 + (currentIdx / (allSlots.length - 1)) * 90
-    : 5;
   const flightNumber = `NMP1${String(slot?.slot_order ?? 1).padStart(2, "0")}`;
 
   const handleComplete = useCallback(async () => {
@@ -402,11 +384,12 @@ export default function StoryMissionPage() {
             <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-[var(--ds-border-primary)]/20">
               <button onClick={() => router.push(`/stories/${slug}`)}
                 aria-label="Back to my flight"
-                className="flex items-center gap-1.5 min-h-[44px] px-3 bg-[var(--ds-surface-card)] border border-ds-border rounded-full text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-brand)] hover:border-[var(--ds-border-brand)] transition shadow-sm font-nunito font-bold text-xs whitespace-nowrap">
+                className="flex items-center gap-1.5 min-h-[44px] px-3 rounded-full font-nunito font-bold text-xs whitespace-nowrap transition"
+                style={{ background: "rgba(6,16,31,0.25)", border: "1px solid rgba(201,168,76,0.30)", color: "rgba(240,232,212,0.75)" }}>
                 <ArrowLeft className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="hidden sm:inline">My Flight</span>
               </button>
-              <p aria-hidden="true" className="font-nunito font-black text-3xs uppercase tracking-widest text-[var(--ds-text-tertiary)] flex items-center gap-1">
+              <p aria-hidden="true" className="font-nunito font-black text-3xs uppercase tracking-widest flex items-center gap-1" style={{ color: "rgba(201,168,76,0.75)" }}>
                 <span>✈️</span>
                 <span>NIMIPIKO AIRWAYS</span>
               </p>
@@ -415,7 +398,7 @@ export default function StoryMissionPage() {
             {/* Mission identity body */}
             <div className="px-4 py-4 flex items-start gap-3">
               <div className="flex-1 min-w-0">
-                <p className="font-baloo font-black text-2xl sm:text-3xl leading-none mb-2" style={{ color: 'var(--ds-text-brand)' }}>
+                <p className="font-baloo font-black text-2xl sm:text-3xl leading-none mb-2" style={{ color: 'var(--airways-gold-text, #E8BC56)' }}>
                   {missionStyle.emoji} {missionStyle.friendlyLabel}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap mb-2">
@@ -423,8 +406,8 @@ export default function StoryMissionPage() {
                     {missionStyle.label}
                   </span>
                   {completed && (
-                    <span className="rounded-full border border-[var(--ds-border-brand)]/30 bg-[var(--ds-brand-subtle)] px-2.5 py-1 text-3xs font-black uppercase tracking-[0.24em] text-[var(--ds-brand-primary)]">
-                      Completed
+                    <span className="rounded-full px-2.5 py-1 text-3xs font-black uppercase tracking-[0.24em]" style={{ background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.40)", color: "#C9A84C" }}>
+                      Completed ✓
                     </span>
                   )}
                 </div>
@@ -456,82 +439,33 @@ export default function StoryMissionPage() {
             </div>
           </div>
 
-          {/* Mission Progress Strip */}
+          {/* Mission Progress Strip — plain numbered dots for the current book's real steps
+              (allSlots/s.completed/slotKey), matching the reference's simple dot row instead
+              of the airplane-on-a-track design. */}
           {allSlots.length > 0 && (
-            <div className="mb-4 px-1" aria-hidden="true">
-              <p aria-hidden="true" className="font-nunito font-black text-3xs uppercase tracking-[0.2em] text-[var(--ds-text-tertiary)] mb-2.5 flex items-center gap-1.5">
-                <span>✈️</span>
-                <span>Your Journey</span>
-              </p>
-              {/* Track + nodes + airplane */}
-              <div className="relative flex items-center justify-between" style={{ minHeight: 44 }}>
-                {/* Background track */}
-                <div className="absolute inset-x-5 top-1/2 -translate-y-1/2 h-[2px] bg-[var(--ds-surface-card-hover)] rounded-full" />
-                {/* Completed-segment overlay — scaleX from left (currentIdx uses outer-scope var) */}
-                {(() => {
-                  const completedUpTo = allSlots.slice(0, currentIdx).filter(s => s.completed).length;
-                  const ratio = allSlots.length > 1
-                    ? completedUpTo / (allSlots.length - 1)
-                    : 0;
-                  return (
-                    <motion.div
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: ratio }}
-                      transition={{ duration: 0.55, ease: "easeOut" }}
-                      className="absolute inset-x-5 top-1/2 -translate-y-1/2 h-[2px] rounded-full origin-left"
-                      style={{ background: "linear-gradient(to right, #C9A84C, #F5C842)" }}
-                    />
-                  );
-                })()}
-
-                {/* ✈️ Airplane indicator — sits above track, moves to current stop position */}
-                <motion.div
-                  className="absolute z-20 pointer-events-none select-none"
-                  aria-hidden="true"
-                  style={{ fontSize: 16, lineHeight: 1, translateX: '-50%', translateY: '-180%' }}
-                  animate={{ left: `${progressPercent}%` }}
-                  initial={{ left: `${progressPercent}%` }}
-                  transition={m.reduced ? { duration: 0 } : SPRING.gentle}
-                >
-                  ✈️
-                </motion.div>
-
-                {allSlots.map((s) => {
-                  const isCurrent = s.slot_key === slotKey;
-                  const isDone = s.completed || (isCurrent && completed);
-                  const isLocked = !isDone && !isCurrent;
-                  const emoji = SLOT_EMOJI[s.slot_key] ?? "⭐";
-                  return (
-                    <div key={s.slot_key} className="relative z-10 flex flex-col items-center gap-1">
-                      <motion.div
-                        initial={{ scale: 0.6, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 22, delay: (s.slot_order ?? 0) * 0.06 }}
-                        aria-hidden="true"
-                        className={`flex items-center justify-center rounded-full transition-all ${
-                          isDone
-                            ? "w-8 h-8 bg-[var(--ds-brand-primary)] shadow-[0_2px_8px_rgba(16,185,129,0.35)] text-[var(--ds-nav-bg)] text-sml font-black"
-                            : isCurrent
-                              ? `w-9 h-9 border-2 ${missionStyle.badgeBorder} ${missionStyle.badgeBg} text-lg shadow-md`
-                              : "w-6 h-6 bg-[var(--ds-surface-card)] border border-[var(--ds-border-primary)] text-sm opacity-50"
-                        }`}
-                      >
-                        {isDone ? "✓" : isLocked ? "🔒" : emoji}
-                      </motion.div>
-                      {isCurrent && (
-                        <motion.span
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.4 }}
-                          className={`text-5xs font-black uppercase tracking-[0.18em] ${missionStyle.badgeText}`}
-                        >
-                          Now
-                        </motion.span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="mb-4 flex items-center justify-center gap-2 px-1">
+              {allSlots.map((s, i) => {
+                const isCurrent = s.slot_key === slotKey;
+                const isDone = s.completed || (isCurrent && completed);
+                return (
+                  <motion.span
+                    key={s.slot_key}
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 22, delay: (s.slot_order ?? 0) * 0.06 }}
+                    className="flex h-7 w-7 items-center justify-center rounded-full font-baloo text-xs font-black"
+                    style={
+                      isDone
+                        ? { background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#06101F" }
+                        : isCurrent
+                          ? { background: "rgba(245,200,66,.18)", border: "2px solid #F5C842", color: "#F5C842" }
+                          : { background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.16)", color: "rgba(255,255,255,.45)" }
+                    }
+                  >
+                    {isDone ? "✓" : i + 1}
+                  </motion.span>
+                );
+              })}
             </div>
           )}
 
@@ -671,7 +605,8 @@ export default function StoryMissionPage() {
                   <motion.p
                     initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.05 }}
-                    className="font-baloo font-black text-[var(--ds-brand-primary)] text-2xl mb-2">
+                    className="font-baloo font-black text-2xl mb-2"
+                    style={{ color: "var(--airways-gold-text, #E8BC56)" }}>
                     ✈️ MISSION COMPLETE!
                   </motion.p>
                   <motion.img src={assets.starMascot} alt="" className="w-14 h-14 mx-auto mb-2"
@@ -706,15 +641,16 @@ export default function StoryMissionPage() {
                   {res?.story_complete && (
                     <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
                       className="mb-3">
-                      <p className="font-baloo font-black text-[var(--ds-text-brand)] text-1.5xl">{t("storyCompleteResult")}</p>
-                      <p className="font-nunito text-ds-text text-sm">{t("storyEarnedCert")}</p>
+                      <p className="font-baloo font-black text-1.5xl" style={{ color: "var(--airways-gold-text, #E8BC56)" }}>{t("storyCompleteResult")}</p>
+                      <p className="font-nunito text-sm" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("storyEarnedCert")}</p>
                     </motion.div>
                   )}
 
                   {res?.next_story_unlocked && (
                     <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.7 }}
-                      className="mb-3 bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)]/30 leaf px-4 py-2 inline-block">
-                      <p className="font-nunito text-ds-text text-sm font-bold">{t("storyNextUnlocked")}</p>
+                      className="mb-3 leaf px-4 py-2 inline-block"
+                      style={{ background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.30)" }}>
+                      <p className="font-nunito text-sm font-bold" style={{ color: "var(--airways-gold-text, #E8BC56)" }}>{t("storyNextUnlocked")}</p>
                     </motion.div>
                   )}
 
@@ -722,17 +658,18 @@ export default function StoryMissionPage() {
                     <motion.div
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
                       className="mb-3">
-                      <p className="font-nunito font-black text-[var(--ds-text-tertiary)] text-xs mb-0.5">
+                      <p className="font-nunito font-black text-xs mb-0.5" style={{ color: "rgba(201,168,76,0.70)" }}>
                         🛫 Next stop reached!
                       </p>
-                      <p className="font-nunito text-ds-text text-sm">{t("storyGreatJob")}</p>
+                      <p className="font-nunito text-sm" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("storyGreatJob")}</p>
                     </motion.div>
                   )}
 
                   <motion.button initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.9 }}
                     whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                     onClick={() => router.push(`/stories/${slug}`)}
-                    className="font-baloo font-black bg-cta-gradient text-white text-base rounded-full px-8 py-3.5 min-h-[48px] shadow-lg shadow-ds-cta transition hover:shadow-ds-hover">
+                    className="font-baloo font-black text-base rounded-full px-8 py-3.5 min-h-[48px] shadow-lg transition"
+                    style={{ background: "linear-gradient(135deg, #F5C842, #C9A84C)", color: "#07111F", boxShadow: "0 8px 24px rgba(201,168,76,0.35)" }}>
                     {res?.story_complete ? t("storyViewCert") : "✈️ Return to My Flight"}
                   </motion.button>
 
@@ -760,9 +697,10 @@ export default function StoryMissionPage() {
                           await navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
                         }
                       }}
-                      className="w-full flex items-center justify-center gap-2 rounded-2xl border border-[var(--ds-border-primary)] bg-[var(--ds-surface-card)] hover:bg-[var(--ds-surface-card)] px-4 py-3 font-baloo font-black text-sm text-[var(--ds-text-secondary)] transition shadow-sm"
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-baloo font-black text-sm transition"
+                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(201,168,76,0.25)", color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}
                     >
-                      <Share2 aria-hidden="true" className="w-4 h-4 text-[var(--ds-text-secondary)]" />
+                      <Share2 aria-hidden="true" className="w-4 h-4" />
                       {t("shareFriendsBtn")}
                     </button>
                   </motion.div>

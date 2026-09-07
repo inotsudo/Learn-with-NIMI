@@ -31,13 +31,13 @@ export default function ShopFilterTabs({ filter, onFilterChange }: Props) {
             key={tab.id}
             onClick={() => onFilterChange(tab.id)}
             className="relative shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-colors duration-200 focus:outline-none"
-            style={{ color: active ? "white" : "var(--ds-text-muted)" }}
+            style={{ color: active ? "#07111F" : "var(--airways-text-muted, rgba(240,232,212,0.55))" }}
           >
             {active && (
               <motion.div
                 layoutId="shop-filter-pill"
                 className="absolute inset-0 rounded-xl"
-                style={{ backgroundColor: "var(--ds-brand-primary)" }}
+                style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)" }}
                 transition={{ type: "spring", stiffness: 380, damping: 32 }}
               />
             )}

@@ -28,28 +28,34 @@ export default function HomeMotivationCard({ consecutiveStreak = 0, isComplete =
     ? "linear-gradient(145deg,#FFF7ED 0%,#FFEDD5 60%,#FED7AA 100%)"
     : isComplete
     ? "linear-gradient(145deg,#FEFCE8 0%,#FEF9C3 60%,#FDE047 20%)"
-    : "linear-gradient(145deg,#E0F2FE 0%,#BAE6FD 50%,#7DD3FC 100%)";
+    : "linear-gradient(160deg,#06101F 0%,#0A1828 60%,#0D1E3A 100%)";
 
   const borderColor = isUnstop ? "border-amber-300/60"
     : isOnFire ? "border-orange-200/60"
     : isComplete ? "border-yellow-300/60"
-    : "border-sky-200/60";
+    : "border-[rgba(201,168,76,0.20)]";
 
   const titleColor = isUnstop ? "text-amber-800"
     : isOnFire ? "text-orange-800"
     : isComplete ? "text-yellow-700"
-    : "text-sky-800";
+    : "";
+
+  const titleStyle = (!isUnstop && !isOnFire && !isComplete)
+    ? { color: "var(--airways-text-primary, #F0E8D4)" } : undefined;
 
   const subColor = isUnstop ? "text-amber-600"
     : isOnFire ? "text-orange-600"
     : isComplete ? "text-yellow-600"
-    : "text-sky-600";
+    : "";
+
+  const subStyle = (!isUnstop && !isOnFire && !isComplete)
+    ? { color: "var(--airways-text-muted, rgba(240,232,212,0.55))" } : undefined;
 
   const emoji = isComplete ? "🌟" : isUnstop ? "🏆" : isOnFire ? "🔥" : "⭐";
 
   return (
     <div
-      className={`relative overflow-hidden leaf-lg border shadow-card-md ${borderColor}`}
+      className={`relative overflow-hidden rounded-3xl border shadow-2xl ${borderColor}`}
       style={{ background: bg }}
     >
       {/* Floating decorations — purely visual */}
@@ -63,8 +69,8 @@ export default function HomeMotivationCard({ consecutiveStreak = 0, isComplete =
       {/* Content */}
       <div className="relative z-10 px-4 pt-4 pb-4 flex flex-col items-center text-center gap-2">
         <div>
-          <h3 className={`font-baloo font-black text-mbase leading-tight ${titleColor}`}>{title}</h3>
-          <p className={`font-nunito text-2xs mt-0.5 leading-snug ${subColor}`}>{sub}</p>
+          <h3 className={`font-baloo font-black text-mbase leading-tight ${titleColor}`} style={titleStyle}>{title}</h3>
+          <p className={`font-nunito text-2xs mt-0.5 leading-snug ${subColor}`} style={subStyle}>{sub}</p>
         </div>
 
         {/* Central animated emoji */}

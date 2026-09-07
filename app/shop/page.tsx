@@ -41,7 +41,7 @@ function Toast({ message, type, onDone }: { message: string; type: "success" | "
       className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-2xl font-black text-sm text-white max-w-xs text-center ${
         type === "success" ? "" : "bg-red-500"
       }`}
-      style={type === "success" ? { background: "var(--ds-brand-primary)" } : {}}
+      style={type === "success" ? { background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" } : {}}
     >
       {type === "success" ? <Check className="w-4 h-4 shrink-0" /> : <X className="w-4 h-4 shrink-0" />}
       {message}
@@ -73,8 +73,8 @@ function CurrentlyWearing({ cosmetics, nimiSrc, pikoSrc, onUnequip }: {
       animate={{ opacity: 1, height: "auto" }}
       className="overflow-hidden"
     >
-      <div className="mt-4 p-3 rounded-2xl border border-ds-border bg-ds-surface/60">
-        <p className="font-black text-ds-text text-2xs uppercase tracking-widest mb-2.5">{t("shopCurrentlyWearing")}</p>
+      <div className="mt-4 p-3 rounded-2xl" style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.22)" }}>
+        <p className="font-black text-2xs uppercase tracking-widest mb-2.5" style={{ color: "var(--airways-gold-text, #E8BC56)" }}>{t("shopCurrentlyWearing")}</p>
         <div className="flex gap-2 flex-wrap">
           {slots.map(slot => {
             const item = cosmetics[slot.key] ? SHOP_ITEM_MAP[cosmetics[slot.key]!] : null;
@@ -88,7 +88,7 @@ function CurrentlyWearing({ cosmetics, nimiSrc, pikoSrc, onUnequip }: {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onUnequip(slot.key)}
                 className="group relative flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border-2 text-xs font-bold transition-colors"
-                style={{ borderColor: "var(--ds-border-brand)", background: "var(--ds-brand-subtle)", color: "var(--ds-text)" }}
+                style={{ borderColor: "rgba(201,168,76,0.40)", background: "rgba(201,168,76,0.12)", color: "var(--airways-gold-text, #E8BC56)" }}
                 title={t("shopRemoveItem")}
               >
                 {slot.src && (

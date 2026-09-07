@@ -16,6 +16,53 @@
   --app-world-bg-image: none;
   --app-world-page-image: none;
   --app-world-decoration-image: none;
+
+  /* ══════════════════════════════════════════════════════════════
+     NIMIPIKO AIRWAYS — Design Tokens
+     The full learner-facing visual identity: navy/gold/cream.
+  ══════════════════════════════════════════════════════════════ */
+  --airways-navy:         #06101F;
+  --airways-navy-deep:    #030C17;
+  --airways-navy-mid:     #0D1E3A;
+  --airways-navy-light:   #1A3558;
+  --airways-navy-surface: #102040;
+  --airways-navy-border:  rgba(201,168,76,0.18);
+
+  --airways-gold:         #C9A84C;
+  --airways-gold-bright:  #F5C842;
+  --airways-gold-soft:    rgba(201,168,76,0.14);
+  --airways-gold-subtle:  rgba(201,168,76,0.08);
+  --airways-gold-border:  rgba(201,168,76,0.35);
+  --airways-gold-text:    #E8BC56;
+
+  --airways-cream:        #F5F0E8;
+  --airways-cream-soft:   #EDE8DC;
+  --airways-parchment:    #FAF7F0;
+
+  --airways-white:        #FFFFFF;
+  --airways-sky:          rgba(135,186,255,0.12);
+  --airways-sky-bright:   rgba(135,186,255,0.22);
+
+  --airways-text-primary: #F0E8D4;
+  --airways-text-muted:   rgba(240,232,212,0.55);
+  --airways-text-faint:   rgba(240,232,212,0.30);
+  --airways-text-dark:    #0D1E3A;
+  --airways-text-gold:    var(--airways-gold-text);
+
+  --airways-surface:      #0A1830;
+  --airways-surface-2:    #0F2040;
+  --airways-surface-card: rgba(15,32,64,0.80);
+  --airways-surface-lift: rgba(20,40,75,0.95);
+
+  --airways-success:      #22C55E;
+  --airways-danger:       #EF4444;
+  --airways-warning:      #F59E0B;
+
+  /* Sidebar width */
+  /* The navigation rail intentionally has the same generous width as the
+     illustrated Airways dashboard reference.  It prevents the avatar and
+     learner copy from collapsing into a cramped icon rail on desktop. */
+  --airways-sidebar-w: 270px;
 }
 
 html {

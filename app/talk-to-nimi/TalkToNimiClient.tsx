@@ -366,8 +366,8 @@ function NimiChatPageContent({
               <button key={val} onClick={() => setPageMode(val)}
                 className="px-5 py-2 text-sml font-black transition"
                 style={{
-                  background: pageMode === val ? "var(--ds-brand-primary)" : "var(--ds-surface-card,#fff)",
-                  color:      pageMode === val ? "var(--ds-nav-bg)" : "var(--ds-text-secondary,#6B7280)",
+                  background: pageMode === val ? "linear-gradient(135deg,#F5C842,#C9A84C)" : "rgba(255,255,255,0.08)",
+                  color:      pageMode === val ? "#07111F" : "var(--airways-text-muted, rgba(240,232,212,0.55))",
                 }}>
                 {label}
               </button>
@@ -468,13 +468,13 @@ function NimiChatPageContent({
 
           {/* CENTER: Chat card */}
           {pageMode === "chat" && (
-          <div className="bg-ds-surface border border-ds-border shadow-ds-card overflow-hidden flex flex-col h-[72vh]"
-            style={{ borderRadius:"var(--leaf-r-lg)" }}>
+          <div className="overflow-hidden flex flex-col h-[72vh]"
+            style={{ borderRadius:"var(--leaf-r-lg)", background: "rgba(10,24,48,0.90)", border: "1px solid rgba(201,168,76,0.18)" }}>
 
             {/* Chat header */}
             <div className="relative flex items-center gap-3 px-4 py-3 flex-shrink-0 overflow-hidden"
-              style={{ backgroundColor:"var(--ds-brand-primary)" }}>
-              <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
+              style={{ background: "linear-gradient(135deg, #06101F 0%, #0D1E3A 100%)", borderBottom: "1px solid rgba(201,168,76,0.22)" }}>
+              <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/5 pointer-events-none" />
 
               <motion.img src={assets.nimiCircle} alt="NIMI"
                 className="w-11 h-11 rounded-full object-cover border-2 border-white/50 shadow-md flex-shrink-0"
@@ -486,7 +486,7 @@ function NimiChatPageContent({
                 <p className="font-black text-white text-mbase">NIMI</p>
                 <p className="text-white/80 text-2xs flex items-center gap-1.5">
                   <motion.span
-                    className="w-2 h-2 rounded-full bg-[var(--ds-brand-soft)] inline-block shrink-0"
+                    className="w-2 h-2 rounded-full inline-block shrink-0 bg-green-400"
                     animate={noMotion ? {} : { scale:[1,1.4,1], opacity:[1,0.5,1] }}
                     transition={noMotion ? {} : { duration:1.8, repeat:Infinity }} />
                   {t("nimiOnlineLabel")}
@@ -539,20 +539,24 @@ function NimiChatPageContent({
                       {isNimi && (
                         <Image src={assets.nimiCircle} alt="NIMI"
                           width={36} height={36}
-                          className="rounded-full object-cover flex-shrink-0 shadow border-2 border-[var(--ds-border-brand)]" />
+                          className="rounded-full object-cover flex-shrink-0 shadow border-2" style={{ borderColor: "rgba(201,168,76,0.55)" }} />
                       )}
                       <div className={`text-sm leading-relaxed px-4 py-2.5 shadow-sm max-w-[78%] ${
                         isNimi
-                          ? "bg-[var(--ds-brand-subtle)] border border-[var(--ds-border-brand)] text-ds-text rounded-2xl rounded-bl-sm"
-                          : "text-white rounded-2xl rounded-br-sm shadow-md"
+                          ? "rounded-2xl rounded-bl-sm"
+                          : "rounded-2xl rounded-br-sm shadow-md"
                       }`}
-                        style={!isNimi ? { backgroundColor:"var(--ds-brand-primary)" } : undefined}
+                        style={isNimi
+                          ? { background: "rgba(201,168,76,0.10)", border: "1px solid rgba(201,168,76,0.28)", color: "var(--airways-text-primary, #F0E8D4)" }
+                          : { background: "linear-gradient(135deg, #1A3558, #0D1E3A)", color: "var(--airways-text-primary, #F0E8D4)", border: "1px solid rgba(201,168,76,0.22)" }
+                        }
                       >
                         {showTypingDots ? (
                           <span className="flex items-center gap-1.5 py-1" aria-label={t("nimiThinking")}>
                             {[0, 0.15, 0.3].map(d => (
                               <motion.span key={d}
-                                className="w-2.5 h-2.5 bg-[var(--ds-brand-primary)] rounded-full block"
+                                className="w-2.5 h-2.5 rounded-full block"
+                                style={{ background: "#C9A84C" }}
                                 animate={noMotion ? {} : { y:[0,-4,0], opacity:[0.5,1,0.5] }}
                                 transition={noMotion ? {} : { duration:0.6, repeat:Infinity, delay:d }} />
                             ))}
@@ -617,12 +621,13 @@ function NimiChatPageContent({
             )}
 
             {/* Input bar */}
-            <div className="px-3 py-3 flex-shrink-0 bg-ds-surface border-t border-ds-border">
-              <div className={`flex items-center gap-2 border shadow-sm px-3 py-2 transition-shadow ${
+            <div className="px-3 py-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(201,168,76,0.18)", background: "rgba(6,16,31,0.50)" }}>
+              <div className={`flex items-center gap-2 px-3 py-2 transition-shadow ${
                 dailyLimitReached
-                  ? "bg-[var(--ds-surface-card-hover)] border-[var(--ds-border-primary)] opacity-50 pointer-events-none"
-                  : "bg-[var(--ds-surface-card)] border-[var(--ds-border-primary)] focus-within:border-[var(--ds-border-brand)] focus-within:ring-2 focus-within:ring-[var(--ds-brand-primary)] focus-within:ring-opacity-20"
-              }`} style={{ borderRadius:"var(--leaf-r)" }}>
+                  ? "opacity-50 pointer-events-none"
+                  : ""
+              }`}
+              style={{ borderRadius:"var(--leaf-r)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(201,168,76,0.25)" }}>
                 {showMic && (
                   <motion.button
                     onClick={() => listening ? stopListening() : startListening()}
@@ -645,11 +650,12 @@ function NimiChatPageContent({
                   onKeyDown={e => e.key === "Enter" && sendChat()}
                   placeholder={dailyLimitReached ? "Daily limit reached" : listening ? (interimText || t("listeningLabel")) : t("chatPlaceholder")}
                   disabled={isTyping || listening || dailyLimitReached}
-                  className="flex-1 min-w-0 text-sm bg-transparent py-1.5 focus:outline-none text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-tertiary)] disabled:opacity-60 font-nunito" />
+                  className="flex-1 min-w-0 text-sm bg-transparent py-1.5 focus:outline-none disabled:opacity-60 font-nunito"
+                  style={{ color: "var(--airways-text-primary, #F0E8D4)" }} />
                 <motion.button onClick={() => sendChat()} whileTap={m.buttonPress}
                   disabled={isTyping || !chatInput.trim() || dailyLimitReached}
                   className="w-9 h-9 flex items-center justify-center flex-shrink-0 transition disabled:opacity-30 text-white shadow hover:opacity-90 disabled:shadow-none"
-                  style={{ backgroundColor:"var(--ds-brand-primary)", borderRadius:"var(--leaf-r-sm)" }}>
+                  style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", borderRadius:"var(--leaf-r-sm)", color: "#07111F" }}>
                   <Send className="w-4 h-4" />
                 </motion.button>
               </div>

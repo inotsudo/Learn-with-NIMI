@@ -73,7 +73,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
       exit={{   opacity:0, y:24, scale:0.95 }}
       transition={{ type:"spring", stiffness:380, damping:26 }}
       className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-2xl font-black text-sm text-white whitespace-nowrap"
-      style={{ background:"var(--ds-brand-primary)" }}
+      style={{ background: "linear-gradient(135deg, #F5C842, #C9A84C)", color: "#07111F" }}
     >
       <span className="text-lg">⭐</span>{message}
     </motion.div>
@@ -87,8 +87,8 @@ function SectionCleared({ label }: { label: string }) {
     <motion.div
       initial={{ opacity:0, scale:0.92, y:6 }}
       animate={{ opacity:1, scale:1,   y:0 }}
-      className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-[var(--ds-brand-primary)]/10 border border-[var(--ds-brand-primary)]/30 text-sml font-black"
-      style={{ color:"var(--ds-brand-primary)" }}
+      className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sml font-black"
+      style={{ background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.30)", color: "var(--airways-gold-text, #E8BC56)" }}
     >
       <motion.span animate={{ rotate:[0,15,-10,0] }} transition={{ duration:0.6, delay:0.2 }}>🎉</motion.span>
       {label} — {t("treasureAllComplete")}
@@ -126,11 +126,12 @@ function ChallengeCard({
         state === "claimed"
           ? "border-ds-border bg-ds-surface/50 opacity-60"
           : state === "ready"
-          ? "border-[var(--ds-brand-primary)] bg-ds-surface shadow-[0_0_0_3px_rgba(34,197,94,0.10),0_8px_28px_rgba(0,0,0,0.09)]"
+          ? "bg-ds-surface shadow-[0_0_0_3px_rgba(201,168,76,0.15),0_8px_28px_rgba(0,0,0,0.09)]"
           : premium
           ? "border-amber-300/60 bg-gradient-to-br from-amber-50/40 to-ds-surface shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
           : "border-ds-border bg-ds-surface shadow-[0_2px_12px_rgba(0,0,0,0.05)]"
       }`}
+      style={state === "ready" ? { borderColor: "rgba(201,168,76,0.55)" } : undefined}
     >
       {/* Left accent stripe */}
       <div className={`absolute left-0 inset-y-0 w-1 rounded-l-2xl bg-gradient-to-b ${challenge.bg} ${state === "locked" ? "opacity-30" : "opacity-100"}`} />
@@ -161,9 +162,8 @@ function ChallengeCard({
             <motion.span
               initial={{ scale:0, opacity:0 }}
               animate={{ scale:1, opacity:1 }}
-              className="text-4xs font-black px-2 py-0.5 rounded-full text-white shrink-0"
-              style={{ background:"var(--ds-brand-primary)",
-                boxShadow:"0 0 0 3px rgba(34,197,94,0.25)" }}
+              className="text-4xs font-black px-2 py-0.5 rounded-full shrink-0"
+              style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", boxShadow: "0 0 0 3px rgba(201,168,76,0.25)" }}
             >
               {t("treasureReady")}
             </motion.span>
@@ -206,9 +206,9 @@ function ChallengeCard({
             <motion.div key="done"
               initial={{ scale:0 }} animate={{ scale:1 }}
               className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background:"var(--ds-brand-primary)" }}
+              style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)" }}
             >
-              <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
+              <Check className="w-4 h-4" style={{ color: "#07111F" }} strokeWidth={2.5} />
             </motion.div>
           ) : state === "ready" ? (
             <motion.button key="claim"
@@ -218,8 +218,8 @@ function ChallengeCard({
               whileTap={{ scale:0.93 }}
               onClick={() => onClaim(challenge)}
               disabled={claiming}
-              className="text-2xs font-black px-3 py-1.5 rounded-xl text-white shadow-md disabled:opacity-60 transition-opacity"
-              style={{ background:"var(--ds-brand-primary)" }}
+              className="text-2xs font-black px-3 py-1.5 rounded-xl shadow-md disabled:opacity-60 transition-opacity"
+              style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
             >
               {claiming ? "…" : t("treasureClaim")}
             </motion.button>
@@ -504,10 +504,10 @@ export default function TreasureClient({ initialChildren }: Props = {}) {
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="font-black text-ds-text text-base">📅 {t("treasureWeeklyTitle")}</h2>
-                    <p className="text-ds-muted text-2xs">{t("treasureWeeklyReset")}</p>
+                    <h2 className="font-black text-base" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>📅 {t("treasureWeeklyTitle")}</h2>
+                    <p className="text-2xs" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("treasureWeeklyReset")}</p>
                   </div>
-                  <span className="text-2xs font-black text-ds-muted bg-ds-surface border border-ds-border px-2.5 py-1 rounded-full">
+                  <span className="text-2xs font-black px-2.5 py-1 rounded-full" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
                     {weeklyDone}/{WEEKLY_CHALLENGES.length}
                   </span>
                 </div>
@@ -538,10 +538,10 @@ export default function TreasureClient({ initialChildren }: Props = {}) {
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="font-black text-ds-text text-base">☀️ {t("treasureDailyTitle")}</h2>
-                    <p className="text-ds-muted text-2xs">{t("treasureDailyReset")}</p>
+                    <h2 className="font-black text-base" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>☀️ {t("treasureDailyTitle")}</h2>
+                    <p className="text-2xs" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("treasureDailyReset")}</p>
                   </div>
-                  <span className="text-2xs font-black text-ds-muted bg-ds-surface border border-ds-border px-2.5 py-1 rounded-full">
+                  <span className="text-2xs font-black px-2.5 py-1 rounded-full" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
                     {dailyDone}/{DAILY_CHALLENGES.length}
                   </span>
                 </div>
@@ -581,12 +581,12 @@ export default function TreasureClient({ initialChildren }: Props = {}) {
                 >
                   {totalDone === totalCount ? "🎊" : "🌟"}
                 </motion.div>
-                <p className="font-black text-ds-text text-mbase">
+                <p className="font-black text-mbase" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>
                   {totalDone === totalCount
                     ? t("treasureFooterAllDone")
                     : `${remaining} ${t("treasureChallengeLabel")}${remaining !== 1 ? "s" : ""} ${t("treasureFooterRemaining")}`}
                 </p>
-                <p className="text-ds-muted text-2xs mt-1">{t("treasureFooterReset")}</p>
+                <p className="text-2xs mt-1" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("treasureFooterReset")}</p>
               </motion.div>
 
             </motion.div>

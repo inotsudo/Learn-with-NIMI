@@ -110,9 +110,9 @@ export default function NimiProactiveBanner({ childId, language = "en" }: Props)
         transition={{ duration: 0.25 }}
         className="relative overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
-          border: "1.5px solid #6ee7b7",
-          borderRadius: "var(--leaf-r-lg, 18px)",
+          background: "linear-gradient(160deg,#06101F 0%,#0A1828 60%,#0D1E3A 100%)",
+          border: "1.5px solid rgba(201,168,76,0.30)",
+          borderRadius: "20px",
           padding: "14px 16px",
         }}
       >
@@ -128,12 +128,12 @@ export default function NimiProactiveBanner({ childId, language = "en" }: Props)
         <div className="flex gap-3 items-start pr-6">
           <span className="text-2xl leading-none shrink-0 mt-0.5">{emoji}</span>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-[var(--ds-text-primary)] leading-snug">{suggestion.title}</p>
-            <p className="text-xs text-[var(--ds-text-secondary)] mt-0.5 leading-snug line-clamp-2">{suggestion.message}</p>
+            <p className="font-bold text-sm leading-snug" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>{suggestion.title}</p>
+            <p className="text-xs mt-0.5 leading-snug line-clamp-2" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{suggestion.message}</p>
             <Link
               href={href}
-              className="inline-block mt-2 text-xs font-bold px-3 py-1 rounded-full text-white transition hover:opacity-90"
-              style={{ background: "var(--nimi-green, #10b981)" }}
+              className="inline-block mt-2 text-xs font-bold px-3 py-1 rounded-full transition hover:opacity-90"
+              style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
             >
               Let&apos;s go →
             </Link>

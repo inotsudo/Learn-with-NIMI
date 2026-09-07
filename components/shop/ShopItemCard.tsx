@@ -37,11 +37,11 @@ export default function ShopItemCard({
       style={{
         borderRadius: "var(--leaf-r)",
         border: equipped
-          ? "2px solid var(--ds-brand-primary)"
+          ? "2px solid rgba(201,168,76,0.70)"
           : "1.5px solid var(--ds-border-primary)",
         background: "white",
         boxShadow: equipped
-          ? "0 0 0 3px rgba(34,197,94,0.15), 0 8px 24px rgba(0,0,0,0.10)"
+          ? "0 0 0 3px rgba(201,168,76,0.18), 0 8px 24px rgba(0,0,0,0.10)"
           : "0 2px 12px rgba(0,0,0,0.06)",
         transition: "box-shadow 0.3s, border-color 0.3s",
       }}
@@ -76,7 +76,7 @@ export default function ShopItemCard({
               exit={{ scale: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="absolute top-2 right-2 flex items-center gap-1 text-white text-4xs font-black uppercase px-2 py-1 rounded-full shadow-lg"
-              style={{ background: "var(--ds-brand-primary)" }}
+              style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
             >
               <Zap className="w-2.5 h-2.5" />
               {t("shopEquippedLabel")}
@@ -133,8 +133,8 @@ export default function ShopItemCard({
               whileTap={{ scale: 0.95 }}
               className="w-full inline-flex items-center justify-center gap-1.5 font-black text-xs px-3 py-2 rounded-lg transition-colors duration-200"
               style={{
-                background: equipped ? "#f3f4f6" : "var(--ds-brand-primary)",
-                color: equipped ? "#6b7280" : "white",
+                background: equipped ? "#f3f4f6" : "linear-gradient(135deg,#F5C842,#C9A84C)",
+                color: equipped ? "#6b7280" : "#07111F",
               }}
             >
               <AnimatePresence mode="wait" initial={false}>
@@ -180,8 +180,8 @@ export default function ShopItemCard({
                 whileTap={affordable ? { scale: 0.95 } : {}}
                 className="w-full inline-flex items-center justify-center gap-1.5 font-black text-xs px-3 py-2 rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
                 style={{
-                  background: affordable ? "var(--ds-brand-primary)" : "#e5e7eb",
-                  color: affordable ? "white" : "#9ca3af",
+                  background: affordable ? "linear-gradient(135deg,#F5C842,#C9A84C)" : "#e5e7eb",
+                  color: affordable ? "#07111F" : "#9ca3af",
                   opacity: purchasing ? 0.7 : 1,
                 }}
               >
@@ -207,7 +207,7 @@ export default function ShopItemCard({
           animate={{ opacity: 1 }}
           className="absolute inset-0 rounded-[inherit] pointer-events-none"
           style={{
-            boxShadow: "inset 0 0 0 2px rgba(34,197,94,0.4)",
+            boxShadow: "inset 0 0 0 2px rgba(201,168,76,0.4)",
           }}
         />
       )}

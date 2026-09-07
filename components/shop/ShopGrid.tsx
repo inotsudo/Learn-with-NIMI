@@ -46,8 +46,8 @@ export default function ShopGrid({ filter, balance, ownedIds, purchaseCounts, co
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xl">{meta.emoji}</span>
                 <div>
-                  <p className="font-black text-ds-text text-mbase leading-tight">{t(`filter${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
-                  <p className="text-ds-muted text-2xs">{t(meta.descKey)}</p>
+                  <p className="font-black text-mbase leading-tight" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>{t(`filter${cat.charAt(0).toUpperCase() + cat.slice(1)}`)}</p>
+                  <p className="text-2xs" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t(meta.descKey)}</p>
                 </div>
               </div>
               <GridRow items={items} balance={balance} ownedIds={ownedIds} purchaseCounts={purchaseCounts}
@@ -73,8 +73,8 @@ export default function ShopGrid({ filter, balance, ownedIds, purchaseCounts, co
         {items.length === 0 ? (
           <div className="flex flex-col items-center text-center gap-3 py-16">
             <span className="text-5xl">🛒</span>
-            <p className="font-black text-ds-text">{t("noToysTitle")}</p>
-            <p className="text-[var(--ds-text-tertiary)] text-sm">{t("noToysBody")}</p>
+            <p className="font-black" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>{t("noToysTitle")}</p>
+            <p className="text-sm" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("noToysBody")}</p>
           </div>
         ) : (
           <GridRow items={items} balance={balance} ownedIds={ownedIds} purchaseCounts={purchaseCounts}

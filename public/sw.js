@@ -1,8 +1,8 @@
 // NIMIPIKO — service worker: web push + offline media/static + AI response caching
 
 const MEDIA_CACHE  = "nimi-media-v1";
-const STATIC_CACHE = "nimi-static-v6";
-const PAGE_CACHE   = "nimi-pages-v6";
+const STATIC_CACHE = "nimi-static-v7";
+const PAGE_CACHE   = "nimi-pages-v7";
 const AI_CACHE     = "nimi-ai-v1";       // deterministic AI response cache
 const CURRENT_CACHES = [MEDIA_CACHE, STATIC_CACHE, PAGE_CACHE, AI_CACHE];
 const OFFLINE_PAGE = "/offline.html";

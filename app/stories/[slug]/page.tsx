@@ -170,7 +170,8 @@ function CertificateModal({
           </button>
           <button
             onClick={onClose}
-            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)] text-[var(--ds-nav-bg)] font-baloo font-black text-sm py-2.5 rounded-2xl shadow-sm transition"
+            className="flex-1 flex items-center justify-center gap-2 font-baloo font-black text-sm py-2.5 rounded-2xl shadow-sm transition"
+            style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
           >
             ✅ Done
           </button>
@@ -783,21 +784,22 @@ export default function StoryDetailPage() {
                 {/* Top nav */}
                 <div className="relative z-10 flex items-center justify-between px-4 pt-5 pb-2 shrink-0">
                   <button onClick={() => router.push("/stories")}
-                    aria-label="Back to My Adventures"
-                    className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 font-nunito font-bold text-sm transition-colors min-h-[44px] px-2 -ml-2">
-                    <ArrowLeft className="w-4 h-4" /> Adventures
+                    aria-label="Back to My Journey"
+                    className="flex items-center gap-1.5 font-nunito font-bold text-sm transition-colors min-h-[44px] px-2 -ml-2"
+                    style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
+                    <ArrowLeft className="w-4 h-4" /> My Journey
                   </button>
                   <div className="flex items-center gap-2">
                     {streak > 0 && (
-                      <div className="flex items-center gap-1 rounded-full px-3 py-1 border border-orange-200"
-                        style={{ background:"rgba(251,146,60,0.10)" }}>
+                      <div className="flex items-center gap-1 rounded-full px-3 py-1"
+                        style={{ background:"rgba(245,158,11,0.12)", border:"1px solid rgba(245,158,11,0.30)" }}>
                         <motion.span aria-hidden="true" animate={m.reduced ? {} : { scale:[1,1.25,1] }} transition={{ duration:1.4, repeat:Infinity }}>🔥</motion.span>
-                        <span className="font-baloo font-black text-orange-500 text-xs">{streak} day streak</span>
+                        <span className="font-baloo font-black text-xs" style={{ color: "#FCD34D" }}>{streak} day streak</span>
                       </div>
                     )}
                     {isPreview && (
                       <span className="font-nunito text-2xs px-2 py-0.5 rounded-full"
-                        style={{ background:"rgba(201,168,76,0.15)", color:"#c9a84c", border:"1px solid rgba(201,168,76,0.3)" }}>
+                        style={{ background:"rgba(201,168,76,0.15)", color:"#C9A84C", border:"1px solid rgba(201,168,76,0.3)" }}>
                         Preview
                       </span>
                     )}
@@ -807,14 +809,14 @@ export default function StoryDetailPage() {
                 {/* Airways eyebrow */}
                 <motion.p initial={{ opacity:0, y:-6 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
                   className="relative z-10 text-center font-nunito text-xs tracking-[0.28em] uppercase shrink-0"
-                  style={{ color:"rgba(120,90,0,0.50)" }}>
-                  <span aria-hidden="true">✈️ </span>Nimipiko · Your Destination
+                  style={{ color:"var(--airways-gold-text, #E8BC56)", opacity: 0.7 }}>
+                  <span aria-hidden="true">✈️ </span>NIMIPIKO AIRWAYS · Your Destination
                 </motion.p>
 
                 {/* Story title */}
                 <motion.h1 initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.18 }}
                   className="relative z-10 text-center font-baloo font-black mt-1 mb-0.5 shrink-0 px-6 leading-tight"
-                  style={{ fontSize:"clamp(1.05rem,3.5vw,1.55rem)", color:"var(--ds-text-primary)" }}>
+                  style={{ fontSize:"clamp(1.05rem,3.5vw,1.55rem)", color:"var(--airways-text-primary, #F0E8D4)" }}>
                   {storyTitle}
                 </motion.h1>
 
@@ -822,7 +824,7 @@ export default function StoryDetailPage() {
                 {totalCount > 0 && (
                   <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.26 }}
                     className="relative z-10 text-center font-nunito font-semibold text-2xs shrink-0 mb-0.5"
-                    style={{ color:"rgba(120,90,0,0.38)" }}>
+                    style={{ color:"var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
                     {doneCount === 0
                       ? `${totalCount} stops · Begin your adventure`
                       : doneCount >= totalCount
@@ -851,11 +853,13 @@ export default function StoryDetailPage() {
                         <span className="text-5xl">🏆</span>
                       </motion.div>
                       <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.4 }}
-                        className="font-baloo font-black text-2xl text-[var(--ds-text-primary)]">
+                        className="font-baloo font-black text-2xl"
+                        style={{ color: "var(--airways-gold-text, #E8BC56)" }}>
                         Destination Reached!
                       </motion.p>
                       <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.5 }}
-                        className="font-nunito text-sm text-center text-[var(--ds-text-secondary)]">
+                        className="font-nunito text-sm text-center"
+                        style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
                         All {totalCount} chapters mastered
                       </motion.p>
                       <motion.button
@@ -879,7 +883,8 @@ export default function StoryDetailPage() {
                             setPhase("missions");
                           }
                         }}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-full font-baloo font-black text-sm border border-[var(--ds-border-primary)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-border-brand)] hover:text-[var(--ds-text-brand)] transition-colors min-h-[44px]">
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-full font-baloo font-black text-sm transition-colors min-h-[44px]"
+                        style={{ border: "1px solid rgba(201,168,76,0.35)", color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
                         🗺️ See Adventure Path
                       </motion.button>
                     </div>
@@ -2052,7 +2057,8 @@ export default function StoryDetailPage() {
                 <button
                   onClick={() => setPhase("missions")}
                   aria-label="Back to my adventure"
-                  className="self-start flex items-center gap-1 text-[var(--ds-text-tertiary)] text-sml font-bold mb-2 hover:text-[var(--ds-text-secondary)] transition min-h-[44px] min-w-[44px]">
+                  className="self-start flex items-center gap-1 text-sml font-bold mb-2 transition min-h-[44px] min-w-[44px]"
+                  style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
                   <ArrowLeft className="w-4 h-4" aria-hidden="true" /> {t("storyBackBtn")}
                 </button>
 
@@ -2089,12 +2095,12 @@ export default function StoryDetailPage() {
 
                 {/* Child name — the hero text */}
                 <motion.div initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-                  <p className="font-nunito text-[var(--ds-text-tertiary)] text-sml font-bold uppercase tracking-widest mb-1">{t("storyCertWoo")}</p>
-                  <h2 className="font-baloo font-black text-3xl leading-tight" style={{ color: "var(--ds-brand-primary)" }}>
+                  <p className="font-nunito text-sml font-bold uppercase tracking-widest mb-1" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("storyCertWoo")}</p>
+                  <h2 className="font-baloo font-black text-3xl leading-tight" style={{ color: "var(--airways-gold-text, #E8BC56)" }}>
                     <span aria-hidden="true">⭐ </span>{childName}!<span aria-hidden="true"> ⭐</span>
                   </h2>
-                  <p className="font-nunito text-[var(--ds-text-secondary)] text-mbase mt-1">{t("storyCertCompleted")}</p>
-                  <h3 className="font-baloo font-black text-ds-text text-xl mt-0.5 leading-tight">{storyTitle}</h3>
+                  <p className="font-nunito text-mbase mt-1" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("storyCertCompleted")}</p>
+                  <h3 className="font-baloo font-black text-xl mt-0.5 leading-tight" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>{storyTitle}</h3>
                 </motion.div>
 
                 {/* Stars earned card */}
@@ -2127,7 +2133,8 @@ export default function StoryDetailPage() {
                     transition={{ duration: DURATION.loopBase, repeat: Infinity }}
                     whileHover={m.buttonHover}
                     whileTap={m.buttonPress}
-                    className="w-full relative overflow-hidden bg-gradient-to-r from-yellow-400 via-amber-400 to-[var(--ds-brand-primary)] text-white font-baloo font-black text-xl leaf py-5 shadow-2xl flex items-center justify-center gap-3">
+                    className="w-full relative overflow-hidden font-baloo font-black text-xl rounded-3xl py-5 shadow-2xl flex items-center justify-center gap-3"
+                    style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}>
 
                     {/* Sparkle particles inside button */}
                     {!m.reduced && [0, 1, 2, 3, 4].map(i => (
@@ -2183,14 +2190,16 @@ export default function StoryDetailPage() {
                   <motion.button whileTap={m.buttonPress}
                     onClick={() => setPhase("challenge")}
                     aria-label="Start a Family Challenge"
-                    className="w-full bg-gradient-to-r from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)] text-[var(--ds-nav-bg)] font-baloo font-black text-base rounded-full py-3.5 shadow-lg flex items-center justify-center gap-2 min-h-[44px]">
+                    className="w-full font-baloo font-black text-base rounded-full py-3.5 shadow-lg flex items-center justify-center gap-2 min-h-[44px]"
+                    style={{ background: "linear-gradient(135deg, #F5C842, #C9A84C)", color: "#07111F" }}>
                     👨‍👩‍👧 Family Challenge
                   </motion.button>
 
                   <button
                     onClick={() => setPhase("complete")}
                     aria-label="Skip family challenge and continue to next destination"
-                    className="w-full text-center font-nunito font-bold text-xs text-[var(--ds-text-tertiary)] hover:text-[var(--ds-text-secondary)] transition py-2 min-h-[44px]">
+                    className="w-full text-center font-nunito font-bold text-xs transition py-2 min-h-[44px]"
+                    style={{ color: "var(--airways-text-faint, rgba(240,232,212,0.30))" }}>
                     Maybe later →
                   </button>
                 </div>
@@ -2321,7 +2330,8 @@ export default function StoryDetailPage() {
                                       a.target = "_blank";
                                       a.click();
                                     }}
-                                    className="flex-shrink-0 bg-[var(--ds-brand-soft)] hover:bg-[var(--ds-brand-primary)] text-[var(--ds-text-brand)] hover:text-[var(--ds-nav-bg)] font-black text-2xs rounded-xl px-3 py-1.5 transition">
+                                    className="flex-shrink-0 font-black text-2xs rounded-xl px-3 py-1.5 transition"
+                                    style={{ background: "rgba(201,168,76,0.15)", color: "var(--airways-gold-text, #E8BC56)", border: "1px solid rgba(201,168,76,0.30)" }}>
                                     🖼️ PNG
                                   </button>
                                 </div>
@@ -2423,7 +2433,7 @@ export default function StoryDetailPage() {
               <motion.div key="challenge" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}
                 className="flex-1 flex flex-col px-5 py-6">
 
-                <button onClick={() => { playCelebration(); setPhase("certificate"); }} aria-label="Back to certificate" className="self-start mb-4 text-[var(--ds-text-tertiary)] flex items-center gap-1 text-sml font-bold min-h-[44px] min-w-[44px]">
+                <button onClick={() => { playCelebration(); setPhase("certificate"); }} aria-label="Back to certificate" className="self-start mb-4 flex items-center gap-1 text-sml font-bold min-h-[44px] min-w-[44px]" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
                   <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Back
                 </button>
 
@@ -2433,14 +2443,14 @@ export default function StoryDetailPage() {
                   <p className="text-sml text-[var(--ds-text-secondary)] mt-1">Ask Mom or Dad to join — complete this challenge together as a family!</p>
                 </div>
 
-                <h2 className="font-baloo font-black text-[var(--ds-brand-primary)] text-1.5xl text-center mb-4">👨‍👩‍👧 {t("storyBonusChallenge")}</h2>
+                <h2 className="font-baloo font-black text-1.5xl text-center mb-4" style={{ color: "var(--airways-gold-text, #E8BC56)" }}>👨‍👩‍👧 {t("storyBonusChallenge")}</h2>
 
                 {challengeDone ? (
                   <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                     className="flex-1 flex flex-col items-center justify-center text-center">
                     <motion.span aria-hidden="true" className="text-6xl" animate={m.reduced ? {} : { rotate: [0, 15, -15, 0] }} transition={{ duration: DURATION.loopBase, repeat: Infinity }}>🎉</motion.span>
-                    <h3 className="font-baloo font-black text-ds-text text-1.5xl mt-4">{t("storyChallengeDone")}</h3>
-                    <p className="text-[var(--ds-text-secondary)] text-sm mt-2">You&apos;re a true champion!</p>
+                    <h3 className="font-baloo font-black text-1.5xl mt-4" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>{t("storyChallengeDone")}</h3>
+                    <p className="text-sm mt-2" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>You&apos;re a true champion!</p>
                     <motion.button whileTap={m.buttonPress}
                       onClick={() => { playStar(); setPhase("complete"); }}
                       className="mt-6 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-baloo font-black text-lg rounded-full px-8 py-4 shadow-xl flex items-center gap-2">
@@ -2750,8 +2760,8 @@ export default function StoryDetailPage() {
                     whileTap={m.buttonPress}
                     onClick={() => setPhase("challenge")}
                     aria-label="Start a Family Challenge"
-                    className="w-full font-baloo font-black text-sm py-2.5 flex items-center justify-center gap-2 text-[var(--ds-nav-bg)] bg-gradient-to-r from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)] min-h-[44px]"
-                    style={{ borderRadius: "var(--leaf-r)" }}>
+                    className="w-full font-baloo font-black text-sm py-2.5 flex items-center justify-center gap-2 min-h-[44px] rounded-3xl"
+                    style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}>
                     👨‍👩‍👧 Family Challenge
                   </motion.button>
 

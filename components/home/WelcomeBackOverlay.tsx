@@ -48,11 +48,12 @@ export default function WelcomeBackOverlay({ childName, daysAway, onDismiss }: P
             exit={{ scale: 0.92, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 280, delay: 0.05 }}
             onClick={e => e.stopPropagation()}
-            className="mx-5 max-w-sm w-full bg-[var(--ds-surface-card)] leaf-lg shadow-2xl overflow-hidden"
+            className="mx-5 max-w-sm w-full rounded-3xl shadow-2xl overflow-hidden"
+            style={{ background: "linear-gradient(160deg,#08131F 0%,#0D1E3A 100%)", border: "1px solid rgba(201,168,76,0.25)" }}
           >
             {/* Illustrated top band */}
             <div className="h-32 flex items-center justify-center relative"
-              style={{ background: "linear-gradient(135deg, var(--ds-brand-subtle) 0%, var(--ds-brand-soft) 50%, var(--ds-brand-primary) 100%)" }}>
+              style={{ background: "linear-gradient(135deg,#06101F 0%,#0D1E3A 55%,#1A3558 100%)" }}>
               <motion.span
                 className="text-7xl leading-none select-none"
                 animate={{ rotate: [0, -8, 8, -4, 0], scale: [1, 1.1, 1.05, 1.1, 1] }}
@@ -65,17 +66,20 @@ export default function WelcomeBackOverlay({ childName, daysAway, onDismiss }: P
             </div>
 
             <div className="px-6 pt-5 pb-6 text-center">
-              <h2 className="font-baloo font-black text-[var(--ds-text-primary)] text-2xl leading-tight mb-2">
+              <h2 className="font-baloo font-black text-2xl leading-tight mb-2"
+                style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>
                 Welcome back, {childName}!
               </h2>
-              <p className="font-nunito text-[var(--ds-text-secondary)] text-sm leading-relaxed mb-6">
+              <p className="font-nunito text-sm leading-relaxed mb-6"
+                style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.60))" }}>
                 {message}
               </p>
 
               {/* Progress nudge */}
-              <div className="bg-[var(--ds-brand-subtle)] rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
+              <div className="rounded-2xl px-4 py-3 mb-5 flex items-center gap-3"
+                style={{ background: "rgba(201,168,76,0.10)", border: "1px solid rgba(201,168,76,0.20)" }}>
                 <span className="text-2.5xl">🔥</span>
-                <p className="font-nunito text-[var(--ds-text-brand)] text-sml text-left leading-snug">
+                <p className="font-nunito text-sml text-left leading-snug" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.70))" }}>
                   Start today's adventure to <strong>light a new streak</strong> — every journey begins with one step!
                 </p>
               </div>
@@ -83,11 +87,11 @@ export default function WelcomeBackOverlay({ childName, daysAway, onDismiss }: P
               <button
                 onClick={dismiss}
                 className="w-full text-[var(--ds-nav-bg)] font-baloo font-black text-base py-3.5 rounded-2xl hover:opacity-90 active:scale-95 transition-all shadow-lg"
-                style={{ background: "linear-gradient(135deg, var(--ds-brand-primary), var(--ds-brand-hover))" }}
+                style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
               >
                 Let's go! 🚀
               </button>
-              <p className="font-nunito text-[var(--ds-text-tertiary)] text-2xs mt-3">Tap anywhere to continue</p>
+              <p className="font-nunito text-2xs mt-3" style={{ color: "rgba(240,232,212,0.35)" }}>Tap anywhere to continue</p>
             </div>
           </motion.div>
         </motion.div>

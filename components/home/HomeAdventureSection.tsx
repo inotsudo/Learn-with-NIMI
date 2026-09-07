@@ -8,18 +8,39 @@ import { getStorageUrl } from "@/lib/queries";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-/* ── Slot-type → icon mapping ──────────────────────────────────────────────── */
 const SLOT_ICONS: Record<string, string> = {
-  flipflop_audio: "🎧",
-  story_pdf:      "📖",
-  coloring:       "🎨",
-  move_explore:   "🤸",
-  sing_along:     "🎵",
-  bonus_video:    "🎬",
+  flipflop_audio:     "🎧",
+  story_pdf:          "📖",
+  coloring:           "🎨",
+  move_explore:       "🤸",
+  sing_along:         "🎵",
+  bonus_video:        "🎬",
+  challenge_1:        "🏅",
+  challenge_2:        "🏅",
+  challenge_3:        "🏅",
+  destination_video:  "🌍",
 };
+
+const SLOT_LABELS: Record<string, string> = {
+  flipflop_audio:     "Listen",
+  story_pdf:          "Read",
+  coloring:           "Create",
+  move_explore:       "Move",
+  sing_along:         "Sing",
+  bonus_video:        "Watch",
+  challenge_1:        "Challenge",
+  challenge_2:        "Challenge",
+  challenge_3:        "Challenge",
+  destination_video:  "Discover",
+};
+
+function slotLabel(slotKey: string): string {
+  return SLOT_LABELS[slotKey] ?? slotKey.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 interface Props {
   curStory:         StoryLibraryItem | undefined;
+  storyNumber:      number;
   doneSlots:        number;
   totalSlots:       number;
   pct:              number;
@@ -30,7 +51,6 @@ interface Props {
   nextPremiumStory?: StoryLibraryItem | null;
 }
 
-/* ── Empty state ─────────────────────────────────────────────────────────── */
 function EmptyAdventure() {
   return (
     <div className="flex flex-col items-center justify-center gap-5 px-6 py-10 text-center h-full">
@@ -38,45 +58,39 @@ function EmptyAdventure() {
         className="text-6xl leading-none select-none"
         animate={{ y: [0, -12, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      >🔭</motion.span>
+      >✈️</motion.span>
       <div>
-        <p className="font-baloo font-black text-[var(--ds-text-primary)] text-xl leading-tight mb-1">
-          Ready for an adventure?
+        <p className="font-baloo font-black text-lg leading-tight mb-1" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>
+          Ready for your first flight?
         </p>
-        <p className="font-nunito text-[var(--ds-text-secondary)] text-sm">
-          Pick a story and start exploring!
+        <p className="font-nunito text-sm" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
+          Pick a destination and start exploring!
         </p>
       </div>
       <Link
         href="/stories"
         className="flex items-center gap-2 font-baloo font-black text-sm px-6 py-3 rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95"
-        style={{
-          background: "linear-gradient(135deg,var(--ds-brand-primary),var(--ds-brand-hover))",
-          color: "var(--ds-nav-bg)",
-          boxShadow: "var(--ds-shadow-cta)",
-        }}
+        style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}
       >
-        Explore Stories <ChevronRight className="w-4 h-4" />
+        Choose Destination <ChevronRight className="w-4 h-4" />
       </Link>
     </div>
   );
 }
 
-/* ── Premium upsell ──────────────────────────────────────────────────────── */
 function PremiumUpsell({ story }: { story: StoryLibraryItem }) {
   return (
     <Link href="/pricing" className="flex flex-col h-full">
       <div
         className="relative flex-1 overflow-hidden rounded-2xl flex flex-col items-center justify-center gap-4 px-5 text-center"
-        style={{ background: "linear-gradient(145deg,#6d28d9,#7c3aed,#8b5cf6)" }}
+        style={{ background: "linear-gradient(145deg,#4c1d95,#5b21b6,#6d28d9)" }}
       >
-        {/* Blurred cover background */}
         {story.cover_url && (
           <Image
             src={getStorageUrl(story.cover_url)}
             alt=""
             fill
-            className="object-cover blur-sm brightness-50 opacity-60"
+            className="object-cover blur-sm brightness-40 opacity-50"
           />
         )}
         <div className="relative z-10 flex flex-col items-center gap-3">
@@ -89,14 +103,14 @@ function PremiumUpsell({ story }: { story: StoryLibraryItem }) {
           </motion.div>
           <div>
             <p className="font-baloo font-black text-white text-xl leading-tight">
-              🎉 You&apos;ve finished all free stories!
+              🎉 All free stories complete!
             </p>
             <p className="font-nunito text-white/70 text-sml mt-1">
               Next: <span className="text-white/90 font-bold">{story.title}</span>
             </p>
           </div>
-          <span className="bg-yellow-300 text-purple-900 font-black text-sml px-5 py-2 rounded-full shadow-lg">
-            👑 Subscribe →
+          <span className="font-baloo font-black text-sm px-5 py-2 rounded-full shadow-lg" style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}>
+            👑 Upgrade to Club →
           </span>
         </div>
       </div>
@@ -104,18 +118,16 @@ function PremiumUpsell({ story }: { story: StoryLibraryItem }) {
   );
 }
 
-/* ── Main export ─────────────────────────────────────────────────────────── */
 export default function HomeAdventureSection({
-  curStory, doneSlots, totalSlots, pct, slots,
+  curStory, storyNumber, doneSlots, totalSlots, pct, slots,
   up, stagger, hasSubscription, nextPremiumStory,
 }: Props) {
   const { t } = useLanguage();
   const showPremiumUpsell =
     !!nextPremiumStory && !hasSubscription && (!curStory || curStory.complete);
 
-  /* Next uncompleted slot — shown as "what's coming next" */
-  const nextSlot = slots.find(s => !s.completed);
   const displayTotal = totalSlots || 6;
+  const displayPct = curStory?.complete ? 100 : pct;
 
   return (
     <motion.section
@@ -127,29 +139,53 @@ export default function HomeAdventureSection({
     >
       <motion.div
         variants={up}
-        className="relative h-full overflow-hidden flex flex-col leaf-lg border border-[var(--ds-border-primary)] shadow-lg"
-        style={{ background: "linear-gradient(165deg,#FEFBF0 0%,#FDF4D5 55%,#F5E8B0 100%)" }}
+        className="relative h-full overflow-hidden flex flex-col rounded-3xl border shadow-2xl"
+        style={{
+          background: "linear-gradient(160deg, #06101F 0%, #0A1828 60%, #0D1E3A 100%)",
+          border: "1px solid rgba(201,168,76,0.25)",
+        }}
       >
+        {/* Gold top bar */}
+        <div className="h-1 w-full shrink-0" style={{ background: "linear-gradient(90deg,#C9A84C,#F5C842,#C9A84C)" }} />
 
-        {/* ── Section header ────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-lg leading-none">🌿</span>
-            <div>
-              <h2 className="font-baloo font-black text-[#1F5C38] text-lg leading-none">
-                {t("homeAdventureLabel")}
+        {/* Section header — title/book number on the left, Story Progress + bar on the right,
+            matching the reference's header (not a separate progress block lower in the body). */}
+        <div className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-3 shrink-0"
+          style={{ borderBottom: "1px solid rgba(201,168,76,0.12)" }}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg leading-none shrink-0">📖</span>
+            <div className="min-w-0">
+              <p className="font-nunito font-bold text-[10px] tracking-[0.18em] uppercase" style={{ color: "var(--airways-gold-text, #E8BC56)" }}>
+                Adventure Book
+              </p>
+              <h2 className="font-baloo font-black text-sml leading-tight truncate" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>
+                {curStory ? `Book ${storyNumber}: ${curStory.title}` : t("homeAdventureLabel")}
               </h2>
-              {curStory && !curStory.complete && (
-                <p className="font-nunito text-[#4A7C5A] text-3xs leading-none mt-0.5">
-                  Continue where you left off
-                </p>
-              )}
             </div>
           </div>
+          {curStory && (
+            <div className="shrink-0 text-right">
+              <p className="font-nunito font-bold text-[9px] uppercase tracking-wide" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>
+                Story Progress
+              </p>
+              <div className="mt-1 flex items-center gap-1.5">
+                <div className="h-1.5 w-16 overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,0.10)" }}>
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: "linear-gradient(90deg,#C9A84C,#F5C842)" }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${displayPct}%` }}
+                    transition={{ duration: 1.2, ease: "easeOut" }}
+                  />
+                </div>
+                <span className="font-baloo font-black text-2xs" style={{ color: "var(--airways-gold-text, #E8BC56)" }}>{displayPct}%</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ── Body ──────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-h-0 px-4 pb-4 gap-3">
+        {/* Body */}
+        <div className="flex-1 flex flex-col min-h-0 px-4 pb-4 gap-3 pt-3">
 
           {showPremiumUpsell && nextPremiumStory ? (
             <PremiumUpsell story={nextPremiumStory} />
@@ -157,187 +193,103 @@ export default function HomeAdventureSection({
             <EmptyAdventure />
           ) : (
             <>
-              {/* ── Story artwork — the hero ─────────────────────────────── */}
-              <Link
-                href={`/stories/${curStory.slug}`}
-                className="block group relative overflow-hidden rounded-2xl shrink-0 shadow-xl"
-                aria-label={`Open story: ${curStory.title}`}
-                style={{ aspectRatio: "16/9" }}
-              >
-                {curStory.cover_url ? (
-                  <Image
-                    src={getStorageUrl(curStory.cover_url)}
-                    alt={curStory.title}
-                    fill
-                    priority
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                ) : (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}
-                  >
-                    <span className="text-7xl leading-none select-none">
-                      {curStory.theme_emoji ?? "📖"}
-                    </span>
-                  </div>
-                )}
-
-                {/* Dark gradient — bottom readability */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background:
-                      "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.28) 45%, transparent 75%)",
-                  }}
-                />
-
-                {/* Status badge — top-left */}
-                <div className="absolute top-2.5 left-2.5">
-                  {curStory.complete ? (
-                    <span className="flex items-center gap-1 font-baloo font-black text-2xs bg-amber-400 text-amber-900 px-2.5 py-1 rounded-full shadow-md">
-                      🏆 {t("homeAdventureCompleteLabel")}
-                    </span>
+              {/* Cover (left) + welcome card with activity row (right) — side by side, matching
+                  the reference, instead of stacking a full-width cover above everything else. */}
+              <div className="flex gap-3 shrink-0">
+                <Link
+                  href={`/stories/${curStory.slug}`}
+                  className="group relative block shrink-0 overflow-hidden rounded-xl shadow-xl"
+                  aria-label={`Open story: ${curStory.title}`}
+                  style={{ width: 92, aspectRatio: "3/4" }}
+                >
+                  {curStory.cover_url ? (
+                    <Image
+                      src={getStorageUrl(curStory.cover_url)}
+                      alt={curStory.title}
+                      fill
+                      priority
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
                   ) : (
-                    <span className="flex items-center gap-1 font-baloo font-black text-2xs bg-white/90 text-[var(--ds-text-brand)] px-2.5 py-1 rounded-full shadow-md backdrop-blur-sm">
-                      📖 {t("homeAdventureLabel")}
-                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg,#0D1E3A,#1A3558)" }}>
+                      <span className="text-4xl leading-none select-none">{curStory.theme_emoji ?? "📖"}</span>
+                    </div>
                   )}
-                </div>
-
-                {/* Play overlay — always on mobile, hover on desktop */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                  <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-sm">
-                    <Play className="w-6 h-6 fill-[var(--ds-brand-primary)] text-[var(--ds-brand-primary)] ml-0.5" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(0,0,0,0.35)" }}>
+                    <Play className="w-6 h-6" style={{ fill: "#F5C842", color: "#F5C842" }} />
                   </div>
-                </div>
+                  <div className="absolute top-1 left-1">
+                    {curStory.complete ? (
+                      <span className="flex items-center rounded-full px-1.5 py-0.5 text-[8px] font-black" style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F" }}>🏆</span>
+                    ) : (
+                      <span className="flex items-center rounded-full bg-white/90 px-1.5 py-0.5 text-[8px] font-black" style={{ color: "#07111F" }}>✈️</span>
+                    )}
+                  </div>
+                </Link>
 
-                {/* Story title overlay — bottom */}
-                <div className="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-8 pointer-events-none">
-                  <h3 className="font-baloo font-black text-white text-lg leading-tight drop-shadow-lg line-clamp-1">
-                    {curStory.title}
-                  </h3>
-                  {curStory.category && (
-                    <p className="font-nunito text-white/70 text-2xs mt-0.5 capitalize">
-                      {curStory.category}
-                    </p>
-                  )}
-                </div>
-              </Link>
+                <div className="flex-1 min-w-0 rounded-xl p-3" style={{ background: "linear-gradient(135deg,#FFFDF8,#F7EEDC)", border: "1px solid rgba(177,120,34,.18)" }}>
+                  <p className="font-baloo font-black text-sml leading-tight" style={{ color: "#14233B" }}>
+                    {curStory.complete ? "Destination reached! 🎉" : "Welcome to your adventure!"}
+                  </p>
+                  <p className="mt-1 font-nunito text-[10px] leading-snug" style={{ color: "rgba(20,35,59,0.65)" }}>
+                    Meet Nimi, Piko and Zilo as they learn, play and grow in {curStory.title}.
+                  </p>
 
-              {/* ── Progress section ──────────────────────────────────────── */}
-              <div className="flex flex-col gap-2 shrink-0">
-
-                {/* Mission dots + count */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    {/* Slot dots — max 10 visible, use partial dots for longer */}
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(displayTotal, 10) }).map((_, i) => {
-                        const slot = slots[i];
-                        const done = slot?.completed ?? false;
-                        const isCurrent = !done && slots.slice(0, i).every(s => s?.completed);
+                  {/* Activity row — Listen / Read / Create / Move / Sing / Watch, wraps onto a
+                      second centered row for stories with more than 6 activities. */}
+                  {slots.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1.5">
+                      {slots.map((slot, i) => {
+                        const icon = SLOT_ICONS[slot.slot_key] ?? "▶";
+                        const label = slotLabel(slot.slot_key);
+                        const isNext = i === doneSlots && !curStory.complete;
                         return (
-                          <motion.div
-                            key={i}
-                            className={`rounded-full transition-all duration-300 ${
-                              done
-                                ? "bg-[var(--ds-brand-primary)] shadow-sm"
-                                : isCurrent
-                                ? "border-2 border-[var(--ds-brand-primary)] bg-white"
-                                : "bg-[rgba(0,0,0,0.12)]"
-                            }`}
-                            style={{ width: done ? 10 : isCurrent ? 10 : 8, height: done ? 10 : isCurrent ? 10 : 8 }}
-                            animate={isCurrent ? { scale: [1, 1.25, 1] } : undefined}
-                            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                          />
+                          <div key={slot.slot_key} className="flex flex-col items-center gap-0.5" style={{ width: 44 }}>
+                            <div
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-xs"
+                              style={slot.completed ? {
+                                background: "linear-gradient(135deg,#C9A84C,#F5C842)", color: "#07111F",
+                              } : isNext ? {
+                                background: "rgba(177,120,34,0.14)", border: "1.5px solid #C9A84C",
+                              } : {
+                                background: "rgba(20,35,59,0.06)", border: "1px solid rgba(20,35,59,0.12)", opacity: 0.55,
+                              }}
+                            >
+                              {slot.completed ? "✓" : icon}
+                            </div>
+                            <span className="font-baloo font-black text-[8px] leading-none text-center truncate w-full" style={{ color: isNext || slot.completed ? "#A96113" : "rgba(20,35,59,0.45)" }}>
+                              {label}
+                            </span>
+                            <span className="font-nunito text-[7px] leading-none" style={{ color: "rgba(20,35,59,0.35)" }}>
+                              Step {i + 1}
+                            </span>
+                          </div>
                         );
                       })}
                     </div>
-                    <span className="font-nunito font-bold text-[#3D6B4A] text-2xs">
-                      {curStory.complete
-                        ? "✓ " + t("journeyCompleted")
-                        : `Mission ${doneSlots + 1} of ${displayTotal}`}
-                    </span>
-                  </div>
-                  <span className="font-baloo font-black text-[#3D6B4A] text-sml">
-                    {curStory.complete ? "100%" : `${pct}%`}
-                  </span>
+                  )}
                 </div>
-
-                {/* Progress bar — game-style */}
-                <div className="relative h-3 bg-[rgba(0,0,0,0.1)] rounded-full overflow-hidden shadow-inner">
-                  <motion.div
-                    className="absolute inset-y-0 left-0 rounded-full"
-                    style={{
-                      background: curStory.complete
-                        ? "linear-gradient(90deg,#fbbf24,#f59e0b)"
-                        : "linear-gradient(90deg,#22c55e,#16a34a,#15803d)",
-                      boxShadow: "0 1px 4px rgba(34,197,94,0.40)",
-                    }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${curStory.complete ? 100 : pct}%` }}
-                    transition={{ duration: 1.4, ease: "easeOut", delay: 0.35 }}
-                  />
-                  {/* Shine glint */}
-                  <div
-                    className="absolute inset-y-0 left-0 w-full rounded-full pointer-events-none"
-                    style={{
-                      background:
-                        "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 60%)",
-                    }}
-                  />
-                </div>
-
-                {/* Next activity hint */}
-                {nextSlot && !curStory.complete && (
-                  <p className="font-nunito text-[#4A7C5A] text-2xs flex items-center gap-1">
-                    <span>{SLOT_ICONS[nextSlot.slot_key] ?? "▶"}</span>
-                    <span>Next: {nextSlot.title}</span>
-                  </p>
-                )}
               </div>
 
-              {/* ── Primary CTA ───────────────────────────────────────────── */}
+              {/* Primary CTA */}
               {curStory.complete ? (
                 <Link
                   href="/stories"
-                  className="flex items-center justify-center gap-2 w-full font-baloo font-black text-sm py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95 shadow-md shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg,#fbbf24,#f59e0b)",
-                    color: "#7c2d12",
-                    boxShadow: "0 4px 14px rgba(251,191,36,0.45)",
-                  }}
+                  className="flex items-center justify-center gap-2 w-full font-baloo font-black text-sm py-3 rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95 shadow-md shrink-0"
+                  style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", boxShadow: "0 4px 14px rgba(201,168,76,0.35)" }}
                 >
-                  <span>🏆</span> {t("homeAdventureViewCert")}
+                  <span>🗺️</span> Choose Next Destination
                 </Link>
               ) : (
                 <Link
                   href={`/stories/${curStory.slug}`}
-                  className="flex items-center justify-center gap-2 w-full font-baloo font-black text-sm py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95 shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg,var(--ds-brand-primary),var(--ds-brand-hover))",
-                    color: "var(--ds-nav-bg)",
-                    boxShadow: "var(--ds-shadow-cta)",
-                  }}
+                  className="flex items-center justify-center gap-2 w-full font-baloo font-black text-sm py-3 rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95 shrink-0"
+                  style={{ background: "linear-gradient(135deg,#F5C842,#C9A84C)", color: "#07111F", boxShadow: "0 4px 14px rgba(201,168,76,0.35)" }}
                 >
                   <Play className="w-4 h-4 fill-current" />
-                  {doneSlots === 0 ? "Start Adventure" : t("homeAdventureKeepGoing")}
+                  {doneSlots === 0 ? "✈️ Begin Adventure" : t("homeAdventureKeepGoing")}
                 </Link>
               )}
-
-              {/* ── Today's progress footer ───────────────────────────────── */}
-              <div
-                className="flex items-center justify-between px-3 py-2 rounded-xl shrink-0"
-                style={{ background: "rgba(30,60,30,0.08)", border: "1px solid rgba(30,60,30,0.12)" }}
-              >
-                <span className="font-nunito font-bold text-[#4A7C5A] text-2xs uppercase tracking-wider">
-                  Today&apos;s Progress
-                </span>
-                <span className="font-baloo font-black text-[#1F5C38] text-sml">
-                  {doneSlots} / {displayTotal}
-                </span>
-              </div>
             </>
           )}
         </div>
