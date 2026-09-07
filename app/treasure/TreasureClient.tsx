@@ -17,7 +17,7 @@ import {
 } from "@/lib/queries";
 import { getStoryLibrary } from "@/lib/storyRepository";
 import { computeStreaks } from "@/lib/parentInsights";
-import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import { PageSurface } from "@/components/layout/primitives";
 import {
   WEEKLY_CHALLENGES, DAILY_CHALLENGES,
   getWeekPeriod, getDayPeriod, todayWeekIndex,
@@ -433,81 +433,65 @@ export default function TreasureClient({ initialChildren }: Props = {}) {
             >
 
               {/* ── HERO ─────────────────────────────────── */}
-              <HeroBanner zone="achievement">
-                {/* Back button */}
-                <button
-                  onClick={() => router.back()}
-                  className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-sml font-bold transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" /> {t("storyBackBtn")}
-                </button>
+              <section className="relative overflow-hidden -mx-4 sm:-mx-5 -mt-4 sm:-mt-6 mb-6 bg-[#0b2f6e]" style={{ minHeight: 240 }}>
+                <img src="/airport-hero.png" alt="" aria-hidden
+                  className="absolute inset-0 h-full w-full object-cover object-center select-none pointer-events-none" />
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{ background: "linear-gradient(100deg,rgba(255,255,255,.93) 0%,rgba(255,255,255,.72) 48%,rgba(255,255,255,.15) 68%,transparent 82%)" }} />
+                <div className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
+                  style={{ background: "linear-gradient(to top, #f8f2e7, transparent)" }} />
 
-                <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-                <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-
-                {([ {tp:"12%",l:"5%",d:0},{tp:"70%",l:"7%",d:0.55},{tp:"18%",r:"5%",d:0.3},{tp:"66%",r:"8%",d:0.9} ] as Array<{tp:string;d:number;l?:string;r?:string}>).map((s,i) => (
-                  <motion.span key={i}
-                    className="absolute text-xl pointer-events-none select-none"
-                    style={{ top:s.tp, left:s.l, right:s.r }}
-                    animate={{ opacity:[0.3,0.9,0.3], y:[0,-7,0], scale:[0.8,1.25,0.8] }}
-                    transition={{ duration:2.5, repeat:Infinity, delay:s.d }}
-                    aria-hidden
-                  >⭐</motion.span>
-                ))}
-
-                <div className="relative z-10 px-5 pt-12 pb-5 sm:px-7 sm:pb-6">
-                  <div className="flex items-center gap-4">
-                    <motion.img src={assets.nimiCircle} alt="NIMI"
-                      className="w-14 h-14 rounded-full border-2 border-white/40 shadow-xl shrink-0"
-                      animate={{ y:[0,-5,0] }} transition={{ duration:2.8, repeat:Infinity }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white/60 text-3xs font-bold uppercase tracking-[0.14em] mb-0.5">
-                        {t("treasureChallengeArena")}
-                      </p>
-                      <h1 className="font-baloo font-black text-white text-1.5xl sm:text-3.5xl leading-tight drop-shadow-md">
-                        {childName}&apos;s Challenges! 🏆
-                      </h1>
+                {/* Left content */}
+                <div className="relative z-10 flex min-h-[240px] flex-col justify-end px-5 pb-10 pt-8 sm:px-10">
+                  <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 font-baloo text-[11px] font-black -rotate-1 mb-2 self-start"
+                    style={{ background:"#ffd331", color:"#092d78" }}>
+                    {t("treasureChallengeArena")} ⚡
+                  </span>
+                  <h1 className="font-baloo font-black text-[#0e368b] leading-tight drop-shadow-[0_2px_0_rgba(255,255,255,.95)]"
+                    style={{ fontSize: "clamp(1.8rem,5vw,2.6rem)" }}>
+                    {childName}&apos;s Challenges! 🏆
+                  </h1>
+                  <p className="mt-1 font-baloo font-bold text-[15px] text-[#123a87] drop-shadow-[0_1px_0_rgba(255,255,255,.85)]">
+                    Earn stars · Complete missions · Climb the ranks
+                  </p>
+                  <div className="mt-2 h-[3px] w-44 -rotate-[3deg] rounded-full bg-[#ffc400]" />
+                  {/* Stat chips */}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="flex items-center gap-2 rounded-full px-3.5 py-1.5 shadow-sm"
+                      style={{ background:"rgba(255,255,255,0.88)", border:"1.5px solid #f5d142" }}>
+                      <span className="text-base leading-none">⭐</span>
+                      <span className="font-baloo font-black text-base leading-none" style={{ color:"#7a5800" }}><StarCount target={totalStars} /></span>
+                      <span className="font-baloo text-[10px] font-bold" style={{ color:"#7a580099" }}>{t("treasureTotalStars")}</span>
                     </div>
-                  </div>
-
-                  {/* Stats row */}
-                  <div className="flex gap-2.5 mt-4 flex-wrap">
-                    <div className="flex items-center gap-2 bg-[var(--ds-surface-card)]/20 border border-white/30 rounded-full px-4 py-2 backdrop-blur-sm">
-                      <span className="text-lg">⭐</span>
-                      <span className="font-baloo font-black text-white text-lg">
-                        <StarCount target={totalStars} />
+                    <div className="flex items-center gap-2 rounded-full px-3.5 py-1.5 shadow-sm"
+                      style={{ background:"rgba(255,255,255,0.88)", border:"1.5px solid #c8d9ef" }}>
+                      <span className="text-base leading-none">🏅</span>
+                      <span className="font-baloo font-black text-base leading-none" style={{ color:"#082b78" }}>
+                        {totalDone} <span className="font-normal opacity-60 text-sm">/ {totalCount}</span>
                       </span>
-                      <span className="text-white/70 text-2xs font-bold">{t("treasureTotalStars")}</span>
+                      <span className="font-baloo text-[10px] font-bold" style={{ color:"#082b7899" }}>{t("treasureDone")}</span>
                     </div>
-
-                    {/* Progress chip */}
-                    <div className="flex items-center gap-2 bg-[var(--ds-surface-card)]/20 border border-white/30 rounded-full px-4 py-2 backdrop-blur-sm">
-                      <span className="text-lg">🏅</span>
-                      <span className="font-baloo font-black text-white text-lg">{totalDone}</span>
-                      <span className="text-white/70 text-2xs font-bold">/ {totalCount} {t("treasureDone")}</span>
-                    </div>
-                  </div>
-
-                  {/* Overall progress bar */}
-                  <div className="mt-3 h-1.5 rounded-full bg-[var(--ds-surface-card)]/20 overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-[var(--ds-surface-card)]"
-                      initial={{ width:0 }}
-                      animate={{ width: `${(totalDone/totalCount)*100}%` }}
-                      transition={{ duration:1, ease:"easeOut", delay:0.3 }}
-                    />
                   </div>
                 </div>
-              </HeroBanner>
+
+                {/* Nimi jumping in celebration — contextual pose for challenges */}
+                <div className="absolute right-1 bottom-0 z-10 flex items-end pb-0">
+                  <motion.img src="/nimi/happy.png" alt="Nimi cheering"
+                    className="h-[165px] sm:h-[200px] w-auto object-contain drop-shadow-2xl select-none"
+                    animate={{ y:[0,-10,0], rotate:[0,2,-2,0] }}
+                    transition={{ duration:2.5, repeat:Infinity, ease:"easeInOut" }}
+                    draggable={false} />
+                </div>
+              </section>
 
               {/* ── WEEKLY ───────────────────────────────── */}
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="font-black text-base" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>📅 {t("treasureWeeklyTitle")}</h2>
-                    <p className="text-2xs" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("treasureWeeklyReset")}</p>
+                    <h2 className="font-black text-base" style={{ color: "#082b78" }}>📅 {t("treasureWeeklyTitle")}</h2>
+                    <p className="text-2xs" style={{ color: "#7791b3" }}>{t("treasureWeeklyReset")}</p>
                   </div>
-                  <span className="text-2xs font-black px-2.5 py-1 rounded-full" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                  <span className="text-2xs font-black px-2.5 py-1 rounded-full" style={{ color: "#7791b3", background: "rgba(8,43,120,0.06)", border: "1px solid #c8d9ef" }}>
                     {weeklyDone}/{WEEKLY_CHALLENGES.length}
                   </span>
                 </div>
@@ -538,10 +522,10 @@ export default function TreasureClient({ initialChildren }: Props = {}) {
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="font-black text-base" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>☀️ {t("treasureDailyTitle")}</h2>
-                    <p className="text-2xs" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("treasureDailyReset")}</p>
+                    <h2 className="font-black text-base" style={{ color: "#082b78" }}>☀️ {t("treasureDailyTitle")}</h2>
+                    <p className="text-2xs" style={{ color: "#7791b3" }}>{t("treasureDailyReset")}</p>
                   </div>
-                  <span className="text-2xs font-black px-2.5 py-1 rounded-full" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                  <span className="text-2xs font-black px-2.5 py-1 rounded-full" style={{ color: "#7791b3", background: "rgba(8,43,120,0.06)", border: "1px solid #c8d9ef" }}>
                     {dailyDone}/{DAILY_CHALLENGES.length}
                   </span>
                 </div>
@@ -581,12 +565,12 @@ export default function TreasureClient({ initialChildren }: Props = {}) {
                 >
                   {totalDone === totalCount ? "🎊" : "🌟"}
                 </motion.div>
-                <p className="font-black text-mbase" style={{ color: "var(--airways-text-primary, #F0E8D4)" }}>
+                <p className="font-baloo font-black text-mbase" style={{ color: "#082b78" }}>
                   {totalDone === totalCount
                     ? t("treasureFooterAllDone")
                     : `${remaining} ${t("treasureChallengeLabel")}${remaining !== 1 ? "s" : ""} ${t("treasureFooterRemaining")}`}
                 </p>
-                <p className="text-2xs mt-1" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>{t("treasureFooterReset")}</p>
+                <p className="text-2xs mt-1" style={{ color: "#7791b3" }}>{t("treasureFooterReset")}</p>
               </motion.div>
 
             </motion.div>

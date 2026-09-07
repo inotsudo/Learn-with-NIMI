@@ -13,7 +13,6 @@ import { getStorageUrl } from "@/lib/queries";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant, type ComponentVariant } from "@/lib/design-system/componentVariants";
-import { HeroBanner } from "@/components/layout/primitives";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { Creation } from "@/components/community/types";
 import { getStoryLibrary } from "@/lib/storyRepository";
@@ -1068,92 +1067,70 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
       <main className="max-w-4xl mx-auto px-3 py-4 sm:px-4 lg:px-6 pb-24 w-full content-enter">
 
         {/* ── HERO ──────────────────────────────────────────────── */}
-        <HeroBanner zone="communitySquare" className="mb-5">
-          <button
-            onClick={() => router.back()}
-            className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-sml font-bold transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> {t("storyBackBtn")}
-          </button>
+        <section className="relative overflow-hidden -mx-3 sm:-mx-4 lg:-mx-6 -mt-4 mb-5" style={{ minHeight: 260, background:"#5ec8f0" }}>
+          {/* Zone-specific background — community scene with Nimi + kids */}
+          <img src="/community-header.png" alt="" aria-hidden
+            className="absolute inset-0 h-full w-full object-cover object-center select-none pointer-events-none" />
+          {/* Strong left mask so text is always readable */}
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: "linear-gradient(95deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.82) 42%,rgba(255,255,255,.30) 62%,transparent 78%)" }} />
+          <div className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
+            style={{ background: "linear-gradient(to top, #f8f2e7, transparent)" }} />
 
-          {/* Decorative blobs */}
-          <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-          <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-          <div className="absolute top-1/2 right-16 w-20 h-20 rounded-full bg-[var(--ds-surface-card)]/8 pointer-events-none" />
-
-          {/* Floating stars */}
-          {([ {t:"12%",l:"5%",d:0},{t:"70%",l:"9%",d:0.55},{t:"15%",r:"6%",d:0.3},{t:"65%",r:"9%",d:0.95} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i) => (
-            <motion.span key={i}
-              className="absolute text-xl pointer-events-none select-none"
-              style={{ top:s.t, left:s.l, right:s.r }}
-              animate={{ opacity:[0.25,0.9,0.25], y:[0,-8,0] }}
-              transition={{ duration:2.6, repeat:Infinity, delay:s.d }}
-              aria-hidden
-            >⭐</motion.span>
-          ))}
-
-          <div className="relative z-10 px-5 pt-10 pb-5 sm:px-8 sm:pt-12 sm:pb-6">
-            {/* Title row */}
-            <div className="flex items-center gap-3 sm:gap-4 mb-4">
-              <motion.img src={assets.nimiCircle} alt="NIMI"
-                className="w-14 h-14 sm:w-20 sm:h-20 rounded-full border-[3px] border-white/50 shadow-2xl shrink-0"
-                animate={{ y:[0,-6,0] }} transition={{ duration:2.8, repeat:Infinity }} />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="bg-[var(--ds-surface-card)]/25 text-white text-4xs font-black px-2 py-0.5 rounded-full tracking-wider uppercase">
-                    {t("communityEyebrow")}
-                  </span>
-                  {communityTotal > 0 && (
-                    <span className="flex items-center gap-1 bg-[var(--ds-surface-card)]/15 text-white text-3xs font-black px-2 py-0.5 rounded-full">
-                      <Sparkles className="w-3 h-3" /> {communityTotal}
-                    </span>
-                  )}
-                </div>
-                <h1 className="font-baloo font-black text-white text-2xl sm:text-3xl leading-tight drop-shadow-lg">
-                  {t("communityHeroTitle")}
-                </h1>
-                <p className="text-white/75 text-xs font-semibold">
-                  {t("communityHeroSubtitle")}
-                </p>
-              </div>
+          {/* Left content */}
+          <div className="relative z-10 flex min-h-[260px] flex-col justify-end px-5 pb-10 pt-8 sm:px-10" style={{ maxWidth: "62%" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 font-baloo text-[11px] font-black -rotate-1"
+                style={{ background:"#ffd331", color:"#092d78" }}>
+                {t("communityEyebrow")} 👥
+              </span>
+              {communityTotal > 0 && (
+                <span className="flex items-center gap-1 text-[#082b78] text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm"
+                  style={{ background:"rgba(255,255,255,0.9)", border:"1px solid #c8d9ef" }}>
+                  <Sparkles className="w-3 h-3 text-[#ffc400]" /> {communityTotal}
+                </span>
+              )}
             </div>
-
-            {/* Friend bubbles + learner count in one row */}
+            <h1 className="font-baloo font-black text-[#0e368b] leading-tight"
+              style={{ fontSize: "clamp(1.7rem,4.5vw,2.5rem)", textShadow:"0 2px 0 rgba(255,255,255,0.95)" }}>
+              {t("communityHeroTitle")}
+            </h1>
+            <p className="mt-1 font-baloo font-bold text-[14px] text-[#123a87]"
+              style={{ textShadow:"0 1px 0 rgba(255,255,255,0.85)" }}>
+              {t("communityHeroSubtitle")}
+            </p>
+            <div className="mt-2 h-[3px] w-40 -rotate-[3deg] rounded-full bg-[#ffc400]" />
             {friends.length > 0 && (
-              <div className="flex items-center gap-3">
+              <div className="mt-3 flex items-center gap-2.5">
                 <div className="flex -space-x-2">
-                  {friends.slice(0, 7).map((f, i) => {
+                  {friends.slice(0, 5).map((f, i) => {
                     const FRIEND_GRADS = [
                       "from-violet-400 to-purple-500","from-pink-400 to-rose-500",
-                      "from-blue-400 to-indigo-500","from-[var(--ds-brand-primary)] to-[var(--ds-brand-hover)]",
-                      "from-amber-400 to-orange-500","from-cyan-400 to-sky-500",
+                      "from-blue-400 to-indigo-500","from-emerald-400 to-teal-500",
+                      "from-amber-400 to-orange-500",
                     ];
                     const grad = FRIEND_GRADS[f.name.charCodeAt(0) % FRIEND_GRADS.length];
                     return (
-                    <motion.div key={f.name + i}
-                      initial={{ scale:0, opacity:0 }}
-                      animate={{ scale:1, opacity:1 }}
-                      transition={{ delay:0.06 + i * 0.045, type:"spring", stiffness:380 }}
-                      className={`w-8 h-8 rounded-full border-2 border-white/70 overflow-hidden flex items-center justify-center font-bold text-white shadow-md bg-gradient-to-br ${grad}`}
-                      title={f.name}
-                    >
-                      <ChildAvatar avatarUrl={f.avatar} name={f.name} size={32} className="w-full h-full" />
-                    </motion.div>
+                      <motion.div key={f.name + i}
+                        initial={{ scale:0, opacity:0 }}
+                        animate={{ scale:1, opacity:1 }}
+                        transition={{ delay:0.06 + i * 0.045, type:"spring", stiffness:380 }}
+                        className={`w-7 h-7 rounded-full border-2 border-white overflow-hidden flex items-center justify-center font-bold text-white shadow-md bg-gradient-to-br ${grad}`}
+                        title={f.name}
+                      >
+                        <ChildAvatar avatarUrl={f.avatar} name={f.name} size={28} className="w-full h-full" />
+                      </motion.div>
                     );
                   })}
-                  {friends.length > 7 && (
-                    <div className="w-8 h-8 rounded-full bg-[var(--ds-surface-card)]/20 border-2 border-white/40 flex items-center justify-center text-3xs font-black text-white">
-                      +{friends.length - 7}
-                    </div>
-                  )}
                 </div>
-                <p className="text-white/75 text-xs font-semibold">
-                  {friends.length} {t("communityLearnerCount")} {t("communityActiveNow")}
+                <p className="text-[#123a87] text-xs font-bold" style={{ textShadow:"0 1px 0 rgba(255,255,255,.85)" }}>
+                  {friends.length} {t("communityLearnerCount")}
                 </p>
               </div>
             )}
           </div>
-        </HeroBanner>
+          {/* No character overlay — Nimi & kids are in the photo */}
+        </section>
 
         {/* ── FILTER BAR ────────────────────────────────────────── */}
         <div className="flex flex-col gap-3 mb-5">
@@ -1202,7 +1179,7 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
             ))}
           </div>
           {/* Right fade hint — hidden on desktop where all chips are visible */}
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-ds-page to-transparent sm:hidden" />
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-[#f8f2e7] to-transparent sm:hidden" />
           </div>
         </div>
 

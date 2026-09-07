@@ -25,7 +25,7 @@ import QuickReplyChips from "@/components/home/QuickReplyChips";
 import ChatQuestBanner from "@/components/home/ChatQuestBanner";
 import ChatSidebar from "@/components/home/ChatSidebar";
 import { NIMI_CHAT_HANDOFF_KEY } from "@/components/home/TalkToNimi";
-import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import { PageSurface } from "@/components/layout/primitives";
 import { useScreenTime } from "@/lib/screenTime";
 import BreakNudge from "@/components/learn/BreakNudge";
 import VoiceCompanionView from "@/components/voice/VoiceCompanionView";
@@ -310,55 +310,46 @@ function NimiChatPageContent({
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full content-enter">
 
         {/* ── HERO ── */}
-        <HeroBanner zone="nimiChat" className="mb-4">
-          <button
-            onClick={() => window.history.back()}
-            className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-sml font-bold transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> {t("storyBackBtn")}
-          </button>
+        <section className="relative overflow-hidden -mx-3 sm:-mx-4 lg:-mx-6 -mt-4 sm:-mt-6 mb-4"
+          style={{ minHeight: 245, background: "linear-gradient(138deg,#e0eeff 0%,#d0e4ff 38%,#b8d0fc 65%,#8db4f5 100%)" }}>
+          {/* Sky-blue gradient — AI/conversation aesthetic, clean of photo characters */}
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: "radial-gradient(ellipse at 75% 10%, rgba(255,255,255,.50) 0%, transparent 55%)" }} />
+          <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none"
+            style={{ background: "linear-gradient(to top, #f8f2e7, transparent)" }} />
 
-          {/* Decorative circles */}
-          <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-
-          {/* Floaters */}
-          {(([
-            { top:"14%", left:"6%",  emoji:"⭐", delay:0   },
-            { top:"68%", left:"10%", emoji:"✨", delay:0.6 },
-            { top:"18%", right:"5%", emoji:"💬", delay:0.3 },
-            { top:"66%", right:"8%", emoji:"⭐", delay:1   },
-          ]) as Array<{top:string;emoji:string;delay:number;left?:string;right?:string}>).map((d, i) => (
-            <motion.span key={i} className="absolute pointer-events-none select-none text-sm"
-              style={{ top:d.top, left:d.left, right:d.right }}
-              animate={noMotion ? {} : { opacity:[0.3,1,0.3], y:[0,-5,0] }}
-              transition={noMotion ? {} : { duration:2.4, repeat:Infinity, delay:d.delay }}
-              aria-hidden>
-              {d.emoji}
-            </motion.span>
-          ))}
-
-          <div className="relative z-10 px-5 pt-12 pb-5 sm:px-7 sm:pb-6 flex items-center gap-4">
-            <motion.img src={assets.nimiCircle} alt="Nimi"
-              animate={noMotion ? {} : { y:[0,-5,0] }}
-              transition={noMotion ? {} : { duration:2.5, repeat:Infinity }}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-white/40 shadow-lg shrink-0"
-              loading="lazy" />
-            <div>
-              <p className="text-white/60 text-3xs font-bold uppercase tracking-[0.15em] mb-0.5">{t("nimiChatAIFriend")}</p>
-              <h1 className="font-baloo font-black text-white text-1.5xl sm:text-3.5xl leading-tight drop-shadow-md">
-                {t("nimiChatPageTitle")}
-              </h1>
-              <p className="text-white/75 text-xs sm:text-sml font-semibold mt-0.5">
-                {t("nimiChatPageSubtitle")}
-              </p>
-            </div>
+          {/* Left content */}
+          <div className="relative z-10 flex min-h-[245px] flex-col justify-end px-5 pb-10 pt-8 sm:px-10" style={{ maxWidth: "62%" }}>
+            <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 font-baloo text-[11px] font-black -rotate-1 mb-2 self-start"
+              style={{ background:"#ffd331", color:"#092d78" }}>
+              {t("nimiChatAIFriend")} 🤖
+            </span>
+            <h1 className="font-baloo font-black text-[#0e368b] leading-tight"
+              style={{ fontSize: "clamp(1.7rem,4.5vw,2.5rem)" }}>
+              {t("nimiChatPageTitle")}
+            </h1>
+            <p className="mt-1 font-baloo font-bold text-[14px] text-[#123a87]">
+              {t("nimiChatPageSubtitle")}
+            </p>
+            <div className="mt-2 h-[3px] w-40 -rotate-[3deg] rounded-full bg-[#ffc400]" />
           </div>
-        </HeroBanner>
+
+          {/* Nimi — sole character, no background photo to clash with */}
+          <div className="absolute right-2 bottom-0 z-10 flex items-end pb-0">
+            <motion.img src="/themes/default/characters/nimi.png" alt="Nimi"
+              className="h-[165px] sm:h-[205px] w-auto object-contain drop-shadow-2xl select-none"
+              animate={noMotion ? {} : { y:[0,-7,0] }} transition={noMotion ? {} : { duration:3, repeat:Infinity, ease:"easeInOut" }}
+              draggable={false} loading="lazy" />
+            <motion.img src="/themes/default/characters/piko.png" alt="Piko"
+              className="h-[140px] sm:h-[175px] w-auto object-contain drop-shadow-2xl select-none"
+              animate={noMotion ? {} : { y:[0,-5,0] }} transition={noMotion ? {} : { duration:2.8, repeat:Infinity, ease:"easeInOut", delay:0.4 }}
+              draggable={false} />
+          </div>
+        </section>
 
         {/* Mode toggle */}
         <div className="flex justify-center mb-4">
-          <div className="flex rounded-full overflow-hidden border border-ds-border shadow-sm">
+          <div className="flex rounded-full overflow-hidden border shadow-sm" style={{ borderColor:"#c8d9ef", background:"#fff" }}>
             {([
               { val: "chat",     label: "💬 Chat with Nimi"  },
               { val: "practice", label: "🎤 Practice Reading" },
@@ -366,8 +357,8 @@ function NimiChatPageContent({
               <button key={val} onClick={() => setPageMode(val)}
                 className="px-5 py-2 text-sml font-black transition"
                 style={{
-                  background: pageMode === val ? "linear-gradient(135deg,#F5C842,#C9A84C)" : "rgba(255,255,255,0.08)",
-                  color:      pageMode === val ? "#07111F" : "var(--airways-text-muted, rgba(240,232,212,0.55))",
+                  background: pageMode === val ? "linear-gradient(135deg,#ffd331,#ffbc14)" : "transparent",
+                  color:      pageMode === val ? "#0e2d6b" : "#7791b3",
                 }}>
                 {label}
               </button>

@@ -6,7 +6,7 @@ import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { ArrowLeft, Upload, Camera, Download, Sparkles, Crown, CheckCircle2 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
-import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import { PageSurface } from "@/components/layout/primitives";
 import supabase from "@/lib/supabaseClient";
 import { authedFetch } from "@/lib/authedFetch";
 import { getChildren } from "@/lib/queries";
@@ -303,45 +303,34 @@ export default function MasterpieceClient({ initialChildren }: Props = {}) {
         <main className="max-w-3xl mx-auto px-3 sm:px-4 lg:px-6 py-4 pb-28 w-full">
 
           {/* ── HERO ── */}
-          <HeroBanner zone="treasureRoom" className="mb-6">
-            <button onClick={() => window.history.back()}
-              className="absolute top-4 left-5 z-20 flex items-center gap-1.5 text-white/80 hover:text-white text-sml font-bold transition-colors">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
+          <section className="relative overflow-hidden -mx-3 sm:-mx-4 lg:-mx-6 -mt-4 mb-6" style={{ minHeight: 255, background:"#4a3070" }}>
+            {/* Art scene — kids creating artwork, positioned right */}
+            <img src="/community.jpeg" alt="" aria-hidden
+              className="absolute inset-0 h-full w-full object-cover object-right select-none pointer-events-none" />
+            {/* Strong left mask so the text panel is clean */}
+            <div className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(95deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.88) 40%,rgba(255,255,255,.42) 60%,rgba(255,255,255,.10) 75%,transparent 88%)" }} />
+            <div className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
+              style={{ background: "linear-gradient(to top, #f8f2e7, transparent)" }} />
 
-            {/* Decorative circles */}
-            <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-            <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-
-            {/* Floating sparkles */}
-            {([ {t:"15%",l:"7%",d:0},{t:"70%",l:"11%",d:0.7},{t:"20%",r:"6%",d:0.35},{t:"65%",r:"9%",d:1.1} ] as Array<{t:string;d:number;l?:string;r?:string}>).map((s,i)=>(
-              <motion.span key={i} className="absolute pointer-events-none select-none text-mbase"
-                style={{ top:s.t, left:s.l, right:s.r }}
-                animate={{ opacity:[0.3,1,0.3], y:[0,-6,0] }}
-                transition={{ duration:2.5, repeat:Infinity, delay:s.d }} aria-hidden>
-                {["✨","⭐","👑","🌟"][i]}
-              </motion.span>
-            ))}
-
-            <div className="relative z-10 px-5 pt-12 pb-6 sm:px-7 flex items-center gap-4">
-              <motion.div
-                animate={{ y:[0,-6,0], rotate:[0,4,-4,0] }}
-                transition={{ duration:3.2, repeat:Infinity }}
-                className="w-16 h-16 sm:w-20 sm:h-20 bg-[var(--ds-surface-card)]/25 backdrop-blur-sm rounded-full flex items-center justify-center text-3xl sm:text-4xl shadow-xl border-2 border-white/40 shrink-0"
-              >
-                👑
-              </motion.div>
-              <div>
-                <p className="text-white/60 text-3xs font-bold uppercase tracking-[0.15em] mb-0.5">Premium Feature</p>
-                <h1 className="font-baloo font-black text-white text-2xl sm:text-3xl leading-tight drop-shadow-md">
-                  Masterpiece Studio
-                </h1>
-                <p className="text-white/80 text-xs sm:text-sml font-semibold mt-0.5">
-                  {child?.name ? `${child.name} becomes the hero of their own story` : "Your child becomes the hero of their own story"}
-                </p>
-              </div>
+            {/* Left content */}
+            <div className="relative z-10 flex min-h-[255px] flex-col justify-end px-5 pb-10 pt-8 sm:px-10" style={{ maxWidth: "58%" }}>
+              <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 font-baloo text-[11px] font-black -rotate-1 mb-2 self-start"
+                style={{ background:"#ffd331", color:"#092d78" }}>
+                Premium Feature ✨
+              </span>
+              <h1 className="font-baloo font-black text-[#0e368b] leading-tight"
+                style={{ fontSize: "clamp(1.7rem,4.5vw,2.5rem)", textShadow:"0 2px 0 rgba(255,255,255,0.95)" }}>
+                Masterpiece Studio 👑
+              </h1>
+              <p className="mt-1 font-baloo font-bold text-[14px] text-[#123a87]"
+                style={{ textShadow:"0 1px 0 rgba(255,255,255,0.85)" }}>
+                {child?.name ? `${child.name} becomes the hero of their own story` : "Your child becomes the hero of their own story"}
+              </p>
+              <div className="mt-2 h-[3px] w-40 -rotate-[3deg] rounded-full bg-[#ffc400]" />
             </div>
-          </HeroBanner>
+            {/* Kids creating art are visible in the photo — no character overlay needed */}
+          </section>
 
           {/* ── STEP INDICATOR ── */}
           {step !== "processing" && <StepBar step={stepIndex} />}

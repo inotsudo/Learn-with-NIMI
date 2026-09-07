@@ -25,7 +25,7 @@ import { computeStreaks } from "@/lib/parentInsights";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PageSurface, HeroBanner } from "@/components/layout/primitives";
+import { PageSurface } from "@/components/layout/primitives";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
 import EditProfileSheet from "@/components/profile/EditProfileSheet";
 import UpdateCardModal from "@/components/parents/UpdateCardModal";
@@ -436,140 +436,121 @@ export default function ParentsClient({ initialChildren, initialUserId }: Props 
       <PageSurface className="content-enter">
 
         {/* ═══ HERO ═══ */}
-        <HeroBanner zone="familyHub" className="shadow-ds-card">
-          <div className="absolute -top-6 -right-6 w-40 h-40 rounded-full bg-[var(--ds-surface-card)]/10 pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-52 h-52 rounded-full bg-[var(--ds-surface-card)]/8 pointer-events-none" />
-          {/* Floating particles */}
-          {[
-            { top: "10%", left:  "8%",  emoji: "📚", size: 14, delay: 0    },
-            { top: "65%", left:  "5%",  emoji: "⭐", size: 12, delay: 0.8  },
-            { top: "15%", right: "6%",  emoji: "🏆", size: 16, delay: 0.35 },
-            { top: "60%", right: "8%",  emoji: "🌟", size: 11, delay: 1.1  },
-            { top: "38%", left:  "2%",  emoji: "💡", size: 12, delay: 0.55 },
-            { top: "35%", right: "3%",  emoji: "🎯", size: 13, delay: 0.9  },
-          ].map((d, i) => (
-            <motion.span
-              key={i}
-              className="absolute pointer-events-none select-none"
-              style={{ top: d.top, left: (d as { left?: string }).left, right: (d as { right?: string }).right, fontSize: d.size }}
-              animate={m.reduced ? { opacity: 0.3 } : { opacity: [0.25, 0.9, 0.25], y: [0, -6, 0], scale: [0.8, 1.15, 0.8] }}
-              transition={m.reduced ? {} : { duration: 2.6, repeat: Infinity, delay: d.delay }}
-              aria-hidden
-            >
-              {d.emoji}
-            </motion.span>
-          ))}
-          <div className="relative z-10 px-5 py-5 sm:px-8 sm:py-6 flex items-center gap-4">
+        <section className="relative overflow-hidden -mx-3 sm:-mx-4 lg:-mx-6 -mt-3 mb-5" style={{ minHeight: 260, background:"#0b2f6e" }}>
+          {/* Nimipiko school scene — warm family hub feel */}
+          <img src="/home-hero.png" alt="" aria-hidden
+            className="absolute inset-0 h-full w-full object-cover object-right select-none pointer-events-none" />
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: "linear-gradient(95deg,rgba(255,255,255,.95) 0%,rgba(255,255,255,.82) 44%,rgba(255,255,255,.25) 64%,transparent 80%)" }} />
+          <div className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
+            style={{ background: "linear-gradient(to top, #f8f2e7, transparent)" }} />
 
-            {/* Parent avatar */}
-            <div className="relative shrink-0">
-              {/* Glow ring */}
+          {/* Left content */}
+          <div className="relative z-10 flex min-h-[260px] flex-col justify-end px-5 pb-10 pt-8 sm:px-10" style={{ maxWidth: "60%" }}>
+            <p className="font-baloo font-black text-[17px] leading-none text-[#0e368b] drop-shadow-[0_2px_0_rgba(255,255,255,.9)] mb-1">
+              {getTimeGreeting()} 👋
+            </p>
+            {editingName ? (
+              <div className="flex items-center gap-2 mb-1">
+                <input
+                  ref={nameInputRef}
+                  value={nameInput}
+                  onChange={e => setNameInput(e.target.value.slice(0, 32))}
+                  onKeyDown={e => { if (e.key === "Enter") void handleSaveName(); if (e.key === "Escape") setEditingName(false); }}
+                  className="font-baloo font-black text-2xl placeholder-[#7791b3] border-b-2 focus:outline-none rounded px-1 min-w-0 flex-1"
+                  style={{ color: "#0e368b", borderColor: "#ffc400", background: "transparent" }}
+                  placeholder={parentName}
+                  autoComplete="off"
+                />
+                <button
+                  onClick={() => void handleSaveName()}
+                  disabled={savingName}
+                  className="shrink-0 px-3 py-1 rounded-full text-xs font-black transition disabled:opacity-50"
+                  style={{ background: "#ffd331", color: "#082b78" }}
+                >
+                  {savingName ? "…" : "Save"}
+                </button>
+                <button onClick={() => setEditingName(false)} className="shrink-0 text-xs text-[#123a87]">✕</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setNameInput(parentName); setEditingName(true); setTimeout(() => nameInputRef.current?.focus(), 60); }}
+                aria-label={`Edit name: ${parentName}`}
+                className="group flex items-center gap-2 mb-1 self-start"
+              >
+                <h1 className="font-baloo font-black leading-tight drop-shadow-[0_2px_0_rgba(255,255,255,.95)] truncate"
+                  style={{ fontSize: "clamp(1.8rem,5vw,2.6rem)", color: "#0e368b" }}>
+                  {parentName}
+                </h1>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0e368b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover:opacity-50 transition-opacity shrink-0">
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            )}
+            <p className="font-baloo font-bold text-[14px] text-[#123a87] drop-shadow-[0_1px_0_rgba(255,255,255,.85)] leading-snug">
+              {getWeeklyInsight(childrenData.find(d => d.child.id === selectedChild) ?? childrenData[0], (todayActivity.length > 0))}
+            </p>
+            <div className="mt-2 h-[3px] w-44 -rotate-[3deg] rounded-full bg-[#ffc400]" />
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <span className="text-[#123a87] text-xs font-bold drop-shadow-[0_1px_0_rgba(255,255,255,.8)]">
+                {childrenData.length} {childrenData.length === 1 ? "learner" : "learners"} · Family Hub
+              </span>
+              {hasSubscription && !isTrial ? (
+                <Link href="/pricing">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-3xs font-black" style={{ background: "rgba(255,255,255,0.85)", border:"1.5px solid #edc953", color:"#7a5800" }}>
+                    👑 CLUB
+                  </span>
+                </Link>
+              ) : isTrial ? (
+                <Link href="/pricing">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-3xs font-black bg-amber-400/90 text-amber-900">
+                    ⏳ {trialDaysLeft}d LEFT
+                  </span>
+                </Link>
+              ) : (
+                <Link href="/pricing">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-3xs font-black" style={{ background:"#ffd331", color:"#082b78" }}>
+                    🚀 UPGRADE
+                  </span>
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Parent avatar — sole focal point on the right; Nimi is in the background photo */}
+          <div className="absolute right-4 sm:right-8 bottom-6 z-10">
+            <div className="relative">
               <motion.div
-                className="absolute inset-0 rounded-full bg-[var(--ds-surface-card)]/30"
-                animate={m.reduced ? { scale: 1, opacity: 0.3 } : { scale: [1, 1.14, 1], opacity: [0.3, 0.6, 0.3] }}
+                className="absolute inset-0 rounded-full"
+                style={{ background: "#ffd331", opacity: 0.4, borderRadius: "50%" }}
+                animate={m.reduced ? {} : { scale: [1, 1.18, 1], opacity: [0.3, 0.55, 0.3] }}
                 transition={m.reduced ? {} : { duration: 3, repeat: Infinity }}
               />
-
-              {/* Avatar button */}
               <motion.button
                 onClick={() => setEditParentOpen(true)}
-                className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/50 shadow-2xl overflow-hidden flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95"
-                style={{ backgroundColor: parentAvatarUrl ? undefined : parentColor }}
+                className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full shadow-2xl overflow-hidden flex items-center justify-center cursor-pointer hover:scale-105 transition-transform active:scale-95"
+                style={{ backgroundColor: parentAvatarUrl ? undefined : parentColor, border: "4px solid #ffd331" }}
                 whileTap={{ scale: 0.93 }}
                 aria-label="Edit your profile"
               >
                 {parentAvatarUrl ? (
-                  <ChildAvatar avatarUrl={parentAvatarUrl} name={parentName} size={80} className="translate-y-[4px]" />
+                  <ChildAvatar avatarUrl={parentAvatarUrl} name={parentName} size={112} className="translate-y-[4px]" />
                 ) : (
-                  <span className="font-baloo font-black text-white text-3.5xl sm:text-4xl select-none">
-                    {parentInitial}
-                  </span>
+                  <span className="font-baloo font-black text-white text-4xl select-none">{parentInitial}</span>
                 )}
               </motion.button>
-
-              {/* Edit pencil badge — decorative, parent avatar button handles the click */}
-              <motion.div
+              <div
                 aria-hidden="true"
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--ds-surface-card)] flex items-center justify-center shadow-lg border-2 border-white pointer-events-none"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg pointer-events-none"
+                style={{ border: "2px solid #edc953" }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={parentColor} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-              </motion.div>
+              </div>
             </div>
-
-            {/* Name + subtitle */}
-            <div className="flex-1 min-w-0">
-              <p className="text-white/60 text-3xs font-nunito font-bold uppercase tracking-[0.14em] mb-0.5">
-                {getTimeGreeting()} 👋
-              </p>
-              {editingName ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={nameInputRef}
-                    value={nameInput}
-                    onChange={e => setNameInput(e.target.value.slice(0, 32))}
-                    onKeyDown={e => { if (e.key === "Enter") void handleSaveName(); if (e.key === "Escape") setEditingName(false); }}
-                    className="font-baloo font-black text-1.5xl bg-[var(--ds-surface-card)]/20 text-white placeholder-white/50 border-b-2 border-white/60 focus:outline-none focus:border-white rounded px-1 min-w-0 flex-1"
-                    placeholder={parentName}
-                    autoComplete="off"
-                  />
-                  <button
-                    onClick={() => void handleSaveName()}
-                    disabled={savingName}
-                    className="shrink-0 px-3 py-1 rounded-full bg-[var(--ds-surface-card)]/25 text-white text-xs font-black hover:bg-[var(--ds-surface-card)]/35 transition disabled:opacity-50"
-                  >
-                    {savingName ? "…" : "Save"}
-                  </button>
-                  <button onClick={() => setEditingName(false)} className="shrink-0 text-white/60 hover:text-white text-xs">✕</button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => { setNameInput(parentName); setEditingName(true); setTimeout(() => nameInputRef.current?.focus(), 60); }}
-                  aria-label={`Edit name: ${parentName}`}
-                  className="group flex items-center gap-2"
-                >
-                  <p className="font-baloo font-black text-white text-2xl sm:text-3.5xl leading-tight truncate">
-                    {parentName}
-                  </p>
-                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover:opacity-70 transition-opacity shrink-0">
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-              )}
-              <p className="text-white/75 text-xs font-nunito mt-1 leading-snug">
-                {getWeeklyInsight(childrenData.find(d => d.child.id === selectedChild) ?? childrenData[0], (todayActivity.length > 0))}
-              </p>
-              <p className="text-white/45 text-3xs font-nunito mt-1">
-                {childrenData.length} {childrenData.length === 1 ? "learner" : "learners"} · Family Hub
-              </p>
-            </div>
-
-            {/* Sub status pill */}
-            {hasSubscription && !isTrial ? (
-              <Link href="/pricing" className="shrink-0">
-                <div className="bg-[var(--ds-surface-card)]/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center gap-1.5">
-                  <span aria-hidden="true" className="text-sm">👑</span>
-                  <span className="text-white text-3xs font-black">CLUB</span>
-                </div>
-              </Link>
-            ) : isTrial ? (
-              <Link href="/pricing" className="shrink-0">
-                <div className="bg-amber-400/90 border border-amber-300/60 rounded-full px-3 py-1.5 flex items-center gap-1.5 hover:bg-amber-400 transition">
-                  <span aria-hidden="true" className="text-sm">⏳</span>
-                  <span className="text-amber-900 text-3xs font-black">{trialDaysLeft}d LEFT</span>
-                </div>
-              </Link>
-            ) : (
-              <Link href="/pricing" className="shrink-0">
-                <div className="bg-[var(--ds-surface-card)]/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center gap-1.5 hover:bg-[var(--ds-surface-card)]/30 transition">
-                  <span aria-hidden="true" className="text-sm">🚀</span>
-                  <span className="text-white text-3xs font-black">UPGRADE</span>
-                </div>
-              </Link>
-            )}
           </div>
-        </HeroBanner>
+        </section>
 
         {/* ═══ Switched toast ═══ */}
         <AnimatePresence>

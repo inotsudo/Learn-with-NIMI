@@ -358,8 +358,8 @@ const airwaysVariant: ComponentVariant = {
     height: "h-2",
   },
   backgroundStyle: {
-    page:         "bg-[var(--ds-surface-card)]",
-    subtle:       "bg-[var(--ds-surface-card)]",
+    page:         "bg-[#f8f2e7]",
+    subtle:       "bg-[#f8f2e7]",
     accent:       "bg-[var(--ds-brand-subtle)]",
     accentBorder: "border border-[var(--ds-border-brand)]",
   },
