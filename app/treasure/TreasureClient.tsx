@@ -433,25 +433,25 @@ export default function TreasureClient({ initialChildren }: Props = {}) {
             >
 
               {/* ── HERO ─────────────────────────────────── */}
-              <section className="relative overflow-hidden -mx-4 sm:-mx-5 -mt-4 sm:-mt-6 mb-6 bg-[#0b2f6e]" style={{ minHeight: 240 }}>
-                <img src="/airport-hero.png" alt="" aria-hidden
-                  className="absolute inset-0 h-full w-full object-cover object-center select-none pointer-events-none" />
+              <section className="relative overflow-hidden -mx-4 sm:-mx-5 -mt-4 sm:-mt-6 mb-6"
+                style={{ minHeight: 240, background: "linear-gradient(138deg,#f0f4ff 0%,#dde8ff 35%,#b0c8ff 60%,#2a4fc4 82%,#0e2a8a 100%)" }}>
+                {/* Deep achievement-blue gradient — unique to challenge arena, no shared photo */}
                 <div className="absolute inset-0 pointer-events-none"
-                  style={{ background: "linear-gradient(100deg,rgba(255,255,255,.93) 0%,rgba(255,255,255,.72) 48%,rgba(255,255,255,.15) 68%,transparent 82%)" }} />
-                <div className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
+                  style={{ background: "radial-gradient(ellipse at 15% 80%, rgba(255,255,255,.55) 0%, transparent 50%)" }} />
+                <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none"
                   style={{ background: "linear-gradient(to top, #f8f2e7, transparent)" }} />
 
                 {/* Left content */}
-                <div className="relative z-10 flex min-h-[240px] flex-col justify-end px-5 pb-10 pt-8 sm:px-10">
+                <div className="relative z-10 flex min-h-[240px] flex-col justify-end px-5 pb-10 pt-8 sm:px-10" style={{ maxWidth: "62%" }}>
                   <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 font-baloo text-[11px] font-black -rotate-1 mb-2 self-start"
                     style={{ background:"#ffd331", color:"#092d78" }}>
                     {t("treasureChallengeArena")} ⚡
                   </span>
-                  <h1 className="font-baloo font-black text-[#0e368b] leading-tight drop-shadow-[0_2px_0_rgba(255,255,255,.95)]"
-                    style={{ fontSize: "clamp(1.8rem,5vw,2.6rem)" }}>
+                  <h1 className="font-baloo font-black text-[#0e368b] leading-tight"
+                    style={{ fontSize: "clamp(1.7rem,4.5vw,2.5rem)" }}>
                     {childName}&apos;s Challenges! 🏆
                   </h1>
-                  <p className="mt-1 font-baloo font-bold text-[15px] text-[#123a87] drop-shadow-[0_1px_0_rgba(255,255,255,.85)]">
+                  <p className="mt-1 font-baloo font-bold text-[14px] text-[#123a87]">
                     Earn stars · Complete missions · Climb the ranks
                   </p>
                   <div className="mt-2 h-[3px] w-44 -rotate-[3deg] rounded-full bg-[#ffc400]" />

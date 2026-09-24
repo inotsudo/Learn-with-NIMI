@@ -1101,8 +1101,8 @@ export default function CommunityClient({ initialUserId, initialHasSubscription 
             </p>
             <div className="mt-2 h-[3px] w-40 -rotate-[3deg] rounded-full bg-[#ffc400]" />
             {friends.length > 0 && (
-              <div className="mt-3 flex items-center gap-2.5">
-                <div className="flex -space-x-2">
+              <div className="mt-3 flex items-center gap-2 flex-wrap min-w-0">
+                <div className="flex -space-x-2 shrink-0">
                   {friends.slice(0, 5).map((f, i) => {
                     const FRIEND_GRADS = [
                       "from-violet-400 to-purple-500","from-pink-400 to-rose-500",

@@ -93,18 +93,20 @@ export default function ProgressHeader({
           <div className="mt-2 h-[3px] w-44 -rotate-[3deg] rounded-full bg-[#ffc400]" />
           <div className="mt-3 flex flex-wrap gap-2">
             {!isMaxLevel && starsToNext > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-sm font-baloo text-[13px] font-bold text-[#123a87] drop-shadow-[0_1px_0_rgba(255,255,255,.85)]">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-sm font-baloo text-[13px] font-bold"
+                style={{ background:"rgba(255,255,255,0.88)", border:"1.5px solid #f5d142", color:"#7a5800" }}>
                 ⭐ {starsToNext} stars to next level
               </span>
             )}
             {isMaxLevel && (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-sm"
-                style={{ background:"rgba(255,255,255,0.88)", border:"1.5px solid #f5d142" }}>
-                <span className="font-baloo font-bold text-[13px] text-[#7a5800]">Max level reached 🎉</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-sm font-baloo font-bold text-[13px]"
+                style={{ background:"rgba(255,255,255,0.88)", border:"1.5px solid #f5d142", color:"#7a5800" }}>
+                Max level reached 🎉
               </span>
             )}
             {lastActiveDaysAgo !== null && lastActiveDaysAgo !== undefined && (
-              <span className="inline-flex items-center gap-1.5 font-baloo font-bold text-[13px] text-[#123a87] drop-shadow-[0_1px_0_rgba(255,255,255,.85)]">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-sm font-baloo font-bold text-[13px]"
+                style={{ background:"rgba(255,255,255,0.88)", border:"1.5px solid #c8d9ef", color:"#123a87" }}>
                 <span className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: lastActiveDaysAgo === 0 ? "#4ade80" : lastActiveDaysAgo <= 2 ? "#fbbf24" : "#f87171" }} />
                 {lastActiveLabel(lastActiveDaysAgo)}
