@@ -1,0 +1,58 @@
+/* NIMIPIKO Universe — base styles (Phase 1 Foundation).
+   Decorative only: layout containment + a11y helpers. Motion itself lives in
+   lib/design-system/motion.ts and is silenced for reduced-motion via hooks. */
+
+.universe-scene {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 320px;
+}
+
+/* Layers stack above the sky without intercepting taps unless interactive. */
+.universe-layer {
+  position: relative;
+  width: 100%;
+}
+
+/* Minimum 44px interactive target (WCAG 2.5.5 / Apple HIG). */
+.universe-touch {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Destination-beacon pulse — one shared loop for .universe-loop elements.
+   Silenced below under prefers-reduced-motion. */
+.universe-loop {
+  transform-origin: center;
+  animation: universe-beacon-pulse 3.6s ease-in-out infinite;
+}
+@keyframes universe-beacon-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.94); }
+  50%      { opacity: 1;    transform: scale(1.06); }
+}
+
+/* Destination-beacon pulse — a slow magical breathe for the far castle glow.
+   transform-box keeps SVG scaling centered on the element. */
+.universe-scene .universe-loop {
+  animation: universe-beacon 5s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes universe-beacon {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50%      { opacity: 1;   transform: scale(1.14); }
+}
+
+/* Belt-and-braces: kill CSS-driven universe motion when reduced is requested.
+   (Framer loops are already silenced via useMotion().) */
+@media (prefers-reduced-motion: reduce) {
+  .universe-atmosphere *,
+  .universe-scene .universe-loop {
+    animation: none !important;
+    transition: none !important;
+  }
+}
