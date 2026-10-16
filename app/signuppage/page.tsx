@@ -4,9 +4,12 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, MotionConfig, AnimatePresence } from "framer-motion";
-import { User, Mail, Lock, Eye, EyeOff, Plane, Gift, ChevronDown, Star } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Plane, Gift, ChevronDown, Smartphone, Star } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import { PENDING_REF_KEY, REFERRAL_CODE_LENGTH } from "@/lib/referralConstants";
+import { appUrl } from "@/lib/auth/config";
+import GoogleIcon from "@/components/auth/GoogleIcon";
+import { AirwaysCTA } from "@/components/auth/AirwaysAuthUI";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
@@ -48,6 +51,14 @@ function SignupInner() {
   const [showConfirm,     setShowConfirm]    = useState(false);
   const [agreed,          setAgreed]         = useState(true);
   const [loading,         setLoading]        = useState(false);
+  const [info,            setInfo]           = useState("");
+  const [method,          setMethod]         = useState<"password" | "magiclink" | "phone" | "google">("password");
+  const [magicEmail,      setMagicEmail]     = useState("");
+  const [phone,           setPhone]          = useState("");
+  const [otp,             setOtp]            = useState("");
+  const [otpSent,         setOtpSent]        = useState(false);
+  const [magicLoading,    setMagicLoading]   = useState(false);
+  const [phoneLoading,    setPhoneLoading]   = useState(false);
   const [error,           setError]          = useState("");
 
   const [referralCode, setReferralCode] = useState<string | null>(null);
@@ -143,6 +154,47 @@ function SignupInner() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const signUpGoogle = async () => {
+    if (loading) return;
+    setLoading(true);
+    setError("");
+    const { error: e } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${appUrl()}/auth/callback?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/onboarding")}` },
+    });
+    if (e) {
+      setError(`${e.message}. Enable Google in Supabase → Auth → Providers.`);
+      setLoading(false);
+    }
+  };
+
+  const sendMagicLink = async () => {
+    if (loading || magicLoading) return;
+    const em = magicEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { setError("Enter a valid email address first."); return; }
+    setMagicLoading(true);
+    setError("");
+    const { error: e } = await supabase.auth.signInWithOtp({
+      email: em,
+      options: { emailRedirectTo: `${appUrl()}/auth/callback?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/onboarding")}` },
+    });
+    setMagicLoading(false);
+    if (e) setError(`${e.message} (Enable email confirmations in Supabase to use magic links.)`);
+    else setInfo("Magic boarding link sent! Check your email.");
+  };
+
+  const sendPhoneOtp = async () => {
+    if (loading || phoneLoading) return;
+    const ph = phone.trim().replace(/[\s-]/g, "");
+    if (!/^\+[1-9]\d{7,14}$/.test(ph)) { setError("Enter phone as +2507XXXXXXXX."); return; }
+    setPhoneLoading(true);
+    setError("");
+    const { error: e } = await supabase.auth.signInWithOtp({ phone: ph });
+    setPhoneLoading(false);
+    if (e) setError(`${e.message} (Enable phone auth in Supabase to use SMS.)`);
+    else { setOtpSent(true); setInfo(`Code sent to ${ph}.`); }
   };
 
   const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -280,7 +332,69 @@ function SignupInner() {
                       {error}
                     </motion.div>
                   )}
-                </AnimatePresence>
+                 </AnimatePresence>
+
+                 {/* Method selector */}
+                 <div className="flex flex-wrap items-center gap-1.5">
+                   {(["password","magiclink","phone","google"] as const).map(m => (
+                     <button
+                       key={m}
+                       onClick={() => setMethod(m)}
+                       className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-40 ${method === m
+                         ? "bg-[var(--ds-brand-primary)] text-white shadow-sm"
+                         : "bg-white border border-[var(--ds-border-strong)] text-[var(--ds-text-secondary)] hover:border-[var(--ds-text-brand)]"}`}
+                       disabled={loading}
+                     >
+                       {m === "password" ? "✈ Password" : m === "magiclink" ? "✨ Magic link" : m === "phone" ? "📱 Phone" : "🟡 Google"}
+                     </button>
+                   ))}
+                 </div>
+
+                 {/* Non-email signup methods */}
+                 {method !== "password" && (
+                   <div className="mt-3 rounded-2xl border border-[var(--ds-border-strong)] bg-white p-3 space-y-2.5">
+                     {method === "magiclink" ? (
+                       <>
+                         <label className="block font-black text-[9px] uppercase tracking-[0.22em] mb-1.5 text-[var(--ds-text-brand)]">Email</label>
+                         <div className="relative">
+                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ds-text-tertiary)]" />
+                           <input type="email" value={magicEmail} onChange={e => setMagicEmail(e.target.value)}
+                             placeholder={t("signupPlaceholderEmail")} onKeyDown={e => e.key === "Enter" && sendMagicLink()}
+                             className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold text-[var(--ds-text-primary)] bg-[var(--ds-surface-card)] border-2 border-[var(--ds-border-primary)] rounded-xl focus:outline-none transition placeholder:text-[var(--ds-text-tertiary)]" />
+                         </div>
+                         <AirwaysCTA onClick={sendMagicLink} loading={magicLoading}>
+                           <>✈ Send magic link</>
+                         </AirwaysCTA>
+                       </>
+                     ) : method === "phone" ? (
+                       <>
+                         <label className="block font-black text-[9px] uppercase tracking-[0.22em] mb-1.5 text-[var(--ds-text-brand)]">Phone (+250)</label>
+                         <div className="relative">
+                           <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ds-text-tertiary)]" />
+                           <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                             placeholder="+2507XXXXXXXX" onKeyDown={e => e.key === "Enter" && sendPhoneOtp()}
+                             className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold text-[var(--ds-text-primary)] bg-[var(--ds-surface-card)] border-2 border-[var(--ds-border-primary)] rounded-xl focus:outline-none transition placeholder:text-[var(--ds-text-tertiary)]" />
+                         </div>
+                         <AirwaysCTA onClick={sendPhoneOtp} loading={phoneLoading}>
+                           <>📱 Send SMS code</>
+                         </AirwaysCTA>
+                       </>
+                     ) : method === "google" ? (
+                       <button type="button" onClick={signUpGoogle}
+                         className="w-full flex items-center justify-center gap-2.5 rounded-2xl border border-[var(--ds-border-strong)] bg-white py-2.5 font-nunito text-xs font-bold text-[var(--ds-text-secondary)] transition hover:border-[var(--ds-text-brand)]">
+                         <GoogleIcon />
+                         Sign up with Google
+                       </button>
+                     ) : null}
+                     {!otpSent && (
+                       <button type="button" onClick={() => setMethod("password")}
+                         className="w-full text-center font-nunito text-[11px] font-bold text-[var(--ds-text-secondary)] hover:text-[var(--ds-text-primary)] transition">
+                         ← Back to email + password
+                       </button>
+                     )}
+                   </div>
+                 )}
+
 
                 {/* Trial badge */}
                 <div className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 bg-[var(--ds-brand-soft)]"
@@ -307,7 +421,7 @@ function SignupInner() {
                     <span className="text-xl shrink-0">⚠️</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-baloo font-black text-red-700 text-[13px]">Invalid invite link.</p>
-                      <p className="font-nunito text-red-500/80 text-[11px]">Enter your code below.</p>
+                      <p className="font-nunito text-red-500/80 text-[11px]">Enter your code below.</p>e
                     </div>
                     <button onClick={() => { setLinkInvalid(false); setCodeOpen(true); }}
                       className="text-[11px] text-red-500 hover:text-red-700 font-bold shrink-0">Enter code</button>

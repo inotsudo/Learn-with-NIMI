@@ -128,6 +128,74 @@ export interface ThemeAssets {
     sing:    string;
     grow:    string;
   };
+  // ── Universe foundation (Phase 1, optional) ───────────────────────────────
+  // Layered 2D world slots. Absent until artist packs land — components must
+  // treat every field as potentially null and render documented fallbacks
+  // (gradients + existing mascots) so the UI never breaks.
+  universe?: UniverseAssets;
+}
+
+// ── Universe foundation asset namespace ────────────────────────────────────
+// Every raster slot is `string | null`: a path under /public/ when approved
+// art exists, `null` while pending. No fake production assets are invented;
+// `null` renders the token-gradient fallback defined in lib/design-system/universe.ts.
+
+export interface UniverseAssets {
+  backgrounds: {
+    /** Full-bleed sky art. Fallback: UNIVERSE_SKY gradient. */
+    sky: string | null;
+    /** Ground art. Fallback: UNIVERSE_GROUND gradient. */
+    ground: string | null;
+    /** Horizon blend art. Fallback: horizon glow wash. */
+    horizon: string | null;
+  };
+  environment: {
+    /** Distant silhouette (mountains / castle / reef). */
+    distant: string | null;
+    /** Middle-ground set piece. */
+    middle: string | null;
+    /** Foreground framing element. */
+    foreground: string | null;
+  };
+  objects: {
+    /** Giant-book closed art. Fallback: story cover via giant_book_url. */
+    bookClosed: string | null;
+    /** Giant-book open art (pending until Phase 3+). */
+    bookOpen: string | null;
+    /** Journey path art. Fallback: UniversePath SVG dots. */
+    path: string | null;
+  };
+  decorations: {
+    cloud: string | null;
+    star: string | null;
+    sparkle: string | null;
+  };
+  portals: {
+    /** Journey portal ring. Fallback: destination-glow CSS ring. */
+    gate: string | null;
+    /** Destination beacon art. Fallback: destination-glow CSS halo. */
+    beacon: string | null;
+  };
+  book: {
+    /** Book glow texture. Fallback: UNIVERSE_GLOW.book. */
+    glow: string | null;
+    /** Page texture for book-open state. */
+    page: string | null;
+  };
+  characters: {
+    /** Nimi uses live assets (never null — falls back to registry nimiHappy). */
+    nimi: string | null;
+    /** Piko slot — null until approved poses land (falls back to pikoCircle). */
+    piko: string | null;
+    /** Zilo slot — null until approved art lands (falls back to initial disc). */
+    zilo: string | null;
+  };
+  rewards: {
+    /** Champion crown / trophy art. Fallback: registry trophy. */
+    champion: string | null;
+    /** Reward burst texture. Fallback: RewardBurst component. */
+    burst: string | null;
+  };
 }
 
 const assetRegistry: Record<string, ThemeAssets> = {

@@ -59,10 +59,10 @@
   --airways-warning:      #F59E0B;
 
   /* Sidebar width */
-  /* The navigation rail intentionally has the same generous width as the
-     illustrated Airways dashboard reference.  It prevents the avatar and
-     learner copy from collapsing into a cramped icon rail on desktop. */
-  --airways-sidebar-w: 270px;
+  /* Matches the ~224px navigation rail of the approved Airways dashboard
+     reference (Phase 2.14B browser evidence). Inner content is fluid with
+     truncation, so the rail stays readable at the reference width. */
+  --airways-sidebar-w: 224px;
 }
 
 html {

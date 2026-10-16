@@ -43,6 +43,9 @@
     "node_modules",
     "e2e",
     "playwright.config.ts",
-    "__tests__"
+    "__tests__",
+    "tmp-qa",
+    "tmp-nimi-preview",
+    "backups"
   ]
 }

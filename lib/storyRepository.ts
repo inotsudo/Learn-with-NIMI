@@ -16,7 +16,13 @@ import type {
   StoryRecommendation,
 } from "./story-types";
 
-export function getStoryLibrary(
+/**
+ * Strict variant: REJECTS when the underlying RPC fails, so callers that must
+ * distinguish "fetch failed" from "the library is truly empty" can do so.
+ * Failures are never cached by qcached (the inner fn throws, so nothing is
+ * stored), meaning the next call retries fresh.
+ */
+export function getStoryLibraryStrict(
   childId: string,
   language: string
 ): Promise<StoryLibraryItem[]> {
@@ -32,8 +38,8 @@ export function getStoryLibrary(
       supabase.from("stories").select("id, category").limit(300),
     ]);
     if (error) {
-      console.error("[getStoryLibrary]", error);
-      return [];
+      throw error; // failures must not enter the TTL cache (a cached [] would
+                   // blank every consumer's story list for 5 minutes)
     }
     // L5: log category query errors but continue — stories are returned with
     // null categories rather than silently swallowing the error.
@@ -47,6 +53,20 @@ export function getStoryLibrary(
     }
     return items;
   }, TTL_LONG);
+}
+
+/**
+ * Lenient wrapper (historical contract): resolves to [] on failure. The error
+ * is logged but NOT cached — only genuine (successful) results enter qcached.
+ */
+export function getStoryLibrary(
+  childId: string,
+  language: string
+): Promise<StoryLibraryItem[]> {
+  return getStoryLibraryStrict(childId, language).catch((err: unknown) => {
+    console.error("[getStoryLibrary]", err);
+    return [] as StoryLibraryItem[];
+  });
 }
 
 export function getCurrentStoryId(

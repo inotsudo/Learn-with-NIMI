@@ -1,24 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 
 const STORAGE_KEY = "nimipiko_cookie_consent";
+const CHANGE_EVENT = "nimipiko_cookie_consent_change";
+
+// Consent lives in localStorage. useSyncExternalStore lets the server render the
+// consented/hidden state while the client reads the real stored value on
+// hydration — no hydration-mismatch error, no post-mount flash. Same key and
+// persistence as before; safe in private-browsing (throws → treated as consented).
+function subscribe(onStoreChange: () => void) {
+  const handler = () => onStoreChange();
+  window.addEventListener("storage", handler);
+  window.addEventListener(CHANGE_EVENT, handler);
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener(CHANGE_EVENT, handler);
+  };
+}
+function getSnapshot() {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return "1"; // private browsing → treat as consented (hide banner)
+  }
+}
+function getServerSnapshot() {
+  return "1"; // server always renders hidden; client reveals after hydration
+}
 
 export default function CookieConsentBanner() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
-    } catch {
-      // Private-browsing environments may throw — silently skip
-    }
-  }, []);
+  const consent = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const visible = consent !== "1";
 
   function accept() {
     try { localStorage.setItem(STORAGE_KEY, "1"); } catch { /* ignore */ }
-    setVisible(false);
+    // Notify this tab (and any external-store subscribers) to re-read the value.
+    window.dispatchEvent(new Event(CHANGE_EVENT));
   }
 
   if (!visible) return null;
@@ -27,15 +46,15 @@ export default function CookieConsentBanner() {
     <div
       role="dialog"
       aria-label="Cookie notice"
-      className="fixed bottom-0 left-0 right-0 z-max p-3 sm:p-4"
+      className="fixed inset-x-0 bottom-0 z-max px-3 pb-[calc(env(safe-area-inset-bottom,0px)+104px)] lg:inset-x-auto lg:right-0 lg:bottom-0 lg:px-4 lg:pb-4"
       style={{ pointerEvents: "none" }}
     >
       <div
-        className="max-w-2xl mx-auto bg-gray-900 text-white rounded-2xl shadow-2xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3"
+        className="mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-gray-900 px-4 py-3 text-white shadow-2xl lg:mx-0 lg:ml-auto lg:px-5 lg:py-4"
         style={{ pointerEvents: "auto" }}
       >
-        <span className="text-2xl shrink-0" aria-hidden>🍪</span>
-        <p className="font-nunito text-sml text-gray-200 flex-1 leading-relaxed">
+        <span className="shrink-0 text-xl" aria-hidden>🍪</span>
+        <p className="min-w-0 flex-1 font-nunito text-[13px] leading-snug text-gray-200">
           We use essential cookies to keep NIMIPIKO running smoothly and remember your preferences.
           No ads, no tracking.{" "}
           <Link href="/privacy" className="text-[var(--ds-text-brand)] underline hover:text-[var(--ds-text-primary)] transition-colors">
@@ -44,7 +63,7 @@ export default function CookieConsentBanner() {
         </p>
         <button
           onClick={accept}
-          className="shrink-0 bg-[var(--nimi-green,#15803D)] hover:bg-[var(--ds-brand-primary,#15803d)] active:bg-[var(--ds-brand-hover,#166534)] text-[var(--ds-nav-bg,#fff)] font-baloo font-bold text-sml px-5 py-2 rounded-xl transition-colors whitespace-nowrap"
+          className="shrink-0 rounded-xl bg-[var(--nimi-green,#15803D)] px-4 py-2.5 font-baloo text-[13px] font-bold text-[var(--ds-nav-bg,#fff)] transition-colors hover:bg-[var(--ds-brand-primary,#15803d)] active:bg-[var(--ds-brand-hover,#166534)]"
         >
           Got it
         </button>

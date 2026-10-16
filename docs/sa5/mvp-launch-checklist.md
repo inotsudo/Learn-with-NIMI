@@ -92,7 +92,7 @@ Every item must be marked PASS, FAIL, or N/A before launch. Any FAIL in a Critic
 | 6/6 triggers story_complete | ☐ | |
 | Certificate generated automatically | ☐ | |
 | Badge awarded automatically | ☐ | |
-| Next story unlocks automatically | ☐ | |
+| Next story accessible (free stories need no prior completion; completion advances "current" + rewards) | ☐ | |
 | Stars awarded correctly | ☐ | |
 
 ---
@@ -263,8 +263,8 @@ Every item must be marked PASS, FAIL, or N/A before launch. Any FAIL in a Critic
 | 13 | Complete missions 2-6 | ☐ |
 | 14 | 6/6 → certificate awarded | ☐ |
 | 15 | Story complete celebration | ☐ |
-| 16 | Next story unlocks | ☐ |
-| 17 | Homepage updates to show new story | ☐ |
+| 16 | Next story already accessible (free need no prior completion; completion advances "current" + rewards) | ☐ |
+| 17 | Homepage updates to show new current story | ☐ |
 | 18 | Treasure page shows earned badges | ☐ |
 | 19 | Parent dashboard shows progress | ☐ |
 

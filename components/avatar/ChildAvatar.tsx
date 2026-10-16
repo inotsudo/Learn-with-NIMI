@@ -39,6 +39,24 @@ export default function ChildAvatar({ avatarUrl, name, size = 40, className = ""
   }
 
   if (avatarUrl) {
+    // Defensive: legacy/test rows sometimes store a raw JSON blob (no "ava:"
+    // prefix and no URL). Never render that as giant body text — fall back to
+    // the child's initial instead. Data itself is untouched (frontend only).
+    const trimmed = avatarUrl.trim();
+    if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+      return (
+        <span
+          className={`flex items-center justify-center rounded-full font-baloo font-black ${className}`}
+          style={{
+            width: size, height: size, fontSize: size * 0.45, lineHeight: 1,
+            background: "linear-gradient(135deg,#173b66,#285595)", color: "#F9D779",
+          }}
+          aria-label={name ?? "avatar"}
+        >
+          {(name?.charAt(0) ?? fallbackEmoji).toUpperCase()}
+        </span>
+      );
+    }
     return <span className={className} style={{ fontSize: size * 0.6, lineHeight: 1 }}>{avatarUrl}</span>;
   }
 

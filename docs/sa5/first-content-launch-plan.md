@@ -310,7 +310,7 @@ All certificates generated automatically by `complete_story_slot` RPC. No manual
 
 **Staggered (1 story per week):** Children who finish Story 1 in Week 1 hit a wall — nothing to do until Week 2. Frustrating for engaged families.
 
-**All 4 at once:** Children always have the next story available. The unlock progression (complete Story 1 → Story 2 unlocks) naturally gates content. No artificial waiting.
+**All 4 at once:** Children always have the next story available. Free, published stories are independently accessible (no completion-order gate — see migration 198); premium stories are gated on an entitled subscription. No artificial waiting.
 
 **Recommendation: Launch all 4 stories simultaneously** with a soft launch to 20 pilot families for Week 0 testing.
 

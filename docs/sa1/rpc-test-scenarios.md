@@ -13,9 +13,9 @@
 
 | Step | RPC Call | Expected Result |
 |------|---------|-----------------|
-| 1 | `get_story_library_progress(child_id, 'en')` | Returns all published stories. Story 1: `unlocked=true, complete=false, progress=0`. Story 2+: `unlocked=false`. |
-| 2 | `get_current_story(child_id, 'en')` | Returns Story 1's UUID. |
-| 3 | `get_unlocked_stories(child_id, 'en')` | Returns only Story 1's UUID. |
+| 1 | `get_story_library_progress(child_id, 'en')` | Returns all published stories. Every free, published story: `unlocked=true, complete=false, progress=0` (no sequential gate — see migration 198). Premium stories: `unlocked=false` unless the parent holds an entitled subscription. |
+| 2 | `get_current_story(child_id, 'en')` | Returns Story 1's UUID (lowest sort_order; current = first not-complete). |
+| 3 | `get_unlocked_stories(child_id, 'en')` | Returns all free published stories (+ premium if subscribed). Sequential completion is NOT required. |
 | 4 | `get_story_recommendations(child_id, 'en')` | Returns all stories with `age_match` based on child's age. |
 
 ## Scenario 2: Story Detail — Slots + Intro
@@ -50,9 +50,9 @@
 | Step | RPC Call | Expected Result |
 |------|---------|-----------------|
 | 1 | `get_story_certificate(child_id, story_1_id, 'en')` | Returns certificate slug + earned_at timestamp. |
-| 2 | `get_unlocked_stories(child_id, 'en')` | Now returns Story 1 AND Story 2. |
-| 3 | `get_current_story(child_id, 'en')` | Returns Story 2's UUID. |
-| 4 | `get_story_library_progress(child_id, 'en')` | Story 1: `complete=true, progress=1.00`. Story 2: `unlocked=true, progress=0`. |
+| 2 | `get_unlocked_stories(child_id, 'en')` | Still returns all free published stories (they were already unlocked from the start; completing Story 1 does not change their unlocked state). |
+| 3 | `get_current_story(child_id, 'en')` | Advances to Story 2 (first not-complete story). |
+| 4 | `get_story_library_progress(child_id, 'en')` | Story 1: `complete=true, progress=1.00`. Story 2: `unlocked=true, progress=0` (was already unlocked). |
 
 ## Scenario 6: Replay — Idempotency
 
@@ -102,5 +102,5 @@
 |------|-------|-----------------|
 | 1 | Retire Story 2 (set `status='retired'`) | Story 2 disappears from library. |
 | 2 | `get_story_library_progress(child_id, 'en')` | Story 2 not in results. |
-| 3 | Complete Story 1. | Story 3 unlocks (skips retired Story 2). |
-| 4 | `get_current_story(child_id, 'en')` | Returns Story 3. |
+| 3 | Complete Story 1. | Story 3 remains accessible (it was already unlocked — free stories never required sequential completion; retired Story 2 is simply skipped in the trail). |
+| 4 | `get_current_story(child_id, 'en')` | Returns Story 3 (first not-complete published story). |

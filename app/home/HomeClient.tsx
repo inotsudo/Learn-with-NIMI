@@ -19,7 +19,7 @@ import {
 import { resolveShields } from "@/lib/streakShields";
 import { computeStreaks } from "@/lib/parentInsights";
 import type { Child, ChildAchievement } from "@/lib/queries";
-import { getStoryLibrary, getStorySlots, getStoryDetails, getPopularStories, type PopularStory } from "@/lib/storyRepository";
+import { getStoryLibraryStrict, getStorySlots, getStoryDetails, getPopularStories, type PopularStory } from "@/lib/storyRepository";
 import { getActiveSubscription } from "@/lib/payments/products";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
@@ -33,8 +33,9 @@ import HomeQuickActions           from "@/components/home/HomeQuickActions";
 import HomeContinueAdventureCard  from "@/components/home/HomeContinueAdventureCard";
 import HomePassportCard           from "@/components/home/HomePassportCard";
 import HomeTodayStarsCard         from "@/components/home/HomeTodayStarsCard";
-import HomeJourneyMapPanel        from "@/components/home/HomeJourneyMapPanel";
 import HomeAirwaysDashboard       from "@/components/home/HomeAirwaysDashboard";
+import HomeWorldShell             from "@/components/home/HomeWorldShell";
+import { UniverseProvider, UniverseTransition } from "@/components/universe";
 import NotificationOptInPrompt    from "@/components/home/NotificationOptInPrompt";
 import WelcomeBackOverlay         from "@/components/home/WelcomeBackOverlay";
 import NimiProactiveBanner        from "@/components/home/NimiProactiveBanner";
@@ -204,8 +205,11 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
       setActiveChild(updated);
       setRefreshing(true);
       try {
+        // Strict library fetch: a transient RPC failure must REJECT here so the
+        // catch keeps the current stories on screen (with a toast) instead of
+        // silently swapping in [] and rendering the empty-state card.
         const [lib, lvl, stars, streak, ach, actDates, popular, cos] = await Promise.all([
-          getStoryLibrary(updated.id, lang),
+          getStoryLibraryStrict(updated.id, lang),
           getCurrentLevel(updated.id, lang),
           getTotalStars(updated.id, lang),
           getWeekStreak(updated.id, lang),
@@ -365,7 +369,12 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
       try {
         const raw  = localStorage.getItem(snapshotKey);
         const snap = raw ? (JSON.parse(raw) as HomeSnapshot) : null;
-        if (snap && Date.now() - snap.ts < TWO_HOURS) {
+        // Only restore snapshots that carry stories: an empty `stories` array is
+        // indistinguishable from a poisoned snapshot (an earlier transient RPC
+        // failure used to be saved as []), and restoring it rendered the
+        // empty-state card on top of an active adventure. Genuinely empty
+        // accounts simply fall through to the fresh load below.
+        if (snap && Array.isArray(snap.stories) && snap.stories.length > 0 && Date.now() - snap.ts < TWO_HOURS) {
           setStories(snap.stories);
           setLevel(snap.level);
           setTotalStars(snap.totalStars);
@@ -383,8 +392,12 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
     if (hasCachedData) setRefreshing(true);
 
     try {
+      // Strict library fetch: a transient get_story_library_progress failure must
+      // REJECT (and land in the catch below) instead of resolving to [] — a
+      // silent [] swapped the Current Adventure card for the empty-state card
+      // and (worse) saved an empty snapshot that re-rendered it for 2 hours.
       const [lib, lvl, stars, streak, ach, actDates, popular, cos] = await Promise.all([
-        getStoryLibrary(child.id, child.language),
+        getStoryLibraryStrict(child.id, child.language),
         getCurrentLevel(child.id, child.language),
         getTotalStars(child.id, child.language),
         getWeekStreak(child.id, child.language),
@@ -432,10 +445,18 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
       void loadCommunityCreations();
     } catch (err) {
       console.error("[home] select failed:", err);
-      // Restore picker so the user can choose again rather than getting a stuck skeleton
-      setActiveChild(null);
-      setLoading(false);
-      setRefreshing(false);
+      if (hasCachedData) {
+        // Keep the restored snapshot on screen (Current Adventure + journey)
+        // and just stop the refresh indicator — a transient failure must not
+        // replace known-good data with the empty-state card.
+        setRefreshing(false);
+      } else {
+        // Nothing cached: show the retry screen rather than a misleading
+        // "Choose Your Destination" empty state (the child may well have an
+        // active adventure — we just failed to load it).
+        setInitError(true);
+        setLoading(false);
+      }
     }
   }
 
@@ -446,7 +467,9 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
     try {
     const lang = child.language;
     const [lib, lvl, stars, streak, ach, actDates, popular, cos] = await Promise.all([
-      getStoryLibrary(child.id, lang),
+      // Strict: on failure this rejects → catch keeps the current stories on
+      // screen instead of silently blanking the dashboard to the empty state.
+      getStoryLibraryStrict(child.id, lang),
       getCurrentLevel(child.id, lang),
       getTotalStars(child.id, lang),
       getWeekStreak(child.id, lang),
@@ -482,6 +505,10 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
         totalStars: stars, weekStreak: streak, achievements: ach,
         consecutiveStreak: cStreak, popularStories: popular, cosmetics: cos });
     }
+    } catch (err) {
+      // Transient failure during a background refresh: keep whatever is
+      // currently on screen (last-known-good stories) and log for debugging.
+      console.error("[home] silent refresh failed (keeping current data):", err);
     } finally {
       setRefreshing(false);
       silentRefreshingRef.current = false;
@@ -532,10 +559,6 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
   const dateLocale = activeChild?.language === "fr" ? "fr-FR" : "en-US";
 
   const curStory         = stories.find(s => s.unlocked && !s.complete) ?? stories[0];
-  // First premium-locked story — used as a Club upsell when a free user has finished all free stories
-  const nextPremiumStory = !hasSubscription && !stories.find(s => s.unlocked && !s.complete)
-    ? (stories.find(s => !s.unlocked && !s.is_free) ?? null)
-    : null;
   const doneSlots  = slots.filter(s => s.completed).length;
   const totalSlots = slots.length;
   const pct        = totalSlots > 0 ? Math.round((doneSlots / totalSlots) * 100) : 0;
@@ -556,26 +579,35 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
 
   // The desktop dashboard is deliberately composed as one travel-desk grid:
   // content and live data stay here; visual layout lives in the focused view.
+  // Phase 2 — Home World: the live dashboard floats on the Universe scene
+  // (sky → dunes → atmosphere) inside the stage transition wrapper.
   if (!loading) {
     return (
       <AppShell>
         <RefreshingBadge show={refreshing} />
-        <HomeAirwaysDashboard
-          childName={activeChild?.name ?? "Explorer"}
-          themeId={themeId}
-          greeting={greeting}
-          stories={stories}
-          curStory={curStory}
-          slots={slots}
-          doneSlots={doneSlots}
-          totalSlots={totalSlots}
-          progress={pct}
-          totalStars={totalStars}
-          streak={consecutiveStreak}
-          stampsCollected={achievements.filter((achievement) => achievement.type === "badge").length}
-          hasSubscription={hasSubscription}
-          nextPremiumStory={nextPremiumStory}
-        />
+        <UniverseProvider>
+          <UniverseTransition stageKey="home">
+            <HomeWorldShell>
+              <HomeAirwaysDashboard
+                childName={activeChild?.name ?? "Explorer"}
+                themeId={themeId}
+                greeting={greeting}
+                stories={stories}
+                curStory={curStory}
+                slots={slots}
+                doneSlots={doneSlots}
+                totalSlots={totalSlots}
+                totalStars={totalStars}
+                streak={consecutiveStreak}
+                level={xpLevel}
+                xpIn={xpIn}
+                xpNeeded={xpNeeded}
+                xpPct={xpPct}
+                stampsCollected={achievements.filter((achievement) => achievement.type === "badge").length}
+              />
+            </HomeWorldShell>
+          </UniverseTransition>
+        </UniverseProvider>
         {welcomeBack.show && activeChild && (
           <WelcomeBackOverlay childName={activeChild.name} daysAway={welcomeBack.daysAway} onDismiss={() => setWelcomeBack({ show: false, daysAway: 0 })} />
         )}
@@ -621,7 +653,7 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
             className="relative">
 
             {/* ═══════════════════════ HERO: WORLD STAGE ═══════════════════════ */}
-            <div className="relative overflow-hidden" style={{ minHeight: 520 }}>
+            <div className="relative overflow-hidden" style={{ minHeight: 300 }}>
 
               {/* ── AIRWAYS: Airport scene — real image ── */}
               <div aria-hidden="true" className="absolute inset-0 pointer-events-none select-none">
@@ -643,7 +675,7 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
               {/* ══════════════════════════════════════════════════════════════
                    Layer 3 — CONTENT: greeting left, characters right
               ══════════════════════════════════════════════════════════════ */}
-              <div className="relative z-10 flex flex-col md:flex-row md:items-end px-6 sm:px-10 lg:px-14 pb-10 pt-8 max-w-[1400px] mx-auto min-h-[420px] gap-3 justify-between">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-end px-6 sm:px-10 lg:px-14 pt-6 pb-8 max-w-[1400px] mx-auto min-h-[200px] gap-3 justify-between">
 
                 {/* ── LEFT: Greeting text ────────────────────────────────── */}
                 <motion.div variants={up} className="flex flex-col justify-end pb-2 max-w-[380px]">
@@ -728,7 +760,7 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
           </div>
 
           {/* ════════════════ BELOW HERO ════════════════ */}
-          <div className="px-5 sm:px-8 lg:px-10 pb-6 pt-2 max-w-[1400px] mx-auto flex flex-col gap-4">
+          <div className="px-5 sm:px-8 lg:px-10  pt-2 max-w-[1400px] mx-auto flex flex-col gap-4">
 
             {/* Trial-expired banner */}
             {trialJustExpired && (
