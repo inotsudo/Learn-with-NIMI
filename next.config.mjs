@@ -42,6 +42,11 @@ const REPORT_TO = JSON.stringify({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Turbopack root directory — explicitly set to avoid "multiple lockfiles" warning
+  turbopack: {
+    root: '/home/martin/Documents/Learn-with-NIMI',
+  },
+
   // Security headers on all responses
   async headers() {
     return [
