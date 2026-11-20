@@ -24,9 +24,6 @@ const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 const PROTECTED_LEARNER_ROUTES = [
   '/home',
   '/stories',
-  '/missions',
-  '/community',
-  '/shop',
   '/talk-to-nimi',
   '/masterpiece',
   '/user-profile',

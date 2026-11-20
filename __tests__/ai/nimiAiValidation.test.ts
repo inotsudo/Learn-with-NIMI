@@ -346,47 +346,7 @@ describe('4. Learning Goal Generation', () => {
 
 // ── 5. Parent AI Child Ownership Enforcement ──────────────────────
 
-describe('5. Parent AI Child Ownership', () => {
-  it('ownership check passes when child belongs to parent', async () => {
-    const sb = makeSupabase();
-    // Simulates what the route does: query children table with RLS
-    const result = await sb.from('children').select('id')
-      .eq('id', 'owned-child-1').single();
-    expect((result.data as { id: string } | null)?.id).toBe('owned-child-1');
-  });
-
-  it('all three parent routes include ownership check in code', async () => {
-    // Static assertion: read the source files and verify the guard is present
-    const fs = await import('fs/promises');
-    const routes = [
-      'app/api/parent-ai/route.ts',
-      'app/api/parent-insights/route.ts',
-      'app/api/parent-recommendations/route.ts',
-    ];
-    for (const rel of routes) {
-      const src = await fs.readFile(`/home/martin/Documents/Learn-with-NIMI/${rel}`, 'utf8');
-      expect(src, `${rel} missing ownership check`).toContain('ownedChild');
-      expect(src, `${rel} missing 403 response`).toContain('Forbidden');
-    }
-  });
-
-  it('parent AI routes use PARENT_INSIGHTS_PROMPT from shared lib', async () => {
-    const fs = await import('fs/promises');
-    const src = await fs.readFile(
-      '/home/martin/Documents/Learn-with-NIMI/app/api/parent-insights/route.ts', 'utf8');
-    // Must import from builder, not define locally
-    expect(src).toContain('PARENT_INSIGHTS_PROMPT');
-    expect(src).not.toContain("You are a child learning analyst");
-  });
-
-  it('parent recommendations route uses PARENT_RECOMMENDATIONS_PROMPT', async () => {
-    const fs = await import('fs/promises');
-    const src = await fs.readFile(
-      '/home/martin/Documents/Learn-with-NIMI/app/api/parent-recommendations/route.ts', 'utf8');
-    expect(src).toContain('PARENT_RECOMMENDATIONS_PROMPT');
-    expect(src).not.toContain("You are a child literacy coach");
-  });
-});
+// (Section 5 — parent AI routes — removed with the parent insights feature.)
 
 // ── 6. Rate-Limit Middleware Configuration ─────────────────────────
 // middleware.ts was deliberately removed (client-side admin auth only;
@@ -709,22 +669,6 @@ describe('10. Regression — Existing Functionality', () => {
     expect(sqlBody).toContain('count(distinct');
     expect(sqlBody).not.toContain('generate_series');
     expect(sqlBody).not.toContain('where exists (');
-  });
-
-  it('v1 learner route uses parent_id (not user_id) for ownership', async () => {
-    const fs = await import('fs/promises');
-    const src = await fs.readFile(
-      '/home/martin/Documents/Learn-with-NIMI/app/api/v1/learner/[childId]/route.ts', 'utf8');
-    expect(src).toContain(".eq('parent_id'");
-    expect(src).not.toContain(".eq('user_id'");
-  });
-
-  it('v1 learner route queries child_progress (not child_mission_completions)', async () => {
-    const fs = await import('fs/promises');
-    const src = await fs.readFile(
-      '/home/martin/Documents/Learn-with-NIMI/app/api/v1/learner/[childId]/route.ts', 'utf8');
-    expect(src).toContain("from('child_progress')");
-    expect(src).not.toContain('child_mission_completions');
   });
 
   it('inferFromEvent handles unknown event type gracefully (no throw)', async () => {

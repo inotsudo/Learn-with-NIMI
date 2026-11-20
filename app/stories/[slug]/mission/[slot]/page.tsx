@@ -33,7 +33,7 @@ import AnimatedCheckmark from "@/components/delight/AnimatedCheckmark";
 import { CONFETTI_BURST } from "@/lib/design-system/delight";
 import { SPRING } from "@/lib/design-system/motion";
 import { useThemeMotion } from "@/hooks/useThemeMotion";
-import ShareAchievementFlow from "@/components/community/ShareAchievementFlow";
+import ShareCertificateButton from "@/components/stories/ShareCertificateButton";
 import { Share2 } from "lucide-react";
 import NimiReaction from "@/components/missions/NimiReaction";
 import ComprehensionQuestion from "@/components/missions/ComprehensionQuestion";
@@ -153,6 +153,7 @@ export default function StoryMissionPage() {
   const [childId, setChildId] = useState<string | null>(null);
   const [childName, setChildName] = useState<string>("");
   const [childLanguage, setChildLanguage] = useState<string>("en");
+  const [storyTitle, setStoryTitle] = useState<string>("");
   const [storyId, setStoryId] = useState<string | null>(null);
   const [slot, setSlot] = useState<StorySlot | null>(null);
   const [allSlots, setAllSlots] = useState<StorySlot[]>([]);
@@ -188,6 +189,7 @@ export default function StoryMissionPage() {
 
       if (!story) { setLoading(false); return; }
       setStoryId(story.id);
+      setStoryTitle(story.title ?? "");
 
       const slots = await getStorySlots(child.id, story.id, child.language);
       if (cancelled) return;
@@ -677,16 +679,17 @@ export default function StoryMissionPage() {
                   <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 1.1 }}
                     className="mt-4 space-y-2 w-full text-left">
-                    {res?.story_complete && childId && childName && mission?.title && (
-                      <ShareAchievementFlow
-                        childId={childId}
+                    {/* Story finished → share the certificate with family (no public feed). */}
+                    {res?.story_complete && childId ? (
+                      <ShareCertificateButton
                         childName={childName}
-                        childLanguage={childLanguage}
+                        childId={childId}
+                        language={childLanguage}
                         storySlug={slug}
-                        shareType="certificate"
-                        title={mission.title}
+                        storyTitle={storyTitle || mission?.title || slug}
+                        url={`/stories/${slug}`}
                       />
-                    )}
+                    ) : (
                     <button
                       onClick={async () => {
                         const url = window.location.href;
@@ -703,6 +706,7 @@ export default function StoryMissionPage() {
                       <Share2 aria-hidden="true" className="w-4 h-4" />
                       {t("shareFriendsBtn")}
                     </button>
+                    )}
                   </motion.div>
                 </div>
               </motion.div>

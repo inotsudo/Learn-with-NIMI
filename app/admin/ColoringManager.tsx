@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
 import { getStorageUrl } from '@/lib/queries'
 import {
-  Search, SlidersHorizontal, LayoutGrid, Eye, Plus,
+  Search, SlidersHorizontal, LayoutGrid, Plus,
   MoreVertical, Pencil, Copy, ArrowUpDown, Trash2, ChevronLeft, ChevronRight,
   PenTool, FileStack, Menu, AlertCircle, RefreshCw, X,
 } from 'lucide-react'
@@ -88,10 +88,6 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
   const pageRows = filtered.slice(pageStart, pageStart + PAGE_SIZE)
 
   const selected = books.find(b => b.id === selectedId) ?? null
-
-  const handlePreview = () => {
-    window.open('/missions/coloring', '_blank')
-  }
 
   const handleCreate = async () => {
     setActionError(null)
@@ -249,9 +245,6 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handlePreview} className="flex items-center gap-1.5 bg-white border border-rose-200 text-rose-500 hover:bg-rose-50 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm transition">
-              <Eye className="w-4 h-4" /> Preview as Child
-            </button>
             <span className={`inline-flex items-center gap-1.5 bg-white border border-gray-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm ${accent.text}`}>
               <PenTool className="w-3.5 h-3.5" /> {books.length}
             </span>
@@ -362,9 +355,6 @@ export default function ColoringManager({ initialBookId, onNavigate, onOpenSideb
                         className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Copy size={14} className="text-gray-400" /> {mutatingId === b.id ? 'Duplicating...' : 'Duplicate'}
-                      </button>
-                      <button onClick={() => { handlePreview(); setOpenMenuId(null) }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition">
-                        <Eye size={14} className="text-gray-400" /> Preview
                       </button>
                       <button onClick={() => { void handleReorder(b, 'up'); setOpenMenuId(null) }} disabled={mutatingId === b.id} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
                         <ArrowUpDown size={14} className="text-gray-400" /> Move Up

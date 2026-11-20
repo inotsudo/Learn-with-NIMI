@@ -6,7 +6,7 @@ import { RefreshCw, Volume2, VolumeX, Wifi, WifiOff, Settings2 } from "lucide-re
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 import { useNimiReader } from "@/contexts/NimiReaderContext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { getQueuedCompletions, flushOfflineQueue } from "@/lib/offlineQueue";
+import { getQueuedSlotCompletions, flushOfflineSlotQueue } from "@/lib/offlineSlotQueue";
 import { updateChildLanguage, getCachedUser } from "@/lib/queries";
 import type { Child } from "@/lib/queries";
 import LanguageSwitchDialog from "@/components/LanguageSwitchDialog";
@@ -49,7 +49,7 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    setPendingCount(getQueuedCompletions().length);
+    setPendingCount(getQueuedSlotCompletions().length);
   }, [isOnline]);
 
   const confirmSwitch = async () => {
@@ -67,8 +67,8 @@ export default function AppPreferencesCard({ activeChild, onLanguageChanged }: P
 
   const syncNow = async () => {
     setSyncing(true);
-    await flushOfflineQueue();
-    setPendingCount(getQueuedCompletions().length);
+    await flushOfflineSlotQueue();
+    setPendingCount(getQueuedSlotCompletions().length);
     setSyncing(false);
   };
 

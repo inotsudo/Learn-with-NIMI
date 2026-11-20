@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { Volume2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -94,11 +93,6 @@ export default function WordLearnedCard({ word, onNext, current, total }: WordLe
         </div>
         {onNext && (
           <div className="flex items-center gap-2">
-            {total && current && current >= total && (
-              <Link href="/vocab" className="font-nunito font-bold text-2xs text-teal-500 hover:underline">
-                See all my words →
-              </Link>
-            )}
             <motion.button
               onClick={onNext}
               whileTap={{ scale: 0.95 }}

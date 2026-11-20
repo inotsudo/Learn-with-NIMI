@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react'
 import { getCachedAdmin } from './adminAuth'
 import {
   LayoutDashboard, BookOpen, Palette, Trophy, Star,
-  Users, Globe, Award, Bell, FolderOpen, Settings,
-  ChevronLeft, ChevronRight, X, CreditCard, Crown, BarChart3, ShieldCheck,
-  GraduationCap, Mail, Share2, Tag, Gift, MessageSquareQuote, Handshake,
+  Users, Award, Bell, FolderOpen, Settings,
+  ChevronLeft, ChevronRight, X, CreditCard, Crown, ShieldCheck,
+  Mail, Share2, Tag, Gift, MessageSquareQuote, Handshake,
   MessagesSquare, ClipboardList, Activity, Plane, Layers, Music, Languages, Video,
   type LucideIcon,
 } from 'lucide-react'
@@ -36,7 +36,6 @@ const NAV_GROUPS: NavGroup[] = [
       { icon: BookOpen,        label: 'Story Studio',      table: 'stories' },
       { icon: Palette,         label: 'Content Library',   table: 'content_library' },
       { icon: Trophy,          label: 'Weekly Challenges', table: 'weekly_challenges' },
-      { icon: GraduationCap,   label: 'Curriculum',        table: 'curriculum' },
       { icon: Languages,       label: 'Langues Missions',  table: 'mission_versions' },
     ],
   },
@@ -48,7 +47,6 @@ const NAV_GROUPS: NavGroup[] = [
       { icon: Award,           label: 'Badge Images',      table: 'badge_images' },
       { icon: Award,           label: 'Certificates',      table: 'child_achievements' },
       { icon: Award,           label: 'Cert Templates',    table: 'certificate_templates' },
-      { icon: Globe,           label: 'Community',         table: 'creations' },
       { icon: Crown,           label: 'Masterpieces',      table: 'masterpieces' },
     ],
   },
@@ -86,7 +84,6 @@ const NAV_GROUPS: NavGroup[] = [
       { icon: Video,           label: 'Platform Intro Video', table: 'platform_intro_video' },
       { icon: Bell,            label: 'Notifications',     table: 'notifications' },
       { icon: FolderOpen,      label: 'Media Library',     table: 'Buckets' },
-      { icon: BarChart3,       label: 'Analytics',         table: 'child_progress' },
       { icon: MessagesSquare,  label: 'AI Chat History',   table: 'conversation_history' },
       { icon: ClipboardList,   label: 'Audit Log',         table: 'audit_log' },
       { icon: ShieldCheck,     label: 'Administrators',    table: 'admins' },

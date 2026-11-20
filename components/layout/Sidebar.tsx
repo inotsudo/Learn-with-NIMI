@@ -32,8 +32,6 @@ const GROUPS = [
   {
     label: "EXPLORE", emoji: "🪐",
     items: [
-      { label: "Community",    icon: "👥", href: "/community",           match: (p: string) => p.startsWith("/community"),                                             bg: "rgba(196,181,253,0.22)", color: "#c4b5fd", ring: "rgba(196,181,253,0.45)" },
-      { label: "Star Shop",    icon: "🛍️", href: "/shop",                match: (p: string) => p.startsWith("/shop"),                                                  bg: "rgba(253,164,175,0.22)", color: "#fda4af", ring: "rgba(253,164,175,0.45)" },
       { label: "Talk to Nimi", icon: "🤖", href: "/talk-to-nimi",        match: (p: string) => p.startsWith("/talk-to-nimi"),                                          bg: "rgba(147,197,253,0.22)", color: "#93c5fd", ring: "rgba(147,197,253,0.45)" },
     ],
   },
@@ -258,7 +256,7 @@ export default function Sidebar({ activeChild, streakCount, isOpen, onClose, onL
         {/* Stars / shop pill */}
         <div className="mx-3 mb-2">
           <Link
-            href="/shop"
+            href="/treasure"
             onClick={onClose}
             className="flex items-center justify-center gap-2 w-full rounded-2xl py-2.5 font-baloo font-black transition-all hover:brightness-108 active:scale-[0.97]"
             style={{

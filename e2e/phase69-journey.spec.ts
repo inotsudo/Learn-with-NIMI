@@ -321,58 +321,13 @@ test.describe('D. Story detail page & activity types', () => {
 })
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/*  E. MISSIONS                                                                */
-/* ═══════════════════════════════════════════════════════════════════════════ */
-
-test.describe('E. Missions', () => {
-
-  test('/missions loads without crash (redirects to /stories by design)', async () => {
-    const page = await loggedInContext!.newPage()
-    const jsErrors: string[] = []
-    page.on('pageerror', err => jsErrors.push(err.message))
-
-    await page.goto(`${BASE}/missions`, { waitUntil: 'networkidle' })
-
-    // /missions unconditionally redirects to /stories (app/missions/page.tsx)
-    // This is intentional product architecture — missions are surfaced via stories
-    const finalUrl = page.url()
-    const isValid = finalUrl.includes('/missions') || finalUrl.includes('/stories')
-    expect(isValid, `Unexpected URL for /missions: ${finalUrl}`).toBe(true)
-    console.log(`/missions landed on: ${finalUrl}`)
-
-    const blocking = jsErrors.filter(e =>
-      !e.includes('ResizeObserver') &&
-      !e.includes('Non-Error promise') &&
-      // Next.js dev-mode Performance.measure timing race during fast redirects
-      !e.includes("cannot have a negative time stamp")
-    )
-    expect(blocking).toHaveLength(0)
-
-    await page.close()
-  })
-
-  test('/missions shows mission content', async () => {
-    const page = await loggedInContext!.newPage()
-    await page.goto(`${BASE}/missions`, { waitUntil: 'networkidle' })
-    await page.waitForTimeout(2000)
-
-    const body = await page.locator('body').textContent()
-    expect(body?.length).toBeGreaterThan(100)
-
-    await page.close()
-  })
-
-})
-
-/* ═══════════════════════════════════════════════════════════════════════════ */
 /*  F. OTHER LEARNER ROUTES                                                    */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 test.describe('F. Other learner routes', () => {
 
   const LEARNER_ROUTES = [
-    '/community',
-    '/shop',
+    '/certificates',
     '/talk-to-nimi',
     '/masterpiece',
     '/user-profile',

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion, type MotionStyle } from "framer-motion";
-import { INTRO_VIDEO, REELS, ZONES, ZONE_ORDER, type SceneHotspot, type WorldZoneId } from "./scenes";
+import { INTRO_VIDEO, REELS, ZONES, type SceneHotspot, type WorldZoneId } from "./scenes";
 import { KID_VERSIONS, KID_VERSION_IDS, WORLD_THEMES, WORLD_THEME_IDS, type KidVersionId, type WorldLang, type WorldTheme, type WorldThemeId } from "./themes";
 
 const SPRING = { type: "spring", stiffness: 420, damping: 24 } as const;
@@ -15,7 +15,7 @@ const GLASS: CSSProperties = {
 };
 
 /* ─── Full-bleed scene: art + mood grade + registered aura hotspots ────── */
-export interface PlacedHotspot { spot: SceneHotspot; label: string; strong: boolean; onActivate: () => void }
+export interface PlacedHotspot { spot: SceneHotspot; label: string; strong: boolean; onActivate: () => void; badge?: string }
 
 export function SceneStage({
   src, fx, fy, theme, parallax, hotspots, showChips, introChips, minTouch, priority,
@@ -58,7 +58,7 @@ export function SceneStage({
           <div className="absolute inset-0" style={{ background: theme.plate.tint, mixBlendMode: theme.plate.blend, opacity: theme.plate.tintOpacity, transition: "background 1s ease, opacity 1s ease" }} />
           <div className="nw-cover" style={{ "--fx": fx, "--fy": fy } as CSSProperties}>
             {hotspots.map((h, i) => (
-              <AuraHotspot key={`${h.spot.kind}-${i}`} {...h} chip={showChips} showChip={introChips} minPx={minTouch} delay={0.35 + i * 0.12} />
+              <AuraHotspot key={`${h.spot.kind}-${h.spot.slotKey ?? i}`} {...h} chip={showChips} showChip={introChips} minPx={minTouch} delay={0.35 + i * 0.12} />
             ))}
           </div>
         </motion.div>
@@ -70,7 +70,7 @@ export function SceneStage({
 const GLINTS: [number, number, number][] = [[22, 26, 0], [74, 32, 0.8], [58, 78, 1.6]];
 
 function AuraHotspot({
-  spot, label, strong, onActivate, chip, showChip, minPx, delay,
+  spot, label, strong, onActivate, badge, chip, showChip, minPx, delay,
 }: PlacedHotspot & { chip: boolean; showChip: boolean; minPx: number; delay: number }) {
   return (
     <motion.button
@@ -90,6 +90,7 @@ function AuraHotspot({
       {GLINTS.map(([gx, gy, d]) => (
         <span key={`${gx}-${gy}`} className="nw-aura__glint" style={{ left: `${gx}%`, top: `${gy}%`, animationDelay: `${d}s` }} aria-hidden="true" />
       ))}
+      {badge && <span className="nw-aura__badge" aria-hidden="true">{badge}</span>}
       {chip && <span className={`nw-chip${showChip ? " nw-chip--show" : ""}`} aria-hidden="true">{label}</span>}
     </motion.button>
   );
@@ -176,13 +177,15 @@ const HOLD_MS = 3000;
 const RING = 2 * Math.PI * 31;
 
 export function WingSwitcher({
-  theme, versionId, lang, zone, showLabels, bilingual, xp, labels,
+  theme, versionId, lang, zone, zones, showLabels, bilingual, xp, labels,
   onTheme, onVersion, onLang, onZone, onParent,
 }: {
   theme: WorldThemeId;
   versionId: KidVersionId;
   lang: WorldLang;
   zone: WorldZoneId;
+  /** Journey stops reached so far (the wing never lets a child skip passport control or boarding). */
+  zones: WorldZoneId[];
   showLabels: boolean;
   bilingual: boolean;
   /** Sky Navigators: XP level ring around the emblem. */
@@ -307,8 +310,8 @@ export function WingSwitcher({
               </Section>
             )}
             <Section title={labels.destinations} show={showLabels}>
-              <div className="grid grid-cols-4 gap-2">
-                {ZONE_ORDER.map((z) => {
+              <div className="grid grid-cols-3 gap-2">
+                {zones.map((z) => {
                   const d = ZONES[z];
                   const active = z === zone;
                   return (
@@ -339,9 +342,10 @@ function Section({ title, show, children }: { title: string; show: boolean; chil
 }
 
 /* ─── Cinematic reels built from the scene stills (full-bleed) ─────────── */
-export function Reel({ kind, onDone }: { kind: "ready" | "takeoff"; onDone: () => void }) {
-  const frames = useMemo(() => (kind === "ready" ? [REELS.ready] : REELS.takeoff), [kind]);
-  const per = kind === "ready" ? 1300 : 900;
+export type ReelKind = "ready" | "takeoff" | "book";
+export function Reel({ kind, onDone }: { kind: ReelKind; onDone: () => void }) {
+  const frames = REELS[kind];
+  const per = kind === "takeoff" ? 900 : kind === "book" ? 1100 : 1300;
   const [i, setI] = useState(0);
   // The reel's clock starts once the first still has painted (or after 1.5 s on a slow network).
   const [ready, setReady] = useState(false);

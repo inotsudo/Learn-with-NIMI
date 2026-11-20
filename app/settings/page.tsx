@@ -8,7 +8,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import GeneralSettingsCard from "@/components/settings/GeneralSettingsCard";
 import ContentSettingsCard from "@/components/settings/ContentSettingsCard";
 import SettingsAccountCard from "@/components/settings/SettingsAccountCard";
-import ThemePicker from "@/components/settings/ThemePicker";
 import ReferralCard from "@/components/settings/ReferralCard";
 import SentGiftsCard from "@/components/settings/SentGiftsCard";
 import supabase from "@/lib/supabaseClient";
@@ -33,10 +32,6 @@ export default function SettingsPage() {
             <p className="text-[var(--ds-text-tertiary)] text-sm mt-1">{t("settingsSubtitle")}</p>
           </div>
 
-          {/* Theme Picker */}
-          <div className="mt-6 border border-white/70 bg-[var(--ds-surface-card)]/90 p-5 shadow-card-2xl" style={{ borderRadius: 'var(--leaf-r-lg)' }}>
-            <ThemePicker />
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5 items-start">
             <GeneralSettingsCard />

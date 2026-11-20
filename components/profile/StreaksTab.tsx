@@ -206,20 +206,6 @@ export default function StreaksTab({ activityDates, weekStreak, childId, languag
         </div>
       </div>
 
-      {/* Get shields CTA if none owned */}
-      {shieldsPurchased === 0 && (
-        <motion.a
-          href="/shop"
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="block border-2 border-dashed border-indigo-500/30 p-4 text-center hover:border-indigo-500/60 hover:bg-indigo-500/5 transition"
-          style={{ borderRadius: 'var(--leaf-r)' }}
-        >
-          <p className="text-2xl mb-1">🛡️</p>
-          <p className="font-black text-ds-text text-sm">{t("getStreakShieldCTA")}</p>
-          <p className="text-ds-muted text-xs mt-0.5">{t("rewardStreakShieldDesc")}</p>
-        </motion.a>
-      )}
     </div>
   );
 }

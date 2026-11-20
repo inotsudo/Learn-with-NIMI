@@ -58,3 +58,13 @@ gen-auth-link.mjs
 
 # Debug screenshot artifacts
 undefined/
+.playwright-mcp/
+tmp-qa/
+test-results/
+
+# Agent worktrees (local only)
+.claude/worktrees/
+
+# Original, full-size source media (too large to deploy or push).
+# The app serves the web cuts in public/now/videos/.
+media-source/

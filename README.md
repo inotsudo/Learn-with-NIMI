@@ -1,13 +1,18 @@
 # NIMIPIKO
 
-NIMIPIKO is a Next.js + Supabase learning platform for young children,
-offering daily curriculum missions (songs, movement, stories, coloring,
-discovery) across English, French, and Kinyarwanda, with a parent dashboard
-and an admin CMS.
+NIMIPIKO is a Next.js + Supabase learning app for children aged 2–12 in
+English, French and Kinyarwanda, built around the NIMIPIKO Airways journey
+from the brand intro video: the airport world (`/home`), story adventures
+with six missions each, the Défi des Champions, Mon Trésor, badges and
+certificates, personalised Airways printables (passport, stamps, kit, badge,
+boarding pass, book, song), Talk to Nimi, a parent area and an admin CMS.
+
+The original 4-minute intro video is kept out of git in `media-source/`; the
+app streams the web cut in `public/now/videos/`.
 
 ## Prerequisites
 
-- Node.js 20.x
+- Node.js 22.x (see `.nvmrc`)
 - A Supabase project (Postgres + Auth + Storage)
 - [Supabase CLI](https://supabase.com/docs/guides/cli) for running migrations
 
@@ -26,12 +31,13 @@ npm run dev      # start dev server (http://localhost:3000)
 npm run build    # production build
 npm run start    # run a production build
 npm run lint     # lint
+npm test         # unit tests (vitest)
 ```
 
 ## Supabase / Database
 
 All schema changes live as numbered SQL files in `supabase/migrations/`
-(currently 001-033), applied in order. Each migration is self-contained and
+(001 through the latest number), applied in order. Each migration is self-contained and
 includes its own RLS policies.
 
 Apply a migration to the linked project:
@@ -45,20 +51,16 @@ list` first. The CLI's local migration history can drift out of sync with
 the remote project (this happened once, 2026-06-12, and required `supabase
 migration repair` before `db push` would work cleanly).
 
-Read-only SQL test suites live in `supabase/tests/` — they assert against
-existing data/schema and make no writes, so they're safe to run anytime:
-
-```bash
-npx supabase db query --linked --file supabase/tests/<suite>.sql
-```
-
 ## Deployment
 
-The app deploys to Vercel. `vercel.json` defines one scheduled job:
+The app deploys to Vercel. Scheduled jobs (all `CRON_SECRET`-protected):
 
 | Cron | Schedule | Purpose |
 |---|---|---|
-| `/api/cron/daily-reminder` | `0 17 * * *` (17:00 UTC daily) | Sends push reminders to parents whose children haven't completed today's missions (`CRON_SECRET`-protected). |
+| `/api/cron/daily` | `0 8 * * *` (`vercel.json`) | Runs subscription renewals, MoMo renewal checks, gift emails, referral rewards, checkout expiry, and the Monday weekly digest. |
+| `/api/cron/daily-reminder` | `0 17 * * *` (`vercel.json`) | Push reminders to parents whose children haven't played today. |
+
+`.github/workflows/cron-scheduler.yml` calls the same routes from GitHub Actions as a backup scheduler.
 
 ## Backup & Recovery
 
@@ -74,10 +76,11 @@ The app deploys to Vercel. `vercel.json` defines one scheduled job:
 
 ## Documentation
 
-- [`docs/`](docs/) — architecture and verification reports for each
-  development phase (`phase-bX-*.md`), plus durable references like
-  [`docs/curriculum-framework.md`](docs/curriculum-framework.md) and
-  [`docs/backlog.md`](docs/backlog.md) for deferred work.
+- [`STORY_ARCHITECTURE.md`](STORY_ARCHITECTURE.md) — how stories, slots,
+  challenges and certificates fit together.
+- [`docs/`](docs/) — story-adventure specs (`sa0`–`sa5`), the brand world
+  bible, Talk to Nimi audits, and [`docs/backlog.md`](docs/backlog.md) for
+  deferred work.
 - [`docs/phase-bk-security-audit.md`](docs/phase-bk-security-audit.md),
   [`docs/phase-bk-data-integrity-audit.md`](docs/phase-bk-data-integrity-audit.md),
   [`docs/phase-bk-performance-baseline.md`](docs/phase-bk-performance-baseline.md),

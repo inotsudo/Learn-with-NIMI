@@ -56,7 +56,7 @@ function GlassButton({ children, onClick, label, gold = false, big = false }: { 
 }
 
 export default function KitStudio({
-  data, backdrop, kitArt, webgl, startItem = "kit", tiles, nextHref, onClose, onLaunch, onTile, onStory,
+  data, backdrop, kitArt, webgl, startItem = "kit", tiles, showTiles, onContinue, onClose, onLaunch, onTile, onStory,
 }: {
   data: WorldData;
   /** The current scene, blurred behind the studio so the child never "leaves" the world. */
@@ -66,7 +66,10 @@ export default function KitStudio({
   webgl: boolean;
   startItem?: StudioItem;
   tiles: RunwayTile[];
-  nextHref: string | null;
+  /** The mission tiles only appear once the child has landed at the storybook (the video's order). */
+  showTiles: boolean;
+  /** "Continue the adventure": the next stop of the journey, or the next mission once landed. */
+  onContinue: () => void;
   onClose: () => void;
   onLaunch: (href: string | null) => void;
   onTile: (slotKey: string) => void;
@@ -210,7 +213,7 @@ export default function KitStudio({
             <motion.button
               type="button"
               aria-label={copy.continue}
-              onClick={() => onLaunch(nextHref)}
+              onClick={onContinue}
               initial={{ scale: 0.4, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={SPRING}
@@ -223,11 +226,11 @@ export default function KitStudio({
             </motion.button>
           ) : (
             <motion.div className="flex flex-col items-center gap-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
-              <RunwayTiles tiles={tiles} showLabels={showLabels} onSelect={onTile} inline ariaLabel={copy.kit} />
+              {showTiles && <RunwayTiles tiles={tiles} showLabels={showLabels} onSelect={onTile} inline ariaLabel={copy.kit} />}
               <div className="flex flex-wrap justify-center gap-2">
-                <GlassButton gold big label={copy.continue} onClick={() => onLaunch(nextHref)}>▶ {copy.continue}</GlassButton>
+                <GlassButton gold big label={copy.continue} onClick={onContinue}>▶ {copy.continue}</GlassButton>
                 <GlassButton label={copy.stories} onClick={() => onLaunch("/stories")}>📚 {copy.stories}</GlassButton>
-                <GlassButton label={copy.create} onClick={() => onLaunch("/create")}>🎨 {copy.create}</GlassButton>
+                <GlassButton label={copy.treasure} onClick={() => onLaunch("/treasure")}>🏆 {copy.treasure}</GlassButton>
                 <GlassButton label={copy.talk} onClick={() => onLaunch("/talk-to-nimi")}>💬 {copy.talk}</GlassButton>
               </div>
             </motion.div>

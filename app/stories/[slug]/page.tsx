@@ -34,11 +34,13 @@ import type { Product, Currency } from "@/lib/payments/types";
 import ChampionChallengeCard from "@/components/challenges/ChampionChallengeCard";
 import PreviewBanner from "@/components/admin/story-readiness/PreviewBanner";
 import CelebrationModal from "@/components/challenges/CelebrationModal";
-import ShareAchievementFlow from "@/components/community/ShareAchievementFlow";
+import ShareCertificateButton from "@/components/stories/ShareCertificateButton";
+import { shareCertificate } from "@/lib/shareCertificate";
+import { advanceJourney, hasReached, readJourney } from "@/components/nimi-world/journey";
 import StoryVideoPlayer from "@/components/media/StoryVideoPlayer";
 import StoryAudioPlayer from "@/components/media/StoryAudioPlayer";
 import { playTap, playSuccess, playCelebration, playUnlock, playStar } from "@/lib/sounds";
-import { generateCertificateDataUrl, generateCertificateImageUrl } from "@/lib/certificateImage";
+import { generateCertificateDataUrl } from "@/lib/certificateImage";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
@@ -296,34 +298,13 @@ export default function StoryDetailPage() {
     try { sessionStorage.setItem(key, "1"); } catch { /* ignore */ }
   }, [bookIsOpen, slug]);
 
+  // Shares the certificate with family (phone share sheet → WhatsApp fallback).
   const handleShare = async () => {
     setSharingCert(true);
     // Safety net: never stay stuck longer than 20 s
     const safety = setTimeout(() => setSharingCert(false), 20_000);
     try {
-      const storyUrl = window.location.href;
-
-      // 1. Try native file share (Android Chrome / iOS Safari)
-      const dataUrl = await generateCertificateDataUrl(childName, language).catch(() => null);
-      if (dataUrl) {
-        const blob = await fetch(dataUrl).then(r => r.blob());
-        const file = new File([blob], `${childName}-certificate.jpg`, { type: "image/jpeg" });
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], text: `🎉 ${childName} just completed "${storyTitle}" on NIMI!\n🔗 ${storyUrl}` });
-          return;
-        }
-      }
-
-      // 2. Upload cert → public URL → WhatsApp message with image link
-      const certPublicUrl = await generateCertificateImageUrl(childName, language, childId ?? undefined, slug).catch(() => null);
-      const message = certPublicUrl
-        ? `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n📜 View certificate:\n${certPublicUrl}\n\n🔗 Start learning:\n${storyUrl}`
-        : `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n🔗 ${storyUrl}`;
-
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    } catch {
-      const message = `🎉 ${childName} just completed "${storyTitle}" on NIMI! 🎓\n\n🔗 ${window.location.href}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      await shareCertificate({ childName, childId, language, storySlug: slug, storyTitle });
     } finally {
       clearTimeout(safety);
       setSharingCert(false);
@@ -875,9 +856,11 @@ export default function StoryDetailPage() {
                         whileHover={{ scale:1.02 }} whileTap={{ scale:0.96 }}
                         onClick={() => {
                           playTap();
-                          // Show boarding only once per session per story
+                          // Board only once: skip the boarding pass if the child already boarded
+                          // in the airport world (/home) or earlier this session.
                           try {
-                            const boarded = sessionStorage.getItem(`nimipiko:airways-boarded:${childId}:${slug}`);
+                            const boarded = sessionStorage.getItem(`nimipiko:airways-boarded:${childId}:${slug}`)
+                              || hasReached(readJourney(childId, storyId), "boarded");
                             setPhase(boarded ? "missions" : "boarding");
                           } catch {
                             setPhase("missions");
@@ -1524,6 +1507,8 @@ export default function StoryDetailPage() {
                   whileTap={m.buttonPress}
                   onClick={() => {
                     try { sessionStorage.setItem(`nimipiko:airways-boarded:${childId}:${slug}`,'1'); } catch { /* ignore */ }
+                    // Boarding + takeoff here = arriving at the storybook in the airport world too.
+                    advanceJourney(childId, storyId, "landed");
                     setPhase('takeoff');
                   }}
                   className="relative z-10 mt-7 font-baloo font-black text-lg py-4 px-10 flex items-center gap-3 min-h-[56px]"
@@ -2183,9 +2168,8 @@ export default function StoryDetailPage() {
                 </motion.div>
 
                 <div className="mt-4 space-y-3 w-full max-w-xs">
-                  <ShareAchievementFlow childId={childId} childName={childName} storySlug={slug} shareType="certificate"
-                    title={storyTitle} description={`${childName} completed: ${storyTitle}`}
-                    imageUrl={details?.cover_url ? getStorageUrl(details.cover_url) : null} />
+                  <ShareCertificateButton childName={childName} childId={childId} language={language}
+                    storySlug={slug} storyTitle={storyTitle} />
 
                   <motion.button whileTap={m.buttonPress}
                     onClick={() => setPhase("challenge")}

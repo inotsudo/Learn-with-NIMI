@@ -39,12 +39,9 @@ const ParentsManager = dynamicView(() => import('./ParentsManager'))
 const CertificatesManager = dynamicView(() => import('./CertificatesManager'))
 const RewardsManager = dynamicView(() => import('./RewardsManager'))
 const BadgesManager  = dynamicView(() => import('./BadgesManager'))
-const AnalyticsManager = dynamicView(() => import('./AnalyticsManager'))
 const SettingsManager = dynamicView(() => import('./SettingsManager'))
 const AdministratorsManager = dynamicView(() => import('./AdministratorsManager'))
 const NotificationsManager = dynamicView(() => import('./NotificationsManager'))
-const CurriculumManager = dynamicView(() => import('./CurriculumManager'))
-const CommunityManager = dynamicView(() => import('./CommunityManager'))
 const ProductsManager = dynamicView(() => import('./ProductsManager'))
 const MasterpieceManager = dynamicView(() => import('./MasterpieceManager'))
 const StorySlotsManager = dynamicView(() => import('./StorySlotsManager'))
@@ -246,7 +243,6 @@ export default function AdminPanel() {
   const isBadgeImagesView = currentTable === 'badge_images'
   const initialRewardChildId = isRewardsView ? currentTable.split(':')[1] : undefined
 
-  const isAnalyticsView = currentTable === 'child_progress'
 
   const isSettingsView = currentTable === 'parental_settings' || currentTable.startsWith('parental_settings:')
   const initialSettingsChildId = isSettingsView ? currentTable.split(':')[1] : undefined
@@ -259,9 +255,7 @@ export default function AdminPanel() {
 
   const isNotificationsView = currentTable === 'notifications'
 
-  const isCurriculumView = currentTable === 'curriculum'
 
-  const isCommunityView = currentTable === 'creations'
   const isProductsView = currentTable === 'products'
   const isPaymentHealthView = currentTable === 'payment_health'
   const isMasterpieceView = currentTable === 'masterpieces'
@@ -340,9 +334,6 @@ export default function AdminPanel() {
           {isBadgeImagesView && (
             <BadgesManager onOpenSidebar={() => setSidebarOpen(true)} />
           )}
-          {isAnalyticsView && (
-            <AnalyticsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
-          )}
           {isSettingsView && (
             <SettingsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />
           )}
@@ -352,8 +343,6 @@ export default function AdminPanel() {
           {isConversationHistoryView && <ConversationHistoryManager onOpenSidebar={() => setSidebarOpen(true)} />}
           {isAdministratorsView && <AdministratorsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isNotificationsView && <NotificationsManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
-          {isCurriculumView && <CurriculumManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
-          {isCommunityView && <CommunityManager onNavigate={setCurrentTable} onOpenSidebar={() => setSidebarOpen(true)} />}
           {isProductsView && <ProductsManager />}
           {isPaymentHealthView && <PaymentHealthManager />}
           {isMasterpieceView && <MasterpieceManager />}
@@ -384,7 +373,7 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
-          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isAnalyticsView && !isSettingsView && !isCurriculumView && !isCommunityView && !isProductsView && !isMasterpieceView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !isAuditLogView && !isPaymentHealthView && !isAirwaysHubView && !isAirwaysTemplatesView && !isKitLayoutView && !isSongManagerView && !isStoryPagesView && !isTestimonialsView && !isPartnersView && !isConversationHistoryView && !isPlatformIntroVideoView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
+          {!isMissionView && !isStoryView && !isStorySlotsView && !isStoryOrderingView && !isStoryPublishingView && !isFlipFlopView && !isStoryPdfsView && !isVideosView && !isAudioView && !isWeeklyChallengesView && !isFamiliesView && !isColoringView && !isLanguagesView && !isChildrenView && !isParentsView && !isCertificatesView && !isCertTemplatesView && !isRewardsView && !isBadgeImagesView && !isSettingsView && !isProductsView && !isMasterpieceView && !isNewsletterView && !isReferralView && !isDiscountCodesView && !isGiftView && !isAuditLogView && !isPaymentHealthView && !isAirwaysHubView && !isAirwaysTemplatesView && !isKitLayoutView && !isSongManagerView && !isStoryPagesView && !isTestimonialsView && !isPartnersView && !isConversationHistoryView && !isPlatformIntroVideoView && !['Buckets', 'Profile', 'admins', 'Dashboard', 'Help', 'notifications'].includes(currentTable) && (
             <TableView table={currentTable} />
           )}
           </ErrorBoundary>

@@ -7,11 +7,10 @@ import Image from "next/image";
 import { Edit } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import {
-  getChildren, getCurrentLevel, getCurriculumMissions,
+  getChildren, getCurrentLevel,
   getTotalStars, getChildBadges, getTodayMissions,
 } from "@/lib/queries";
 import type { Child } from "@/lib/queries";
-import { ACTIVITIES, type ActivityCategory } from "@/app/_activityData";
 import AppShell from "@/components/layout/AppShell";
 import { Bone } from "@/components/ui/Bone";
 import { PageSurface } from "@/components/layout/primitives";
@@ -20,12 +19,10 @@ import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import ProfileCard from "@/components/profile/ProfileCard";
 import ProfileStatsGrid from "@/components/profile/ProfileStatsGrid";
-import ProfileBadgesRow from "@/components/profile/ProfileBadgesRow";
 import AccountSettingsCard from "@/components/profile/AccountSettingsCard";
 import AppPreferencesCard from "@/components/profile/AppPreferencesCard";
 import EditChildModal from "@/components/profile/EditChildModal";
 import type { Language } from "@/contexts/LanguageContext";
-import ThemePicker from "@/components/settings/ThemePicker";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -41,7 +38,6 @@ export default function MyProfilePage() {
   const [activitiesCompleted, setActivitiesCompleted] = useState(0);
   const [starsCollected, setStarsCollected] = useState(0);
   const [badgesEarned, setBadgesEarned] = useState(0);
-  const [completedInLevel, setCompletedInLevel] = useState<Set<ActivityCategory>>(new Set());
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
@@ -62,11 +58,10 @@ export default function MyProfilePage() {
       const child = list.find(c => c.id === savedId) ?? list[0];
       setActiveChild(child);
 
-      const [level, stars, badges, curriculumMissions, todayMissions] = await Promise.all([
+      const [level, stars, badges, todayMissions] = await Promise.all([
         getCurrentLevel(child.id, child.language),
         getTotalStars(child.id, child.language),
         getChildBadges(child.id, child.language),
-        getCurriculumMissions(child.id),
         getTodayMissions(child.id, child.language),
       ]);
 
@@ -74,7 +69,6 @@ export default function MyProfilePage() {
       setActivitiesCompleted(todayMissions.length);
       setStarsCollected(stars);
       setBadgesEarned(badges.length);
-      setCompletedInLevel(new Set(curriculumMissions.filter(m => m.completed).map(m => m.category)));
     } catch (err) {
       console.error("[MyProfilePage] load error:", err);
     } finally {
@@ -144,8 +138,6 @@ export default function MyProfilePage() {
               avatar={activeChild?.avatar_url ?? null}
               childName={activeChild?.name ?? "Explorer"}
               level={level}
-              categoriesCompleted={completedInLevel.size}
-              categoriesTotal={ACTIVITIES.length}
             />
             <ProfileStatsGrid
               activitiesCompleted={activitiesCompleted}
@@ -155,14 +147,6 @@ export default function MyProfilePage() {
             />
           </div>
 
-          <div className="mt-4">
-            <ProfileBadgesRow completedInLevel={completedInLevel} />
-          </div>
-
-          {/* Theme Picker */}
-          <div className="mt-4 bg-[var(--ds-surface-card)] border border-ds-border shadow-ds-card p-5" style={{ borderRadius: 'var(--leaf-r)' }}>
-            <ThemePicker />
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
             {activeChild && (

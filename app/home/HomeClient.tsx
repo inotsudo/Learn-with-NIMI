@@ -103,7 +103,6 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
   const [level,            setLevel]            = useState(1);
   const [totalStars,       setTotalStars]       = useState(0);
   const [weekStreak,         setWeekStreak]         = useState<boolean[]>([false,false,false,false,false,false,false]);
-  const [,                   setCommunityCreations] = useState<Array<{ id: string; imageUrl: string; childName: string; type: string }>>([]);
   const [achievements,       setAchievements]       = useState<ChildAchievement[]>([]);
   const [consecutiveStreak,  setConsecutiveStreak]  = useState(0);
   const [,                   setFavorites]          = useState<Set<string>>(new Set());
@@ -250,21 +249,6 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
     }
   }
 
-  async function loadCommunityCreations() {
-    const { data } = await supabase
-      .from("creations")
-      .select("id, image_url, child_name, type")
-      .eq("is_public", true)
-      .eq("status", "approved")
-      .order("created_at", { ascending: false })
-      .limit(3);
-    if (data) setCommunityCreations(
-      data
-        .filter(r => { const url = (r.image_url as string | null) ?? ""; return url.length > 0 && !url.startsWith("/") && !url.startsWith("assets/"); })
-        .map(r => ({ id: r.id as string, imageUrl: (r.image_url as string | null) ?? "", childName: (r.child_name as string | null) ?? "", type: (r.type as string | null) ?? "art" }))
-    );
-  }
-
   async function select(child: Child, list?: Child[]) {
     const gen = ++selectGenRef.current;
     setActiveChild(child);
@@ -370,8 +354,6 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
           consecutiveStreak: cStreak, popularStories: popular, cosmetics: cos });
       }
 
-      // Community creations — best-effort, never blocks
-      void loadCommunityCreations();
     } catch (err) {
       console.error("[home] select failed:", err);
       if (hasCachedData) {
@@ -491,7 +473,7 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
   const worldData: WorldData = {
     childName: activeChild?.name ?? "Explorer",
     stories: stories.map((s) => ({
-      id: s.sid, slug: s.slug, title: s.title, emoji: s.theme_emoji ?? "📖", unlocked: s.unlocked, complete: s.complete,
+      id: s.sid, slug: s.slug, title: s.title, emoji: s.theme_emoji ?? "📖", unlocked: s.unlocked, complete: s.complete, order: s.sort_order,
     })),
     currentStoryId: curStory?.sid ?? null,
     slots: slots.map((s) => ({ slotKey: s.slot_key, title: s.title, completed: s.completed })),

@@ -2,7 +2,7 @@ import nextConfig from "eslint-config-next";
 
 const config = [
   {
-    ignores: ["node_modules/**", ".next/**", "dist/**", "make-circle.cjs"],
+    ignores: ["node_modules/**", ".next/**", "dist/**", "media-source/**", ".claude/**"],
   },
   ...nextConfig,
   {

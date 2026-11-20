@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import supabase from '@/lib/supabaseClient'
 import {
-  Search, SlidersHorizontal, LayoutGrid, Eye, Plus,
+  Search, SlidersHorizontal, LayoutGrid, Plus,
   MoreVertical, Pencil, Copy, ArrowUpDown, Archive, ArchiveRestore, ChevronLeft, ChevronRight,
   Star, ListChecks, Menu, AlertCircle, RefreshCw, X,
 } from 'lucide-react'
@@ -153,10 +153,6 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
   const pageRows = filtered.slice(pageStart, pageStart + PAGE_SIZE)
 
   const selected = missions.find(m => m.id === selectedId) ?? null
-
-  const handlePreview = () => {
-    window.open(`/missions/${categorySlug}`, '_blank')
-  }
 
   const handleCreate = async () => {
     setActionError(null)
@@ -359,9 +355,6 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handlePreview} className="flex items-center gap-1.5 bg-white border border-rose-200 text-rose-500 hover:bg-rose-50 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm transition">
-              <Eye className="w-4 h-4" /> Preview as Child
-            </button>
             <span className="inline-flex items-center gap-1.5 bg-white border border-gray-100 text-amber-500 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm">
               <Star className="w-3.5 h-3.5 fill-amber-400" /> {totalStars}
             </span>
@@ -509,9 +502,6 @@ export default function MissionManager({ categorySlug, initialMissionId, onNavig
                       </button>
                       <button onClick={() => { handleDuplicate(m); setOpenMenuId(null) }} disabled={mutatingId === m.id} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
                         <Copy size={14} className="text-gray-400" /> {mutatingId === m.id ? 'Duplicating...' : 'Duplicate'}
-                      </button>
-                      <button onClick={() => { handlePreview(); setOpenMenuId(null) }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition">
-                        <Eye size={14} className="text-gray-400" /> Preview
                       </button>
                       <button onClick={() => { void handleReorder(m, 'up'); setOpenMenuId(null) }} disabled={mutatingId === m.id} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
                         <ArrowUpDown size={14} className="text-gray-400" /> Move Up

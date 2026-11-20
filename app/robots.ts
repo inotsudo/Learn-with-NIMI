@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/stories", "/pricing", "/community", "/parents", "/help", "/privacy", "/terms"],
-        disallow: ["/admin/", "/api/", "/reset-password", "/home/", "/settings/", "/user-profile/", "/talk-to-nimi/", "/shop/", "/onboarding/"],
+        allow: ["/", "/stories", "/pricing", "/parents", "/help", "/privacy", "/terms"],
+        disallow: ["/admin/", "/api/", "/reset-password", "/home/", "/settings/", "/user-profile/", "/talk-to-nimi/", "/onboarding/"],
       },
     ],
     sitemap: "https://nimipiko.com/sitemap.xml",

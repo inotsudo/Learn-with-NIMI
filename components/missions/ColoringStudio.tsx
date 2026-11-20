@@ -308,37 +308,31 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
     showSavedTimer1Ref.current = setTimeout(() => setShowSaved(false), 2000);
   }, [pageIdx, saveToDb, childId, getPageId, pages]);
 
-  const shareToNimi = useCallback(async () => {
+  // Shares the finished picture with family through the phone's share sheet.
+  // Desktop browsers without file sharing get a download instead.
+  const sharePicture = useCallback(async () => {
     const canvas = canvasRef.current;
-    if (!canvas || !childId) return;
+    if (!canvas) return;
     try {
-      const dataUrl = canvas.toDataURL("image/png");
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `coloring-${Date.now()}.png`, { type: "image/png" });
-      const path = `community/coloring-${childId}-${Date.now()}.png`;
-      const { error } = await supabase.storage.from("creations").upload(path, file, { upsert: true });
-      if (error) return;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const children = await supabase.from("children").select("name").eq("id", childId).maybeSingle();
-      await supabase.from("creations").insert({
-        parent_id: user.id,
-        child_id: childId,
-        child_name: children.data?.name ?? "Artist",
-        description: `${children.data?.name ?? "A kid"} colored a beautiful picture! 🎨`,
-        type: "coloring",
-        status: "approved",
-        is_public: true,
-        image_url: `creations/${path}`,
-      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) return;
+      const file = new File([blob], `nimipiko-coloring-${Date.now()}.png`, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share({ files: [file], text: "🎨 NIMIPIKO" }); } catch { /* dismissed */ }
+        return;
+      }
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.download = file.name;
+      a.href = href;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(href), 1000);
       setShowSaved(true);
       // L8: store timer ref so it can be cleared on unmount
       clearTimeout(showSavedTimer2Ref.current);
       showSavedTimer2Ref.current = setTimeout(() => setShowSaved(false), 2000);
     } catch {}
-  }, [childId]);
+  }, []);
 
   // ── Navigation ──────────────────────────────────────────────
   const goTo = useCallback((next: number) => {
@@ -663,8 +657,8 @@ export default function ColoringStudio({ pages, childId, onClose, t }: ColoringS
               </button>
             </div>
 
-            {/* Share to Nimi */}
-            <button onClick={shareToNimi}
+            {/* Share with family */}
+            <button onClick={sharePicture}
               className="w-full flex items-center justify-center gap-2 py-3 leaf bg-pink-50 border border-pink-200 text-pink-600 text-xs font-bold hover:bg-pink-100 transition">
               {t("storyColorShare")}
             </button>

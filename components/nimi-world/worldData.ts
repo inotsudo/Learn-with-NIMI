@@ -1,4 +1,4 @@
-// Data contract between the app (HomeClient / demo) and the toy world.
+// Data contract between the app (HomeClient) and the toy world.
 import type { PassportStamp } from "./three/PassportBook";
 import { TARMAC_TILES } from "./themes";
 
@@ -9,6 +9,8 @@ export interface WorldStory {
   emoji: string;
   unlocked: boolean;
   complete: boolean;
+  /** Destination number (story sort_order) → flight NMP1xx, gate, "Destination N". */
+  order: number;
 }
 
 export interface WorldSlot { slotKey: string; title: string; completed: boolean }
@@ -65,32 +67,3 @@ export function nextSlotKey(data: WorldData): string | null {
   }
   return data.slots.find((s) => !s.completed)?.slotKey ?? null;
 }
-
-/** Public /world demo: a believable mid-adventure passenger, no real user data. */
-export const DEMO_WORLD: WorldData = {
-  childName: "Ketsia",
-  stories: [
-    { id: "s1", slug: "nimi-a-l-ecole", title: "Nimi à l'école", emoji: "🏫", unlocked: true, complete: true },
-    { id: "s2", slug: "le-jardin-de-zilo", title: "Le jardin de Zilo", emoji: "🌻", unlocked: true, complete: false },
-    { id: "s3", slug: "piko-et-les-etoiles", title: "Piko et les étoiles", emoji: "✨", unlocked: true, complete: false },
-    { id: "s4", slug: "la-fete-des-couleurs", title: "La fête des couleurs", emoji: "🎨", unlocked: false, complete: false },
-    { id: "s5", slug: "le-grand-voyage", title: "Le grand voyage", emoji: "✈️", unlocked: false, complete: false },
-    { id: "s6", slug: "nathan-et-les-visages", title: "Nathan et les visages qui parlent", emoji: "🙂", unlocked: false, complete: false },
-  ],
-  currentStoryId: "s2",
-  slots: [
-    { slotKey: "flipflop_audio", title: "FlipFlop Audio", completed: true },
-    { slotKey: "story_pdf", title: "Histoire PDF", completed: true },
-    { slotKey: "coloring", title: "Coloriage", completed: true },
-    { slotKey: "move_explore", title: "Bouge avec Nimi", completed: false },
-    { slotKey: "sing_along", title: "Karaoké", completed: false },
-    { slotKey: "bonus_video", title: "Vidéo Bonus", completed: false },
-  ],
-  stars: 27,
-  streak: 4,
-  level: 3,
-  xpIn: 17,
-  xpNeeded: 25,
-  xpPct: 68,
-  stamps: ["histoire-1", "flipflop-2", "story-s1-complete-fr", "coloring-1", "story-streak-3"].map(stampForBadge),
-};

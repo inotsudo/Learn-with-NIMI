@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Swords, Users, MessageCircle, ShoppingBag } from "lucide-react";
+import { Home, BookOpen, Swords, User, MessageCircle, Award } from "lucide-react";
 import { useAppTheme } from "@/contexts/AppThemeProvider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getThemeAssets } from "@/lib/design-system/assetRegistry";
@@ -15,8 +15,8 @@ const NAV_ITEMS = [
   { href: "/stories",      icon: BookOpen,      key: "stories",   labelKey: "navStories"    },
   { href: "/treasure",     icon: Swords,        key: "treasure",  labelKey: "navChallenges" },
   { href: null,            icon: null,          key: "nimi",      labelKey: ""              },
-  { href: "/community",    icon: Users,         key: "community", labelKey: "navFriends"    },
-  { href: "/shop",         icon: ShoppingBag,   key: "shop",      labelKey: "navShop"       },
+  { href: "/user-profile", icon: User,          key: "profile",   labelKey: "navProfile"      },
+  { href: "/certificates", icon: Award,         key: "certs",     labelKey: "navCertificates" },
   { href: "/talk-to-nimi", icon: MessageCircle, key: "talk",      labelKey: "navTalk"       },
 ];
 

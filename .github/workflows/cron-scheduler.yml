@@ -7,7 +7,6 @@ on:
     - cron: '0 12 * * *'    # check-momo-renewals at 12:00 UTC
     - cron: '0 8 * * 1'     # weekly-digest at 08:00 UTC on Mondays
     - cron: '0 8 * * *'     # send-gift-emails at 08:00 UTC
-    - cron: '*/15 * * * *'  # xapi flush every 15 minutes
 
 jobs:
   daily-reminder:
@@ -54,12 +53,3 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/cron/send-gift-emails"
-
-  xapi-flush:
-    if: github.event.schedule == '*/15 * * * *'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Call xapi flush cron
-        run: |
-          set -euo pipefail
-          curl -fsS -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" "${{ secrets.CRON_BASE_URL }}/api/enterprise/xapi?flush=1"

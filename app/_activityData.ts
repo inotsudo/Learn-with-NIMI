@@ -1,7 +1,7 @@
 // NIMIPIKO — "Today's Adventure" dashboard activity config (Phase 2A)
 //
-// Drives the homepage grid and the /missions/[category] dynamic route.
-// This config provides card layout/links/i18n fallbacks; lesson content
+// Category metadata (labels, emoji, colours) shared by profile, certificates
+// and parent views. Lesson content
 // (title, subtitle, media, stars, tips) is loaded from the `missions`
 // table per category and overrides these defaults when present.
 
@@ -27,7 +27,6 @@ export interface ActivityConfig {
   numBgGlass: string;
   numTextGlass: string;
   stars: number;
-  href: string;
   startKey?: string;
 }
 
@@ -44,7 +43,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-purple-400/20",
     numTextGlass: "text-purple-200",
     stars: 10,
-    href: "/missions/morning",
     startKey: "startSinging",
   },
   {
@@ -59,7 +57,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-pink-400/20",
     numTextGlass: "text-pink-200",
     stars: 10,
-    href: "/missions/movement",
     startKey: "startMoving",
   },
   {
@@ -74,7 +71,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-orange-400/20",
     numTextGlass: "text-orange-200",
     stars: 15,
-    href: "/missions/artistic",
     startKey: "startCreating",
   },
   {
@@ -89,7 +85,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-amber-400/20",
     numTextGlass: "text-amber-200",
     stars: 15,
-    href: "/missions/histoire",
     startKey: "startExploring",
   },
   {
@@ -104,7 +99,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-[var(--ds-brand-soft)]",
     numTextGlass: "text-[var(--ds-text-brand)]",
     stars: 15,
-    href: "/missions/zoom",
     startKey: "startZooming",
   },
   {
@@ -119,7 +113,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-teal-400/20",
     numTextGlass: "text-teal-200",
     stars: 10,
-    href: "/missions/discovery",
     startKey: "startDiscovering",
   },
   {
@@ -134,7 +127,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-indigo-400/20",
     numTextGlass: "text-indigo-200",
     stars: 10,
-    href: "/missions/flipflop",
     startKey: "startReading",
   },
   {
@@ -149,7 +141,6 @@ export const ACTIVITIES: ActivityConfig[] = [
     numBgGlass: "bg-yellow-400/20",
     numTextGlass: "text-yellow-200",
     stars: 10,
-    href: "/missions/coloring",
     startKey: "startColoring",
   },
 ];

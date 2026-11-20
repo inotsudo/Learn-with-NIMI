@@ -83,7 +83,7 @@ async function storyRecs(
       reason:      reasonKey,
       reasonLabel: STORY_REASON_LABELS[r.reasonKey] ?? 'Recommended for you',
       priority:    100 + i,
-      href:        `/missions?storyId=${r.storyId}`,
+      href:        '/stories',
       metadata: {
         coverUrl:      r.coverUrl,
         completionPct: r.completionPct,
@@ -124,7 +124,7 @@ function missionRecs(
       reason:      'interest_match',
       reasonLabel: 'Your favourite activity',
       priority:    50,
-      href:        `/missions/${type}`,
+      href:        '/stories',
       metadata:    { missionType: type },
       evidence:    buildMissionFavouriteEvidence(childName, type, favType.confidence),
     });
@@ -146,7 +146,7 @@ function missionRecs(
         reason:      'review_needed',
         reasonLabel: 'Build your skills here',
         priority:    200,
-        href:        `/missions/${type}`,
+        href:        '/stories',
         metadata:    { missionType: type, isStruggle: true },
         evidence:    buildMissionStruggleEvidence(childName, type, struggle.confidence),
       });
@@ -196,7 +196,7 @@ function vocabRec(
     reason:      'review_needed',
     reasonLabel: 'Words that need a little practice',
     priority:    75,
-    href:        '/missions/read-with-me',
+    href:        '/stories',
     metadata:    { wordCount: count, words: conceptsToReview.slice(0, 3).map(c => c.concept_name) },
     evidence:    buildVocabReviewEvidence(childName, conceptsToReview),
   };
@@ -252,32 +252,6 @@ function certificateRec(
   return null;
 }
 
-// ── Community rec ─────────────────────────────────────────────────
-
-function communityRec(
-  ctx:      LearnerContext,
-  memories: LearnerMemory[]
-): UniversalRecommendation | null {
-  const isCreative = memories.find(m =>
-    m.memory_type === 'personality' && m.key === 'creative' && m.confidence >= 0.7
-  );
-  if (!isCreative) return null;
-  const childName = ctx.child.name || 'your child';
-
-  return {
-    contentType: 'community',
-    id:          'community-share',
-    title:       'Share with the Community',
-    emoji:       '🌍',
-    reason:      'interest_match',
-    reasonLabel: 'Show your creativity',
-    priority:    300,
-    href:        '/community',
-    metadata:    {},
-    evidence:    buildMissionFavouriteEvidence(childName, 'creative sharing', isCreative.confidence),
-  };
-}
-
 function coloringRec(
   ctx:      LearnerContext,
   memories: LearnerMemory[]
@@ -296,7 +270,7 @@ function coloringRec(
     reason:      'interest_match',
     reasonLabel: 'Your favourite creative activity',
     priority:    150,
-    href:        '/missions/little-creators',
+    href:        '/stories',
     metadata:    {},
     evidence:    buildMissionFavouriteEvidence(childName, 'little creators', lovesCreating.confidence),
   };
@@ -338,7 +312,7 @@ function skillGapRec(
     reason:      'review_needed',
     reasonLabel: `You're ${levelLabel} ${sl}`,
     priority:    90,
-    href:        `/missions?skill=${weakest.curriculum_skill}`,
+    href:        '/stories',
     metadata: {
       skill:         weakest.curriculum_skill,
       masteryLevel:  weakest.mastery_level,
@@ -381,8 +355,6 @@ export async function getUniversalRecommendations(
   const coloring = coloringRec(ctx, memories);
   if (coloring) all.push(coloring);
 
-  const community = communityRec(ctx, memories);
-  if (community) all.push(community);
 
   const gap = skillGapRec(childName, skillMastery);
   if (gap) all.push(gap);

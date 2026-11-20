@@ -75,8 +75,6 @@ async function rateLimited(key: string, max: number): Promise<boolean> {
 
 // ── Route → per-minute limit for non-GET requests ───────────────────────────
 const LIMITS: [string, number][] = [
-  ["/api/auth/send-reset",       5],  // password reset — limit to protect Resend quota and prevent spam
-  ["/api/schools/inquiry",       5],  // lead form
   ["/api/newsletter",            5],  // newsletter sign-up
   ["/api/referral/validate",     10], // public code-check — tighter to block enumeration
   ["/api/referral",              20], // referral code ops
@@ -91,13 +89,9 @@ const LIMITS: [string, number][] = [
   ["/api/confirm-payment",       10], // payment confirmation
   ["/api/push",                  20], // push subscription ops
   ["/api/nimi",                  60], // AI chat + proactive + recommendations
-  ["/api/parent-ai",             10], // parent insight generation (expensive LLM)
-  ["/api/parent-insights",       10], // parent insight generation (expensive LLM)
-  ["/api/parent-recommendations", 10], // parent recommendation generation
   ["/api/ai/event",             120], // event inference (fast, but fire-and-forget)
   ["/api/masterpiece",           10], // expensive PDF generation
   ["/api/admin",                 60], // admin mutations
-  ["/api/v1",                    30], // external partner API
 ];
 
 function tooManyRequests() {
@@ -112,9 +106,6 @@ function tooManyRequests() {
 // AI routes we key by the first 32 chars of the bearer token (a unique session
 // fingerprint) so each authenticated user gets their own independent budget.
 const USER_SCOPED_ROUTES = new Set([
-  "/api/parent-ai",
-  "/api/parent-insights",
-  "/api/parent-recommendations",
   "/api/nimi",
 ]);
 
@@ -201,7 +192,6 @@ export const config = {
     "/api/referral/validate",
     "/api/referral/:path*",
     "/api/referral",
-    "/api/schools/:path*",
     "/api/orders/:path*",
     "/api/orders",
     "/api/checkout",
@@ -217,11 +207,6 @@ export const config = {
     "/api/certificate",
     "/api/masterpiece/:path*",
     "/api/auth/:path*",
-    "/api/creations/:path*",
-    "/api/v1/:path*",
-    "/api/parent-ai",
-    "/api/parent-insights",
-    "/api/parent-recommendations",
     "/api/ai/:path*",
     "/api/nimi",
   ],

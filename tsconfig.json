@@ -35,8 +35,6 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "app/user-profile",
-    "app/api/creations/upload",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
@@ -44,8 +42,6 @@
     "e2e",
     "playwright.config.ts",
     "__tests__",
-    "tmp-qa",
-    "tmp-nimi-preview",
-    "backups"
+    "media-source"
   ]
 }

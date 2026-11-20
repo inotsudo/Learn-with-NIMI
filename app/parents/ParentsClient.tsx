@@ -31,7 +31,6 @@ import EditProfileSheet from "@/components/profile/EditProfileSheet";
 import UpdateCardModal from "@/components/parents/UpdateCardModal";
 
 // Lazy-loaded tab panels — only downloaded when the user opens that tab
-const LearningBrainTab    = dynamic(() => import("@/components/parents/LearningBrainTab"),    { ssr: false });
 const ReferralCard        = dynamic(() => import("@/components/parents/ReferralCard"),         { ssr: false });
 const PushNotificationsCard = dynamic(() => import("@/components/parents/PushNotificationsCard"), { ssr: false });
 
@@ -145,7 +144,7 @@ export default function ParentsClient({ initialChildren, initialUserId }: Props 
   const [referralRewards, setReferralRewards] = useState(0);
   const [referralCodeError, setReferralCodeError] = useState(false);
   const [parentUserId, setParentUserId] = useState<string | null>(null);
-  const [parentTab, setParentTab] = useState<"overview" | "stories" | "achievements" | "learning" | "airways" | "settings">("overview");
+  const [parentTab, setParentTab] = useState<"overview" | "stories" | "achievements" | "airways" | "settings">("overview");
   const [airwaysDownloading, setAirwaysDownloading] = useState<string | null>(null);
   const [airwaysError, setAirwaysError] = useState<string | null>(null);
   const [boardingPassPreview, setBoardingPassPreview] = useState<string | null>(null);
@@ -1098,7 +1097,6 @@ export default function ParentsClient({ initialChildren, initialUserId }: Props 
                   { id: "overview",     emoji: "📊", label: t("tabOverview"), badge: null },
                   { id: "stories",      emoji: "📚", label: t("tabStories"),  badge: totalStories > 0 ? `${storiesComplete}/${totalStories}` : null },
                   { id: "achievements", emoji: "🏆", label: t("tabWins"),     badge: (badges.length + certs.length) > 0 ? String(badges.length + certs.length) : null },
-                  { id: "learning",     emoji: "🧠", label: "Learning",       badge: null },
                   { id: "airways",      emoji: "✈️", label: "Journey",        badge: null },
                   { id: "settings",     emoji: "⚙️", label: t("tabSettings"), badge: null },
                 ] as { id: typeof parentTab; emoji: string; label: string; badge: string | null }[]).map(tab => (
@@ -2259,17 +2257,6 @@ export default function ParentsClient({ initialChildren, initialUserId }: Props 
                     )}
 
                   </motion.div>
-                )}
-
-                {/* ── LEARNING TAB ── */}
-                {parentTab === "learning" && (
-                  <div id="tabpanel-learning" role="tabpanel" aria-labelledby="tab-learning">
-                    <LearningBrainTab
-                      childId={active.child.id}
-                      language={active.child.language}
-                      childName={active.child.name}
-                    />
-                  </div>
                 )}
 
                 {/* ── AIRWAYS TAB ── */}

@@ -251,7 +251,7 @@ export default function LandingPage() {
           {href:"/stories",  top:"46.60vw",label:"Explorer"},
           {href:"/stories",  top:"53.60vw",label:"Bouger"},
           {href:"/stories",  top:"60.60vw",label:"Chanter"},
-          {href:"/community", top:"67.61vw",label:"Grandir"},
+          {href:"/stories",  top:"67.61vw",label:"Grandir"},
         ] as const).map(({href,top,label}) => (
           <Link key={label} href={href} aria-label={label} className="absolute z-20 cursor-pointer"
             style={{top,right:"6.54vw",width:"39.59vw",height:"6.45vw"}} />
@@ -297,7 +297,7 @@ export default function LandingPage() {
           {href:"/stories",  top:"21.81vw",label:"Explore"},
           {href:"/stories",  top:"26.98vw",label:"Move"},
           {href:"/stories",  top:"32.15vw",label:"Sing"},
-          {href:"/community", top:"37.31vw",label:"Grow"},
+          {href:"/stories",  top:"37.31vw",label:"Grow"},
         ] as const).map(({href,top,label}) => (
           <Link key={label} href={href} aria-label={label} className="absolute z-20 cursor-pointer"
             style={{top,right:"7.01vw",width:"23.99vw",height:"5.14vw"}} />
@@ -1019,7 +1019,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-3 gap-10 text-center sm:text-left">
               <div>
                 <p className="font-baloo font-black text-white text-[13px] mb-4">Learn</p>
-                {([["Stories","/stories"],["Community","/community"]] as const).map(([l,h]) => (
+                {([["Stories","/stories"]] as const).map(([l,h]) => (
                   <Link key={l} href={h} className="block font-nunito text-gray-400 hover:text-white text-[13px] mb-2 transition-colors">{l}</Link>
                 ))}
               </div>

@@ -8,11 +8,12 @@ interface Props {
   avatar: string | null;
   childName: string;
   level: number;
-  categoriesCompleted: number;
-  categoriesTotal: number;
+  /** Optional progress bar; hidden when not provided. */
+  categoriesCompleted?: number;
+  categoriesTotal?: number;
 }
 
-export default function ProfileCard({ avatar, childName, level, categoriesCompleted, categoriesTotal }: Props) {
+export default function ProfileCard({ avatar, childName, level, categoriesCompleted = 0, categoriesTotal = 0 }: Props) {
   const { t } = useLanguage();
   const pct = categoriesTotal > 0 ? (categoriesCompleted / categoriesTotal) * 100 : 0;
 
@@ -41,7 +42,7 @@ export default function ProfileCard({ avatar, childName, level, categoriesComple
         {t("levelExplorer").replace("{level}", String(level))}
       </motion.span>
 
-      <div className="w-full mt-4">
+      {categoriesTotal > 0 && <div className="w-full mt-4">
         <div className="w-full bg-[var(--ds-surface-card-active)] rounded-full h-3.5 overflow-hidden">
           <motion.div
             className="bg-gradient-to-r from-yellow-400 via-green-400 to-sky-400 h-full rounded-full"
@@ -53,7 +54,7 @@ export default function ProfileCard({ avatar, childName, level, categoriesComple
         <p className="text-xs text-[var(--ds-text-secondary)] font-semibold mt-1.5">
           {t("levelProgressLabel").replace("{current}", String(categoriesCompleted)).replace("{total}", String(categoriesTotal))}
         </p>
-      </div>
+      </div>}
     </div>
   );
 }

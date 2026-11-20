@@ -233,12 +233,6 @@ export function generateProactiveSuggestions(
     }));
   }
 
-  // ── 6. Community invite (no upload in 7 days) ────────────────
-  const hasRecentUpload = memories.find(m => m.memory_type === 'achievement' && m.key === 'story_author');
-  if (!hasRecentUpload) {
-    suggestions.push(make('community_invite', 8, name, lang, {}));
-  }
-
   // ── 7. Daily check-in fallback ───────────────────────────────
   if (suggestions.length === 0) {
     suggestions.push(make('daily_checkin', 10, name, lang, {}));
