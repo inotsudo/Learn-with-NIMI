@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { useThemeMotion } from "@/hooks/useThemeMotion";
 import { Crown } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import {
-  getChildren, ensureParentRow, getStorageUrl,
+  getChildren, ensureParentRow,
   getCurrentLevel, getTotalStars,
   getWeekStreak, getActivityDates,
   getChildAchievements,
@@ -19,27 +17,15 @@ import {
 import { resolveShields } from "@/lib/streakShields";
 import { computeStreaks } from "@/lib/parentInsights";
 import type { Child, ChildAchievement } from "@/lib/queries";
-import { getStoryLibraryStrict, getStorySlots, getStoryDetails, getPopularStories, type PopularStory } from "@/lib/storyRepository";
+import { getStoryLibraryStrict, getStorySlots, getPopularStories, type PopularStory } from "@/lib/storyRepository";
 import { getActiveSubscription } from "@/lib/payments/products";
 import type { StoryLibraryItem, StorySlot } from "@/lib/story-types";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
-import { useAppTheme } from "@/contexts/AppThemeProvider";
-import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import AppShell              from "@/components/layout/AppShell";
-import { Bone }             from "@/components/ui/Bone";
-import { RefreshingBadge }  from "@/components/layout/RefreshingBadge";
-import HomeAdventureSection       from "@/components/home/HomeAdventureSection";
-import HomeQuickActions           from "@/components/home/HomeQuickActions";
-import HomeContinueAdventureCard  from "@/components/home/HomeContinueAdventureCard";
-import HomePassportCard           from "@/components/home/HomePassportCard";
-import HomeTodayStarsCard         from "@/components/home/HomeTodayStarsCard";
-import HomeAirwaysDashboard       from "@/components/home/HomeAirwaysDashboard";
-import HomeWorldShell             from "@/components/home/HomeWorldShell";
-import { UniverseProvider, UniverseTransition } from "@/components/universe";
-import NotificationOptInPrompt    from "@/components/home/NotificationOptInPrompt";
 import WelcomeBackOverlay         from "@/components/home/WelcomeBackOverlay";
-import NimiProactiveBanner        from "@/components/home/NimiProactiveBanner";
-import { SHOP_ITEM_MAP } from "@/components/shop/_shopData";
+import { NimiThemeProvider }      from "@/components/nimi-world/NimiThemeProvider";
+import NimiToyWorld               from "@/components/nimi-world/NimiToyWorld";
+import { worldLangFor }           from "@/components/nimi-world/themes";
+import { stampForBadge, type WorldData } from "@/components/nimi-world/worldData";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -52,60 +38,6 @@ const LEVELS = [
 ];
 
 
-
-const CATEGORY_VISUALS: Record<string, { emoji: string; bg: string; accent: string; label: string }> = {
-  morning:   { emoji: "🎵", bg: "from-purple-50 to-pink-100",    accent: "#ec4899", label: "Morning Song"  },
-  movement:  { emoji: "🤸", bg: "from-pink-50   to-red-100",     accent: "#f43f5e", label: "Move & Groove" },
-  artistic:  { emoji: "🎨", bg: "from-amber-50  to-yellow-100",  accent: "#fbbf24", label: "Art Time"      },
-  histoire:  { emoji: "📖", bg: "from-blue-50   to-sky-100",     accent: "#38bdf8", label: "Story Time"    },
-  zoom:      { emoji: "🔍", bg: "from-green-50  to-emerald-100", accent: "#34d399", label: "Zoom In"       },
-  discovery: { emoji: "🌍", bg: "from-teal-50   to-cyan-100",    accent: "#22d3ee", label: "Discover"      },
-  flipflop:  { emoji: "🎧", bg: "from-violet-50 to-purple-100",  accent: "#a78bfa", label: "Flip Flop"     },
-  coloring:  { emoji: "🦋", bg: "from-pink-50   to-rose-100",    accent: "#fb7185", label: "Color"         },
-};
-
-
-
-const CAT_BADGE_DISPLAY: Record<string, { emoji: string; label: string; from: string; to: string; glow: string }> = {
-  morning:   { emoji: "🎵", label: "Music Master",   from: "#ec4899", to: "#db2777", glow: "#ec4899" },
-  movement:  { emoji: "🤸", label: "Move Champion",  from: "#f43f5e", to: "#e11d48", glow: "#f43f5e" },
-  artistic:  { emoji: "🎨", label: "Art Star",       from: "#fbbf24", to: "#f59e0b", glow: "#fbbf24" },
-  histoire:  { emoji: "📖", label: "Story Master",   from: "#38bdf8", to: "#0ea5e9", glow: "#38bdf8" },
-  zoom:      { emoji: "🔍", label: "Zoom Explorer",  from: "#34d399", to: "#10b981", glow: "#34d399" },
-  discovery: { emoji: "🌍", label: "Discoverer",     from: "#22d3ee", to: "#06b6d4", glow: "#22d3ee" },
-  flipflop:  { emoji: "🎧", label: "Audio Legend",   from: "#a78bfa", to: "#7c3aed", glow: "#a78bfa" },
-  coloring:  { emoji: "🦋", label: "Color Expert",   from: "#fb7185", to: "#e11d48", glow: "#fb7185" },
-};
-
-function parseBadgeSlug(slug: string): { emoji: string; label: string; from: string; to: string; glow: string } {
-  if (slug.startsWith("trilingual-story-"))
-    return { emoji: "🌐", label: "Trilingual!", from: "#14b8a6", to: "#0d9488", glow: "#14b8a6" };
-  if (slug.startsWith("story-streak-")) {
-    const n = slug.split("-")[2] ?? "5";
-    return { emoji: "🔥", label: `${n}-Story Streak`, from: "#f97316", to: "#ea580c", glow: "#f97316" };
-  }
-  if (slug.startsWith("story-") && slug.includes("-complete-"))
-    return { emoji: "📚", label: "Story Complete", from: "#818cf8", to: "#6366f1", glow: "#818cf8" };
-  if (slug.startsWith("level-") && slug.includes("-complete-")) {
-    const n = slug.split("-")[1] ?? "1";
-    return { emoji: "⭐", label: `Level ${n} Champ`, from: "#fbbf24", to: "#f59e0b", glow: "#fbbf24" };
-  }
-  const cat = slug.split("-")[0] ?? "";
-  return CAT_BADGE_DISPLAY[cat] ?? { emoji: "🏅", label: "Achievement", from: "#818cf8", to: "#6366f1", glow: "#818cf8" };
-}
-
-const LOCKED_BADGE_PLACEHOLDERS = [
-  { emoji: "🎨", label: "Art Star",    from: "#fbbf24", to: "#f59e0b", glow: "#fbbf24" },
-  { emoji: "🧩", label: "Puzzle Pro",  from: "#818cf8", to: "#6366f1", glow: "#818cf8" },
-  { emoji: "🔥", label: "Streak Hero", from: "#f97316", to: "#ea580c", glow: "#f97316" },
-];
-
-
-
-
-const up      = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const } } };
-const pop     = { hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.34, 1.56, 0.64, 1] as const } } };
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.07 } } };
 
 interface HomeSnapshot {
   ts: number;
@@ -148,10 +80,7 @@ function InlineToast({ message, onDone }: { message: string; onDone: () => void 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 export default function HomeClient({ initialChildren, initialHasSubscription }: Props = {}) {
   const router = useRouter();
-  const m = useThemeMotion();
-  const { setLanguage, t } = useLanguage();
-  const { themeId, theme } = useAppTheme();
-  const assets = getThemeAssets(themeId);
+  const { setLanguage } = useLanguage();
 
   const activeChildRef       = useRef<Child | null>(null);
   const switchGenRef         = useRef(0);
@@ -160,11 +89,11 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
   const silentRefreshingRef  = useRef(false);      // prevents concurrent silentRefresh calls
   const [loading,         setLoading]         = useState(true);
   const [initError,       setInitError]       = useState(false);
-  const [refreshing,      setRefreshing]      = useState(false);
+  const [,                setRefreshing]      = useState(false);
   const [children,        setChildren]        = useState<Child[]>([]);
   const [activeChild,     setActiveChild]     = useState<Child | null>(null);
   const [noChildrenYet,   setNoChildrenYet]   = useState(false);
-  const [hasSubscription, setHasSubscription] = useState(false);
+  const [,                setHasSubscription] = useState(false);
   const [isTrial,           setIsTrial]           = useState(false);
   const [trialDaysLeft,     setTrialDaysLeft]     = useState(0);
   const [trialJustExpired,  setTrialJustExpired]  = useState(false);
@@ -174,10 +103,10 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
   const [level,            setLevel]            = useState(1);
   const [totalStars,       setTotalStars]       = useState(0);
   const [weekStreak,         setWeekStreak]         = useState<boolean[]>([false,false,false,false,false,false,false]);
-  const [communityCreations, setCommunityCreations] = useState<Array<{ id: string; imageUrl: string; childName: string; type: string }>>([]);
+  const [,                   setCommunityCreations] = useState<Array<{ id: string; imageUrl: string; childName: string; type: string }>>([]);
   const [achievements,       setAchievements]       = useState<ChildAchievement[]>([]);
   const [consecutiveStreak,  setConsecutiveStreak]  = useState(0);
-  const [favorites,          setFavorites]          = useState<Set<string>>(new Set());
+  const [,                   setFavorites]          = useState<Set<string>>(new Set());
   const [cosmetics,          setCosmetics]          = useState<ChildCosmetics>({ nimi_outfit: null, piko_outfit: null, frame: null, title_badge: null });
   const [welcomeBack,        setWelcomeBack]        = useState<{ show: boolean; daysAway: number }>({ show: false, daysAway: 0 });
   const [langToast,          setLangToast]          = useState<string | null>(null);
@@ -520,48 +449,30 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
     await select(child, [...children, child]);
   }
 
+  const isFr = activeChild?.language === "fr";
+
   if (initError) return (
-    <AppShell>
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <span className="text-5xl leading-none">😕</span>
-        <div>
-          <p className="font-baloo font-black text-[var(--ds-text-primary)] text-xl mb-1">Couldn&apos;t load your dashboard</p>
-          <p className="font-nunito text-[var(--ds-text-secondary)] text-sm">Check your connection and try again.</p>
-        </div>
-        <button
+    <div className="fixed inset-0 grid place-items-center px-6" style={{ background: "linear-gradient(160deg, #06101F 0%, #1A3558 60%, #0d2244 100%)" }}>
+      <div className="flex flex-col items-center gap-5 text-center">
+        <motion.span className="text-7xl leading-none" animate={{ y: [-6, 6, -6] }} transition={{ duration: 3, repeat: Infinity }} aria-hidden="true">🛸</motion.span>
+        <p className="font-baloo text-2xl font-black text-white">{isFr ? "Oups, la tour de contrôle ne répond pas" : "Oops, the control tower isn't answering"}</p>
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
           onClick={() => { setInitError(false); setLoading(true); void init(); }}
-          className="font-baloo font-black px-8 py-3.5 leaf shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all"
-          style={{ background: "linear-gradient(135deg,var(--ds-brand-primary),var(--ds-brand-hover))", color: "var(--ds-nav-bg)", boxShadow: "var(--ds-shadow-cta)" }}
+          className="rounded-full px-8 py-4 font-baloo text-lg font-black"
+          style={{ minHeight: 64, background: "linear-gradient(135deg, #C9A84C, #D4A830 60%, #c09428)", color: "#06101F", boxShadow: "0 8px 0 rgba(0,0,0,0.3)" }}
         >
-          Try Again
-        </button>
+          🔄 {isFr ? "Réessayer" : "Try again"}
+        </motion.button>
       </div>
-    </AppShell>
+    </div>
   );
 
   if (noChildrenYet) { router.replace("/onboarding"); return null; }
 
   /* ─── Derived ──────────────────────────────────────────────────────────── */
-  const WEEK_DAYS = [t("dayMon"), t("dayTue"), t("dayWed"), t("dayThu"), t("dayFri"), t("daySat"), t("daySun")];
-
-  // Streak broke = no current streak, had activity earlier this week, haven't done today yet.
-  const todayDotIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-  const streakBroke = consecutiveStreak === 0
-    && !weekStreak[todayDotIdx]
-    && weekStreak.slice(0, todayDotIdx).some(Boolean);
-
-  const greeting = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return t("greetingMorning");
-    if (h < 17) return t("greetingAfternoon");
-    return t("greetingEvening");
-  })();
-  const dateLocale = activeChild?.language === "fr" ? "fr-FR" : "en-US";
-
-  const curStory         = stories.find(s => s.unlocked && !s.complete) ?? stories[0];
-  const doneSlots  = slots.filter(s => s.completed).length;
-  const totalSlots = slots.length;
-  const pct        = totalSlots > 0 ? Math.round((doneSlots / totalSlots) * 100) : 0;
+  const curStory   = stories.find(s => s.unlocked && !s.complete) ?? stories[0];
   const xp         = totalStars;
   // Derive star-level: first bucket whose maxXp >= stars; -1 means stars exceeds all → last level.
   const xpLvlIdxFinal = (() => {
@@ -573,329 +484,72 @@ export default function HomeClient({ initialChildren, initialHasSubscription }: 
   const xpIn       = Math.max(0, xp - prevMax);
   const xpNeeded   = levelInfo.maxXp - prevMax;
   const xpPct      = Math.min(100, Math.round((xpIn / xpNeeded) * 100));
-  const xpLevel    = xpLvlIdxFinal + 1;
-  // 0 = Mon … 6 = Sun, matching the weekStreak array order
-  const todayIdx  = (new Date().getDay() + 6) % 7;
 
-  // The desktop dashboard is deliberately composed as one travel-desk grid:
-  // content and live data stay here; visual layout lives in the focused view.
-  // Phase 2 — Home World: the live dashboard floats on the Universe scene
-  // (sky → dunes → atmosphere) inside the stage transition wrapper.
-  if (!loading) {
-    return (
-      <AppShell>
-        <RefreshingBadge show={refreshing} />
-        <UniverseProvider>
-          <UniverseTransition stageKey="home">
-            <HomeWorldShell>
-              <HomeAirwaysDashboard
-                childName={activeChild?.name ?? "Explorer"}
-                themeId={themeId}
-                greeting={greeting}
-                stories={stories}
-                curStory={curStory}
-                slots={slots}
-                doneSlots={doneSlots}
-                totalSlots={totalSlots}
-                totalStars={totalStars}
-                streak={consecutiveStreak}
-                level={xpLevel}
-                xpIn={xpIn}
-                xpNeeded={xpNeeded}
-                xpPct={xpPct}
-                stampsCollected={achievements.filter((achievement) => achievement.type === "badge").length}
-              />
-            </HomeWorldShell>
-          </UniverseTransition>
-        </UniverseProvider>
-        {welcomeBack.show && activeChild && (
-          <WelcomeBackOverlay childName={activeChild.name} daysAway={welcomeBack.daysAway} onDismiss={() => setWelcomeBack({ show: false, daysAway: 0 })} />
-        )}
-        {activeChild && <NotificationOptInPrompt childId={activeChild.id} childName={activeChild.name} />}
-        <AnimatePresence>
-          {langToast && (
-            <InlineToast key={`lang-toast-${langToastKey.current}`} message={langToast} onDone={() => setLangToast(null)} />
-          )}
-        </AnimatePresence>
-      </AppShell>
-    );
-  }
+  // Zero-dashboard home: the learner lands in the NIMIPIKO Airways toy world.
+  // Everything a child needs is a toy in that world; parent-only information
+  // (trial / subscription) lives behind the Kit's long-press Parent Portal.
+  const worldData: WorldData = {
+    childName: activeChild?.name ?? "Explorer",
+    stories: stories.map((s) => ({
+      id: s.sid, slug: s.slug, title: s.title, emoji: s.theme_emoji ?? "📖", unlocked: s.unlocked, complete: s.complete,
+    })),
+    currentStoryId: curStory?.sid ?? null,
+    slots: slots.map((s) => ({ slotKey: s.slot_key, title: s.title, completed: s.completed })),
+    stars: totalStars,
+    streak: consecutiveStreak,
+    level: xpLvlIdxFinal + 1,
+    xpIn,
+    xpNeeded,
+    xpPct,
+    stamps: achievements.filter((a) => a.type === "badge").map((a) => stampForBadge(a.slug)),
+  };
 
-  /* ═══════════════════════════════════════════════════════════════════════ */
+  const parentExtras = (isTrial || trialJustExpired) ? (
+    <Link
+      href="/pricing"
+      className="flex items-center gap-3 rounded-2xl p-3"
+      style={{ background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.35)" }}
+    >
+      <span className="text-xl" aria-hidden="true">{trialJustExpired ? "⏳" : trialDaysLeft <= 2 ? "⚡" : "🎫"}</span>
+      <span className="flex-1 text-sm">
+        <strong className="text-white">
+          {trialJustExpired
+            ? (isFr ? "L'essai gratuit de 7 jours est terminé" : "Your 7-day free trial has ended")
+            : isFr ? `Essai : ${trialDaysLeft} jour${trialDaysLeft === 1 ? "" : "s"} restant${trialDaysLeft === 1 ? "" : "s"}` : `Trial: ${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`}
+        </strong>
+        <span className="block opacity-75">{isFr ? "S'abonner pour garder l'accès complet →" : "Subscribe to keep full access →"}</span>
+      </span>
+      <Crown className="h-4 w-4 shrink-0" style={{ color: "#C9A84C" }} />
+    </Link>
+  ) : undefined;
+
   return (
-    <AppShell>
-      <RefreshingBadge show={refreshing} />
-      {loading ? (
-        <>
-          <div className="min-h-screen pb-24">
-            <Bone className="w-full rounded-none" style={{ height: 380 }} />
-            <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6 flex flex-col xl:flex-row gap-6">
-              <div className="flex-1 min-w-0 space-y-5">
-                <div className="grid grid-cols-1 lg:grid-cols-[40%_1fr] gap-5">
-                  <Bone className="h-[340px] leaf-lg" />
-                  <Bone className="h-[340px] leaf-lg" />
-                </div>
-              </div>
-              <div className="w-full xl:w-[284px] xl:shrink-0 space-y-4">
-                <Bone className="h-[180px] leaf-lg" />
-                <Bone className="h-[220px] leaf-lg" />
-                <Bone className="h-[140px] leaf-lg" />
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className={`min-h-screen content-enter transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`} style={{ background: "#F5F0E6" }}>
-
-          {/* ════════════════════════════════ HERO ══════════════════════════ */}
-          <motion.div
-            initial="hidden" animate="visible" variants={stagger}
-            className="relative">
-
-            {/* ═══════════════════════ HERO: WORLD STAGE ═══════════════════════ */}
-            <div className="relative overflow-hidden" style={{ minHeight: 300 }}>
-
-              {/* ── AIRWAYS: Airport scene — real image ── */}
-              <div aria-hidden="true" className="absolute inset-0 pointer-events-none select-none">
-                {/* Photo background — covers full hero */}
-                <img
-                  src="/airport-hero.png"
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ objectPosition: "center bottom" }}
-                />
-                {/* Very light vignette left — just enough to keep boarding pass readable */}
-                <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(6,16,31,0.28) 0%, rgba(6,16,31,0.06) 38%, transparent 58%)" }} />
-                {/* Bottom fade to page cream */}
-                <div className="absolute inset-x-0 bottom-0" style={{ height: 80, background: "linear-gradient(to top, #F5F0E6, transparent)" }} />
-              </div>{/* end airport scene */}
-
-
-
-              {/* ══════════════════════════════════════════════════════════════
-                   Layer 3 — CONTENT: greeting left, characters right
-              ══════════════════════════════════════════════════════════════ */}
-              <div className="relative z-10 flex flex-col md:flex-row md:items-end px-6 sm:px-10 lg:px-14 pt-6 pb-8 max-w-[1400px] mx-auto min-h-[200px] gap-3 justify-between">
-
-                {/* ── LEFT: Greeting text ────────────────────────────────── */}
-                <motion.div variants={up} className="flex flex-col justify-end pb-2 max-w-[380px]">
-                  {/* Sparkle + time-of-day */}
-                  <p className="font-baloo font-bold text-base drop-shadow" style={{ color: "white", textShadow: "0 1px 6px rgba(0,0,0,0.45)" }}>
-                    {greeting},
-                  </p>
-                  {/* Name */}
-                  <h1 className="font-baloo font-black leading-none drop-shadow" style={{ fontSize: "clamp(2.4rem,5.5vw,3.5rem)", color: "#14233B", textShadow: "0 2px 12px rgba(255,255,255,0.70)" }}>
-                    {activeChild?.name ?? "Explorer"}! <span className="inline-block animate-bounce" style={{ animationDuration: "2s" }}>⭐</span>
-                  </h1>
-                  {/* Subtitle */}
-                  <p className="font-baloo font-bold text-lg mt-1 drop-shadow" style={{ color: "#14233B", textShadow: "0 1px 8px rgba(255,255,255,0.60)" }}>
-                    Where shall we fly today?
-                  </p>
-                </motion.div>
-
-                {/* ── RIGHT: Characters on world stage ──────────────────── */}
-                <motion.div variants={up} className="relative flex flex-1 items-end justify-end self-stretch shrink-0">
-                  {/* Stage spotlight — gold runway glow rising from ground */}
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[340px] sm:w-[440px] h-[110px] pointer-events-none"
-                    style={{ background: "radial-gradient(ellipse 70% 60% at 50% 100%, rgba(201,168,76,0.35) 0%, rgba(201,168,76,0.08) 50%, transparent 75%)" }} />
-
-                  {/* NIMI with outfit badge */}
-                  <div className="relative">
-                    <motion.img src={`/themes/${themeId}/characters/nimi.png`} alt="Nimi"
-                    className="h-[170px] sm:h-[205px] lg:h-[235px] w-auto object-contain drop-shadow-2xl select-none"
-                      animate={{ y: [0, -9, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    {cosmetics.nimi_outfit && SHOP_ITEM_MAP[cosmetics.nimi_outfit] && (
-                      <motion.span
-                        initial={{ scale: 0 }} animate={{ scale: 1 }}
-                        className="absolute bottom-6 right-0 text-4xl drop-shadow-xl leading-none pointer-events-none select-none"
-                        title={t(SHOP_ITEM_MAP[cosmetics.nimi_outfit].nameKey)}
-                      >
-                        {SHOP_ITEM_MAP[cosmetics.nimi_outfit].emoji}
-                      </motion.span>
-                    )}
-                  </div>
-
-                  {/* PIKO with outfit badge */}
-                  <div className="relative mx-2">
-                    <motion.img src={`/themes/${themeId}/characters/piko.png`} alt="Piko"
-                    className="h-[155px] sm:h-[185px] lg:h-[215px] w-auto object-contain drop-shadow-2xl select-none"
-                      animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    {cosmetics.piko_outfit && SHOP_ITEM_MAP[cosmetics.piko_outfit] && (
-                      <motion.span
-                        initial={{ scale: 0 }} animate={{ scale: 1 }}
-                        className="absolute bottom-6 right-0 text-4xl drop-shadow-xl leading-none pointer-events-none select-none"
-                        title={t(SHOP_ITEM_MAP[cosmetics.piko_outfit].nameKey)}
-                      >
-                        {SHOP_ITEM_MAP[cosmetics.piko_outfit].emoji}
-                      </motion.span>
-                    )}
-                  </div>
-
-                  {/* ZILO */}
-                  <motion.img src={`/themes/${themeId}/characters/zilo.png`} alt="Zilo"
-                    className="h-[160px] sm:h-[195px] lg:h-[225px] w-auto object-contain drop-shadow-2xl select-none"
-                    animate={{ y: [0, -8, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                </motion.div>
-
-              </div>{/* end content */}
-
-              {/* ── Transition: tarmac → cream page ─────────────────────── */}
-              <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none" style={{ lineHeight: 0 }}>
-                <svg viewBox="0 0 1440 56" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
-                  <path d="M0,20 C360,44 720,4 1080,28 C1260,40 1380,14 1440,22 L1440,56 L0,56 Z" fill="rgba(205,198,188,0.45)" />
-                  <path d="M0,34 C240,52 540,16 840,36 C1080,52 1320,22 1440,38 L1440,56 L0,56 Z" fill="rgba(220,213,202,0.72)" />
-                  <path d="M0,46 C300,28 600,56 900,40 C1100,30 1280,52 1440,44 L1440,56 L0,56 Z" fill="#F5F0E6" />
-                </svg>
-              </div>
-
-            </div>{/* end hero card */}
-          </motion.div>
-
-          {/* ── Quick Actions row ────────────────────────────────────────── */}
-          <div className="relative z-30 px-5 sm:px-8 lg:px-10 pt-4 pb-2 max-w-[1400px] mx-auto">
-            <HomeQuickActions curStorySlug={curStory?.slug} />
-          </div>
-
-          {/* ════════════════ BELOW HERO ════════════════ */}
-          <div className="px-5 sm:px-8 lg:px-10  pt-2 max-w-[1400px] mx-auto flex flex-col gap-4">
-
-            {/* Trial-expired banner */}
-            {trialJustExpired && (
-              <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
-                <div className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl px-4 py-3.5 shadow-sm">
-                  <span className="text-2xl shrink-0">⏳</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-baloo font-black text-amber-900 text-sm leading-tight">Your 7-day free trial has ended</p>
-                    <p className="text-amber-700 text-xs mt-0.5">
-                      You&apos;re now on the free plan — 3 stories & 10 Nimi chats/day.{" "}
-                      <Link href="/pricing" className="font-black underline underline-offset-2 hover:text-amber-900">Subscribe to restore full access →</Link>
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (typeof window !== "undefined") localStorage.setItem("nimipiko_trial_expiry_seen", "1");
-                      setTrialJustExpired(false);
-                    }}
-                    className="w-7 h-7 rounded-full hover:bg-amber-100 flex items-center justify-center text-amber-500 hover:text-amber-700 transition shrink-0 text-base font-black"
-                    aria-label="Dismiss"
-                  >✕</button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* 3-column cards row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <HomeContinueAdventureCard
-                curStory={curStory}
-                slots={slots}
-                doneSlots={doneSlots}
-                totalSlots={totalSlots}
-                pct={pct}
-                storyNumber={(stories.findIndex((s) => s.sid === curStory?.sid) + 1) || 1}
-                hasSubscription={hasSubscription}
-              />
-              <HomePassportCard
-                stampsCollected={achievements.filter((a) => a.type === "badge").length}
-                totalStamps={42}
-                destinationsVisited={stories.filter((s) => s.complete).length}
-              />
-              <HomeTodayStarsCard
-                totalStars={totalStars}
-                consecutiveStreak={consecutiveStreak}
-              />
-            </div>
-
-            {/* Proactive Nimi Banner */}
-            {activeChild && (
-              <NimiProactiveBanner childId={activeChild.id} language={activeChild.language} />
-            )}
-
-            {/* "Caught up" banner — shown when no more stories unlocked */}
-            {stories.length > 0 && stories.every((s) => s.complete || !s.unlocked) && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="relative rounded-3xl overflow-hidden"
-                style={{ background: "linear-gradient(135deg, #E8F4FF 0%, #D6EAFF 50%, #EBF5FF 100%)", border: "1px solid rgba(59,130,246,0.18)", minHeight: 140 }}
-              >
-                {/* Floating islands illustration — colourful sky background */}
-                <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #87CEEB 0%, #98D8F0 40%, #B0E4FF 70%, #C8EDFF 100%)" }} />
-                {/* Clouds */}
-                {[[8,12,70,28],[22,35,50,22],[55,8,60,24],[70,28,45,18]].map(([l,t,w,h],i) => (
-                  <div key={i} className="absolute rounded-full" style={{ left:`${l}%`, top:`${t}%`, width:w, height:h, background:"rgba(255,255,255,0.80)" }} />
-                ))}
-                {/* Green islands */}
-                <div className="absolute bottom-0 left-[8%] w-24 h-16 rounded-t-full" style={{ background: "linear-gradient(to top, #5BA85A, #7EC87D)" }} />
-                <div className="absolute bottom-0 left-[18%] w-16 h-10 rounded-t-full" style={{ background: "linear-gradient(to top, #4A9649, #6DB86C)" }} />
-                <div className="absolute bottom-0 right-[5%] w-32 h-20 rounded-t-full" style={{ background: "linear-gradient(to top, #5BA85A, #7EC87D)" }} />
-                {/* Flying plane */}
-                <motion.span className="absolute text-2xl" style={{ top: "15%", left: "60%" }}
-                  animate={{ x: [0, 30, 0], y: [0, -6, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}>✈️</motion.span>
-
-                {/* Text content */}
-                <div className="relative z-10 flex items-center justify-between px-8 py-6">
-                  <div>
-                    <p className="font-baloo font-black text-xl md:text-2xl" style={{ color: "#0D2D6B" }}>
-                      🎉 You&apos;re all caught up, {activeChild?.name ?? "Explorer"}!
-                    </p>
-                    <p className="font-nunito text-sm mt-1" style={{ color: "rgba(13,45,107,0.65)" }}>
-                      You&apos;ve explored every destination in the library so far — more adventures are on the way!
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Trial countdown */}
-            {isTrial && (
-              <Link href="/pricing">
-                <div className="flex items-center gap-3 rounded-2xl p-4 cursor-pointer transition-all"
-                  style={{
-                    background: trialDaysLeft <= 2 ? "linear-gradient(135deg,rgba(239,68,68,0.10),rgba(220,38,38,0.06))" : "linear-gradient(135deg,rgba(201,168,76,0.10),rgba(201,168,76,0.05))",
-                    border: trialDaysLeft <= 2 ? "1px solid rgba(239,68,68,0.22)" : "1px solid rgba(201,168,76,0.22)",
-                  }}
-                >
-                  <span className="text-xl shrink-0">{trialDaysLeft <= 2 ? "⚡" : "⏳"}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-baloo font-black text-sm" style={{ color: "#14233B" }}>
-                      {trialDaysLeft === 0 ? "Trial ending today!" : `${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left on trial`}
-                    </p>
-                    <p className="font-nunito text-xs mt-0.5" style={{ color: "rgba(20,35,59,0.52)" }}>
-                      {trialDaysLeft <= 2 ? "Subscribe now to keep full access" : "Subscribe to continue flying →"}
-                    </p>
-                  </div>
-                  <Crown className="w-4 h-4 shrink-0" style={{ color: trialDaysLeft <= 2 ? "#F87171" : "#C9A84C" }} />
-                </div>
-              </Link>
-            )}
-
-          </div>{/* end below hero */}
-
-        </div>
-      )}
-
-
+    <NimiThemeProvider
+      childId={activeChild?.id ?? null}
+      childAge={activeChild?.age ?? null}
+      defaultLang={worldLangFor(activeChild?.language)}
+    >
+      <NimiToyWorld
+        data={worldData}
+        loading={loading}
+        kids={children.map((c) => ({ id: c.id, name: c.name, age: c.age }))}
+        activeChildId={activeChild?.id ?? null}
+        childAge={activeChild?.age ?? null}
+        onSelectChild={(id) => {
+          const next = children.find((c) => c.id === id);
+          if (next && next.id !== activeChild?.id) void select(next);
+        }}
+        onNavigate={(href) => router.push(href)}
+        parentExtras={parentExtras}
+      />
       {welcomeBack.show && activeChild && (
-        <WelcomeBackOverlay
-          childName={activeChild.name}
-          daysAway={welcomeBack.daysAway}
-          onDismiss={() => setWelcomeBack({ show: false, daysAway: 0 })}
-        />
+        <WelcomeBackOverlay childName={activeChild.name} daysAway={welcomeBack.daysAway} onDismiss={() => setWelcomeBack({ show: false, daysAway: 0 })} />
       )}
-
-      {activeChild && (
-        <NotificationOptInPrompt childId={activeChild.id} childName={activeChild.name} />
-      )}
-
       <AnimatePresence>
         {langToast && (
           <InlineToast key={`lang-toast-${langToastKey.current}`} message={langToast} onDone={() => setLangToast(null)} />
         )}
       </AnimatePresence>
-    </AppShell>
+    </NimiThemeProvider>
   );
 }

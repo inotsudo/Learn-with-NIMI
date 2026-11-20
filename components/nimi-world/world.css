@@ -1,0 +1,204 @@
+/* NIMIPIKO toy world — full-bleed cinema stage. No drawn shapes over the art:
+   only light (auras, dust, grade) and glass. */
+
+.nw-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #06101F;
+  color: var(--world-text);
+  container-type: size; /* lets .nw-cover reproduce object-cover geometry in pure CSS */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nw-layer { position: absolute; inset: 0; pointer-events: none; }
+
+/* Registration box: exactly where a square image sits under
+   `object-fit: cover; object-position: fx fy` — hotspots inside it stay
+   glued to the illustrated objects at any viewport size. */
+.nw-cover {
+  --s: max(100cqw, 100cqh);
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  left: calc((100cqw - var(--s)) * var(--fx, 0.5));
+  top: calc((100cqh - var(--s)) * var(--fy, 0.5));
+  pointer-events: none;
+}
+
+/* ── aura hotspots ─────────────────────────────────────────────────────── */
+@keyframes nw-breathe { 0%, 100% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.05); opacity: 1; } }
+@keyframes nw-ring { 0% { transform: scale(0.7); opacity: 0; } 20% { opacity: 0.95; } 100% { transform: scale(1.1); opacity: 0; } }
+@keyframes nw-glint { 0%, 100% { opacity: 0; transform: scale(0.4); } 50% { opacity: 1; transform: scale(1); } }
+
+.nw-aura {
+  position: absolute;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.nw-aura__glow {
+  position: absolute; inset: 0; border-radius: 50%;
+  /* a halo of warm light hugging the object: clear centre, glowing rim */
+  background: radial-gradient(circle,
+    rgba(255, 240, 190, 0.10) 0%,
+    rgba(255, 228, 140, 0.06) 34%,
+    rgba(255, 214, 102, 0.42) 50%,
+    rgba(251, 191, 36, 0.24) 60%,
+    rgba(251, 191, 36, 0) 71%);
+  filter: blur(3px);
+  animation: nw-breathe 3.2s ease-in-out infinite;
+  transition: filter 0.3s ease;
+}
+.nw-aura__ring {
+  position: absolute; inset: 15%; border-radius: 50%;
+  border: 2px solid rgba(255, 228, 140, 0.95);
+  box-shadow: 0 0 16px 3px rgba(251, 191, 36, 0.7), inset 0 0 16px rgba(251, 191, 36, 0.45);
+  animation: nw-ring 2.6s ease-out infinite;
+}
+.nw-aura__glint {
+  position: absolute; width: 9%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 236, 160, 0.95) 30%, transparent 70%);
+  box-shadow: 0 0 12px 3px rgba(253, 230, 138, 0.8);
+  animation: nw-glint 2.4s ease-in-out infinite;
+}
+.nw-aura:hover .nw-aura__glow, .nw-aura:focus-visible .nw-aura__glow { filter: blur(3px) brightness(1.5) saturate(1.25); }
+.nw-aura--strong .nw-aura__glow {
+  background: radial-gradient(circle,
+    rgba(255, 240, 190, 0.16) 0%,
+    rgba(255, 228, 140, 0.1) 34%,
+    rgba(255, 214, 102, 0.6) 50%,
+    rgba(251, 191, 36, 0.34) 60%,
+    rgba(251, 191, 36, 0) 72%);
+}
+.nw-aura:focus-visible { outline: 3px solid rgba(253, 230, 138, 0.9); outline-offset: 4px; }
+
+/* hover / entry label: small glass chip under the aura */
+.nw-chip {
+  position: absolute; left: 50%; top: 100%;
+  transform: translate(-50%, 6px);
+  white-space: nowrap;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--font-baloo), system-ui, sans-serif;
+  font-weight: 800; font-size: 14px; color: #fff;
+  background: rgba(6, 16, 31, 0.42);
+  border: 1px solid rgba(253, 230, 138, 0.45);
+  backdrop-filter: blur(10px) saturate(1.3);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  pointer-events: none;
+}
+
+/* ── mission runway tiles ─────────────────────────────────────────────── */
+.nw-runway {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  padding: 0 24px;
+  perspective: 800px;
+  pointer-events: none;
+  z-index: 5;
+}
+.nw-runway__deck {
+  display: flex; gap: 12px;
+  transform: rotateX(28deg);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+}
+.nw-tile {
+  position: relative;
+  width: 118px; height: 94px;
+  border-radius: 16px;
+  pointer-events: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #FFF7E0;
+  font-family: var(--font-baloo), system-ui, sans-serif; font-weight: 800; font-size: 13px; line-height: 1.1; text-align: center;
+  background: linear-gradient(165deg,
+    rgba(255, 242, 196, 0.46) 0%,
+    rgba(253, 214, 110, 0.32) 38%,
+    rgba(201, 150, 40, 0.34) 70%,
+    rgba(70, 45, 8, 0.5) 100%);
+  border: 2px solid rgba(253, 224, 130, 0.95);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -14px 26px rgba(255, 200, 60, 0.38),
+    0 8px 0 rgba(110, 72, 12, 0.8),
+    0 16px 28px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(251, 191, 36, 0.45);
+  backdrop-filter: blur(9px) saturate(1.35);
+  -webkit-backdrop-filter: blur(9px) saturate(1.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 2px 10px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+.nw-tile__icon { font-size: 30px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35)); }
+.nw-tile--done { border-color: rgba(253, 230, 138, 1); }
+.nw-tile--next { animation: nw-tile-glow 1.8s ease-in-out infinite; }
+.nw-tile[disabled] { opacity: 0.45; cursor: default; }
+.nw-tile__check {
+  position: absolute; top: -9px; right: -9px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 13px; color: #06101F;
+  background: linear-gradient(135deg, #FDE68A, #D4A830);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.nw-tile:focus-visible { outline: 3px solid #FDE68A; outline-offset: 3px; }
+@keyframes nw-tile-glow {
+  0%, 100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.6), inset 0 -14px 26px rgba(255,200,60,0.38), 0 8px 0 rgba(110,72,12,0.8), 0 16px 28px rgba(0,0,0,0.45), 0 0 26px rgba(251,191,36,0.5); }
+  50% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.8), inset 0 -14px 30px rgba(255,220,100,0.6), 0 8px 0 rgba(110,72,12,0.8), 0 16px 28px rgba(0,0,0,0.45), 0 0 60px 6px rgba(253,230,138,0.95); }
+}
+.nw-tile--next { border-color: #FFF3C4; }
+@media (max-width: 640px) {
+  .nw-runway { padding: 0 12px; justify-content: center !important; }
+  .nw-runway__deck { gap: 6px; }
+  .nw-tile { width: 54px; height: 58px; border-radius: 12px; }
+  .nw-tile__icon { font-size: 24px; }
+  .nw-tile__label { display: none; }
+}
+
+/* ── CSS dust (only when WebGL is unavailable) ───────────────────────── */
+@keyframes nw-rise { from { transform: translate3d(0, 6vh, 0); opacity: 0; } 15% { opacity: 0.9; } to { transform: translate3d(3vw, -70vh, 0); opacity: 0; } }
+.nw-rise { animation: nw-rise linear infinite; }
+
+@keyframes nw-pulse-ring { from { transform: scale(0.85); opacity: 0.9; } to { transform: scale(1.6); opacity: 0; } }
+.nw-pulse-ring { animation: nw-pulse-ring 1.6s ease-out infinite; }
+
+/* Visually hidden until focused (keyboard twins of 3D objects). */
+.nw-a11y-hotspot {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.nw-a11y-hotspot:focus-visible {
+  width: auto; height: auto; overflow: visible; clip-path: none;
+  padding: 10px 16px; border-radius: 999px;
+  background: rgba(6, 16, 31, 0.85); color: #fff;
+  outline: 3px solid var(--world-accent); outline-offset: 3px;
+  font-family: var(--font-baloo), system-ui, sans-serif; font-weight: 800;
+  transform: translate(-50%, -50%);
+}
+
+.nw-toy-btn:focus-visible { outline: 3px solid #FDE68A; outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nw-aura__glow, .nw-aura__ring, .nw-aura__glint, .nw-tile--next, .nw-rise, .nw-pulse-ring { animation: none !important; }
+}
+
+/* labels stay hidden until hover / focus (or the brief reveal when a zone opens) */
+.nw-chip { opacity: 0; transition: opacity 0.3s ease; }
+.nw-aura:hover .nw-chip, .nw-aura:focus-visible .nw-chip, .nw-chip--show { opacity: 1; }
+
+/* Hall gate light: mid-right on landscape; lower-right on phones so it never sits on a face */
+.nw-edge-gate { top: 50%; }
+@media (orientation: portrait) { .nw-edge-gate { top: 80%; } }
+@media (max-width: 640px) { .nw-edge-gate__label { display: none; } }
