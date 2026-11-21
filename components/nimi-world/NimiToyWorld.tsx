@@ -12,7 +12,7 @@ import ParentPortal from "./ParentPortal";
 import RunwayTiles, { type RunwayTile } from "./RunwayTiles";
 import { BoardingPass, PassportControl } from "./JourneyDesk";
 import { Caption, EdgeGate, IntroCinematic, Reel, SceneStage, WingSwitcher, type PlacedHotspot, type ReelKind } from "./WorldOverlays";
-import { REELS, ZONES, ZONE_ORDER, type WorldZoneId } from "./scenes";
+import { REELS, ZONES, ZONE_ORDER, focusFor, type WorldZoneId } from "./scenes";
 import { TARMAC_TILES, WORLD_THEMES, type WorldThemeId } from "./themes";
 import { missionHref, nextSlotKey, type WorldChild, type WorldData } from "./worldData";
 import { advanceJourney, hasReached, readJourney, useJourney, type JourneyStep } from "./journey";
@@ -246,9 +246,10 @@ export default function NimiToyWorld({
   }, [activeChildId, storyId, speak, copy.boarded, go]);
 
   /* ── aura hotspots on the artwork (hidden while loading or when cropped off-screen) ── */
+  const focus = focusFor(def, vp.w, vp.h);
   const S = Math.max(vp.w, vp.h);
-  const ox = (vp.w - S) * def.fx;
-  const oy = (vp.h - S) * def.fy;
+  const ox = (vp.w - S) * focus.fx;
+  const oy = (vp.h - S) * focus.fy;
   const onScreen = (x: number, y: number) => {
     const X = ox + x * S, Y = oy + y * S;
     return X > 12 && X < vp.w - 12 && Y > 12 && Y < vp.h - 12;
@@ -327,8 +328,8 @@ export default function NimiToyWorld({
       {/* Layer 1 — the full-bleed artwork, graded for the theme, with aura hotspots registered to it */}
       <SceneStage
         src={plate}
-        fx={def.fx}
-        fy={def.fy}
+        fx={focus.fx}
+        fy={focus.fy}
         theme={theme}
         parallax={parallax}
         hotspots={hotspots}

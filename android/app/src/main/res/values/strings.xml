@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NIMIPIKO</string>
+    <string name="title_activity_main">NIMIPIKO</string>
+    <string name="package_name">com.nimipiko.app</string>
+    <string name="custom_url_scheme">com.nimipiko.app</string>
+</resources>

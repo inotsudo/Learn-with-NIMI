@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Baloo_2, Nunito } from "next/font/google";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { NimiReaderProvider } from "@/contexts/NimiReaderContext";
@@ -39,6 +39,16 @@ export const metadata: Metadata = {
     description: "Interactive stories, AI companion Nimi & achievement certificates for ages 2–12. English, French & Kinyarwanda.",
     images: ["/nimipiko.png"],
   },
+};
+
+// Phones + tablets, web and the store apps: draw under the notch/home bar
+// (screens pad themselves with env(safe-area-inset-*)) and don't let a child's
+// double-tap zoom the whole world. Pinch-zoom stays available for accessibility.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#06101F",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- NIMIPIKO Airways palette -->
+    <color name="nimipiko_navy">#06101F</color>
+    <color name="nimipiko_navy_mid">#0B1A33</color>
+    <color name="nimipiko_gold">#C9A84C</color>
+    <color name="colorPrimary">#0B1A33</color>
+    <color name="colorPrimaryDark">#06101F</color>
+    <color name="colorAccent">#C9A84C</color>
+</resources>

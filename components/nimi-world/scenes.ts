@@ -40,6 +40,11 @@ export interface ZoneDef {
    */
   fx: number;
   fy: number;
+  /**
+   * Per-shape crop overrides. Phones in landscape ("wide", ≥1.75:1) only show
+   * ~46% of a square scene's height, so key objects need their own framing there.
+   */
+  framing?: Partial<Record<"wide" | "landscape" | "portrait", { fx?: number; fy?: number }>>;
   hotspots: SceneHotspot[];
   /** Zone the "next" hotspot (gate / stairs / screen) leads to. */
   next: WorldZoneId | null;
@@ -52,6 +57,7 @@ export const ZONES: Record<WorldZoneId, ZoneDef> = {
     emoji: "🏛️",
     plate: scene(1),
     fx: 0.59, fy: 0.6,
+    framing: { wide: { fy: 0.75 } },
     hotspots: [
       { kind: "kit", x: 0.555, y: 0.76, r: 0.12 },
       { kind: "piko", x: 0.725, y: 0.32, r: 0.085 },
@@ -80,9 +86,12 @@ export const ZONES: Record<WorldZoneId, ZoneDef> = {
     emoji: "🎫",
     plate: scene(5),
     fx: 0.55, fy: 0.5,
+    framing: { wide: { fy: 0.85 } },
     hotspots: [
       { kind: "pass", x: 0.64, y: 0.77, r: 0.1 },
+      // The plane door; on wide phone screens the boarding stairs stand in for it.
       { kind: "next", x: 0.6, y: 0.22, r: 0.09 },
+      { kind: "next", x: 0.84, y: 0.62, r: 0.08 },
       { kind: "piko", x: 0.42, y: 0.45, r: 0.07 },
     ],
     next: "cabin",
@@ -93,6 +102,7 @@ export const ZONES: Record<WorldZoneId, ZoneDef> = {
     emoji: "💺",
     plate: scene(9),
     fx: 0.35, fy: 0.45,
+    framing: { wide: { fy: 0.2 } },
     hotspots: [
       { kind: "next", x: 0.25, y: 0.25, r: 0.12 },
       { kind: "piko", x: 0.47, y: 0.21, r: 0.065 },
@@ -132,6 +142,14 @@ export const ZONES: Record<WorldZoneId, ZoneDef> = {
     next: null,
   },
 };
+
+/** The crop for a stop on a given screen (phone/tablet, portrait/landscape). */
+export function focusFor(def: ZoneDef, w: number, h: number): { fx: number; fy: number } {
+  const ratio = h > 0 ? w / h : 1;
+  const shape = ratio >= 1.75 ? "wide" : ratio > 1 ? "landscape" : ratio < 1 ? "portrait" : null;
+  const o = (shape && def.framing?.[shape]) || (shape === "wide" ? def.framing?.landscape : undefined) || {};
+  return { fx: o.fx ?? def.fx, fy: o.fy ?? def.fy };
+}
 
 /** Short cinematic reels built from the scene stills. */
 export const REELS = {

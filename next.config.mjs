@@ -1,3 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const PROJECT_ROOT = path.dirname(fileURLToPath(import.meta.url));
+
 // CyberSource Flex SDK URL is embedded in the capture-context JWT and loaded
 // dynamically by PricingPaymentModal / PricingGiftModal. Both production and
 // sandbox hosts must be allowed. Google Pay requires pay.google.com.
@@ -42,9 +47,11 @@ const REPORT_TO = JSON.stringify({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Turbopack root directory — explicitly set to avoid "multiple lockfiles" warning
+  // Turbopack root = this project folder (resolved at load time, so it works on
+  // any machine: local dev, Vercel, and the mobile build services). Set
+  // explicitly to avoid the "multiple lockfiles" warning.
   turbopack: {
-    root: '/home/martin/Documents/Learn-with-NIMI',
+    root: PROJECT_ROOT,
   },
 
   // Security headers on all responses
@@ -109,6 +116,10 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
+
+  // Dev only: the Android emulator reaches this computer's dev server at 10.0.2.2
+  // (see capacitor.config.ts). Has no effect on production builds.
+  allowedDevOrigins: ["10.0.2.2"],
 
   // canvas is a native addon (.node file) — must not be bundled by webpack
   serverExternalPackages: ["canvas"],
