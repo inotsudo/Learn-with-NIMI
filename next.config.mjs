@@ -87,6 +87,12 @@ const nextConfig = {
       { source: "/dashboard", destination: "/home",       permanent: true },
       // Story slug renames — keep old URLs alive after migration 156
       { source: "/stories/new-story-1782593741408", destination: "/stories/the-talking-faces", permanent: true },
+      // QR codes already printed on boarding passes and Champion Kits point to
+      // /missions?story=<slug>. The curriculum /missions pages were removed, so
+      // send those scans to the story itself (and any other /missions link to the library).
+      { source: "/missions", has: [{ type: "query", key: "story", value: "(?<slug>[a-z0-9-]+)" }], destination: "/stories/:slug", permanent: false },
+      { source: "/missions/:path*", destination: "/stories", permanent: false },
+      { source: "/missions", destination: "/stories", permanent: false },
     ];
   },
 

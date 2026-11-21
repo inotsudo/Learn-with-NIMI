@@ -76,6 +76,11 @@ The app deploys to Vercel. Scheduled jobs (all `CRON_SECRET`-protected):
 
 ## Documentation
 
+- **[`docs/brand/official/README.md`](docs/brand/official/README.md) — the
+  official product spec (source of truth)**: characters, the journey,
+  missions, rewards, personalised products, privacy/community/NIMI AI rules,
+  the Grand Champion ceremony, and where the app doesn't match yet. The
+  reference art lives next to it in `docs/brand/official/images/`.
 - [`STORY_ARCHITECTURE.md`](STORY_ARCHITECTURE.md) — how stories, slots,
   challenges and certificates fit together.
 - [`docs/`](docs/) — story-adventure specs (`sa0`–`sa5`), the brand world
