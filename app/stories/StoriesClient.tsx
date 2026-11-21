@@ -17,6 +17,9 @@ import { getActiveSubscription } from "@/lib/payments/products";
 import supabase from "@/lib/supabaseClient";
 import type { StoryLibraryItem } from "@/lib/story-types";
 import StatsSidebar from "@/components/home/StatsSidebar";
+import { WorldBackdrop } from "@/components/world-ui";
+import "@/components/world-ui/world-ui.css";
+import { WORLD } from "@/lib/design-system/world";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 const PAGE_SIZE = 8;
@@ -33,16 +36,16 @@ const CATEGORY_SPINE: Record<string, string> = {
 };
 
 const CATEGORY_META: Record<string, { emoji: string; key: string; activeClass: string; inactiveClass: string }> = {
-  animals:    { emoji: "🦁", key: "storyCatAnimals",    activeClass: "bg-amber-500 text-white border-amber-500",       inactiveClass: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" },
-  friendship: { emoji: "❤️", key: "storyCatFriendship", activeClass: "bg-pink-500 text-white border-pink-500",         inactiveClass: "bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100" },
-  bedtime:    { emoji: "🌙", key: "storyCatBedtime",    activeClass: "bg-indigo-500 text-white border-indigo-500",     inactiveClass: "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100" },
-  adventure:  { emoji: "🚀", key: "storyCatAdventure",  activeClass: "bg-orange-500 text-white border-orange-500",    inactiveClass: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100" },
-  values:     { emoji: "⭐", key: "storyCatValues",     activeClass: "bg-yellow-500 text-white border-yellow-500",    inactiveClass: "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100" },
-  nature:     { emoji: "🌿", key: "storyCatNature",     activeClass: "bg-teal-500 text-white border-teal-500",        inactiveClass: "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100" },
-  family:     { emoji: "👨‍👩‍👧", key: "storyCatFamily",    activeClass: "bg-violet-500 text-white border-violet-500",   inactiveClass: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100" },
-  creativity: { emoji: "🎨", key: "storyCatCreativity", activeClass: "bg-blue-500 text-white border-blue-500",        inactiveClass: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" },
-  school:     { emoji: "🏫", key: "storyCatSchool",     activeClass: "bg-sky-500 text-white border-sky-500",          inactiveClass: "bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100" },
-  funny:      { emoji: "😂", key: "storyCatFunny",      activeClass: "bg-lime-500 text-white border-lime-500",        inactiveClass: "bg-lime-50 text-lime-700 border-lime-200 hover:bg-lime-100" },
+  animals:    { emoji: "🦁", key: "storyCatAnimals",    activeClass: "bg-amber-500 text-white border-amber-500",       inactiveClass: "bg-amber-400/10 text-amber-200 border-amber-300/35 hover:bg-amber-400/20" },
+  friendship: { emoji: "❤️", key: "storyCatFriendship", activeClass: "bg-pink-500 text-white border-pink-500",         inactiveClass: "bg-pink-400/10 text-pink-200 border-pink-300/35 hover:bg-pink-400/20" },
+  bedtime:    { emoji: "🌙", key: "storyCatBedtime",    activeClass: "bg-indigo-500 text-white border-indigo-500",     inactiveClass: "bg-indigo-400/10 text-indigo-200 border-indigo-300/35 hover:bg-indigo-400/20" },
+  adventure:  { emoji: "🚀", key: "storyCatAdventure",  activeClass: "bg-orange-500 text-white border-orange-500",    inactiveClass: "bg-orange-400/10 text-orange-200 border-orange-300/35 hover:bg-orange-400/20" },
+  values:     { emoji: "⭐", key: "storyCatValues",     activeClass: "bg-yellow-500 text-white border-yellow-500",    inactiveClass: "bg-yellow-400/10 text-yellow-200 border-yellow-300/35 hover:bg-yellow-400/20" },
+  nature:     { emoji: "🌿", key: "storyCatNature",     activeClass: "bg-teal-500 text-white border-teal-500",        inactiveClass: "bg-teal-400/10 text-teal-200 border-teal-300/35 hover:bg-teal-400/20" },
+  family:     { emoji: "👨‍👩‍👧", key: "storyCatFamily",    activeClass: "bg-violet-500 text-white border-violet-500",   inactiveClass: "bg-violet-400/10 text-violet-200 border-violet-300/35 hover:bg-violet-400/20" },
+  creativity: { emoji: "🎨", key: "storyCatCreativity", activeClass: "bg-blue-500 text-white border-blue-500",        inactiveClass: "bg-blue-400/10 text-blue-200 border-blue-300/35 hover:bg-blue-400/20" },
+  school:     { emoji: "🏫", key: "storyCatSchool",     activeClass: "bg-sky-500 text-white border-sky-500",          inactiveClass: "bg-sky-400/10 text-sky-200 border-sky-300/35 hover:bg-sky-400/20" },
+  funny:      { emoji: "😂", key: "storyCatFunny",      activeClass: "bg-lime-500 text-white border-lime-500",        inactiveClass: "bg-lime-400/10 text-lime-200 border-lime-300/35 hover:bg-lime-400/20" },
 };
 
 // BC1: Hoisted to module scope — defining components inside .map() creates a
@@ -323,35 +326,28 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
   return (
     <AppShell>
       <RefreshingBadge show={refreshing} />
+      {/* the departures gate: destination board, the Kit and the kids */}
+      <WorldBackdrop src={WORLD.scene(4)} focus={{ x: 0.5, y: 0.45 }} shade="full" dim={0.42} />
 
-      <div className={`min-h-screen w-full bg-[#f8f2e7] transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}>
+      <div className={`relative z-10 w-full transition-opacity duration-300${refreshing ? " opacity-50 pointer-events-none" : ""}`}>
         <div className="w-full xl:flex xl:gap-6 xl:items-start pb-24">
         <main className="flex-1 min-w-0">
 
           {/* ── HERO — airport photo, same as home ── */}
-          <section className="relative overflow-hidden bg-[#8bd9ff]" style={{ minHeight: 280 }}>
-            <img src="/airport-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-            {/* Left white fade so text is readable */}
-            <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(255,255,255,.75)_0%,rgba(255,255,255,.32)_38%,transparent_62%)]" />
-            {/* Bottom fade into page bg */}
-            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#f8f2e7] to-transparent" />
-            {/* Clouds */}
-            <div aria-hidden className="absolute left-[3%] top-[18%] h-12 w-32 rounded-full bg-white/70 blur-[2px]" />
-            <div aria-hidden className="absolute left-[14%] top-[10%] h-8 w-22 rounded-full bg-white/55 blur-[1px]" />
-
+          <section className="relative" style={{ minHeight: 250 }}>
             {/* Greeting text — left column, same as home */}
-            <div className="relative z-10 flex min-h-[280px] flex-col justify-end px-5 pb-12 pt-8 sm:px-10 lg:px-12">
+            <div className="relative z-10 flex min-h-[250px] flex-col justify-end px-2 pb-8 pt-6 sm:px-6 lg:px-8">
               <div className="relative max-w-[380px]">
                 <span aria-hidden className="absolute -left-2 top-7 text-2xl text-[#ffc400]">✦</span>
-                <p className="font-baloo text-[18px] font-black leading-none text-[#0e368b] drop-shadow-[0_2px_0_rgba(255,255,255,.9)] sm:text-[22px]">
+                <p className="font-baloo text-[18px] font-black leading-none text-[#FDE68A] sm:text-[22px]" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>
                   ✈️ My Journey,
                 </p>
-                <h1 className="mt-1 font-baloo font-black leading-[.85] tracking-tight text-[#0e368b] drop-shadow-[0_2px_0_rgba(255,255,255,.95)]"
-                  style={{ fontSize: "clamp(2.2rem,6vw,3.4rem)" }}>
+                <h1 className="mt-1 font-baloo font-black leading-[.9] tracking-tight text-[#FFF7E0]"
+                  style={{ fontSize: "clamp(2.2rem,6vw,3.4rem)", textShadow: "0 4px 24px rgba(0,0,0,0.6)" }}>
                   {childName ? `${childName}!` : "Explorer!"}
                   <span className="inline-block text-[#ffbc14] ml-2">🗺️</span>
                 </h1>
-                <p className="mt-2 font-baloo text-[15px] font-black text-[#123a87] drop-shadow-[0_1px_0_rgba(255,255,255,.85)] sm:text-[18px]">
+                <p className="mt-2 font-baloo text-[15px] font-black text-[#FFF7E0]/85 sm:text-[18px]" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}>
                   Where shall we fly today?
                 </p>
                 <div className="mt-2 h-[3px] w-48 -rotate-[3deg] rounded-full bg-[#ffc400]" />
@@ -359,17 +355,15 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
                 {/* Stat chips */}
                 <div className="mt-4 flex gap-2 flex-wrap">
                   {[
-                    { icon:"🗺️", val:inProgress,    label:"In progress",        bg:"#fff", border:"#bdd4f0", text:"#0e368b" },
-                    { icon:"🏅", val:completedCount, label:"Completed",           bg:"#fff", border:"#bdd4f0", text:"#0e368b" },
-                    { icon:"⭐", val:totalStars,     label:"Stars earned",        bg:"#fff5cc", border:"#f5d142", text:"#7a5800" },
+                    { icon:"🗺️", val:inProgress,    label:"In progress" },
+                    { icon:"🏅", val:completedCount, label:"Completed" },
+                    { icon:"⭐", val:totalStars,     label:"Stars earned" },
                   ].map(chip => (
-                    <div key={chip.label}
-                      className="flex items-center gap-1.5 rounded-2xl px-3 py-1.5 shadow-sm"
-                      style={{ background:chip.bg, border:`1.5px solid ${chip.border}` }}>
-                      <span className="text-base leading-none">{chip.icon}</span>
+                    <div key={chip.label} className="wui-pill !min-h-[46px] !gap-2 !py-1.5 !pl-3 !pr-4">
+                      <span className="text-lg leading-none" aria-hidden="true">{chip.icon}</span>
                       <div>
-                        <p className="font-baloo font-black text-[13px] leading-none" style={{ color:chip.text }}>{chip.val}</p>
-                        <p className="font-baloo text-[9px] leading-none mt-0.5" style={{ color:`${chip.text}99` }}>{chip.label}</p>
+                        <p className="font-baloo font-black text-[16px] leading-none text-[#FFF7E0]">{chip.val}</p>
+                        <p className="mt-0.5 font-baloo text-[10px] font-bold leading-none text-[#FDE68A]/75">{chip.label}</p>
                       </div>
                     </div>
                   ))}
@@ -381,23 +375,13 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
                   initial={{ opacity:0, scale:0.85 }} animate={{ opacity:1, scale:1 }}
                   transition={{ delay:0.22, ...SPRING.bounce }}
                   whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                  className="mt-4 inline-flex items-center gap-2 font-baloo font-black text-sm px-6 py-2.5 rounded-full cursor-pointer shadow-lg"
-                  style={{ background:"linear-gradient(135deg,#ffd331,#ffbc14)", color:"#0e2d6b",
-                    boxShadow:"0 4px 16px rgba(255,188,20,0.45), 0 2px 0 rgba(0,0,0,0.08)" }}>
-                  Board Now ✈️
+                  className="wui-btn wui-btn--gold mt-5">
+                  <span className="wui-btn__shine" aria-hidden="true" />
+                  <span className="relative">Board now ✈️</span>
                 </motion.button>
               </div>
             </div>
 
-            {/* Nimi + Piko — right side, same as home */}
-            <div className="absolute bottom-3 right-3 z-10 hidden items-end gap-1 sm:flex lg:right-8">
-              <motion.img src="/themes/default/characters/nimi.png" alt="Nimi"
-                animate={{ y:[0,-6,0] }} transition={{ duration:4.5, repeat:Infinity, ease:"easeInOut" }}
-                className="h-[150px] w-auto object-contain drop-shadow-2xl lg:h-[200px]" draggable={false} />
-              <motion.img src="/themes/default/characters/piko.png" alt="Piko"
-                animate={{ y:[0,-5,0] }} transition={{ duration:5.2, repeat:Infinity, delay:.4, ease:"easeInOut" }}
-                className="h-[130px] w-auto object-contain drop-shadow-2xl lg:h-[175px]" draggable={false} />
-            </div>
           </section>
 
           {/* ── CONTINUE ADVENTURE — warm card like home ── */}
@@ -414,26 +398,21 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
             return (
               <motion.div
                 initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.12, duration:0.4 }}
-                className="relative overflow-hidden rounded-[24px] mb-3 cursor-pointer group"
-                style={{
-                  background:"linear-gradient(135deg,#fffdf8 0%,#fff9e8 60%,#fff3c4 100%)",
-                  border:"2px solid #edc953",
-                  boxShadow:"0 7px 0 rgba(173,145,100,.10), 0 12px 28px rgba(33,58,85,.10)",
-                }}
+                className="wui-glass relative overflow-hidden rounded-[24px] mb-4 cursor-pointer group"
               >
                 <Link href={`/stories/${currentStory.slug}`} className="block">
                   <div className="flex items-center min-h-[110px] gap-4 px-4 py-4 sm:px-6">
                     {/* Spinning label badge */}
                     <div className="absolute top-3 left-4">
                       <span className="inline-flex items-center gap-1 -rotate-1 rounded-full px-3 py-1 font-baloo text-[12px] font-black shadow-sm"
-                        style={{ background:"#ffd331", color:"#092d78" }}>
+                        style={{ background:"linear-gradient(120deg,#FDE68A,#E8BC56)", color:"#06101F", boxShadow:"0 3px 0 #8A6A1E" }}>
                         Continue Your Adventure ✈
                       </span>
                     </div>
 
                     {/* Cover */}
                     <div className="shrink-0 mt-5 w-[76px] h-[96px] rounded-[18px] overflow-hidden border-2 shadow-md"
-                      style={{ borderColor:"#edc953", background:"#f6d562" }}>
+                      style={{ borderColor:"#E8BC56", background:"#1A3558" }}>
                       {currentStory.cover_url
                         ? <img src={getStorageUrl(currentStory.cover_url)} alt={currentStory.title ?? "Story"} className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center text-4xl">📚</div>
@@ -442,16 +421,14 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
 
                     {/* Info */}
                     <div className="flex-1 min-w-0 pt-5">
-                      <p className="font-baloo font-black text-[10px] uppercase tracking-widest" style={{ color:"#7790b3" }}>Current story</p>
-                      <h2 className="font-baloo font-black text-[#082b78] leading-tight" style={{ fontSize:"clamp(1rem,2.5vw,1.3rem)" }}>
+                      <p className="font-baloo font-black text-[10px] uppercase tracking-widest text-[#E8BC56]">Current story</p>
+                      <h2 className="font-baloo font-black text-[#FFF7E0] leading-tight" style={{ fontSize:"clamp(1rem,2.5vw,1.3rem)" }}>
                         {currentStory.title}
                       </h2>
-                      <p className="font-baloo font-semibold text-[#7891b6] text-xs mt-1 mb-3">{progressLabel}</p>
+                      <p className="font-baloo font-semibold text-[#FFF7E0]/65 text-xs mt-1 mb-3">{progressLabel}</p>
                       <motion.div
                         whileHover={{ scale:1.05 }} whileTap={{ scale:0.94 }}
-                        className="inline-flex items-center gap-1.5 font-baloo font-black text-sm px-5 py-2 rounded-full shadow-md"
-                        style={{ background:"linear-gradient(135deg,#ffd331,#ffbc14)", color:"#0e2d6b",
-                          boxShadow:"0 4px 14px rgba(255,188,20,0.38)" }}>
+                        className="wui-btn wui-btn--gold !min-h-[44px] !px-5 !text-[15px]">
                         Continue <Play className="w-3.5 h-3.5 fill-current" />
                       </motion.div>
                     </div>
@@ -460,7 +437,7 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
                     {pct > 0 && (
                       <div className="shrink-0 self-end mb-2">
                         <span className="font-baloo font-black text-sm px-3 py-1 rounded-full"
-                          style={{ background:"rgba(8,43,120,0.08)", color:"#082b78", border:"1.5px solid rgba(8,43,120,0.14)" }}>
+                          style={{ background:"rgba(253,230,138,0.12)", color:"#FDE68A", border:"1.5px solid rgba(253,230,138,0.35)" }}>
                           {pct}%
                         </span>
                       </div>
@@ -472,35 +449,30 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
           })()}
 
           {/* ── STORY LIBRARY PANEL ── */}
-          <div className="rounded-[24px] overflow-hidden mb-4"
-            style={{
-              background:"#fff",
-              border:"1.5px solid rgba(0,0,0,0.07)",
-              boxShadow:"0 4px 0 rgba(0,0,0,0.05), 0 8px 28px rgba(33,58,85,0.09)",
-            }}>
+          <div className="wui-glass rounded-[24px] overflow-hidden mb-4">
             <div className="p-4 sm:p-5">
 
               {/* Header + search */}
               <div className="flex items-center justify-between mb-3 gap-3">
-                <h2 className="font-baloo font-black text-[#082b78] text-lg flex items-center gap-2">
+                <h2 className="font-baloo font-black text-[#FFF7E0] text-lg flex items-center gap-2">
                   All Adventures <span aria-hidden>📚</span>
                 </h2>
                 <div className="relative hidden sm:block">
-                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#7791b3]" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#E8BC56]" />
                   <input type="text" value={search}
                     onChange={e => { setSearch(e.target.value); setPage(1); }}
                     placeholder={t("storySearchPlaceholder")}
-                    className="rounded-full pl-9 pr-4 py-2 text-xs font-baloo font-semibold outline-none w-48 transition"
-                    style={{ background:"#f4f7fb", border:"1.5px solid #c8d9ef", color:"#082b78" }} />
+                    className="rounded-full pl-9 pr-4 py-2.5 text-sm font-baloo font-semibold outline-none w-56 transition placeholder:text-[#FFF7E0]/40"
+                    style={{ background:"rgba(6,16,31,0.55)", border:"1.5px solid rgba(253,230,138,0.25)", color:"#FFF7E0" }} />
                 </div>
               </div>
               <div className="relative sm:hidden mb-3">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#7791b3]" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#E8BC56]" />
                 <input type="text" value={search}
                   onChange={e => { setSearch(e.target.value); setPage(1); }}
                   placeholder={t("storySearchPlaceholder")}
-                  className="w-full rounded-full pl-9 pr-4 py-2 text-xs font-baloo font-semibold outline-none transition"
-                  style={{ background:"#f4f7fb", border:"1.5px solid #c8d9ef", color:"#082b78" }} />
+                  className="w-full rounded-full pl-9 pr-4 py-3 text-[16px] font-baloo font-semibold outline-none transition placeholder:text-[#FFF7E0]/40"
+                  style={{ background:"rgba(6,16,31,0.55)", border:"1.5px solid rgba(253,230,138,0.25)", color:"#FFF7E0" }} />
               </div>
 
               {/* Category pills — keep original colorful styles */}
@@ -544,14 +516,14 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
                 <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
                   transition={{ delay:0.2 }}
                   className="flex items-center gap-5 px-6 py-6 rounded-3xl mt-2"
-                  style={{ background:"linear-gradient(135deg,#FFF9E6,#FFF3C4)", border:"1.5px solid #F5C842" }}>
+                  style={{ background:"rgba(253,230,138,0.1)", border:"1.5px solid rgba(253,230,138,0.35)" }}>
                   <motion.img src="/themes/default/characters/nimi.png" alt="Nimi"
                     animate={{ y:[0,-5,0] }} transition={{ duration:3, repeat:Infinity, ease:"easeInOut" }}
                     style={{ height:72, width:"auto", flexShrink:0, filter:"drop-shadow(0 4px 8px rgba(0,0,0,0.12))" }}
                     draggable={false} />
                   <div className="flex-1 min-w-0">
-                    <p className="font-baloo font-black text-[#082b78] text-base leading-tight mb-0.5">More adventures are coming! 🚀</p>
-                    <p className="font-baloo text-[#7791b3] text-sm leading-snug">Nimi is getting new stories ready — check back soon!</p>
+                    <p className="font-baloo font-black text-[#FFF7E0] text-base leading-tight mb-0.5">More adventures are coming! 🚀</p>
+                    <p className="font-baloo text-[#FFF7E0]/65 text-sm leading-snug">Nimi is getting new stories ready — check back soon!</p>
                   </div>
                 </motion.div>
               ) : paginated.length === 0 ? (
@@ -561,8 +533,8 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
                     animate={{ y:[0,-6,0] }} transition={{ duration:3, repeat:Infinity, ease:"easeInOut" }}
                     style={{ height:80, width:"auto", filter:"drop-shadow(0 4px 10px rgba(0,0,0,0.12))" }}
                     className="mb-4" draggable={false} />
-                  <p className="font-baloo font-black text-[#082b78] text-xl mb-1">{t("storyNoResults")}</p>
-                  <p className="font-baloo text-[#7791b3] text-sm">Try a different search or pick another category!</p>
+                  <p className="font-baloo font-black text-[#FFF7E0] text-xl mb-1">{t("storyNoResults")}</p>
+                  <p className="font-baloo text-[#FFF7E0]/65 text-sm">Try a different search or pick another category!</p>
                 </motion.div>
               ) : (
                 <>
@@ -626,26 +598,20 @@ export default function StoriesClient({ initialChildren, initialHasSubscription 
                 <div className="flex items-center justify-center gap-2 mt-8">
                   <motion.button whileTap={m.buttonPress}
                     onClick={() => setPage(p => Math.max(1, p-1))} disabled={page <= 1}
-                    className="w-10 h-10 rounded-full flex items-center justify-center transition disabled:opacity-25"
-                    style={{ background:"#f4f7fb", border:"1.5px solid #c8d9ef", color:"#7791b3" }}>
+                    aria-label="Previous page" className="wui-orb !h-11 !w-11 disabled:opacity-30">
                     <ChevronLeft size={18} />
                   </motion.button>
                   {Array.from({ length:totalPages }).map((_, i) => (
                     <motion.button key={i} whileTap={m.buttonPress}
                       onClick={() => setPage(i+1)}
-                      className="w-10 h-10 rounded-full font-baloo font-black text-sm transition"
-                      style={page === i+1
-                        ? { background:"linear-gradient(135deg,#ffd331,#ffbc14)", color:"#0e2d6b",
-                            boxShadow:"0 4px 12px rgba(255,188,20,0.40)", transform:"scale(1.10)" }
-                        : { background:"#f4f7fb", border:"1.5px solid #c8d9ef", color:"#7791b3" }
-                      }>
+                      aria-label={`Page ${i+1}`} aria-current={page === i+1 ? "page" : undefined}
+                      className={`wui-orb !h-11 !w-11 font-baloo text-sm font-black${page === i+1 ? " wui-orb--gold" : ""}`}>
                       {i+1}
                     </motion.button>
                   ))}
                   <motion.button whileTap={m.buttonPress}
                     onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page >= totalPages}
-                    className="w-10 h-10 rounded-full flex items-center justify-center transition disabled:opacity-25"
-                    style={{ background:"#f4f7fb", border:"1.5px solid #c8d9ef", color:"#7791b3" }}>
+                    aria-label="Next page" className="wui-orb !h-11 !w-11 disabled:opacity-30">
                     <ChevronRight size={18} />
                   </motion.button>
                 </div>

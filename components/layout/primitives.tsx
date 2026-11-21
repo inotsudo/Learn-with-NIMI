@@ -19,11 +19,10 @@ interface PageSurfaceProps {
 }
 
 export function PageSurface({ children, className }: PageSurfaceProps) {
-  const { themeId } = useAppTheme();
-  const v = getComponentVariant(themeId);
   return (
     <div className={cn("min-h-screen flex flex-col bg-transparent", className)}>
-      <div className={cn("mx-auto flex w-full max-w-7xl flex-1 flex-col px-3 py-3 sm:px-4 lg:px-6", v.backgroundStyle.page)}>
+      {/* transparent: the learner app is drawn over official scenes (world shell) */}
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col">
         {children}
       </div>
     </div>

@@ -23,11 +23,9 @@ import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import NotificationPanel from "@/components/layout/NotificationPanel";
 import Flag from "@/components/ui/Flag";
-import { useAppTheme } from "@/contexts/AppThemeProvider";
-import { getThemeAssets } from "@/lib/design-system/assetRegistry";
-import { getComponentVariant } from "@/lib/design-system/componentVariants";
 import { MotionConfig } from "framer-motion";
 import ChildAvatar from "@/components/avatar/ChildAvatar";
+import "@/components/world-ui/world-ui.css";
 import supabase from "@/lib/supabaseClient";
 import { getActiveSubscription } from "@/lib/payments/products";
 
@@ -53,9 +51,6 @@ export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { language, setLanguage, setLanguageSilent, t } = useLanguage();
-  const { themeId } = useAppTheme();
-  const assets = getThemeAssets(themeId);
-  const variants = getComponentVariant(themeId);
   const isOnline = useOnlineStatus();
   useOfflineSync();
   const { updateReady } = useSwUpdate();
@@ -274,219 +269,113 @@ export default function AppShell({ children }: AppShellProps) {
   };
 
   if (authLoading || !user) return (
-    <div className="flex items-center justify-center min-h-screen" style={{ background: "var(--airways-navy, #06101F)" }}>
-      <div className="text-center">
-        <div className="animate-spin w-10 h-10 rounded-full border-4 border-t-transparent mx-auto" style={{ borderColor: "var(--airways-gold, #C9A84C)", borderTopColor: "transparent" }} />
-        <p className="mt-3 font-baloo font-bold text-sm" style={{ color: "var(--airways-text-muted, rgba(240,232,212,0.55))" }}>✈️ Boarding…</p>
+    <div className="flex min-h-dvh items-center justify-center" style={{ background: "radial-gradient(120% 80% at 50% -10%, #1A3558 0%, #0B1A33 45%, #06101F 100%)" }}>
+      <div className="text-center" role="status">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#E8BC56] border-t-transparent" aria-hidden="true" />
+        <p className="mt-3 font-baloo text-sm font-bold text-[#FFF7E0]/60">✈️ Boarding…</p>
       </div>
     </div>
   );
 
+  const urgentTrial = trialExpiredBanner || trialGraceBanner || trialBannerDays === 0;
+  const showTrialBanner = !bannerDismissed && (trialBannerDays !== null || trialExpiredBanner || trialGraceBanner);
+  const sidePad = { paddingLeft: "max(12px, env(safe-area-inset-left))", paddingRight: "max(12px, env(safe-area-inset-right))" };
+
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative min-h-screen overflow-x-hidden">
-      {/* ── AIRWAYS: Deep navy gradient background ── */}
-      <div
-        className="fixed inset-0 -z-10"
-        style={{
-          background: "linear-gradient(160deg, #030C17 0%, #06101F 40%, #0A1828 75%, #0D1E3A 100%)",
-        }}
-      />
-      {/* Airways: Subtle gold bloom top-right */}
-      <div
-        className="pointer-events-none fixed inset-x-0 top-0 h-96 -z-10"
-        style={{
-          background: "radial-gradient(ellipse 70% 50% at 85% -10%, rgba(201,168,76,0.10) 0%, transparent 60%)",
-        }}
-      />
-      {/* Airways: Sky blue horizon glow */}
-      <div
-        className="pointer-events-none fixed inset-x-0 bottom-0 h-64 -z-10"
-        style={{
-          background: "radial-gradient(ellipse 100% 60% at 50% 100%, rgba(30,80,160,0.18) 0%, transparent 70%)",
-        }}
-      />
-      {/* Airways: Floating cloud texture — very subtle */}
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.025]"
-        style={{
-          backgroundImage: `url('${assets.backgrounds.app}')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: "invert(1)",
-        }}
-      />
+    <div className="wui-world relative min-h-dvh" style={{ background: "#06101F" }}>
+      {/* Default night sky — each screen paints its own official scene over it. */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10"
+        style={{ background: "radial-gradient(120% 80% at 50% -10%, #1A3558 0%, #0B1A33 45%, #06101F 100%)" }} />
+
+      {/* The Kit des Champions — main menu (was the sidebar) */}
       <Sidebar
         activeChild={activeChild}
         level={level}
         weekStreak={weekStreak}
         streakCount={streakCount}
+        totalStars={totalStars}
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onLogoutClick={() => setShowLogout(true)}
       />
 
-      <div className="relative flex min-h-screen min-w-0 flex-col" style={{ paddingLeft: "0" }} data-airways-main>
-      <style>{`@media (min-width:1024px){[data-airways-main]{margin-left:var(--airways-sidebar-w,220px);width:calc(100% - var(--airways-sidebar-w,220px));}}`}</style>
+      <div className="relative flex min-h-dvh min-w-0 flex-col">
 
-        {!isOnline && (
-          <div className="bg-ds-warn-surface text-ds-warn text-xs font-semibold text-center py-1.5 px-3 border-b border-ds-warn">
-            📡 {t("offlineBanner")}
+        {/* ── status strips (offline, trial) ─────────────────────────────── */}
+        {(!isOnline || showTrialBanner) && (
+          <div className="relative z-40 grid gap-2" style={{ ...sidePad, paddingTop: "max(10px, env(safe-area-inset-top))" }}>
+            {!isOnline && (
+              <div role="status" className="wui-notice mx-auto w-full max-w-3xl !items-center" style={{ background: "rgba(251,191,36,0.14)", border: "1px solid rgba(251,191,36,0.45)", color: "#FDE68A" }}>
+                📡 {t("offlineBanner")}
+              </div>
+            )}
+            {showTrialBanner && (
+              <div role="status" className={`wui-notice mx-auto w-full max-w-3xl !items-center ${urgentTrial ? "wui-notice--error" : ""}`}
+                style={urgentTrial ? undefined : { background: "rgba(251,191,36,0.14)", border: "1px solid rgba(251,191,36,0.45)", color: "#FDE68A" }}>
+                <span className="shrink-0" aria-hidden="true">{urgentTrial ? "🔴" : "⏳"}</span>
+                <span className="min-w-0 flex-1">
+                  {trialExpiredBanner
+                    ? "Your free trial has ended — subscribe to restore full access."
+                    : trialGraceBanner
+                    ? "Your trial ended — you have 24 hours of grace access. Subscribe to keep Club."
+                    : trialBannerDays === 0
+                    ? "Your trial ends today! Subscribe now to keep all premium stories."
+                    : trialBannerDays === 1
+                    ? "1 day left on your trial — subscribe before tomorrow to keep Club access."
+                    : `${trialBannerDays} days left on your free trial.`}
+                </span>
+                <a href="/pricing" className="wui-btn wui-btn--gold shrink-0 !min-h-[40px] !px-4 !text-[14px]">
+                  {trialExpiredBanner || trialGraceBanner ? "Subscribe" : "Subscribe →"}
+                </a>
+                <button onClick={() => setBannerDismissed(true)} aria-label="Dismiss banner" className="grid h-10 w-10 shrink-0 place-items-center rounded-full opacity-60 transition hover:opacity-100">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── Trial countdown / expired banner ─────────────────────────── */}
-        {!bannerDismissed && (trialBannerDays !== null || trialExpiredBanner || trialGraceBanner) && (
-          <div
-            className={`flex items-center justify-between gap-3 px-4 py-2 text-xs font-semibold border-b ${
-              trialExpiredBanner || trialGraceBanner || trialBannerDays === 0
-                ? "bg-ds-danger-surface text-ds-danger border-ds-danger"
-                : "bg-ds-warn-surface text-ds-warn border-ds-warn"
-            }`}
-          >
-            <span className="flex items-center gap-2 min-w-0">
-              <span className="text-base shrink-0">{trialExpiredBanner || trialGraceBanner || trialBannerDays === 0 ? "🔴" : "⏳"}</span>
-              <span className="truncate">
-                {trialExpiredBanner
-                  ? "Your free trial has ended — subscribe to restore full access."
-                  : trialGraceBanner
-                  ? "Your trial ended — you have 24 hours of grace access. Subscribe to keep Club."
-                  : trialBannerDays === 0
-                  ? "Your trial ends today! Subscribe now to keep all premium stories."
-                  : trialBannerDays === 1
-                  ? "1 day left on your trial — subscribe before tomorrow to keep Club access."
-                  : `${trialBannerDays} days left on your free trial.`}
-              </span>
-            </span>
-            <div className="flex items-center gap-2 shrink-0">
-              <a
-                href="/pricing"
-                className={`font-black px-3 py-1 rounded-xl text-2xs transition ${
-                  trialExpiredBanner || trialGraceBanner || trialBannerDays === 0
-                    ? "bg-[var(--ds-state-error)] text-white hover:opacity-90"
-                    : "bg-[var(--ds-warn-icon)] text-white hover:opacity-90"
-                }`}
-              >
-                {trialExpiredBanner || trialGraceBanner ? "Subscribe" : "Subscribe →"}
-              </a>
-              <button
-                onClick={() => setBannerDismissed(true)}
-                className="text-current opacity-50 hover:opacity-100 transition"
-                aria-label="Dismiss banner"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── AIRWAYS Top bar ──────────────────────────────────────────────── */}
+        {/* ── World bar: airport medallion, passport chip (opens the Kit), stats ── */}
         {activeChild && (
-          <div
-            className={pathname === "/home"
-              ? "relative z-20 lg:absolute lg:top-3 lg:right-6 lg:w-fit"
-              : "relative z-20"}
-          >
-            {/* No header bar — the reference has no distinct top strip at all; the streak/
-                stars/bell/language row sits directly on the page background, same as the
-                hero below it, with no separating background/border/shadow. */}
+          <header className="relative z-40" style={{ ...sidePad, paddingTop: !isOnline || showTrialBanner ? 10 : "max(10px, env(safe-area-inset-top))" }}>
+            <div className="mx-auto flex max-w-[1800px] items-center gap-2">
+              <Link href="/home" aria-label="Back to the airport" className="wui-orb overflow-hidden !p-0">
+                <img src="/nimi-logo.png" alt="" className="h-full w-full rounded-full object-cover" />
+              </Link>
 
-            {/* Content layer — overflow-visible so dropdowns escape */}
-            <div className="relative flex items-center h-12 px-3 lg:px-0 max-w-[1800px] mx-auto gap-2.5">
-
-              {/* Mobile: hamburger */}
-              <button
-                onClick={() => setDrawerOpen(true)}
-                className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:-translate-y-0.5 active:scale-95 shrink-0"
-                style={{ background: "rgba(20,35,59,0.05)", border: "1px solid rgba(177,120,34,0.20)", color: "#14233B" }}
-                aria-label="Open menu"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
-                  <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                </svg>
-              </button>
-
-              {/* Search — mobile only. The reference's desktop top bar has no search icon at
-                  all (search lives on /stories), so desktop stays exactly as clean as the
-                  reference; mobile keeps a compact entry point since there's no room for a
-                  persistent search affordance elsewhere at that width. */}
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:-translate-y-0.5 active:scale-95 shrink-0"
-                style={{ background: "rgba(20,35,59,0.05)", border: "1px solid rgba(177,120,34,0.20)", color: "rgba(20,35,59,0.55)" }}
-                aria-label="Search"
-              >
-                <Search className="w-4.5 h-4.5" />
+              <button type="button" onClick={() => setDrawerOpen(true)} aria-haspopup="dialog" aria-label={`Open the Kit menu — ${activeChild.name}`}
+                className="wui-pill min-w-0 transition hover:-translate-y-0.5 active:translate-y-0.5">
+                <span className="shrink-0 rounded-full" style={{ boxShadow: "0 0 0 2px #E8BC56" }}>
+                  <ChildAvatar avatarUrl={activeChild.avatar_url} size={38} />
+                </span>
+                <span className="min-w-0 text-left leading-tight">
+                  <span className="block max-w-[110px] truncate font-baloo text-[15px] font-extrabold sm:max-w-[180px]">{activeChild.name}</span>
+                  <span className="block font-nunito text-[11px] font-bold text-[#FDE68A]/80">Level {level} · 🧳 Kit</span>
+                </span>
               </button>
 
               <div className="flex-1" />
 
-              {/* Right cluster — frosted pill so chips are legible over hero */}
-              <div
-                className="ml-auto flex items-center gap-2 shrink-0 rounded-[28px] px-2 py-1.5 lg:backdrop-blur-sm"
-                style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.28)" }}
-              >
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="wui-pill wui-pill--stat" title={`${totalStars} stars earned`}>
+                  <span aria-hidden="true">⭐</span>{totalStars}<span className="sr-only"> stars</span>
+                </span>
+                {streakCount > 0 && (
+                  <span className="wui-pill wui-pill--stat hidden sm:inline-flex" title={`${streakCount}-day streak!`}>
+                    <span aria-hidden="true">🔥</span>{streakCount}<span className="sr-only">-day streak</span>
+                  </span>
+                )}
 
-                {/* ── Streak chip ── */}
-                <div
-                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-2xl transition-all"
-                  title={streakCount > 0 ? `${streakCount}-day streak!` : "No streak yet"}
-                  style={{
-                    background: streakCount > 0
-                      ? "linear-gradient(135deg,#FF8C00,#F55F00)"
-                      : "rgba(20,35,59,0.06)",
-                    boxShadow: streakCount > 0
-                      ? "0 3px 0 rgba(180,60,0,0.30), 0 6px 16px rgba(245,95,0,0.22)"
-                      : "none",
-                    border: streakCount > 0 ? "none" : "1.5px solid rgba(20,35,59,0.10)",
-                  }}
-                >
-                  <span className={`text-[20px] leading-none ${streakCount === 0 ? "grayscale opacity-35" : ""}`}>🔥</span>
-                  <div className="leading-none">
-                    <p className="font-baloo font-black text-[15px] leading-none"
-                       style={{ color: streakCount > 0 ? "#fff" : "rgba(20,35,59,0.30)" }}>
-                      {streakCount}
-                    </p>
-                    <p className="font-baloo text-[9px] mt-0.5 uppercase tracking-wide"
-                       style={{ color: streakCount > 0 ? "rgba(255,255,255,0.75)" : "rgba(20,35,59,0.28)" }}>
-                      streak
-                    </p>
-                  </div>
-                </div>
+                <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search" className="wui-orb md:hidden">
+                  <Search className="h-5 w-5" />
+                </button>
 
-                {/* ── Stars chip ── */}
-                <div
-                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-2xl"
-                  title={`${totalStars} stars earned`}
-                  style={{
-                    background: "linear-gradient(135deg,#F9C932,#E8A820)",
-                    boxShadow: "0 3px 0 rgba(180,120,0,0.28), 0 6px 16px rgba(232,168,32,0.28)",
-                  }}
-                >
-                  <span className="text-[20px] leading-none">⭐</span>
-                  <div className="leading-none">
-                    <p className="font-baloo font-black text-[15px] leading-none" style={{ color: "#06101F" }}>{totalStars}</p>
-                    <p className="font-baloo text-[9px] mt-0.5 uppercase tracking-wide" style={{ color: "rgba(6,16,31,0.55)" }}>stars</p>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="hidden md:block w-px h-6 rounded-full" style={{ background: "rgba(177,120,34,0.22)" }} />
-
-                {/* ── Bell / Notifications ── */}
                 <div className="relative">
-                  <button
-                    onClick={() => { setShowNotifications(p => !p); setShowLangPicker(false); setShowProfileMenu(false); }}
-                    className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all hover:-translate-y-0.5 active:scale-95"
-                    style={{ background: "rgba(20,35,59,0.05)", border: "1px solid rgba(177,120,34,0.20)" }}
-                    aria-label="Notifications"
-                  >
-                    <Bell className="w-[17px] h-[17px]" strokeWidth={1.8} style={{ color: "rgba(20,35,59,0.55)" }} />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center text-5xs font-black text-white border-2 border-white px-0.5">
-                        {unreadCount}
-                      </span>
-                    )}
+                  <button type="button" aria-label="Notifications" className="wui-orb"
+                    onClick={() => { setShowNotifications(p => !p); setShowLangPicker(false); setShowProfileMenu(false); }}>
+                    <Bell className="h-5 w-5" strokeWidth={2} />
+                    {unreadCount > 0 && <span className="wui-orb__badge">{unreadCount}</span>}
                   </button>
                   <NotificationPanel
                     isOpen={showNotifications}
@@ -495,121 +384,80 @@ export default function AppShell({ children }: AppShellProps) {
                   />
                 </div>
 
-                {/* ── Language pill — desktop only ── */}
-                <div className="relative hidden md:block">
-                  <button
-                    onClick={() => { setShowLangPicker(p => !p); setShowProfileMenu(false); setShowNotifications(false); }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border border-[var(--ds-border-primary)]/70 bg-white/80 shadow-sm transition-all hover:shadow-md hover:border-[var(--ds-brand-primary)]/40 hover:bg-[var(--ds-brand-soft)] hover:-translate-y-0.5 active:scale-95"
-                    aria-label="Language"
-                  >
-                    <Flag lang={language} className="w-5 h-3.5 rounded-sm flex-shrink-0" />
-                    <span className="text-2xs font-black text-[var(--ds-text-secondary)] uppercase tracking-wide">{language}</span>
-                    <svg className="w-3 h-3 text-[var(--ds-text-tertiary)]" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                <div className="relative hidden sm:block">
+                  <button type="button" aria-label={`Language: ${language}`} aria-expanded={showLangPicker} className="wui-orb"
+                    onClick={() => { setShowLangPicker(p => !p); setShowProfileMenu(false); setShowNotifications(false); }}>
+                    <Flag lang={language} className="h-4 w-6 rounded-sm" />
                   </button>
                   {showLangPicker && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowLangPicker(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[var(--ds-border-primary)]/80 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5">
+                      <div className="wui-glass absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl p-1.5">
                         {([
-                          { code: "en" as Language, label: "English",     flag: "🇬🇧" },
-                          { code: "fr" as Language, label: "Français",    flag: "🇫🇷" },
-                          { code: "rw" as Language, label: "Kinyarwanda", flag: "🇷🇼" },
-                        ] as { code: Language; label: string; flag: string }[]).map(l => (
-                          <button
-                            key={l.code}
+                          { code: "en" as Language, label: "English" },
+                          { code: "fr" as Language, label: "Français" },
+                          { code: "rw" as Language, label: "Kinyarwanda" },
+                        ]).map(l => (
+                          <button key={l.code} type="button"
                             onClick={() => { setShowLangPicker(false); setPendingLanguage(l.code); }}
-                            className={`flex items-center gap-2.5 px-4 py-2.5 w-full transition font-nunito text-sml font-bold ${
-                              l.code === language
-                                ? "bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)]"
-                                : "hover:bg-[var(--ds-surface-card-hover)] text-[var(--ds-text-primary)]"
-                            }`}
-                          >
-                            <Flag lang={l.code} className="w-6 h-4 rounded-sm flex-shrink-0" />
+                            className={`flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 font-baloo text-[15px] font-bold transition ${
+                              l.code === language ? "bg-[#FDE68A]/15 text-[#FDE68A]" : "text-[#FFF7E0]/85 hover:bg-white/5"}`}>
+                            <Flag lang={l.code} className="h-4 w-6 shrink-0 rounded-sm" />
                             <span className="flex-1 text-left">{l.label}</span>
-                            {l.code === language && <span className="text-3xs font-black text-[var(--ds-brand-primary)]">✓</span>}
+                            {l.code === language && <span aria-hidden="true">✓</span>}
                           </button>
                         ))}
                       </div>
                     </>
                   )}
                 </div>
-
-                {/* Learner identity lives in the sidebar only, matching the reference exactly —
-                    no avatar/profile chip in the top bar. Masterpiece and Settings, which used
-                    to live in this dropdown, are now sidebar nav items instead (see Sidebar.tsx)
-                    so they stay reachable. */}
-
-              </div>{/* end right cluster */}
+              </div>
             </div>
 
-            {/* Mobile search overlay */}
+            {/* Search overlay (phones) */}
             {searchOpen && (
-              <div className={`md:hidden absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center h-16 px-4 gap-3 border-b border-[var(--ds-border-primary)] shadow-sm`}>
-                <button
-                  onClick={() => setSearchOpen(false)}
-                  className="p-1.5 rounded-xl text-[var(--ds-text-secondary)] hover:bg-[var(--ds-surface-card-hover)] transition shrink-0"
-                  aria-label="Close search"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <form
-                  onSubmit={e => {
-                    e.preventDefault();
-                    const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value.trim();
-                    setSearchOpen(false);
-                    if (q) void (window.location.href = `/stories?q=${encodeURIComponent(q)}`);
-                  }}
-                  className="flex-1 flex items-center gap-2"
-                >
-                  <div className="relative flex-1">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ds-text-tertiary)]" />
-                    <input
-                      name="q"
-                      type="text"
-                      autoFocus
-                      placeholder="Search stories, activities…"
-                      className="w-full h-10 bg-[var(--ds-surface-input)] border border-[var(--ds-border-primary)] rounded-2xl pl-9 pr-4 text-sml font-nunito text-[var(--ds-text-primary)] placeholder:text-[var(--ds-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--ds-brand-primary)]/30 focus:border-[var(--ds-brand-primary)]/60 transition"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-10 h-10 flex items-center justify-center rounded-xl transition shrink-0 active:scale-95"
-                    style={{ backgroundColor: "var(--ds-brand-primary)" }}
-                  >
-                    <Search className="w-4 h-4 text-white" />
+              <div className="absolute inset-x-0 top-0 z-50 flex items-center gap-2 md:hidden" style={{ ...sidePad, paddingTop: "max(10px, env(safe-area-inset-top))" }}>
+                <div className="wui-glass flex w-full items-center gap-2 rounded-full p-1.5">
+                  <button type="button" onClick={() => setSearchOpen(false)} aria-label="Close search" className="wui-orb !h-11 !w-11 shrink-0">
+                    <ArrowLeft className="h-5 w-5" />
                   </button>
-                </form>
+                  <form
+                    onSubmit={e => {
+                      e.preventDefault();
+                      const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value.trim();
+                      setSearchOpen(false);
+                      if (q) void (window.location.href = `/stories?q=${encodeURIComponent(q)}`);
+                    }}
+                    className="flex min-w-0 flex-1 items-center gap-2"
+                  >
+                    <label htmlFor="shell-search" className="sr-only">Search stories</label>
+                    <input id="shell-search" name="q" type="search" autoFocus placeholder="Search stories, activities…"
+                      className="h-11 min-w-0 flex-1 bg-transparent px-2 font-nunito text-[16px] font-bold text-[#FFF7E0] outline-none placeholder:text-[#FFF7E0]/40" />
+                    <button type="submit" aria-label="Search" className="wui-orb wui-orb--gold !h-11 !w-11 shrink-0">
+                      <Search className="h-5 w-5" />
+                    </button>
+                  </form>
+                </div>
               </div>
             )}
-          </div>
+          </header>
         )}
 
         <div
           id="main-content"
-          className={pathname === "/home"
-            ? "flex-1 flex flex-col w-full max-w-[1800px] mx-auto px-0 py-0 pb-[88px] sm:px-0 sm:py-0 lg:px-0 lg:py-0 lg:pb-0"
-            : "flex-1 flex flex-col w-full max-w-[1800px] mx-auto px-4 py-4 pb-[88px] sm:px-5 sm:py-5 lg:px-6 lg:py-6 lg:pb-8"}
+          className="relative flex w-full max-w-[1800px] flex-1 flex-col self-center px-3 pb-[120px] pt-4 sm:px-5 lg:px-6 [@media(max-height:500px)]:pb-6"
         >
           {children}
         </div>
       </div>
 
-      {/* Persistent bottom navigation — mobile only (lg:hidden inside the component) */}
+      {/* The dock (bottom navigation) */}
       <BottomNavBar />
 
       <InstallPrompt />
       <UpdateToast visible={updateReady && !updateDismissed} onDismiss={() => setUpdateDismissed(true)} />
 
       <LogoutModal isOpen={showLogout} onClose={() => setShowLogout(false)} />
-
-      {/* Copyright footer — desktop only, stays below content */}
-      {pathname !== "/home" && (
-        <div className="hidden lg:block text-center py-2 border-t border-ds-border bg-ds-card/50">
-          <p className="font-nunito text-3xs text-[var(--ds-text-tertiary)]">© 2026 Nimipiko Studio LTD. All rights reserved.</p>
-        </div>
-      )}
 
       <LanguageSwitchDialog
         pendingLanguage={pendingLanguage}

@@ -276,3 +276,160 @@
 .wui-paper__perf::before { left: -18px; }
 .wui-paper__perf::after { right: -18px; }
 .wui-paper__label { font-family: var(--font-baloo), system-ui, sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.24em; color: #A07F2C; }
+
+/* ── round 3D orb button (dock, top bar) ─────────────────────────────── */
+.wui-orb {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 50%; cursor: pointer; color: #FFF7E0;
+  background: radial-gradient(circle at 35% 28%, rgba(255, 247, 224, 0.28), rgba(255, 247, 224, 0) 45%),
+    linear-gradient(160deg, #1F3E66 0%, #0B1A33 100%);
+  border: 1.5px solid rgba(253, 230, 138, 0.42);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.35), 0 4px 0 rgba(0, 0, 0, 0.35), 0 10px 20px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.wui-orb:hover { transform: translateY(-2px); }
+.wui-orb:active { transform: translateY(3px); box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.3); }
+.wui-orb:focus-visible { outline: 3px solid #FDE68A; outline-offset: 3px; }
+.wui-orb[aria-current="page"], .wui-orb--gold {
+  color: #06101F; border-color: transparent;
+  background: radial-gradient(circle at 35% 25%, #FFF7E0 0%, #FDE68A 30%, #E8BC56 65%, #C9A84C 100%);
+  box-shadow: inset 0 -3px 6px rgba(138, 106, 30, 0.45), 0 4px 0 #8A6A1E, 0 10px 22px rgba(0, 0, 0, 0.35), 0 0 24px rgba(253, 230, 138, 0.35);
+}
+.wui-orb__badge {
+  position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
+  display: grid; place-items: center; background: #EF4444; color: #fff; border: 2px solid #06101F;
+  font: 800 10px/1 var(--font-baloo), system-ui, sans-serif;
+}
+
+/* ── glass top bar pieces ────────────────────────────────────────────── */
+.wui-pill {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 4px 14px 4px 4px; border-radius: 999px;
+  background: rgba(11, 26, 51, 0.62); border: 1.5px solid rgba(253, 230, 138, 0.32); color: #FFF7E0;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 247, 224, 0.12);
+  backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+.wui-pill--stat { padding: 4px 12px; gap: 6px; font: 800 16px/1 var(--font-baloo), system-ui, sans-serif; }
+
+/* ── the dock (bottom navigation) ────────────────────────────────────── */
+.wui-dock {
+  display: flex; align-items: flex-end; gap: 6px; padding: 8px 10px; border-radius: 30px;
+  background: rgba(6, 16, 31, 0.7); border: 1.5px solid rgba(253, 230, 138, 0.3);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 247, 224, 0.12);
+  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+}
+.wui-dock__item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 52px;
+  font: 800 10px/1 var(--font-baloo), system-ui, sans-serif; letter-spacing: 0.04em; color: rgba(255, 247, 224, 0.7);
+  text-decoration: none;
+}
+.wui-dock__item[aria-current="page"] { color: #FDE68A; }
+
+/* ── the Kit (main menu panel) ───────────────────────────────────────── */
+.wui-kit-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 96px; padding: 10px 6px;
+  border-radius: 22px; text-decoration: none; text-align: center; color: #FFF7E0; cursor: pointer;
+  background: rgba(255, 247, 224, 0.06); border: 1.5px solid rgba(253, 230, 138, 0.2);
+  font: 800 13px/1.1 var(--font-baloo), system-ui, sans-serif;
+  transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.wui-kit-tile:hover { transform: translateY(-2px); border-color: rgba(253, 230, 138, 0.5); }
+.wui-kit-tile:active { transform: translateY(2px); }
+.wui-kit-tile:focus-visible { outline: 3px solid #FDE68A; outline-offset: 2px; }
+.wui-kit-tile[aria-current="page"] { border-color: #FDE68A; background: rgba(253, 230, 138, 0.14); box-shadow: 0 0 0 3px rgba(253, 230, 138, 0.14), 0 0 24px rgba(253, 230, 138, 0.22); color: #FDE68A; }
+.wui-kit-tile__icon {
+  display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; font-size: 26px; line-height: 1;
+  background: radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 45%), var(--tile, #1F3E66);
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.3), 0 5px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* ── World token set ─────────────────────────────────────────────────────
+   Applied by the app shell (class on its root). Every --ds-* / --theme-*
+   consumer inside the learner app turns into night-glass + gold without
+   per-component changes; admin and marketing pages keep their own tokens. */
+.wui-world {
+  color-scheme: dark;
+  color: #FFF7E0;
+
+  --ds-surface-page:        transparent;
+  --ds-surface-card:        rgba(11, 26, 51, 0.8);
+  --ds-surface-card-hover:  rgba(26, 53, 88, 0.82);
+  --ds-surface-card-active: rgba(26, 53, 88, 0.94);
+  --ds-surface-input:       rgba(6, 16, 31, 0.55);
+  --ds-surface-nav:         rgba(6, 16, 31, 0.82);
+  --ds-surface-overlay:     rgba(6, 16, 31, 0.72);
+  --ds-surface-tooltip:     #FFF7E0;
+
+  --ds-text-primary:   #FFF7E0;
+  --ds-text-secondary: rgba(255, 247, 224, 0.72);
+  --ds-text-tertiary:  rgba(255, 247, 224, 0.45);
+  --ds-text-inverse:   #06101F;
+  --ds-text-brand:     #E8BC56;
+
+  --ds-border-primary: rgba(253, 230, 138, 0.18);
+  --ds-border-strong:  rgba(253, 230, 138, 0.38);
+  --ds-border-brand:   #E8BC56;
+
+  --ds-brand-primary: #E8BC56;
+  --ds-brand-hover:   #FDE68A;
+  --ds-brand-pressed: #C9A84C;
+  --ds-brand-soft:    rgba(253, 230, 138, 0.14);
+  --ds-brand-subtle:  rgba(253, 230, 138, 0.08);
+
+  --ds-nav-bg:            #06101F;
+  --ds-nav-active-bg:     rgba(253, 230, 138, 0.14);
+  --ds-nav-active-text:   #FDE68A;
+  --ds-nav-inactive-text: rgba(255, 247, 224, 0.75);
+  --ds-nav-inactive-icon: rgba(255, 247, 224, 0.55);
+  --ds-nav-border:        rgba(253, 230, 138, 0.25);
+
+  --ds-shadow-card:  0 18px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 247, 224, 0.08);
+  --ds-shadow-nav:   0 10px 30px rgba(0, 0, 0, 0.4);
+  --ds-shadow-hover: 0 22px 48px rgba(0, 0, 0, 0.45), 0 0 24px rgba(253, 230, 138, 0.18);
+  --ds-shadow-cta:   0 6px 0 #8A6A1E, 0 14px 28px rgba(0, 0, 0, 0.4);
+
+  --ds-progress-track: rgba(255, 247, 224, 0.12);
+  --ds-progress-fill:  #E8BC56;
+
+  --ds-state-success: #34D399;
+  --ds-state-error:   #F87171;
+  --ds-state-warning: #FBBF24;
+  --ds-state-focus:   #FDE68A;
+
+  --ds-warn-surface: rgba(251, 191, 36, 0.12);
+  --ds-warn-border:  rgba(251, 191, 36, 0.42);
+  --ds-warn-text:    #FDE68A;
+  --ds-warn-icon:    #FBBF24;
+
+  --ds-danger-surface: rgba(248, 113, 113, 0.12);
+  --ds-danger-border:  rgba(248, 113, 113, 0.42);
+  --ds-danger-text:    #FECACA;
+
+  --ds-club-primary: #A78BFA;
+  --ds-club-hover:   #C4B5FD;
+  --ds-club-soft:    rgba(167, 139, 250, 0.16);
+  --ds-club-subtle:  rgba(167, 139, 250, 0.1);
+  --ds-club-border:  rgba(167, 139, 250, 0.42);
+  --ds-club-text:    #DDD6FE;
+  --ds-shadow-club:  0 8px 24px rgba(124, 58, 237, 0.35);
+
+  --theme-bg:          #06101F;
+  --theme-card:        rgba(11, 26, 51, 0.8);
+  --theme-darker:      rgba(6, 16, 31, 0.6);
+  --theme-card-hover:  rgba(26, 53, 88, 0.82);
+  --theme-card-active: rgba(26, 53, 88, 0.94);
+  --theme-accent:      #E8BC56;
+  --theme-accent-soft: rgba(253, 230, 138, 0.14);
+  --theme-accent-muted: rgba(253, 230, 138, 0.22);
+  --theme-border:      rgba(253, 230, 138, 0.18);
+  --theme-border-strong: rgba(253, 230, 138, 0.38);
+  --theme-surface-page: transparent;
+}
+/* glass blur for token cards inside the world */
+.wui-world .bg-ds-card { -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25); }
+
+/* loading placeholders (Bone) inside the world: dark glass with a gold shimmer */
+.wui-world .wui-bone {
+  background-image: linear-gradient(90deg, rgba(255, 247, 224, 0.05) 0%, rgba(253, 230, 138, 0.14) 50%, rgba(255, 247, 224, 0.05) 100%);
+  border: 1px solid rgba(253, 230, 138, 0.1);
+}

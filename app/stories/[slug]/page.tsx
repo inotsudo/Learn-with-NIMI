@@ -46,6 +46,9 @@ import { getThemeAssets } from "@/lib/design-system/assetRegistry";
 import { getComponentVariant } from "@/lib/design-system/componentVariants";
 import { PageSurface } from "@/components/layout/primitives";
 import BadgeCircle from "@/components/stories/BadgeCircle";
+import { WorldBackdrop } from "@/components/world-ui";
+import "@/components/world-ui/world-ui.css";
+import { WORLD } from "@/lib/design-system/world";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
 
@@ -221,6 +224,19 @@ const SLOT_BADGE: Record<string, { bg: string; text: string; border: string }> =
 };
 
 type Phase = "onboarding" | "welcome" | "boarding" | "takeoff" | "missions" | "landing" | "certificate" | "challenge" | "complete";
+
+/** The official scene behind each stage — the journey follows the intro video. */
+const PHASE_SCENE: Record<Phase, { n: number; dim: number }> = {
+  onboarding:  { n: 1,  dim: 0.6 },
+  welcome:     { n: 14, dim: 0.4 },
+  boarding:    { n: 5,  dim: 0.45 },
+  takeoff:     { n: 12, dim: 0.2 },
+  missions:    { n: 16, dim: 0.55 },
+  landing:     { n: 17, dim: 0.35 },
+  certificate: { n: 18, dim: 0.5 },
+  challenge:   { n: 20, dim: 0.55 },
+  complete:    { n: 23, dim: 0.45 },
+};
 
 
 export default function StoryDetailPage() {
@@ -687,7 +703,15 @@ export default function StoryDetailPage() {
     <AppShell>
       <PreviewBanner />
       <PageSurface className={isPreview ? "pt-10" : ""}>
-        <main className="max-w-3xl mx-auto w-full min-h-screen flex flex-col">
+        {/* official scene for the current stage, cross-faded; takeoff pushes the camera in */}
+        <AnimatePresence>
+          <motion.div key={PHASE_SCENE[phase].n} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}>
+            <motion.div initial={{ scale: 1 }} animate={{ scale: phase === "takeoff" && !m.reduced ? 1.18 : 1 }} transition={{ duration: 2.4, ease: "easeIn" }} className="fixed inset-0">
+              <WorldBackdrop src={WORLD.scene(PHASE_SCENE[phase].n)} shade="full" dim={PHASE_SCENE[phase].dim} />
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+        <main className="relative z-10 max-w-3xl mx-auto w-full min-h-[calc(100dvh-80px)] flex flex-col">
 
           <AnimatePresence mode="wait">
 
@@ -698,18 +722,8 @@ export default function StoryDetailPage() {
               <motion.div key="onboarding"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.4 }}
-                className="flex-1 flex flex-col items-center justify-center relative min-h-screen"
-                style={{ background: "linear-gradient(160deg, #04111f 0%, #091829 45%, #100e24 100%)" }}>
+                className="flex-1 flex flex-col items-center justify-center relative">
 
-                {/* Star field — decorative, screen-reader hidden */}
-                <div aria-hidden="true" className="absolute inset-0 pointer-events-none select-none">
-                {STARS.map((s, i) => (
-                  <motion.div key={i} className="absolute rounded-full pointer-events-none select-none"
-                    style={{ left:`${s.x}%`, top:`${s.y}%`, width:s.size, height:s.size, background:"#fff" }}
-                    animate={m.reduced ? {} : { opacity:[0.15, s.peakOpacity, 0.15] }}
-                    transition={{ duration:s.duration, delay:s.delay, repeat:Infinity, ease:"easeInOut" }} />
-                ))}
-                </div>
 
                 <div className="relative z-10 w-full max-w-2xl mx-auto px-4 flex flex-col items-center gap-6 py-10">
                   <div className="text-center space-y-2">
@@ -910,6 +924,10 @@ export default function StoryDetailPage() {
                           <motion.div
                             animate={{ rotateY: isBookOpening ? -175 : 0 }}
                             transition={{ type:"spring", stiffness:40, damping:24, delay:0.05 }}
+                            role="button"
+                            tabIndex={isBookOpening ? -1 : 0}
+                            aria-label={doneCount === 0 ? "Open the book" : `Continue the book, ${doneCount} of ${totalCount} done`}
+                            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
                             onClick={() => {
                               if (isBookOpening) return;
                               playTap();
@@ -1391,8 +1409,7 @@ export default function StoryDetailPage() {
               <motion.div key="boarding"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.35 }}
-                className="flex-1 flex flex-col items-center justify-center relative min-h-screen px-5 py-10"
-                style={{ background: 'linear-gradient(160deg,#04111f 0%,#091829 45%,#100e24 100%)' }}>
+                className="flex-1 flex flex-col items-center justify-center relative px-5 py-10">
 
                 {/* Starfield — decorative */}
                 <div aria-hidden="true" className="absolute inset-0 pointer-events-none select-none">
@@ -1536,16 +1553,8 @@ export default function StoryDetailPage() {
             {phase === "takeoff" && (
               <motion.div key="takeoff"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center min-h-screen relative overflow-hidden"
-                style={{ background: 'linear-gradient(180deg, #04111f 0%, #060e1c 50%, #040b18 100%)' }}
+                className="flex-1 flex flex-col items-center justify-center relative overflow-hidden"
                 aria-live="polite" aria-label="Preparing for takeoff">
-
-                {/* Stars */}
-                <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
-                  {Array.from({ length: 30 }).map((_, si) => (
-                    <div key={si} style={{ position:'absolute', left:`${((si*137.5)%100).toFixed(1)}%`, top:`${((si*61.8)%100).toFixed(1)}%`, width: si%5===0?2:1, height: si%5===0?2:1, borderRadius:'50%', background:'#F0E8D5', opacity:0.04+(si%4)*0.03 }} />
-                  ))}
-                </div>
 
                 {/* Runway lights scrolling past */}
                 {!m.reduced && (
@@ -1560,19 +1569,9 @@ export default function StoryDetailPage() {
                   </div>
                 )}
 
-                {/* Airplane ascending */}
-                <motion.div
-                  aria-hidden="true"
-                  initial={{ y: 60, x: 0, rotate: -8, opacity: 0 }}
-                  animate={{ y: -80, x: 20, rotate: 12, opacity: [0, 1, 1, 0.6] }}
-                  transition={{ duration: 1.4, ease: [0.2, 0, 0.4, 1] }}
-                  style={{ fontSize: 56, lineHeight: 1, filter: 'drop-shadow(0 4px 16px rgba(201,168,76,0.5))' }}>
-                  ✈️
-                </motion.div>
-
                 <motion.div
                   initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="absolute text-center px-8" style={{ bottom: '30%' }}>
+                  className="wui-glass absolute rounded-3xl px-8 py-5 text-center" style={{ bottom: '22%' }}>
                   <p className="font-nunito font-black text-2xs uppercase tracking-widest mb-1" style={{ color: 'rgba(201,168,76,0.7)' }}>
                     ✈️ NIMIPIKO AIRWAYS
                   </p>
@@ -1589,13 +1588,10 @@ export default function StoryDetailPage() {
             {/* ═══════════════════════════════════════════ */}
             {phase === "missions" && (
               <motion.div key="missions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col pb-28 relative" style={{ background: '#06101F' }}>
+                className="flex-1 flex flex-col pb-28 relative">
 
                 {/* Airways starfield + in-flight ambience — decorative, screen-reader hidden */}
                 <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                  {Array.from({ length: 44 }).map((_, si) => (
-                    <div key={si} style={{ position: 'absolute', left: `${((si * 137.5) % 100).toFixed(1)}%`, top: `${((si * 61.8) % 100).toFixed(1)}%`, width: si % 6 === 0 ? 2 : 1, height: si % 6 === 0 ? 2 : 1, borderRadius: '50%', background: '#F0E8D5', opacity: 0.03 + (si % 4) * 0.025 }} />
-                  ))}
                   <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
                   <div style={{ position: 'absolute', bottom: '10%', left: '30%', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%)', pointerEvents: 'none' }} />
                   {/* Subtle drifting clouds — visible only when motion is allowed */}
@@ -1975,8 +1971,7 @@ export default function StoryDetailPage() {
             {phase === "landing" && (
               <motion.div key="landing"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center min-h-screen relative overflow-hidden"
-                style={{ background: 'linear-gradient(180deg, #04111f 0%, #060e1c 40%, #081a10 100%)' }}
+                className="flex-1 flex flex-col items-center justify-center relative overflow-hidden"
                 aria-live="polite" aria-label="Landing at destination">
 
                 {/* Stars */}

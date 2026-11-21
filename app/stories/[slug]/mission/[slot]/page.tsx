@@ -39,9 +39,18 @@ import NimiReaction from "@/components/missions/NimiReaction";
 import ComprehensionQuestion from "@/components/missions/ComprehensionQuestion";
 import type { QuestionData } from "@/components/missions/ComprehensionQuestion";
 import WordLearnedCard from "@/components/missions/WordLearnedCard";
+import { WorldBackdrop } from "@/components/world-ui";
+import "@/components/world-ui/world-ui.css";
+import { WORLD } from "@/lib/design-system/world";
 import type { VocabWord } from "@/components/missions/WordLearnedCard";
 
 const ACTIVE_CHILD_KEY = "nimipiko_active_child";
+
+/** Each mission stands in its own official scene (the intro video's mission bubbles). */
+const SLOT_SCENE: Record<string, number> = {
+  flipflop_audio: 24, story_pdf: 25, coloring: 19, move_explore: 21, sing_along: 22, bonus_video: 23,
+  challenge_1: 20, challenge_2: 20, challenge_3: 20, destination_video: 16,
+};
 
 const SLOT_T_KEYS: Record<string, string> = {
   flipflop_audio:    "flipflopAudioLabel",
@@ -345,39 +354,9 @@ export default function StoryMissionPage() {
     <AppShell>
       <PreviewBanner />
       <PageSurface className={isPreview ? "pt-10" : ""}>
-        <main className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 pb-24 flex-1 w-full relative overflow-hidden" style={{ isolation: 'isolate' }}>
-
-          {/* ── Airways atmosphere ─────────────────────────────────── */}
-          {/* Navy gradient behind all content; z:-1 stays in isolation stacking context */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              zIndex: -1,
-              background: 'linear-gradient(180deg, rgba(6,16,31,0.08) 0%, rgba(6,16,31,0.04) 45%, transparent 75%)',
-            }}
-          />
-
-          {/* In-flight ambient clouds — decorative, reduced-motion guarded */}
-          {!m.reduced && (
-            <div aria-hidden="true" className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: -1 }}>
-              <motion.span
-                style={{ position: 'absolute', top: '3%', left: '8%', fontSize: 38, opacity: 0.07 }}
-                animate={{ x: [0, 20, 0] }}
-                transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
-              >☁️</motion.span>
-              <motion.span
-                style={{ position: 'absolute', top: '18%', right: '10%', fontSize: 26, opacity: 0.05 }}
-                animate={{ x: [0, -14, 0] }}
-                transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut', delay: 7 }}
-              >☁️</motion.span>
-              <motion.span
-                style={{ position: 'absolute', top: '36%', left: '52%', fontSize: 20, opacity: 0.04 }}
-                animate={{ x: [0, 10, 0] }}
-                transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 13 }}
-              >⛅</motion.span>
-            </div>
-          )}
+        {/* the mission's official scene, full-bleed behind everything */}
+        <WorldBackdrop src={WORLD.scene(SLOT_SCENE[slotKey] ?? 16)} shade="full" dim={0.62} />
+        <main className="relative z-10 mx-auto w-full max-w-4xl flex-1 pb-6">
 
           {/* Airways header */}
           <div className={`mb-4 border ${missionStyle.headerBorder} ${missionStyle.headerBg} shadow-card-2xl overflow-hidden`} style={{ borderRadius: 'var(--leaf-r-lg)' }}>

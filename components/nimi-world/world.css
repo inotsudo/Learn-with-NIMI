@@ -5,6 +5,11 @@
   position: fixed;
   inset: 0;
   overflow: hidden;
+  /* clip, not hidden: an overflow:hidden box can still be scrolled by the
+     browser (focus / scroll-into-view of a hotspot near the edge), which slid
+     the whole scene up-left and left a navy band on tablets. clip can't scroll. */
+  overflow: clip;
+  overscroll-behavior: none;
   background: #06101F;
   color: var(--world-text);
   container-type: size; /* lets .nw-cover reproduce object-cover geometry in pure CSS */
