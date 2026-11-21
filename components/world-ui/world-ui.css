@@ -1,0 +1,278 @@
+/* NIMIPIKO World UI — glass, gold and paper surfaces shared by every screen.
+   Light comes from the art; UI is glass over it, never opaque slabs. */
+
+.wui-screen {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  overflow: clip; /* clip, not hidden: no scroll box, so sticky children still pin to the page */
+  background: #06101F;
+  color: #FFF7E0;
+  -webkit-tap-highlight-color: transparent;
+}
+.wui-safe {
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* Backdrop shade that follows the layout: panel under the art on portrait
+   phones (darken the bottom), panel beside it on landscape (darken the right). */
+.wui-shade-adaptive { background: linear-gradient(180deg, rgba(6,16,31,0) 22%, rgba(6,16,31,0.6) 52%, rgba(6,16,31,0.95) 100%); }
+/* backdrop crop: focus on landscape, portraitFocus on portrait */
+.wui-backdrop-img { object-position: var(--wui-fx, 50%) var(--wui-fy, 50%); }
+@media (orientation: portrait) { .wui-backdrop-img { object-position: var(--wui-pfx, 50%) var(--wui-pfy, 50%); } }
+
+/* Opt-in (WorldBackdrop portraitTop): on tablet-portrait screens the square art
+   sits whole at the top and melts into the night below the panel line. */
+@media (orientation: portrait) and (min-aspect-ratio: 3/5) {
+  .wui-backdrop-art--top {
+    bottom: auto; aspect-ratio: 1 / 1;
+    -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 72%, transparent 100%);
+  }
+}
+@media (orientation: landscape) {
+  .wui-shade-adaptive { background: linear-gradient(90deg, rgba(6,16,31,0.5) 0%, rgba(6,16,31,0.12) 36%, rgba(6,16,31,0.22) 52%, rgba(6,16,31,0.82) 75%, rgba(6,16,31,0.94) 100%); }
+}
+
+/* ── glass panel ─────────────────────────────────────────────────────── */
+.wui-glass {
+  position: relative;
+  background: linear-gradient(160deg, rgba(26, 53, 88, 0.72) 0%, rgba(11, 26, 51, 0.78) 55%, rgba(6, 16, 31, 0.84) 100%);
+  border: 1px solid rgba(253, 230, 138, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 247, 224, 0.14),
+    inset 0 0 40px rgba(253, 230, 138, 0.05),
+    0 30px 80px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(6, 16, 31, 0.4);
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+}
+.wui-glass::before { /* gold foil hairline along the top edge */
+  content: ""; position: absolute; left: 18px; right: 18px; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(253, 230, 138, 0.85), transparent);
+  pointer-events: none;
+}
+
+/* ── boarding-pass ticket (glass with a perforated stub) ─────────────── */
+.wui-ticket__perf {
+  position: relative; height: 0; margin: 18px -1px;
+  border-top: 2px dashed rgba(253, 230, 138, 0.28);
+}
+.wui-ticket__perf::before, .wui-ticket__perf::after { /* punched notches */
+  content: ""; position: absolute; top: -13px; width: 24px; height: 24px; border-radius: 50%;
+  background: #06101F; box-shadow: inset 0 0 0 1px rgba(253, 230, 138, 0.32);
+}
+.wui-ticket__perf::before { left: -13px; }
+.wui-ticket__perf::after { right: -13px; }
+
+/* ── fields ──────────────────────────────────────────────────────────── */
+.wui-field {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 56px; padding: 0 16px;
+  border-radius: 16px;
+  background: rgba(6, 16, 31, 0.55);
+  border: 1.5px solid rgba(253, 230, 138, 0.22);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.wui-field:focus-within {
+  border-color: #FDE68A;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35), 0 0 0 4px rgba(253, 230, 138, 0.16), 0 0 24px rgba(253, 230, 138, 0.18);
+}
+.wui-field input {
+  /* width:100% lets the field shrink to any card width (an input's built-in
+     size would otherwise push narrow cards off a phone screen) */
+  flex: 1; width: 100%; min-width: 0; height: 52px;
+  background: transparent; border: 0; outline: none;
+  color: #FFF7E0; font-family: var(--font-nunito), system-ui, sans-serif; font-size: 16px; font-weight: 700;
+}
+.wui-field input::placeholder { color: rgba(255, 247, 224, 0.38); font-weight: 600; }
+.wui-label {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 8px 4px;
+  font-family: var(--font-baloo), system-ui, sans-serif; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.22em; text-transform: uppercase; color: #E8BC56;
+}
+
+/* ── gold 3D button ──────────────────────────────────────────────────── */
+.wui-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 56px; padding: 0 26px; border: 0; border-radius: 999px; cursor: pointer;
+  font-family: var(--font-baloo), system-ui, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 0.01em;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation;
+}
+.wui-btn:focus-visible { outline: 3px solid #FDE68A; outline-offset: 3px; }
+.wui-btn[disabled] { cursor: default; opacity: 0.7; }
+.wui-btn--gold {
+  color: #06101F;
+  background: radial-gradient(130% 160% at 30% 0%, #FFF7E0 0%, #FDE68A 32%, #E8BC56 62%, #C9A84C 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 0 rgba(150, 105, 25, 0.35),
+    0 6px 0 #8A6A1E, 0 14px 28px rgba(0, 0, 0, 0.45), 0 0 34px rgba(253, 230, 138, 0.35);
+}
+.wui-btn--glass {
+  color: #FFF7E0;
+  background: rgba(255, 247, 224, 0.08);
+  border: 1.5px solid rgba(253, 230, 138, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 247, 224, 0.12), 0 4px 0 rgba(0, 0, 0, 0.35), 0 10px 22px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.wui-btn--light {
+  color: #0B1A33; background: #FFF7E0;
+  box-shadow: inset 0 2px 0 #fff, 0 5px 0 #C9B98E, 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+.wui-btn__shine { /* a slow foil glint across gold buttons */
+  position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none;
+}
+.wui-btn__shine::after {
+  content: ""; position: absolute; top: -40%; bottom: -40%; width: 38%; left: -60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  transform: skewX(-18deg); animation: wui-shine 4.2s ease-in-out infinite;
+}
+@keyframes wui-shine { 0%, 62% { left: -60%; } 100% { left: 130%; } }
+
+/* ── chips + notices ─────────────────────────────────────────────────── */
+.wui-notice {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px 14px; border-radius: 16px;
+  font-family: var(--font-nunito), system-ui, sans-serif; font-size: 14px; font-weight: 700; line-height: 1.35;
+}
+.wui-notice--error { background: rgba(248, 113, 113, 0.14); border: 1px solid rgba(248, 113, 113, 0.45); color: #FECACA; }
+.wui-notice--ok { background: rgba(52, 211, 153, 0.14); border: 1px solid rgba(52, 211, 153, 0.45); color: #A7F3D0; }
+
+/* ── 3D tilt object (official art as a physical card / book) ─────────── */
+.wui-tilt { perspective: 1100px; }
+.wui-tilt__body { position: relative; transform-style: preserve-3d; will-change: transform; border-radius: 18px; }
+.wui-tilt__face { display: block; width: 100%; height: auto; border-radius: inherit; backface-visibility: hidden; }
+.wui-tilt__edge { /* page block / thickness behind the cover */
+  position: absolute; inset: 0; border-radius: inherit; transform: translateZ(-14px);
+  background: linear-gradient(90deg, #E9DDBF, #FBF4DE 30%, #E0D1AC); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+}
+.wui-tilt__glare {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; mix-blend-mode: soft-light;
+  background: radial-gradient(60% 50% at var(--gx, 30%) var(--gy, 20%), rgba(255, 255, 255, 0.75), transparent 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wui-btn__shine::after { animation: none; }
+}
+
+/* ── segmented choice (sign-up method, tabs) ─────────────────────────── */
+.wui-seg {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px;
+  border-radius: 18px; background: rgba(6, 16, 31, 0.5); border: 1px solid rgba(253, 230, 138, 0.18);
+}
+.wui-seg__opt {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 56px; padding: 6px 4px; border-radius: 14px; border: 0; cursor: pointer;
+  background: transparent; color: rgba(255, 247, 224, 0.7);
+  font-family: var(--font-baloo), system-ui, sans-serif; font-size: 12px; font-weight: 800; line-height: 1.1;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.wui-seg__opt:hover { color: #FFF7E0; }
+.wui-seg__opt:focus-visible { outline: 3px solid #FDE68A; outline-offset: 1px; }
+.wui-seg__opt[aria-pressed="true"] {
+  color: #06101F;
+  background: radial-gradient(130% 160% at 30% 0%, #FFF7E0 0%, #FDE68A 35%, #E8BC56 75%, #C9A84C 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 3px 0 #8A6A1E, 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+.wui-seg__opt[disabled] { opacity: 0.45; cursor: default; }
+
+/* a quiet glass row inside a card (trial ribbon, referral, info) */
+.wui-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px;
+  background: rgba(6, 16, 31, 0.42); border: 1px solid rgba(253, 230, 138, 0.18);
+}
+.wui-row--gold { background: linear-gradient(120deg, rgba(253, 230, 138, 0.16), rgba(201, 168, 76, 0.08)); border-color: rgba(253, 230, 138, 0.42); }
+.wui-row--danger { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.42); }
+
+/* quiet text link button */
+.wui-link {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; border: 0; background: none; cursor: pointer;
+  color: #E8BC56; font-family: var(--font-nunito), system-ui, sans-serif; font-weight: 800; font-size: 14px;
+  transition: color 0.2s ease;
+}
+.wui-link:hover { color: #FDE68A; }
+.wui-link:focus-visible { outline: 3px solid #FDE68A; outline-offset: 2px; border-radius: 8px; }
+
+/* ── chips row (categories) ──────────────────────────────────────────── */
+.wui-chiprow { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.wui-chiprow::-webkit-scrollbar { display: none; }
+.wui-chip {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0;
+  min-width: 62px; min-height: 58px; padding: 6px 10px; border-radius: 16px; cursor: pointer;
+  background: rgba(255, 247, 224, 0.06); border: 1.5px solid rgba(253, 230, 138, 0.2); color: rgba(255, 247, 224, 0.72);
+  font-family: var(--font-baloo), system-ui, sans-serif; font-size: 12px; font-weight: 800; line-height: 1.05;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.wui-chip:hover { color: #FFF7E0; border-color: rgba(253, 230, 138, 0.45); }
+.wui-chip:active { transform: translateY(2px); }
+.wui-chip:focus-visible { outline: 3px solid #FDE68A; outline-offset: 2px; }
+.wui-chip[aria-selected="true"] {
+  color: #06101F; border-color: transparent;
+  background: radial-gradient(130% 160% at 30% 0%, #FFF7E0 0%, #FDE68A 35%, #E8BC56 75%, #C9A84C 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 3px 0 #8A6A1E, 0 8px 16px rgba(0, 0, 0, 0.35);
+}
+.wui-chip__icon { font-size: 20px; line-height: 1; }
+
+/* ── option card (style choices) ─────────────────────────────────────── */
+.wui-option {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; border-radius: 18px; cursor: pointer;
+  background: rgba(255, 247, 224, 0.06); border: 1.5px solid rgba(253, 230, 138, 0.16); color: rgba(255, 247, 224, 0.7);
+  font-family: var(--font-baloo), system-ui, sans-serif; font-size: 11px; font-weight: 800; line-height: 1.05;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.wui-option:hover { border-color: rgba(253, 230, 138, 0.42); }
+.wui-option:focus-visible { outline: 3px solid #FDE68A; outline-offset: 2px; }
+.wui-option[aria-pressed="true"] {
+  color: #FDE68A; border-color: #FDE68A; background: rgba(253, 230, 138, 0.12);
+  box-shadow: 0 0 0 3px rgba(253, 230, 138, 0.16), 0 0 22px rgba(253, 230, 138, 0.25);
+}
+.wui-option__art { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; overflow: hidden; border-radius: 13px; background: rgba(6, 16, 31, 0.45); }
+
+/* ── glossy colour bead ──────────────────────────────────────────────── */
+.wui-beads { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); }
+.wui-beads--large { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
+.wui-bead {
+  aspect-ratio: 1; border-radius: 50%; border: 0; cursor: pointer;
+  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 36%), var(--bead);
+  box-shadow: inset 0 -5px 9px rgba(0, 0, 0, 0.32), inset 0 2px 3px rgba(255, 255, 255, 0.35), 0 5px 12px rgba(0, 0, 0, 0.45);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.wui-bead:hover { transform: translateY(-2px) scale(1.04); }
+.wui-bead:focus-visible { outline: 3px solid #FDE68A; outline-offset: 3px; }
+.wui-bead[aria-pressed="true"] {
+  transform: scale(1.08);
+  box-shadow: inset 0 -5px 9px rgba(0, 0, 0, 0.32), inset 0 2px 3px rgba(255, 255, 255, 0.35),
+    0 0 0 3px #06101F, 0 0 0 6px #FDE68A, 0 0 22px rgba(253, 230, 138, 0.5);
+}
+
+/* ── photo-studio stage: spotlight + gold pedestal ───────────────────── */
+.wui-stage { position: relative; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; isolation: isolate; }
+.wui-stage::before { /* spotlight cone */
+  content: ""; position: absolute; inset: -20% 10% 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(50% 60% at 50% 8%, rgba(255, 247, 224, 0.55), rgba(255, 247, 224, 0) 70%);
+}
+.wui-stage__pedestal {
+  position: absolute; left: 50%; bottom: 14px; width: 74%; max-width: 240px; aspect-ratio: 4 / 1; transform: translateX(-50%); z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(60% 70% at 50% 35%, #FFF7E0 0%, #FDE68A 30%, #C9A84C 70%, #8A6A1E 100%);
+  box-shadow: 0 10px 0 #6B5216, 0 22px 30px rgba(0, 0, 0, 0.55), 0 0 40px rgba(253, 230, 138, 0.35);
+}
+
+/* ── paper ticket (the official boarding pass look: cream + gold frame) ── */
+.wui-paper {
+  position: relative; color: #0B1A33; border-radius: 24px;
+  background: radial-gradient(120% 90% at 20% 0%, #FFFDF5 0%, #FBF4DE 55%, #F1E4BF 100%);
+  box-shadow: inset 0 0 0 2px #FBF4DE, inset 0 0 0 4px #C9A84C, inset 0 0 0 5px rgba(201, 168, 76, 0.35),
+    0 2px 0 rgba(255, 255, 255, 0.6) inset, 0 40px 80px rgba(0, 0, 0, 0.55), 0 0 60px rgba(253, 230, 138, 0.25);
+}
+.wui-paper__perf { position: relative; height: 0; margin: 16px 6px; border-top: 2px dashed rgba(201, 168, 76, 0.55); }
+.wui-paper__perf::before, .wui-paper__perf::after {
+  content: ""; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%; background: #0B1A33;
+  box-shadow: inset 0 0 0 2px #C9A84C;
+}
+.wui-paper__perf::before { left: -18px; }
+.wui-paper__perf::after { right: -18px; }
+.wui-paper__label { font-family: var(--font-baloo), system-ui, sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.24em; color: #A07F2C; }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import { ArrowRight, ArrowLeft, Sparkles, Star } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import { createChild } from "@/lib/queries";
@@ -12,6 +12,9 @@ import { SPRING } from "@/lib/design-system/motion";
 import AvatarBuilder from "@/components/avatar/AvatarBuilder";
 import AvatarSvg from "@/components/avatar/AvatarSvg";
 import { serializeAvatar, DEFAULT_AVATAR, type AvatarConfig } from "@/lib/avatarConfig";
+import { WorldBackdrop, WorldBrand, WorldNotice, GoldButton, GlassField } from "@/components/world-ui";
+import "@/components/world-ui/world-ui.css";
+import { WORLD } from "@/lib/design-system/world";
 
 const LANGUAGES: { code: Child["language"]; label: string; native: string; flag: string }[] = [
   { code: "en", label: "English",     native: "English",      flag: "🇬🇧" },
@@ -112,319 +115,222 @@ export default function OnboardingPage() {
     setTimeout(() => router.replace("/home"), 3000);
   }, [childName, ageGroup, language, avatarCfg, router]);
 
-  return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ background: "linear-gradient(160deg,#d1fae5 0%,#ecfdf5 40%,#f0fdf4 70%,#dcfce7 100%)" }}
-    >
-      {/* Ambient sparkles */}
-      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden>
-        {[
-          { top:"8%",  left:"5%",  emoji:"⭐", size:28, delay:0   },
-          { top:"15%", left:"88%", emoji:"✨", size:22, delay:0.5 },
-          { top:"75%", left:"4%",  emoji:"🌟", size:24, delay:1   },
-          { top:"82%", left:"90%", emoji:"⭐", size:20, delay:0.7 },
-          { top:"45%", left:"2%",  emoji:"💫", size:18, delay:1.4 },
-          { top:"35%", left:"94%", emoji:"✨", size:16, delay:0.3 },
-        ].map((d, i) => (
-          <motion.span key={i} className="absolute"
-            style={{ top: d.top, left: d.left, fontSize: d.size }}
-            animate={{ opacity:[0.3,1,0.3], scale:[0.7,1.2,0.7], rotate:[0,15,-15,0] }}
-            transition={{ duration:2.5+i*0.4, repeat:Infinity, delay:d.delay }}>
-            {d.emoji}
-          </motion.span>
-        ))}
-      </div>
+  const scene = done ? WORLD.scene(9) : step === 0 ? WORLD.scene(6) : WORLD.scene(8);
 
-      {/* Top bar */}
-      <div className="relative z-10 w-full max-w-xl px-4 pt-6 pb-2">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <span className="text-1.5xl">📚</span>
-            <span className="font-baloo font-black text-[var(--ds-text-brand)] text-lg">NIMIPIKO</span>
-          </div>
+  return (
+    <MotionConfig reducedMotion="user">
+    <div className="wui-screen">
+      {/* each check-in step has its own cabin scene, cross-faded */}
+      <AnimatePresence>
+        <motion.div key={scene} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}>
+          <WorldBackdrop src={scene} focus={{ x: 0.5, y: 0.4 }} shade="full" dim={0.2} />
+        </motion.div>
+      </AnimatePresence>
+
+      <main id="main-content" className="wui-safe relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col">
+        <div className="flex items-center justify-between gap-3">
+          <WorldBrand subtitle="Check-in · New explorer" />
           {!done && (
-            <div className="flex items-center gap-1.5">
-              {STEPS.map((_, i) => (
-                <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${
-                  i < step ? "bg-[var(--ds-brand-primary)] w-5" : i === step ? "bg-[var(--ds-brand-primary)]/60 w-10" : "bg-[var(--ds-brand-soft)] w-5"
-                }`} />
+            <ol className="flex items-center gap-2" aria-label={`Step ${step + 1} of ${STEPS.length}`}>
+              {STEPS.map((label, i) => (
+                <li key={label} className="flex items-center gap-2">
+                  <span className={`inline-flex h-8 min-w-8 items-center justify-center whitespace-nowrap rounded-full px-2.5 font-baloo text-[13px] font-extrabold transition ${
+                    i <= step ? "text-[#06101F]" : "text-[#FFF7E0]/55"}`}
+                    style={i <= step
+                      ? { background: "linear-gradient(120deg,#FDE68A,#E8BC56)", boxShadow: "0 3px 0 #8A6A1E" }
+                      : { background: "rgba(255,247,224,0.08)", border: "1.5px solid rgba(253,230,138,0.25)" }}
+                    aria-current={i === step ? "step" : undefined}>
+                    {i + 1}<span className="ml-1 hidden sm:inline">· {label}</span>
+                  </span>
+                  {i < STEPS.length - 1 && <span className="h-0.5 w-5 rounded bg-[#FDE68A]/30" aria-hidden="true" />}
+                </li>
               ))}
-            </div>
+            </ol>
           )}
         </div>
-      </div>
 
-      {/* Card area */}
-      <div className="relative z-10 w-full max-w-xl px-4 flex-1 flex items-start pb-8">
-        <AnimatePresence mode="wait">
+        <div className="flex flex-1 flex-col items-center justify-center py-6">
+          <AnimatePresence mode="wait">
 
-          {/* ── STEP 0: Avatar designer ─────────────────────────────────── */}
-          {step === 0 && !done && (
-            <motion.div key="s0" variants={fadeSlide} initial="hidden" animate="visible" exit="exit"
-              className="w-full bg-[var(--ds-surface-card)]/90 backdrop-blur-sm border border-[var(--ds-border-brand)] shadow-brand-glow-md overflow-hidden"
-              style={{ borderRadius: "28px" }}>
+            {/* ── STEP 0: Avatar designer ─────────────────────────────────── */}
+            {step === 0 && !done && (
+              <motion.section key="s0" variants={fadeSlide} initial="hidden" animate="visible" exit="exit" aria-labelledby="s0-title"
+                className="wui-glass w-full max-w-3xl rounded-[28px] p-4 sm:p-6">
+                <p className="font-baloo text-[10px] font-extrabold tracking-[0.26em] text-[#E8BC56]">CHECK-IN · STEP 1 OF 2</p>
+                <h1 id="s0-title" className="mt-1 font-baloo text-[22px] font-extrabold leading-tight text-[#FFF7E0] sm:text-[26px]">
+                  Hi {parentName}! Design your <span className="whitespace-nowrap">explorer <span aria-hidden="true">🎨</span></span>
+                </h1>
+                <p className="mb-4 font-nunito text-sm font-bold text-[#FFF7E0]/65">Make your child&apos;s character completely unique</p>
 
-              <div className="relative px-6 pt-6 pb-5 text-center overflow-hidden"
-                style={{ background:"linear-gradient(135deg, var(--ds-brand-primary), var(--ds-brand-hover))" }}>
-                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[var(--ds-surface-card)]/10" />
-                <p className="text-white/70 text-2xs font-nunito font-bold uppercase tracking-[0.18em] mb-1">Step 1 of 2</p>
-                <h2 className="font-baloo font-black text-white text-2xl leading-tight">
-                  Hi {parentName}! Design your Explorer 🎨
-                </h2>
-                <p className="text-white/75 text-xs font-nunito mt-1">Make your child&apos;s character completely unique</p>
-              </div>
-
-              <div className="p-4">
                 <AvatarBuilder initial={avatarCfg} onChange={setAvatarCfg} />
-              </div>
 
-              <div className="px-4 pb-4">
-                <motion.button whileTap={{ scale:0.97 }} onClick={() => setStep(1)}
-                  className="w-full text-white font-baloo font-black text-base py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-[var(--ds-brand-primary)]/25 transition hover:opacity-90"
-                  style={{ background:"linear-gradient(135deg, var(--ds-brand-primary), var(--ds-brand-hover))", color:"var(--ds-nav-bg)", borderRadius:"14px" }}>
-                  Next: Name your Explorer
-                  <ArrowRight className="w-5 h-5" />
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
+                <GoldButton full className="mt-5" onClick={() => setStep(1)} icon={<ArrowRight className="h-5 w-5" />}>
+                  Next: name your explorer
+                </GoldButton>
+              </motion.section>
+            )}
 
-          {/* ── STEP 1: Name + age + language + create ──────────────────── */}
-          {step === 1 && !done && (
-            <motion.div key="s1" variants={fadeSlide} initial="hidden" animate="visible" exit="exit"
-              className="w-full bg-[var(--ds-surface-card)]/90 backdrop-blur-sm border border-[var(--ds-border-brand)] shadow-brand-glow-md overflow-hidden"
-              style={{ borderRadius:"28px" }}>
-
-              <div className="relative px-6 pt-6 pb-5 text-center overflow-hidden"
-                style={{ background:"linear-gradient(135deg, var(--ds-brand-primary), var(--ds-brand-hover))" }}>
-                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[var(--ds-surface-card)]/10" />
-                {/* Avatar preview in header */}
-                <div className="flex justify-center mb-2">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                    <AvatarSvg config={avatarCfg} size={64} />
+            {/* ── STEP 1: Name + age + language + create ──────────────────── */}
+            {step === 1 && !done && (
+              <motion.section key="s1" variants={fadeSlide} initial="hidden" animate="visible" exit="exit" aria-labelledby="s1-title"
+                className="wui-glass w-full max-w-xl rounded-[28px] p-5 sm:p-7">
+                <div className="flex items-center gap-4">
+                  <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full" style={{ background: `#${avatarCfg.bg}`, boxShadow: "0 0 0 3px #06101F, 0 0 0 5px #E8BC56, 0 10px 24px rgba(0,0,0,0.45)" }}>
+                    <AvatarSvg config={avatarCfg} size={72} />
                   </div>
-                </div>
-                <p className="text-white/70 text-2xs font-nunito font-bold uppercase tracking-[0.18em] mb-1">Step 2 of 2</p>
-                <h2 className="font-baloo font-black text-white text-2xl leading-tight">Who&apos;s the hero? 🌟</h2>
-              </div>
-
-              <div className="px-6 py-5 space-y-5">
-                {/* Name */}
-                <div>
-                  <label className="text-2xs font-black uppercase tracking-[0.18em] text-[var(--ds-text-secondary)] block mb-2">
-                    Child&apos;s name
-                  </label>
-                  <input type="text" value={childName} onChange={e => { setChildName(e.target.value); setError(""); }}
-                    onKeyDown={e => e.key === "Enter" && childName.trim() && handleCreate()}
-                    placeholder="Enter name…" maxLength={30} autoFocus
-                    className="w-full border-2 border-[var(--ds-border-primary)] focus:border-[var(--ds-border-brand)] bg-[var(--ds-surface-card-hover)] px-4 py-3 text-mbase font-semibold text-[var(--ds-text-primary)] focus:outline-none transition placeholder:text-[var(--ds-text-tertiary)]"
-                    style={{ borderRadius:"12px" }} />
-                </div>
-
-                {/* Age group */}
-                <div>
-                  <p className="text-2xs font-black uppercase tracking-[0.18em] text-[var(--ds-text-secondary)] mb-2">Age group</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {AGE_GROUPS.map((g, i) => (
-                      <motion.button key={g.label} whileTap={{ scale:0.95 }} onClick={() => setAgeGroup(i)}
-                        className={`py-3 px-3 flex items-center gap-2.5 border-2 transition text-left ${
-                          ageGroup === i ? "border-[var(--ds-border-brand)] bg-[var(--ds-brand-subtle)]" : "border-[var(--ds-border-primary)] bg-[var(--ds-surface-card-hover)] hover:border-[var(--ds-border-strong)]"
-                        }`} style={{ borderRadius:"12px" }}>
-                        <span className="text-1.5xl">{g.emoji}</span>
-                        <div>
-                          <p className="font-baloo font-black text-[var(--ds-text-primary)] text-sml leading-none">{g.label} yrs</p>
-                          <p className="font-nunito text-[var(--ds-text-secondary)] text-3xs">{g.desc}</p>
-                        </div>
-                      </motion.button>
-                    ))}
+                  <div className="min-w-0">
+                    <p className="font-baloo text-[10px] font-extrabold tracking-[0.26em] text-[#E8BC56]">CHECK-IN · STEP 2 OF 2</p>
+                    <h1 id="s1-title" className="font-baloo text-[24px] font-extrabold leading-tight text-[#FFF7E0]">Who&apos;s the hero? <span aria-hidden="true">🌟</span></h1>
                   </div>
                 </div>
 
-                {/* Language */}
-                <div>
-                  <p className="text-2xs font-black uppercase tracking-[0.18em] text-[var(--ds-text-secondary)] mb-2">Learning language</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {LANGUAGES.map(l => (
-                      <motion.button key={l.code} whileTap={{ scale:0.95 }} onClick={() => setLanguage(l.code)}
-                        className={`py-3 flex flex-col items-center gap-1 border-2 transition ${
-                          language === l.code ? "border-[var(--ds-border-brand)] bg-[var(--ds-brand-subtle)]" : "border-[var(--ds-border-primary)] bg-[var(--ds-surface-card-hover)] hover:border-[var(--ds-border-strong)]"
-                        }`} style={{ borderRadius:"12px" }}>
-                        <span className="text-2xl">{l.flag}</span>
-                        <span className="font-baloo font-black text-[var(--ds-text-primary)] text-2xs">{l.native}</span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
+                <div className="mt-6 grid grid-cols-1 gap-5">
+                  <GlassField label="Child's name" icon={<Star className="h-5 w-5" />} type="text" maxLength={30} autoFocus autoComplete="off"
+                    value={childName} onChange={e => { setChildName(e.target.value); setError(""); }}
+                    onKeyDown={e => e.key === "Enter" && childName.trim() && handleCreate()} placeholder="Enter name…" />
 
-                {/* 7-day trial reminder */}
-                <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-ds-club bg-ds-club-subtle">
-                  <span className="text-xl shrink-0">👑</span>
-                  <p className="font-nunito font-bold text-ds-club-text text-xs">
-                    7-day free trial — all of Club unlocked. No credit card needed.
-                  </p>
-                </div>
-
-                {error && <p className="text-red-500 text-xs font-semibold text-center">{error}</p>}
-
-                <div className="flex gap-3">
-                  <button onClick={() => setStep(0)}
-                    className="flex items-center gap-1.5 px-4 py-3 rounded-2xl border border-[var(--ds-border-primary)] text-[var(--ds-text-secondary)] font-bold text-sm hover:bg-[var(--ds-surface-card-hover)] transition shrink-0">
-                    <ArrowLeft className="w-4 h-4" />
-                    Back
-                  </button>
-                  <motion.button whileTap={{ scale:0.97 }}
-                    onClick={handleCreate}
-                    disabled={saving || !childName.trim()}
-                    className="flex-1 text-white font-baloo font-black text-base py-3.5 flex items-center justify-center gap-2 shadow-lg shadow-[var(--ds-brand-primary)]/25 disabled:opacity-40 transition hover:opacity-90"
-                    style={{ background:"linear-gradient(135deg, var(--ds-brand-primary), var(--ds-brand-hover))", color:"var(--ds-nav-bg)", borderRadius:"14px" }}>
-                    {saving ? (
-                      <motion.span animate={{ rotate:[0,360] }} transition={{ duration:1, repeat:Infinity, ease:"linear" }}>⭐</motion.span>
-                    ) : (
-                      <><Sparkles className="w-5 h-5" /> Begin {childName || "the"} Adventure!</>
-                    )}
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── DONE: Ready for Departure ──────────────────────────────── */}
-          {done && (
-            <motion.div key="done" variants={fadeSlide} initial="hidden" animate="visible"
-              className="w-full overflow-hidden shadow-2xl"
-              style={{ borderRadius:"28px" }}>
-
-              {/* Airport header bar */}
-              <div className="px-6 py-4 flex items-center justify-between"
-                style={{ background:"linear-gradient(135deg,#06101F 0%,#1A3558 100%)" }}>
-                <div>
-                  <p className="text-[#C9A84C] font-black text-3xs tracking-widest uppercase">Nimipiko Airways</p>
-                  <p className="text-white font-baloo font-black text-base leading-none">Boarding Gate Open ✈️</p>
-                </div>
-                <motion.span
-                  animate={{ x:[0, 8, 0] }}
-                  transition={{ duration:1.8, repeat:Infinity, ease:"easeInOut" }}
-                  className="text-4xl select-none">✈️</motion.span>
-              </div>
-
-              {/* Boarding pass body */}
-              <div className="bg-white px-6 pt-5 pb-6">
-
-                {/* Flight info row */}
-                <div className="flex items-start justify-between mb-4 pb-4 border-b border-dashed border-gray-200">
-                  <div>
-                    <p className="text-3xs font-black text-gray-400 uppercase tracking-widest">Passenger</p>
-                    <p className="font-baloo font-black text-gray-900 text-xl leading-tight">{childName.toUpperCase()}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xs font-black text-gray-400 uppercase tracking-widest">Flight</p>
-                    <p className="font-baloo font-black text-[#1A3558] text-lg">NMP101</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="text-center">
-                    <p className="font-baloo font-black text-2xl text-gray-900">NMP</p>
-                    <p className="text-3xs text-gray-400 uppercase tracking-wider">Nimi Academy</p>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full flex items-center gap-1">
-                      <div className="flex-1 h-px bg-gray-300" />
-                      <span className="text-gray-400 text-xs">✈</span>
-                      <div className="flex-1 h-px bg-gray-300" />
-                    </div>
-                    <p className="text-3xs text-[#1A7A3E] font-black uppercase tracking-widest">Direct</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-baloo font-black text-2xl text-gray-900">ADV</p>
-                    <p className="text-3xs text-gray-400 uppercase tracking-wider">Adventure</p>
-                  </div>
-                </div>
-
-                {/* Avatar + welcome */}
-                <div className="flex items-center gap-4 mb-5">
-                  <motion.div
-                    initial={{ scale:0.7, opacity:0 }}
-                    animate={{ scale:1, opacity:1 }}
-                    transition={{ delay:0.3, type:"spring", stiffness:260, damping:18 }}
-                    className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#C9A84C] shadow-lg shrink-0"
-                    style={{ backgroundColor:`#${avatarCfg.bg}` }}>
-                    <AvatarSvg config={avatarCfg} size={64} />
-                  </motion.div>
-                  <div>
-                    <p className="font-baloo font-black text-gray-900 text-base leading-tight">
-                      {childName}&apos;s passport is ready!
-                    </p>
-                    <p className="text-gray-500 text-xs font-nunito mt-0.5">
-                      7-day free trial active · All Club doors open 🎉
-                    </p>
-                    <div className="flex items-center gap-0.5 mt-1.5">
-                      {[...Array(5)].map((_, i) => (
-                        <motion.div key={i} initial={{ scale:0 }} animate={{ scale:1 }}
-                          transition={{ delay:0.5 + i*0.07, ...SPRING.card }}>
-                          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                        </motion.div>
+                  <fieldset>
+                    <legend className="wui-label">Age group</legend>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {AGE_GROUPS.map((g, i) => (
+                        <motion.button key={g.label} type="button" whileTap={{ scale: 0.95 }} onClick={() => setAgeGroup(i)} aria-pressed={ageGroup === i}
+                          className="wui-option !flex-row !items-center !gap-3 !p-3 text-left">
+                          <span className="text-2xl" aria-hidden="true">{g.emoji}</span>
+                          <span className="min-w-0">
+                            <span className="block text-[16px] leading-none">{g.label} yrs</span>
+                            <span className="mt-1 block font-nunito text-[12px] font-bold opacity-75">{g.desc}</span>
+                          </span>
+                        </motion.button>
                       ))}
                     </div>
+                  </fieldset>
+
+                  <fieldset>
+                    <legend className="wui-label">Learning language</legend>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {LANGUAGES.map(l => (
+                        <motion.button key={l.code} type="button" whileTap={{ scale: 0.95 }} onClick={() => setLanguage(l.code)} aria-pressed={language === l.code}
+                          className="wui-option !gap-1.5 !py-3">
+                          <span className="text-[26px] leading-none" aria-hidden="true">{l.flag}</span>
+                          <span className="text-[13px]">{l.native}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <div className="wui-row wui-row--gold">
+                    <span className="text-xl" aria-hidden="true">👑</span>
+                    <p className="font-nunito text-[13px] font-bold text-[#FFF7E0]/85">7-day free trial — all of Club unlocked. No credit card needed.</p>
+                  </div>
+
+                  <WorldNotice error={error} />
+
+                  <div className="flex gap-3">
+                    <GoldButton variant="glass" onClick={() => setStep(0)} icon={<ArrowLeft className="h-5 w-5" />} className="shrink-0 !px-5">Back</GoldButton>
+                    <GoldButton className="min-w-0 flex-1" onClick={handleCreate} disabled={!childName.trim()} loading={saving} icon={<Sparkles className="h-5 w-5" />}>
+                      Begin {childName || "the"} adventure!
+                    </GoldButton>
                   </div>
                 </div>
+              </motion.section>
+            )}
 
-                {/* Boarding progress bar */}
-                <div className="mb-4">
-                  <div className="flex justify-between text-3xs text-gray-400 font-black uppercase tracking-widest mb-1.5">
-                    <span>Boarding…</span><span>Gate closing</span>
+            {/* ── DONE: Ready for departure — the paper boarding pass ─────── */}
+            {done && (
+              <motion.section key="done" aria-labelledby="done-title" role="status"
+                initial={{ opacity: 0, rotateY: -70, y: 30 }} animate={{ opacity: 1, rotateY: 0, y: 0 }} transition={{ ...WORLD.spring.pop }}
+                className="w-full max-w-md" style={{ perspective: 1200 }}>
+                <div className="wui-paper p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="wui-paper__label">NIMIPIKO AIRWAYS</p>
+                      <h1 id="done-title" className="font-baloo text-[22px] font-extrabold leading-tight">Boarding gate open <span aria-hidden="true">✈️</span></h1>
+                    </div>
+                    <motion.span animate={{ x: [0, 8, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} className="select-none text-4xl" aria-hidden="true">✈️</motion.span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div className="h-full rounded-full"
-                      style={{ background:"linear-gradient(90deg,#1A7A3E,#34D399)" }}
-                      initial={{ width:"0%" }} animate={{ width:"100%" }}
-                      transition={{ duration:2.8, ease:"easeInOut" }} />
+
+                  <div className="mt-5 flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="wui-paper__label">PASSENGER</p>
+                      <p className="truncate font-baloo text-[22px] font-extrabold leading-tight">{childName.toUpperCase()}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="wui-paper__label">FLIGHT</p>
+                      <p className="font-baloo text-lg font-extrabold text-[#1A3558]">NMP101</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="text-center">
+                      <p className="font-baloo text-2xl font-extrabold">NMP</p>
+                      <p className="wui-paper__label !tracking-[0.12em]">NIMI ACADEMY</p>
+                    </div>
+                    <div className="flex flex-1 items-center gap-1 text-[#C9A84C]" aria-hidden="true">
+                      <span className="h-px flex-1 bg-[#C9A84C]/60" />✈<span className="h-px flex-1 bg-[#C9A84C]/60" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-baloo text-2xl font-extrabold">ADV</p>
+                      <p className="wui-paper__label !tracking-[0.12em]">ADVENTURE</p>
+                    </div>
+                  </div>
+
+                  <div className="wui-paper__perf" aria-hidden="true" />
+
+                  <div className="flex items-center gap-4">
+                    <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.3, ...WORLD.spring.pop }}
+                      className="h-16 w-16 shrink-0 overflow-hidden rounded-full" style={{ backgroundColor: `#${avatarCfg.bg}`, boxShadow: "0 0 0 3px #C9A84C, 0 8px 18px rgba(0,0,0,0.25)" }}>
+                      <AvatarSvg config={avatarCfg} size={64} />
+                    </motion.div>
+                    <div className="min-w-0">
+                      <p className="font-baloo text-base font-extrabold leading-tight">{childName}&apos;s passport is ready!</p>
+                      <p className="mt-0.5 font-nunito text-xs font-bold text-[#0B1A33]/60">7-day free trial active · All Club doors open 🎉</p>
+                      <div className="mt-1.5 flex items-center gap-0.5" aria-hidden="true">
+                        {[...Array(5)].map((_, i) => (
+                          <motion.div key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 + i * 0.07, ...SPRING.card }}>
+                            <Star className="h-4 w-4 fill-[#E8BC56] text-[#C9A84C]" />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="mb-1.5 flex justify-between"><span className="wui-paper__label">BOARDING…</span><span className="wui-paper__label">GATE CLOSING</span></div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-[#0B1A33]/10">
+                      <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg,#C9A84C,#FDE68A)" }}
+                        initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 2.8, ease: "easeInOut" }} />
+                    </div>
+                  </div>
+
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.4 }}
+                    className="mt-4 flex items-center gap-3 rounded-2xl px-3 py-2.5" style={{ background: "linear-gradient(135deg,#06101F,#1A3558)" }}>
+                    <span className="text-xl" aria-hidden="true">📘</span>
+                    <div>
+                      <p className="font-baloo text-xs font-extrabold leading-tight text-[#E8BC56]">Passport &amp; boarding pass ready</p>
+                      <p className="font-nunito text-[11px] font-bold text-[#FFF7E0]/65">Download them anytime from your parent profile → Airways ✈️</p>
+                    </div>
+                  </motion.div>
+
+                  <div className="mt-4 flex items-center justify-between gap-3" aria-hidden="true">
+                    <div className="flex items-end gap-0.5">
+                      {Array.from({ length: 28 }).map((_, i) => (
+                        <div key={i} className="rounded-[1px] bg-[#0B1A33]" style={{ width: i % 3 === 0 ? 3 : 1.5, height: 28 }} />
+                      ))}
+                    </div>
+                    <p className="font-baloo text-[11px] font-extrabold tracking-widest text-[#0B1A33]/45">{createdChildId?.slice(0, 8).toUpperCase() ?? "NMP-0001"}</p>
                   </div>
                 </div>
+              </motion.section>
+            )}
 
-                {/* Airways tip */}
-                <motion.div
-                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-                  transition={{ delay:0.9, duration:0.4 }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                  style={{ background:"linear-gradient(135deg,#06101F,#1A3558)" }}>
-                  <span className="text-xl shrink-0">📘</span>
-                  <div>
-                    <p className="font-baloo font-black text-[#C9A84C] text-xs leading-tight">
-                      Passport &amp; boarding pass ready
-                    </p>
-                    <p className="text-white/60 text-3xs font-nunito">
-                      Download them anytime from your parent profile → Airways ✈️
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
+          </AnimatePresence>
+        </div>
 
-              {/* Barcode strip */}
-              <div className="px-6 py-3 flex items-center justify-between"
-                style={{ background:"#F7F7F7", borderTop:"2px dashed #E5E7EB" }}>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 28 }).map((_, i) => (
-                    <div key={i} className="bg-gray-800 rounded-sm"
-                      style={{ width: i % 3 === 0 ? 3 : 1.5, height: 28 }} />
-                  ))}
-                </div>
-                <p className="font-baloo font-black text-3xs text-gray-400 tracking-widest">
-                  {createdChildId?.slice(0, 8).toUpperCase() ?? 'NMP-0001'}
-                </p>
-              </div>
-            </motion.div>
-          )}
-
-        </AnimatePresence>
-      </div>
-
-      <div className="relative z-10 py-4 text-center">
-        <p className="text-[var(--ds-text-brand)]/60 font-nunito text-2xs">
-          © {new Date().getFullYear()} Nimipiko Studio LTD · Secure & Kid-Safe
+        <p className="text-center font-nunito text-[11px] font-bold text-[#FFF7E0]/45">
+          © {new Date().getFullYear()} Nimipiko Studio LTD · Secure &amp; Kid-Safe
         </p>
-      </div>
+      </main>
     </div>
+    </MotionConfig>
   );
 }

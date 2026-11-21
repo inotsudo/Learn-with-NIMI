@@ -2,19 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, MotionConfig } from "framer-motion";
-import { Lock, Eye, EyeOff, CheckCircle, AlertTriangle, RotateCcw } from "lucide-react";
+import { MotionConfig } from "framer-motion";
+import { ArrowLeft, Lock, Mail, RotateCcw, ShieldCheck, AlertTriangle } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
-import AuthBackground from "@/components/auth/AuthBackground";
-import { useThemeMotion } from "@/hooks/useThemeMotion";
-import { useAppTheme } from "@/contexts/AppThemeProvider";
-import { getThemeAssets } from "@/lib/design-system/assetRegistry";
+import { TerminalLayout, TicketCard, WorldNotice, HeroTitle, GoldButton, GlassField, EyeToggle } from "@/components/world-ui";
+import "@/components/world-ui/world-ui.css";
+import { WORLD } from "@/lib/design-system/world";
 
 export default function ResetPassword() {
   const router = useRouter();
-  const { themeId } = useAppTheme();
-  const assets = getThemeAssets(themeId);
-  const m = useThemeMotion();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -79,183 +75,68 @@ export default function ResetPassword() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden">
-
-      <AuthBackground />
-
-      <div className="relative z-10 w-full max-w-md">
-
-        {/* Mascot header */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <motion.img
-            src={assets.nimiAuth} alt="NIMI"
-            className="w-20 h-20 rounded-full object-cover border-4 border-yellow-400 shadow-xl mb-3"
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }} />
-          <h1 className="font-black text-3xl sm:text-4xl text-ds-text">
-            {expired ? 'Link Expired' : 'New'}{' '}
-            <span className="text-[var(--ds-brand-primary)]">{expired ? '' : 'Password'}</span>
-          </h1>
-          <p className="text-gray-500 mt-2 text-sm max-w-xs">
-            {expired
-              ? 'Your password reset link has expired. Request a new one below.'
-              : 'Choose a strong new password to secure your account.'}
+      <TerminalLayout
+        scene={WORLD.scene(5)}
+        focus={{ x: 0.4, y: 0.45 }}
+        subtitle={expired ? "Help desk · Link expired" : "Help desk · New boarding code"}
+        hero={<>
+          {expired
+            ? <HeroTitle lead="This link has" gold="expired" emoji="⏳" />
+            : <HeroTitle lead="Choose a new" gold="boarding code" emoji="🔐" />}
+          <p className="max-w-sm font-nunito text-base font-bold text-[#FFF7E0]/85" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+            {expired ? "Reset links expire after 1 hour for security. Ask for a fresh one." : "Pick a strong new code to keep your family's journey safe."}
           </p>
-        </div>
-
-        {/* ── Expired state ── */}
-        {expired && (
-          <div
-            className="bg-white border border-ds-border shadow-ds-card p-6 sm:p-8 space-y-5"
-            style={{ borderRadius: 'var(--leaf-r-lg)' }}
-          >
-            <div className="flex flex-col items-center text-center gap-3">
-              <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center">
-                <AlertTriangle className="w-7 h-7 text-orange-500" />
-              </div>
-              <p className="text-sm text-gray-600 max-w-xs">
-                Reset links expire after <strong>1 hour</strong> for security. Enter your email to get a fresh link.
+          <div className="wui-glass flex max-w-sm items-center gap-3 rounded-2xl px-4 py-3 [@media(max-height:520px)]:hidden">
+            <ShieldCheck className="h-5 w-5 shrink-0 text-[#E8BC56]" aria-hidden="true" />
+            <p className="font-nunito text-sm font-bold text-[#FFF7E0]/80">
+              <span className="text-[#FFF7E0]">Secure connection.</span> Your code is encrypted and never stored in plain text.
+            </p>
+          </div>
+        </>}
+      >
+        {expired ? (
+          <TicketCard id="reset" kicker="HELP DESK" stub={{ label: "STATUS", value: "EXPIRED" }} title="Link expired">
+            <div className="wui-row mt-4">
+              <AlertTriangle className="h-6 w-6 shrink-0 text-[#FDBA74]" aria-hidden="true" />
+              <p className="font-nunito text-sm font-bold text-[#FFF7E0]/80">
+                Reset links expire after <strong className="text-[#FFF7E0]">1 hour</strong> for security. Enter your email to get a fresh link.
               </p>
             </div>
-
             {resendSent ? (
-              <div className="leaf p-4 bg-[var(--ds-brand-subtle)] text-[var(--ds-text-brand)] text-sm font-semibold text-center flex items-center justify-center gap-2">
-                <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                New link sent! Check your inbox.
-              </div>
+              <WorldNotice ok="New link sent! Check your inbox." className="mt-4" />
             ) : (
-              <form onSubmit={handleResend} className="space-y-4">
-                {message && isError && (
-                  <p className="text-red-500 text-sm text-center font-semibold">{message}</p>
-                )}
-                <div>
-                  <label className="font-bold text-ds-text text-sm mb-1.5 block">Your email address</label>
-                  <input
-                    type="email" required
-                    value={resendEmail}
-                    onChange={e => setResendEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full border border-ds-border bg-ds-input leaf px-4 py-2.5 text-sm font-semibold text-ds-text focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400"
-                  />
-                </div>
-                <motion.button
-                  type="submit"
-                  disabled={resendLoading}
-                  whileTap={m.buttonPress}
-                  className="w-full text-white font-black py-3.5 shadow-md transition disabled:opacity-60 flex items-center justify-center gap-2"
-                  style={{ backgroundColor: 'var(--ds-brand-primary)', borderRadius: 'var(--leaf-r)' }}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  {resendLoading ? 'Sending…' : 'Send New Reset Link'}
-                </motion.button>
+              <form onSubmit={handleResend} className="mt-5 grid grid-cols-1 gap-4">
+                <WorldNotice error={isError ? message : ""} />
+                <GlassField label="Your email address" icon={<Mail className="h-5 w-5" />} type="email" required autoComplete="email" inputMode="email"
+                  value={resendEmail} onChange={e => setResendEmail(e.target.value)} placeholder="you@example.com" />
+                <GoldButton type="submit" full loading={resendLoading} icon={<RotateCcw className="h-5 w-5" />}>
+                  {resendLoading ? "Sending…" : "Send new reset link"}
+                </GoldButton>
               </form>
             )}
-
-            <p className="text-center text-xs text-gray-400">
-              Back to{' '}
-              <button onClick={() => router.push('/loginpage')} className="font-bold text-[var(--ds-brand-primary)] hover:underline">
-                Login
-              </button>
-            </p>
-          </div>
+            <div className="wui-ticket__perf" aria-hidden="true" />
+            <button type="button" onClick={() => router.push("/loginpage")} className="wui-link w-full justify-center">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to login
+            </button>
+          </TicketCard>
+        ) : (
+          <TicketCard id="reset" kicker="HELP DESK" stub={{ label: "GATE", value: "G1" }} title="New boarding code">
+            <p className="mt-2 font-nunito text-sm font-bold text-[#FFF7E0]/70">Enter your new code below.</p>
+            <form onSubmit={handleUpdatePassword} className="mt-5 grid grid-cols-1 gap-4">
+              <WorldNotice error={isError ? message : ""} ok={!isError ? message : ""} />
+              <GlassField label="New code" icon={<Lock className="h-5 w-5" />} type={showPassword ? "text" : "password"} autoComplete="new-password" required disabled={loading}
+                value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter new password"
+                trailing={<EyeToggle shown={showPassword} onToggle={() => setShowPassword(p => !p)} />} />
+              <GlassField label="Confirm code" icon={<Lock className="h-5 w-5" />} type={showConfirmPassword ? "text" : "password"} autoComplete="new-password" required disabled={loading}
+                value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirm new password"
+                trailing={<EyeToggle shown={showConfirmPassword} onToggle={() => setShowConfirmPassword(p => !p)} />} />
+              <GoldButton type="submit" full loading={loading} icon={<Lock className="h-5 w-5" />}>
+                {loading ? "Updating password…" : "Update password"}
+              </GoldButton>
+            </form>
+          </TicketCard>
         )}
-
-        {/* ── Normal reset form ── */}
-        {!expired && <form
-          onSubmit={handleUpdatePassword}
-          className="bg-white border border-ds-border shadow-ds-card p-6 sm:p-8 space-y-4"
-          style={{ borderRadius: 'var(--leaf-r-lg)' }}
-        >
-          <div className="flex flex-col items-center text-center mb-1">
-            <div className="w-14 h-14 rounded-full bg-[var(--ds-brand-subtle)] flex items-center justify-center mb-3">
-              <Lock className="w-6 h-6 text-[var(--ds-brand-primary)]" />
-            </div>
-            <h2 className="font-black text-xl text-ds-text">Reset Password</h2>
-            <p className="text-gray-500 text-sm mt-1">Enter your new password below.</p>
-          </div>
-
-          {message && (
-            <div className={`leaf p-2.5 text-center text-sm font-semibold flex items-center justify-center gap-2 ${
-              isError ? "bg-red-50 text-red-600" : "bg-[var(--ds-brand-subtle)] text-[var(--ds-brand-primary)]"
-            }`}>
-              {!isError && <CheckCircle className="w-4 h-4 flex-shrink-0" />}
-              {message}
-            </div>
-          )}
-
-          {/* New password */}
-          <div>
-            <label className="flex items-center gap-1.5 font-bold text-ds-text text-sm mb-1.5">
-              <Lock className="w-4 h-4 text-gray-400" /> New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Enter new password"
-                required
-                disabled={loading}
-                className="w-full border border-ds-border bg-ds-input leaf px-4 py-2.5 pr-10 text-sm font-semibold text-ds-text focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(p => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Confirm password */}
-          <div>
-            <label className="flex items-center gap-1.5 font-bold text-ds-text text-sm mb-1.5">
-              <Lock className="w-4 h-4 text-gray-400" /> Confirm Password
-            </label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                required
-                disabled={loading}
-                className="w-full border border-ds-border bg-ds-input leaf px-4 py-2.5 pr-10 text-sm font-semibold text-ds-text focus:outline-none focus:ring-2 focus:ring-[var(--ds-state-focus)] transition placeholder:text-gray-400" />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(p => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-              >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileTap={m.buttonPress}
-            className="w-full text-white font-black py-3.5 shadow-md transition disabled:opacity-60 flex items-center justify-center gap-2"
-            style={{ backgroundColor: 'var(--ds-brand-primary)', borderRadius: 'var(--leaf-r)' }}
-          >
-            <Lock className="w-4 h-4" />
-            {loading ? "Updating Password..." : "Update Password"}
-          </motion.button>
-        </form>}
-
-        {/* Bottom note */}
-        {!expired && (
-          <div className="flex items-center gap-3 mt-4 bg-white border border-ds-border leaf px-4 py-3 shadow-sm">
-            <div className="w-8 h-8 rounded-full bg-[var(--ds-brand-subtle)] flex items-center justify-center flex-shrink-0">
-              <Lock className="w-3.5 h-3.5 text-[var(--ds-brand-primary)]" />
-            </div>
-            <p className="text-sm text-gray-600">
-              <span className="font-bold text-ds-text">Secure connection.</span> Your password is encrypted and never stored in plain text.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      </TerminalLayout>
     </MotionConfig>
   );
 }

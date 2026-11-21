@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AvatarSvg from "./AvatarSvg";
+import "@/components/world-ui/world-ui.css";
 import {
   type AvatarConfig,
   type HairStyle, type EyeShape, type MouthStyle, type OutfitStyle, type AccessoryStyle,
@@ -42,41 +43,42 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-0 overflow-hidden leaf-lg border border-ds-border shadow-ds-card bg-ds-card" style={{ minHeight: 420 }}>
-      {/* ── Left: live preview ───────────────────────────────────────────────── */}
-      <div className="flex items-center justify-center sm:w-[280px] shrink-0 py-8 px-4"
-        style={{ background: `#${cfg.bg}` }}>
+    <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
+      {/* ── Live preview: the explorer on a lit gold pedestal ─────────────────── */}
+      <div className="wui-stage h-[230px] shrink-0 rounded-[22px] sm:h-auto sm:min-h-[360px] sm:w-[250px]"
+        style={{ background: `radial-gradient(90% 80% at 50% 30%, #${cfg.bg} 0%, color-mix(in srgb, #${cfg.bg} 55%, #06101F) 70%, #06101F 100%)`,
+          boxShadow: "inset 0 0 0 1px rgba(253,230,138,0.3), inset 0 -40px 60px rgba(6,16,31,0.45)" }}>
         <motion.div
           key={bounce}
-          animate={{ scale: [1, 1.04, 1] }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="relative mb-[34px] w-[190px] sm:mb-[46px] sm:w-[210px]"
+          animate={{ scale: [1, 1.05, 1], y: [0, -6, 0] }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          style={{ filter: "drop-shadow(0 18px 18px rgba(0,0,0,0.45))" }}
         >
-          <AvatarSvg config={cfg} size={200} />
+          <AvatarSvg config={cfg} size={210} />
         </motion.div>
+        <span className="wui-stage__pedestal" aria-hidden="true" />
       </div>
 
-      {/* ── Right: editor ────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col border-t sm:border-t-0 sm:border-l border-ds-border min-w-0">
-        {/* Category tabs — scrollable row */}
-        <div className="flex overflow-x-auto scrollbar-none border-b border-ds-border bg-ds-page shrink-0">
+      {/* ── Editor ───────────────────────────────────────────────────────────── */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="wui-chiprow" role="tablist" aria-label="Avatar parts">
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex flex-col items-center gap-0.5 px-3.5 py-3 shrink-0 transition-all border-b-2 text-3xs font-black uppercase tracking-wide ${
-                activeCategory === cat.id
-                  ? "border-[var(--ds-brand-primary)] text-[var(--ds-brand-primary)]"
-                  : "border-transparent text-ds-muted hover:text-ds-text"
-              }`}
+              className="wui-chip"
             >
-              <span className="text-lg leading-none">{cat.icon}</span>
+              <span className="wui-chip__icon" aria-hidden="true">{cat.icon}</span>
               {cat.label}
             </button>
           ))}
         </div>
 
-        {/* Options panel */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="min-h-[200px] flex-1 pt-3" role="tabpanel">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeCategory}
@@ -97,7 +99,7 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
 
               {/* ── HAIR STYLE ── */}
               {activeCategory === "hair" && (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-2.5">
                   {HAIR_STYLES.map(s => (
                     <StyleCard
                       key={s.id}
@@ -128,7 +130,7 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
               {/* ── EYE SHAPE ── */}
               {activeCategory === "eyes" && (
                 <>
-                  <div className="grid grid-cols-5 gap-2 mb-4">
+                  <div className="mb-4 grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-2.5">
                     {EYE_SHAPES.map(s => (
                       <StyleCard
                         key={s.id}
@@ -144,7 +146,7 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
                       />
                     ))}
                   </div>
-                  <p className="text-2xs font-bold text-ds-muted uppercase tracking-wide mb-2">Eye color</p>
+                  <p className="wui-label">Eye color</p>
                   <ColorGrid
                     colors={EYE_COLORS}
                     selected={cfg.ec}
@@ -155,7 +157,7 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
 
               {/* ── MOUTH ── */}
               {activeCategory === "mouth" && (
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-2.5">
                   {MOUTH_STYLES.map(s => (
                     <StyleCard
                       key={s.id}
@@ -175,7 +177,7 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
 
               {/* ── OUTFIT STYLE ── */}
               {activeCategory === "outfit" && (
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-2.5">
                   {OUTFIT_STYLES.map(s => (
                     <StyleCard
                       key={s.id}
@@ -206,7 +208,7 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
               {/* ── ACCESSORY ── */}
               {activeCategory === "accessory" && (
                 <>
-                  <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="mb-4 grid grid-cols-3 gap-2.5">
                     {ACCESSORY_STYLES.map(s => (
                       <StyleCard
                         key={s.id}
@@ -225,7 +227,7 @@ export default function AvatarBuilder({ initial = DEFAULT_AVATAR, onChange }: Pr
                   </div>
                   {cfg.ac !== "none" && (
                     <>
-                      <p className="text-2xs font-bold text-ds-muted uppercase tracking-wide mb-2">Accessory color</p>
+                      <p className="wui-label">Accessory color</p>
                       <ColorGrid
                         colors={ACCESSORY_COLORS}
                         selected={cfg.ab}
@@ -267,21 +269,20 @@ function ColorGrid({
   large?: boolean;
 }) {
   return (
-    <div className={`grid gap-2.5 ${large ? "grid-cols-5" : "grid-cols-7"}`}>
+    <div className={`wui-beads ${large ? "wui-beads--large" : ""}`}>
       {colors.map(c => {
         const isSelected = c.hex.toUpperCase() === selected.toUpperCase();
         return (
           <motion.button
             key={c.hex}
+            type="button"
             onClick={() => onSelect(c.hex)}
             whileTap={{ scale: 0.88 }}
             title={c.label}
-            className={`aspect-square rounded-2xl transition-all border-2 shadow-sm ${
-              isSelected
-                ? "border-[var(--ds-brand-primary)] scale-110 shadow-md ring-2 ring-[var(--ds-brand-primary)]/30"
-                : "border-transparent hover:scale-105 hover:border-[var(--ds-border-strong)]"
-            }`}
-            style={{ backgroundColor: `#${c.hex}` }}
+            aria-label={c.label}
+            aria-pressed={isSelected}
+            className="wui-bead"
+            style={{ ["--bead" as string]: `#${c.hex}` }}
           />
         );
       })}
@@ -306,20 +307,16 @@ function StyleCard({
 }) {
   return (
     <motion.button
+      type="button"
       onClick={onClick}
-      whileTap={{ scale: 0.9 }}
-      className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl border-2 transition-all ${
-        active
-          ? "border-[var(--ds-brand-primary)] bg-[var(--ds-brand-subtle)] shadow-md"
-          : "border-ds-border bg-ds-card hover:border-[var(--ds-border-strong)]"
-      }`}
+      whileTap={{ scale: 0.92 }}
+      aria-pressed={active}
+      className="wui-option"
     >
-      <div className="w-full flex items-center justify-center overflow-hidden rounded-xl" style={{ height: 52 }}>
+      <span className="wui-option__art">
         {previewEl ?? <span className="text-2xl">{emoji}</span>}
-      </div>
-      <span className={`text-4xs font-black leading-none ${active ? "text-[var(--ds-brand-primary)]" : "text-ds-muted"}`}>
-        {label}
       </span>
+      <span>{label}</span>
     </motion.button>
   );
 }

@@ -3,18 +3,19 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { motion, MotionConfig } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Plane, Sparkles, Rocket, Phone } from "lucide-react";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { Mail, Lock, Plane, Sparkles, Phone } from "lucide-react";
 import supabase from "@/lib/supabaseClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { appUrl, safeNextPath } from "@/lib/auth/config";
 import GoogleIcon from "@/components/auth/GoogleIcon";
-import { AirwaysCTA } from "@/components/auth/AirwaysAuthUI";
+import { TerminalLayout, TicketCard, WorldNotice, HeroTitle, GoldButton, GlassField, EyeToggle, Tilt3D } from "@/components/world-ui";
+import "@/components/world-ui/world-ui.css";
+import { WORLD } from "@/lib/design-system/world";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen" style={{ background: "#F7FAF7" }} />}>
+    <Suspense fallback={<div className="min-h-screen" style={{ background: "#06101F" }} />}>
       <LoginInner />
     </Suspense>
   );
@@ -38,6 +39,7 @@ function LoginInner() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [showPhone, setShowPhone] = useState(false); // the phone-code panel is folded away until asked for
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -115,156 +117,94 @@ function LoginInner() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen relative overflow-hidden" style={{ background: "linear-gradient(180deg, #F7FAF7 0%, #F2F7F3 45%, #EDF5EF 100%)" }}>
-        <div className="absolute inset-0 pointer-events-none" aria-hidden
-          style={{ backgroundImage: "radial-gradient(rgba(27,138,75,0.03) 1px, transparent 1px)", backgroundSize: "24px 24px", maskImage: "radial-gradient(90% 90% at 50% 20%, #0003 30%, transparent 90%)", WebkitMaskImage: "radial-gradient(90% 90% at 50% 20%, #0003 30%, transparent 90%)" }} />
+      <TerminalLayout
+        scene={WORLD.scene(2)}
+        focus={{ x: 0.42, y: 0.4 }}
+        subtitle="Learning terminal · Kigali"
+        hero={<>
+          <HeroTitle lead="Welcome back," gold="Captain!" emoji="✈️" />
+          <p className="max-w-sm font-nunito text-base font-bold text-[#FFF7E0]/80" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+            Your little explorers are ready for take-off.
+          </p>
+          <motion.div initial={{ opacity: 0, y: 30, rotate: -6 }} animate={{ opacity: 1, y: 0, rotate: -4 }} transition={{ ...WORLD.spring.soft, delay: 0.2 }}
+            className="w-[min(30vw,230px)] [@media(max-height:520px)]:hidden">
+            <Tilt3D src="/now/props/passport-cover.webp" alt="Passeport Voyage Nimipiko" width={600} height={931} priority />
+          </motion.div>
+        </>}
+      >
+        <TicketCard
+          id="login"
+          stub={{ label: "SEAT", value: "12A" }}
+          title={<>
+            <span className="block text-[20px] landscape:md:hidden">Welcome back, <span className="whitespace-nowrap">Captain! ✈️</span></span>
+            <span className="block text-[15px] font-bold text-[#FFF7E0]/70 landscape:md:text-[22px] landscape:md:font-extrabold landscape:md:text-[#FFF7E0]">Parent / Guardian Login</span>
+          </>}
+        >
+          <WorldNotice error={error} ok={message} className="mt-4" />
 
-        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-6 pb-10 min-h-screen flex flex-col">
-          <div className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ border: "1.5px solid #1B8A4B", color: "#1B8A4B", background: "#1B8A4B14" }}>
-              <Plane className="w-4 h-4" />
-            </span>
-            <div>
-              <p className="font-baloo font-black text-[13px] tracking-[0.18em]" style={{ color: "#1B8A4B" }}>NIMIPIKO AIRWAYS</p>
-              <p className="font-nunito text-[10px] tracking-[0.14em] text-gray-400 font-bold mt-0.5">LEARNING TERMINAL · KIGALI</p>
+          {/* a real form so phone password managers can fill and save the login */}
+          <form onSubmit={e => { e.preventDefault(); login(); }} noValidate>
+            <div className="mt-5 grid grid-cols-1 gap-4">
+              <GlassField label="Email" icon={<Mail className="h-5 w-5" />} type="email" autoComplete="email" inputMode="email"
+                value={email} onChange={e => setEmail(e.target.value)} placeholder="you@family.com" />
+              <GlassField label="Boarding code" icon={<Lock className="h-5 w-5" />} type={showPassword ? "text" : "password"} autoComplete="current-password"
+                value={password} onChange={e => setPassword(e.target.value)} placeholder="Your secret word"
+                trailing={<EyeToggle shown={showPassword} onToggle={() => setShowPassword(v => !v)} />} />
             </div>
+
+            <div className="mt-3 flex items-center justify-between gap-3 font-nunito text-sm font-bold">
+              <label className="flex min-h-11 cursor-pointer select-none items-center gap-2 text-[#FFF7E0]/75">
+                <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="h-5 w-5 rounded accent-[#E8BC56]" />
+                Remember me
+              </label>
+              <Link href="/forgot-password" className="flex min-h-11 items-center text-[#E8BC56] transition hover:text-[#FDE68A]">Forgot code?</Link>
+            </div>
+
+            <GoldButton type="submit" full className="mt-3" loading={loading} icon={<Plane className="h-5 w-5" />}>Board now</GoldButton>
+          </form>
+
+          <div className="wui-ticket__perf" aria-hidden="true" />
+
+          <p className="mb-3 text-center font-baloo text-[11px] font-extrabold tracking-[0.24em] text-[#FFF7E0]/55">OTHER WAYS TO BOARD</p>
+          <GoldButton variant="light" full onClick={loginWithGoogle} loading={oauthLoading} icon={<GoogleIcon />}>Continue with Google</GoldButton>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <GoldButton variant="glass" onClick={loginWithMagicLink} disabled={magicLoading || loading} loading={magicLoading} icon={<Sparkles className="h-4 w-4" />} className="!px-3 !text-[15px]">
+              Magic link
+            </GoldButton>
+            <GoldButton variant="glass" icon={<Phone className="h-4 w-4" />} className="!px-3 !text-[15px]" aria-expanded={showPhone} aria-controls="phone-pane"
+              onClick={() => { setError(""); setMessage(""); setShowPhone(v => !v); }}>
+              Phone code
+            </GoldButton>
           </div>
 
-          <div className="flex-1 grid lg:grid-cols-2 gap-8 items-center mt-6 lg:mt-0">
-            <div>
-              <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.05 }}
-                className="font-baloo font-black leading-[1.08] text-gray-900" style={{ fontSize: "clamp(2rem,5vw,3.2rem)" }}>
-                Welcome back,
-                <span style={{ color: "#1B8A4B" }}>Captain!</span> <span className="inline-block align-middle">✈️</span>
-              </motion.h1>
-              <p className="font-nunito text-gray-400 text-sm mt-3 font-semibold">Your little explorers are ready for take-off.</p>
-
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.12 }} className="mt-5 flex items-center gap-3">
-                <div className="w-[76px] h-[76px] rounded-full overflow-hidden shrink-0 bg-white shadow-2xl" style={{ border: "2.5px solid #1B8A4B" }}>
-                  <Image src="/nimi/happy.png" alt="NIMI" width={76} height={76} className="w-full h-full object-cover" />
-                </div>
-                <div className="rounded-2xl bg-white px-4 py-2.5 max-w-[240px]" style={{ border: "1.5px solid #1B8A4B18" }}>
-                  <p className="font-nunito text-[12.5px] font-bold leading-snug" style={{ color: "#1B8A4B" }}>Let's create something amazing today!</p>
-                </div>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.15 }} className="mt-5 flex flex-wrap gap-2">
-                {["Passengers","Families","Stories","Adventure"].map((label, i) => (
-                  <span key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-nunito font-bold"
-                    style={{ background: ["#F0F5F1","#E8F4FD","#FCE4EC","#EAF2FF"][i], color: ["#1B8A4B","#175C8A","#B42318","#175C8A"][i], border: "1px solid", borderColor: ["#D4E8D8","#C8E0F0","#E8C8D0","#C8E0F0"][i] }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: ["#4CAF50","#2196F3","#F44336","#2196F3"][i] }} />
-                    {label}
-                  </span>
-                ))}
-              </motion.div>
-            </div>
-
-            <motion.div initial={{ opacity: 0, y: 22, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.6, delay: 0.08 }} className="justify-self-center lg:justify-self-end w-full max-w-[440px]">
-              <div className="rounded-[24px] bg-white overflow-hidden" style={{ boxShadow: "0 4px 20px rgba(27,138,75,0.08), 0 1px 4px rgba(27,138,75,0.05)", border: "1px solid #E8F0E8" }}>
-                <div className="px-6 pt-5 pb-4 flex items-start justify-between">
-                  <div>
-                    <p className="font-nunito text-[10px] font-black tracking-[0.22em]" style={{ color: "#1B8A4B" }}>NIMIPIKO AIRWAYS</p>
-                    <p className="font-baloo font-black text-[17px] text-gray-900 mt-0.5">Parent / Guardian Login</p>
+          <AnimatePresence initial={false}>
+            {(showPhone || otpSent) && (
+              <motion.div id="phone-pane" key="phone-pane" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.28, ease: "easeOut" }} className="overflow-hidden">
+              <div className="mt-4 rounded-2xl p-3" style={{ background: "rgba(6,16,31,0.4)", border: "1px solid rgba(253,230,138,0.16)" }}>
+                {!otpSent ? (
+                  <div className="flex items-end gap-2">
+                    <GlassField autoFocus className="min-w-0 flex-1" label="Phone · +250 Rwanda" icon={<Phone className="h-5 w-5" />} type="tel" autoComplete="tel" inputMode="tel"
+                      value={phone} onChange={(e) => setPhone(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendPhoneOtp(); }} placeholder="+2507XXXXXXXX" />
+                    <GoldButton variant="glass" onClick={sendPhoneOtp} loading={loading} className="!px-5">Send</GoldButton>
                   </div>
-                  <div className="text-right">
-                    <p className="font-nunito text-[10px] font-black tracking-[0.22em] text-gray-400">SEAT</p>
-                    <p className="font-baloo font-black text-[15px] text-gray-900" style={{ color: "#1B8A4B" }}>12A · WIN</p>
+                ) : (
+                  <div className="flex items-end gap-2">
+                    <GlassField className="min-w-0 flex-1" label="SMS code" icon={<Lock className="h-5 w-5" />} type="text" inputMode="numeric" autoComplete="one-time-code"
+                      value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(e) => { if (e.key === "Enter") verifyPhoneOtp(); }} placeholder="6-digit code" />
+                    <GoldButton variant="glass" onClick={verifyPhoneOtp} loading={loading} className="!px-5">Verify</GoldButton>
                   </div>
-                </div>
-
-                {(error || message) && (
-                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                    className="mb-3 rounded-xl px-4 py-2.5 font-nunito text-sm" style={error ? { background: "#FDECEC", color: "#B42318", border: "1px solid #F5C0B8" } : { background: "#E9F7EF", color: "#1B8A4B", border: "1px solid #BDE5CD" }}>
-                    {error || message}
-                  </motion.div>
                 )}
-
-                <div className="mt-4">
-                  <div className="flex items-center gap-2" style={{ color: "#1B8A4B" }}>
-                    <Plane className="w-3.5 h-3.5" />
-                    <span className="font-nunito text-[10px] font-black tracking-[0.22em] uppercase">Email</span>
-                  </div>
-                  <div className="relative mt-1.5">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9AA5B1" }} />
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && login()}
-                      placeholder="you@family.com" style={{ border: "2px solid #E8ECEC", borderRadius: "12px", paddingLeft: "32px", padding: "12px 16px", fontFamily: "Nunito", fontSize: "14px", color: "#333", backgroundColor: "#fff" }} />
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="flex items-center gap-2" style={{ color: "#1B8A4B" }}>
-                    <Lock className="w-3.5 h-3.5" />
-                    <span className="font-nunito text-[10px] font-black tracking-[0.22em] uppercase">Boarding Code</span>
-                  </div>
-                  <div className="relative mt-1.5">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9AA5B1" }} />
-                    <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && login()}
-                      placeholder="Type your secret word" style={{ border: "2px solid #E8ECEC", borderRadius: "12px", paddingLeft: "32px", padding: "12px 16px", fontFamily: "Nunito", fontSize: "14px", color: "#333", backgroundColor: "#fff" }} />
-                    <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 transition">
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <label className="flex items-center gap-1.5 font-nunito cursor-pointer select-none">
-                    <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="w-3.5 h-3.5 rounded accent-#1B8A4B" />
-                    <span className="font-nunito text-gray-500">Remember me</span>
-                  </label>
-                  <Link href="/forgot-password" className="font-bold text-gray-500 hover:text-gray-800 transition">Forgot code?</Link>
-                </div>
-
-                <AirwaysCTA onClick={login} loading={loading}>
-                  {loading ? <Rocket className="w-4 h-4 animate-spin" /> : <><Plane className="w-4 h-4" /> Board Now</>}
-                </AirwaysCTA>
-
-                <p className="mt-3 text-center text-xs text-gray-400 font-nunito">
-                  New here? <Link href="/signuppage" className="font-black hover:opacity-80 transition" style={{ color: "#1B8A4B" }}>Get your boarding pass →</Link>
-                </p>
-
-                <div className="mt-4">
-                  <AirwaysCTA variant="blue" onClick={loginWithGoogle} loading={oauthLoading}>
-                    {oauthLoading ? <Rocket className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
-                  </AirwaysCTA>
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button type="button" onClick={loginWithMagicLink} disabled={magicLoading || loading}
-                    className="flex-1 min-w-[140px] rounded-xl border border-gray-200 bg-white py-2.5 font-nunito text-xs font-bold text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 active:scale-[0.99] disabled:opacity-60">
-                    <Sparkles className="w-3 h-3 inline-block mr-1.5" /> Magic link
-                  </button>
-                  <button type="button" onClick={() => { setError(""); setMessage(""); document.getElementById("phone-pane")?.scrollIntoView({ behavior: "smooth", block: "nearest" }); setOtpSent(false); (document.getElementById("phone-input") as HTMLInputElement | null)?.focus(); }}
-                    className="flex-1 min-w-[140px] rounded-xl border border-gray-200 bg-white py-2.5 font-nunito text-xs font-bold text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 active:scale-[0.99] disabled:opacity-60">
-                    <Phone className="w-3 h-3 inline-block mr-1.5" /> Phone code
-                  </button>
-                </div>
-
-                <div id="phone-pane" className="mt-3 rounded-xl border border-gray-100 bg-gray-50/60 p-3" style={{ borderColor: "#1B8A4B18" }}>
-                  <div className="flex items-center gap-2" style={{ color: "#1B8A4B" }}>
-                    <Phone className="w-3.5 h-3.5" />
-                    <span className="font-nunito text-[10px] font-black tracking-[0.2em] uppercase">Phone Boarding · +250 RWANDA READY</span>
-                  </div>
-                  {!otpSent ? (
-                    <div className="mt-2 flex gap-2">
-                      <input id="phone-input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") sendPhoneOtp(); }}
-                        placeholder="+2507XXXXXXXX" style={{ flex: 1, border: "2px solid #E8ECEC", borderRadius: "12px", padding: "10px 12px", fontFamily: "Nunito", fontSize: "13px", color: "#333", outline: "none" }} />
-                      <AirwaysCTA variant="primary" onClick={sendPhoneOtp} loading={loading}>Send</AirwaysCTA>
-                    </div>
-                  ) : (
-                    <div className="mt-2 flex gap-2">
-                      <input type="text" inputMode="numeric" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        onKeyDown={(e) => { if (e.key === "Enter") verifyPhoneOtp(); }}
-                        placeholder="6-digit code" style={{ flex: 1, border: "2px solid #E8ECEC", borderRadius: "12px", padding: "10px 12px", fontFamily: "Nunito", fontSize: "13px", color: "#333", textAlign: "center", outline: "none" }} />
-                      <AirwaysCTA variant="primary" onClick={verifyPhoneOtp} loading={loading}>Verify</AirwaysCTA>
-                    </div>
-                  )}
-                </div>
               </div>
-            </motion.div>
-          </div>
-        </div>
-      </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <p className="mt-5 text-center font-nunito text-sm font-bold text-[#FFF7E0]/65">
+            New here? <Link href="/signuppage" className="text-[#E8BC56] transition hover:text-[#FDE68A]">Get your boarding pass →</Link>
+          </p>
+        </TicketCard>
+      </TerminalLayout>
     </MotionConfig>
   );
 }
